@@ -1,0 +1,91 @@
+~~~~~~~~~~~~~~~~~ ALL pyTRS CONFIG PARAMETER OPTIONS ~~~~~~~~~~~~~~~~~
+
+Where two parameters are stated below with <or>, they are functionally equivalent to one another (i.e. either option can be used for the same effect).
+
+And [**] denotes default behavior that need not be specified in config (usually the `.False` option for such settings is the non-default).
+
+USAGE:
+Combine desired parameters into a single string, separated by comma or semicolon, like so:
+   'defaultNS.n, defaultEW.w, cleanQQ, includeLotDivs.False'
+(Spaces are optional and have no effect.)
+
+The string should be the first positional argument of a Config object, or the init parameter `config=` when creating PLSSDesc and/or Tract objects:
+>>> config_obj = pyTRS.Config('n,w,cleanQQ')
+>>> tract_obj = pyTRS.Tract('154n97w14', 'NE/4', config='n,w,cleanQQ')
+
+
+ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~
+       PARAMETER       )              EFFECT
+ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~
+'n'                    )
+  <or>                 )--> Assume any missing N/S in a Twp should be 'n' [**]
+'defaultNS.n'          )
+ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~
+'s'                    )
+  <or>                 )--> Assume any missing N/S in a Twp should be 's'
+'defaultNS.s'          )
+ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~
+'w'                    )
+  <or>                 )--> Assume any missing E/W in a Rge should be 'w' [**]
+'defaultEW.w'          )
+ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~
+'e'                    )
+  <or>                 )--> Assume any missing E/W in a Rge should be 'e'
+'defaultEW.e'          )
+ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~
+'initParse'            )--> PLSSDesc object should parse at initialization
+ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~
+'initParseQQ'          )--> Tract object (or PLSSDesc object's subordinate Tract objects) should parse lots/aliquots at initialization
+ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~
+'initPreprocess'       )
+  <or>                 )--> Will preprocess description at initialization [**]
+'initPreprocess.True'  )
+ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~
+'initPreprocess.False' )--> Will NOT preprocess description at initialization
+ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~
+'cleanQQ'              )--> Expect ONLY clean aliquots/lots
+ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~
+'requireColon'         )
+  <or>                 )--> Require a colon between Section number and its following description block (on a 'first-pass' attempt at a parse only) [**]
+'requireColon.True'    )
+ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~
+'requireColon.False'   )--> Do not require a colon in that position
+ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~
+'includeLotDivs'       )
+  <or>                 )--> Report lot divisions (i.e., 'N2 of L1' for 'N/2 of Lot 1') [**]
+'includeLotDivs.True'  )
+ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~
+'includeLotDivs.False' )--> Do NOT report lot divisions (i.e. just 'L1', even if divided further)
+ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~
+'ocrScrub'             )
+  <or>                 )--> Scrub common OCR artifacts from the text (currently limited effect)
+'ocrScrub.True'        )
+ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~
+'ocrScrub.False        )--> Do NOT scrub OCR artifacts from the text. [**]
+ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~
+'segment'              )
+  <or>                 )--> Segment description before parsing into Tracts (MIGHT capture descriptions with multiple layouts).
+'segment.True'         )
+ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~
+'segment.False         )--> Do NOT segment the description before parsing. [**]
+ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~
+'TRS_desc'             )
+  <or>                 )--> do not deduce layout; instead, force 'TRS_desc' (NOT RECOMMENDED)
+'layout.TRS_desc'      )
+ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~
+'desc_STR'             )
+  <or>                 )--> do not deduce layout; instead, force 'desc_STR' (NOT RECOMMENDED)
+'layout.desc_STR'      )
+ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~
+'S_desc_TR'            )
+  <or>                 )--> do not deduce layout; instead, force 'S_desc_TR' (NOT RECOMMENDED)
+'layout.S_desc_TR'     )
+ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~
+'TR_desc_S'            )
+  <or>                 )--> do not deduce layout; instead, force 'TR_desc_S' (NOT RECOMMENDED)
+'layout.TR_desc_S'     )
+ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~
+'copy_all'             )
+  <or>                 )--> do not deduce layout; instead, force 'copy_all' (NOT RECOMMENDED)
+'layout.copy_all'      )
+ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~
