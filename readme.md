@@ -215,11 +215,11 @@ __[D] description block__ (for lack of a better term) -- This is the text that c
 
 
 ## Quick Start Guide and Documentation
-A quick-start guide can be found [here](https://github.com/JamesPImes/pyTRS/blob/master/documentation/documentation.md#quick-start-guide), which will point new users to the broad-strokes features.
+A quick start guide can be found [here](https://github.com/JamesPImes/pyTRS/blob/master/documentation/quickstart.md), which will point new users to the broad-strokes features.
 
-The rest of the documentation is [here](https://github.com/JamesPImes/pyTRS/blob/master/documentation/documentation.md).
+For an implementation for parsing PLSS descriptions in .csv files, [look into the `pyTRS.csv_suite` package](https://github.com/JamesPImes/pyTRS/blob/master/documentation/csv_suite%20documentation/csv_readme.md), which also includes a GUI implementation (launch from console with `pyTRS.csv_suite.launch_gui()` or run `pyTRS\csv_suite\pyTRS_parse_csv_gui.pyw` directly).
 
-For an implementation for parsing PLSS descriptions in .csv files, [look into the pyTRS CSV Suite](https://github.com/JamesPImes/pyTRS/blob/master/documentation/csv_suite%20documentation/csv_readme.md), which can be accessed with `import pyTRS.csv_suite`, and a GUI implementation can be accessed with `pyTRS.csv_suite.launch_gui()` or run `pyTRS\csv_suite\pyTRS_parse_csv_gui.pyw` directly.
+The rest of the documentation is forthcoming. (It's one of few big tasks before a `v1.0.0` release of `pyTRS`). Nearly complete documentation can be found in docstrings, so Python's native `pydoc` module might be a decent option in the meantime.
 
 
 
@@ -419,12 +419,12 @@ Be sure to read the full disclaimer in `LICENSE.txt`. However, some non-obvious 
 
 
 ## Upcoming / TODO
-pyTRS is nearly ready for a `v1.0.0 ` release. At this point, I'm mostly cleaning up a few comments and working on a clean output of the documentation (although docstrings currently contain nearly complete documentation on their own -- so you can access all of it with Python's `pydoc` module).
+`pyTRS` is nearly ready for a `v1.0.0 ` release. I'm hoping to have one out before the end of 2020. At this point, I'm mostly cleaning up a few comments and working on a clean output of the documentation (although docstrings currently contain nearly complete documentation on their own -- so you can access all of it with Python's `pydoc` module).
 
 
 ## Requirements
+The pyTRS library itself is pure Python:
 
-Python 3.6+
-*(NOTE: These programs were written and tested in Python version 3.8.2, but will probably work with all versions of Python more recent than 3.6. These programs have been tested in a Windows 10 environment; they have not been tested with macOS or Linux.)*
+* Python 3.6+
 
-The pyTRS library itself is pure Python.
+*(NOTE: `pyTRS` was written and tested in Python version 3.8.2, but is expected to work with all versions of Python more recent than 3.6. It's been tested in a Windows 10 environment; and has not been tested on macOS or Linux. I doubt any of the primary parsing functionality will struggle with other operating systems, but possibly some of the saving/loading/csv functionality might require some tweaking. I'd be interested in hearing any issues you run into.)*
