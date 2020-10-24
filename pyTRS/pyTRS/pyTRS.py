@@ -2301,11 +2301,17 @@ class Config:
             configObj.set_str_to_values(line.strip('\n'))
         return configObj
 
-    @classmethod
-    def from_parent(cls, parentObj, configName='', suppress_layout=False):
+    @staticmethod
+    def from_parent(parentObj, configName='', suppress_layout=False):
         """
         Compile and return a Config object from the settings in a
         PLSSDesc object or Tract object.
+        :param parentObj: A PLSSDesc or Tract object whose config
+        parameters should be compiled into this Config object.
+        :param configName: An optional string, being the name of this
+        Config object.
+        :param suppress_layout: A bool, whether or not to include the
+        `.layout` attribute from the parent object.
         """
 
         configObj = Config()
