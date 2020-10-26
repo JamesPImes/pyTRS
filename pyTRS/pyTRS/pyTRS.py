@@ -951,7 +951,12 @@ class PLSSDesc:
         of those dicts (the returned list being equal in length to
         .parsedTracts).
 
+        :param attributes: The names (strings) of whichever attributes
+        should be included (see documentation on `pyTRS.Tract` objects
+        for the names of relevant attributes).
+
         :Example:
+
         txt = '''154N-97W
         Sec 14: NE/4
         Sec 15: Northwest Quarter, North Half South West Quarter'''
@@ -981,7 +986,12 @@ class PLSSDesc:
         nested list of those lists (the returned list being equal in
         length to .parsedTracts).
 
+        :param attributes: The names (strings) of whichever attributes
+        should be included (see documentation on `pyTRS.Tract` objects
+        for the names of relevant attributes).
+
         :Example:
+
         txt = '''154N-97W
         Sec 14: NE/4
         Sec 15: Northwest Quarter, North Half South West Quarter'''
@@ -1009,14 +1019,20 @@ class PLSSDesc:
         containing the requested attributes only, and return a single
         string of the data.
 
+        :param attributes: The names (strings) of whichever attributes
+        should be included (see documentation on `pyTRS.Tract` objects
+        for the names of relevant attributes).
+
         :Example:
+
         txt = '''154N-97W
         Sec 14: NE/4
         Sec 15: Northwest Quarter, North Half South West Quarter'''
         d_obj = PLSSDesc(txt, initParseQQ=True)
         d_obj.tracts_to_str('trs', 'desc', 'QQList')
 
-        Example returns a multi-line string:
+        Example returns a multi-line string that looks like this when
+        printed:
 
             Tract #1
             trs    : 154n97w14
@@ -1041,13 +1057,15 @@ class PLSSDesc:
         (defaults to '\n').
 
         :Example:
+
         txt = '''154N-97W
         Sec 14: NE/4
         Sec 15: Northwest Quarter, North Half South West Quarter'''
         d_obj = PLSSDesc(txt, initParseQQ=True)
-        d_obj.tracts_to_list('trs', 'desc', 'QQList')
+        d_obj.quick_desc('trs', 'desc', 'QQList')
 
-        Example returns a multi-line string:
+        Example returns a multi-line string that looks like this when
+        printed:
 
             154n97w14: NE/4
             154n97w15: Northwest Quarter, North Half South West Quarter
@@ -1831,7 +1849,12 @@ class TractList(list):
         (the returned list being equal in length to this TractList
         object).
 
+        :param attributes: The names (strings) of whichever attributes
+        should be included (see documentation on `pyTRS.Tract` objects
+        for the names of relevant attributes).
+
         :Example:
+
         txt = '''154N-97W
         Sec 14: NE/4
         Sec 15: Northwest Quarter, North Half South West Quarter'''
@@ -1868,7 +1891,12 @@ class TractList(list):
         lists (the returned list being equal in length to this TractList
         object).
 
+        :param attributes: The names (strings) of whichever attributes
+        should be included (see documentation on `pyTRS.Tract` objects
+        for the names of relevant attributes).
+
         :Example:
+
         txt = '''154N-97W
         Sec 14: NE/4
         Sec 15: Northwest Quarter, North Half South West Quarter'''
@@ -1902,7 +1930,12 @@ class TractList(list):
         Compile the data for all Tract objects, containing the requested
         attributes only, and return a single string of the data.
 
+        :param attributes: The names (strings) of whichever attributes
+        should be included (see documentation on `pyTRS.Tract` objects
+        for the names of relevant attributes).
+
         :Example:
+
         txt = '''154N-97W
         Sec 14: NE/4
         Sec 15: Northwest Quarter, North Half South West Quarter'''
@@ -1910,7 +1943,8 @@ class TractList(list):
         tl_obj = d_obj.parse(initParseQQ=True, commit=False)
         tl_obj.tracts_to_str('trs', 'desc', 'QQList')
 
-        Example returns a multi-line string:
+        Example returns a multi-line string that looks like this when
+        printed:
 
             Tract #1
             trs    : 154n97w14
@@ -1954,14 +1988,16 @@ class TractList(list):
         (defaults to '\n').
 
         :Example:
+
         txt = '''154N-97W
         Sec 14: NE/4
         Sec 15: Northwest Quarter, North Half South West Quarter'''
         d_obj = PLSSDesc(txt)
         tl_obj = d_obj.parse(initParseQQ=True, commit=False)
-        tl_obj.tracts_to_list('trs', 'desc', 'QQList')
+        tl_obj.quick_desc()
 
-        Example returns a multi-line string:
+        Example returns a multi-line string that looks like this when
+        printed:
 
             154n97w14: NE/4
             154n97w15: Northwest Quarter, North Half South West Quarter
