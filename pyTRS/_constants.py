@@ -1,6 +1,6 @@
 
-__version__ = '0.5'
-__versionDate__ = '9/25/2020'
+__version__ = '0.5.1'
+__versionDate__ = '2/1/2021'
 __author__ = 'James P. Imes'
 __email__ = 'jamesimes@gmail.com'
 __website__ = 'https://github.com/JamesPImes/pyTRS'
