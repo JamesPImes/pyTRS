@@ -102,7 +102,7 @@ class PLSSDesc:
     .tracts_to_str() -- Compile the requested attributes for each Tract
         into a string-based table, and return a single string of all
         tables.
-    .list_TRS() -- Return a list of all twp/rge/sec combinations in the
+    .list_trs() -- Return a list of all twp/rge/sec combinations in the
         `.parsedTracts` TractList, optionally removing duplicates.
     .print_data() -- Equivalent to `.tracts_to_dict()`, but the data
         is formatted as a table and printed to console.
@@ -956,7 +956,7 @@ class PLSSDesc:
         txt = '''154N-97W
         Sec 14: NE/4
         Sec 15: Northwest Quarter, North Half South West Quarter'''
-        d_obj = PLSSDesc(txt, initParseQQ=True)
+        d_obj = pyTRS.PLSSDesc(txt, initParseQQ=True)
         d_obj.tracts_to_dict('trs', 'desc', 'QQList')
 
         Example returns a list of two dicts:
@@ -991,7 +991,7 @@ class PLSSDesc:
         txt = '''154N-97W
         Sec 14: NE/4
         Sec 15: Northwest Quarter, North Half South West Quarter'''
-        d_obj = PLSSDesc(txt, initParseQQ=True)
+        d_obj = pyTRS.PLSSDesc(txt, initParseQQ=True)
         d_obj.tracts_to_list('trs', 'desc', 'QQList')
 
         Example returns a nested list:
@@ -1024,7 +1024,7 @@ class PLSSDesc:
         txt = '''154N-97W
         Sec 14: NE/4
         Sec 15: Northwest Quarter, North Half South West Quarter'''
-        d_obj = PLSSDesc(txt, initParseQQ=True)
+        d_obj = pyTRS.PLSSDesc(txt, initParseQQ=True)
         d_obj.tracts_to_str('trs', 'desc', 'QQList')
 
         Example returns a multi-line string that looks like this when
@@ -1057,8 +1057,8 @@ class PLSSDesc:
         txt = '''154N-97W
         Sec 14: NE/4
         Sec 15: Northwest Quarter, North Half South West Quarter'''
-        d_obj = PLSSDesc(txt, initParseQQ=True)
-        d_obj.quick_desc('trs', 'desc', 'QQList')
+        d_obj = pyTRS.PLSSDesc(txt, initParseQQ=True)
+        d_obj.quick_desc()
 
         Example returns a multi-line string that looks like this when
         printed:
@@ -1076,14 +1076,14 @@ class PLSSDesc:
     # def strDesc():  # method removed in v0.4.11, 8/25/2020
     # (replaced with .tracts_to_str())
 
-    def list_TRS(self, remove_duplicates=False):
+    def list_trs(self, remove_duplicates=False):
         """
         Return a list all the TRS's in .parsedTracts list. Optionally
         remove duplicates with remove_duplicates=True.
         """
 
         # This functionality is handled by TractList method.
-        return self.parsedTracts.list_TRS(remove_duplicates=remove_duplicates)
+        return self.parsedTracts.list_trs(remove_duplicates=remove_duplicates)
 
     def print_desc(self, delim=': ', newline='\n') -> None:
         """
@@ -1109,6 +1109,10 @@ class PLSSDesc:
         return
 
     # def sumGrossAcres(self):  # method removed in v0.4.11, 8/25/2020
+
+    # Aliases to prevent breaking API on calls to method names with caps
+    # TODO: Deprecate these method names
+    list_TRS = list_trs
 
 
 class Tract:
@@ -1283,13 +1287,13 @@ class Tract:
         # If a T&R is identified without 'North/South' specified, fall
         # back on this. Will be filled in with set_config() (if
         # applicable) or defaulted to 'n' shortly.
-        # NOTE: only applicable for using .from_TwpRgeSec()
+        # NOTE: only applicable for using .from_twprgesec()
         self.defaultNS = None
 
         # If a T&R is identified without 'East/West' specified, fall
         # back on this. Will be filled in with set_config() (if
         # applicable) or defaulted to 'w' shortly.
-        # NOTE: only applicable for using .from_TwpRgeSec()
+        # NOTE: only applicable for using .from_twprgesec()
         self.defaultEW = None
 
         # NOTE: `initPreproces`, `initParseQQ`, `cleanQQ`, &
@@ -1312,7 +1316,7 @@ class Tract:
 
         # Whether to iron out common OCR artifacts. Defaults to `False`.
         # NOTE: Currently only has effect if Tract object is created via
-        # `.from_TwpRgeSec()`   ...  May have more effect in a later version.
+        # `.from_twprgesec()`   ...  May have more effect in a later version.
         self.ocrScrub = False
 
         # Apply settings from kwarg `config=`
@@ -1344,7 +1348,7 @@ class Tract:
             self.parse(commit=True)
 
     @staticmethod
-    def from_TwpRgeSec(
+    def from_twprgesec(
             desc='', twp='0', rge='0', sec='0', source='', origDesc='',
             origIndex=0, descIsFlawed=False, config=None, initParseQQ=None):
         """
@@ -1377,6 +1381,8 @@ class Tract:
         # Get our defaultNS and defaultEW from config
         defaultNS = configObj.defaultNS
         defaultEW = configObj.defaultEW
+        if defaultNS is None: defaultNS = 'n'
+        if defaultEW is None: defaultEW = 'w'
         if defaultNS.lower() not in ['n', 'north', 's', 'south']:
             defaultNS = 'n'
         if defaultEW.lower() not in ['w', 'west', 'e', 'east']:
@@ -1806,6 +1812,10 @@ class Tract:
     # def outputTRSdesc():  # method removed in v0.4.11, 8/25/2020
     # (replaced with .quick_desc())
 
+    # Aliases to prevent breaking API on calls to method names with caps
+    # TODO: Deprecate these method names
+    from_TwpRgeSec = from_twprgesec
+
 
 class TractList(list):
     """
@@ -1822,7 +1832,7 @@ class TractList(list):
     .tracts_to_str() -- Compile the requested attributes for each Tract
         into a string-based table, and return a single string of all
         tables.
-    .list_TRS() -- Return a list of all twp/rge/sec combinations,
+    .list_trs() -- Return a list of all twp/rge/sec combinations,
         optionally removing duplicates.
     """
 
@@ -2018,7 +2028,7 @@ class TractList(list):
 
         print(self.quick_desc(delim=delim, newline=newline))
 
-    def list_TRS(self, remove_duplicates=False):
+    def list_trs(self, remove_duplicates=False):
         """
         Return a list all the TRS's in this TractList. Optionally remove
         duplicates with remove_duplicates=True.
@@ -2033,6 +2043,10 @@ class TractList(list):
                     all_TRS_noDup.append(TRS)
             all_TRS = all_TRS_noDup
         return all_TRS
+
+    # Aliases to prevent breaking API on calls to method names with caps
+    # TODO: Deprecate these method names
+    list_TRS = list_trs
 
 
 class ParseBag:
