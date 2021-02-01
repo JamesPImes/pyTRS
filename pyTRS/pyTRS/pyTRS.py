@@ -724,10 +724,6 @@ class PLSSDesc:
         'artifacts'. May cause unintended changes. (Defaults to `False`)
         :return: The preprocessed string.
         """
-        """
-        Call PLSSDesc.preprocess() as a static method (i.e. no need to
-        save a PLSSDesc object.
-        """
 
         dummyObj = PLSSDesc(text, config='preprocess.False')
         return dummyObj.preprocess(
