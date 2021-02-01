@@ -25,7 +25,7 @@ def quick_parse_list(
     TRS and description block for a separate identified Tract.
     """
 
-    from pyTRS.pyTRS import PLSSDesc, Config
+    from pyTRS.parser import PLSSDesc, Config
 
     if isinstance(config, Config):
         config = config.decompile_to_text()
@@ -60,7 +60,7 @@ def quick_flags(text) -> list:
     parsing the PLSS description, without storing a PLSSDesc object.
     Returns a list of flags.
     """
-    from pyTRS.pyTRS import PLSSDesc
+    from pyTRS.parser import PLSSDesc
 
     PLSSDescObj = PLSSDesc(text, initParseQQ=True)
 
@@ -73,7 +73,7 @@ def quick_flag_lines(text) -> list:
     flags by parsing the PLSS description, without storing a PLSSDesc
     object. Returns a list of 2-tuples: (flag, context).
     """
-    from pyTRS.pyTRS import PLSSDesc
+    from pyTRS.parser import PLSSDesc
 
     PLSSDescObj = PLSSDesc(text, initParseQQ=True)
 
@@ -89,6 +89,6 @@ def quick_lotsQQ(text, cleanQQ=False) -> list:
     no metes-and-bounds, exceptions, complicated descriptions,
     etc.). Defaults to False.
     """
-    from pyTRS.pyTRS import Tract
+    from pyTRS.parser import Tract
     return Tract(desc=text, config=f'{"cleanQQ"*cleanQQ},initParseQQ').lotQQList
 

@@ -20,7 +20,7 @@ the user makes their choices, and then continue when it returns.
 import tkinter as tk
 from tkinter import messagebox
 from tkinter.ttk import Combobox
-from pyTRS import pyTRS
+from pyTRS import parser
 
 
 def prompt_config(
@@ -132,7 +132,7 @@ class PromptConfig(tk.Frame):
         
         if isinstance(parameters, str):
             if parameters.lower() == 'all':
-                parameters = pyTRS.Config.__ConfigAttribs__
+                parameters = parser.Config.__ConfigAttribs__
             else:
                 parameters = parameters.replace(' ', '').split(',')
 
@@ -175,7 +175,7 @@ class PromptConfig(tk.Frame):
                      "layouts, it is probably wise to let the program "
                      "deduce the layout for each.\n\n"
                      "Below are examples of the possible layouts:\n\n"
-                     f"{pyTRS.__implementedLayoutExamples__}"
+                     f"{parser.__implementedLayoutExamples__}"
                  },
             'cleanQQ':
                 {'help':
@@ -305,7 +305,7 @@ class PromptConfig(tk.Frame):
         # Prompt for layout
         self.layoutcombo = Combobox(combo_frame, width=25)
         self.layoutcombo['values'] = tuple(
-            ['Deduce (RECOMMENDED)'] + pyTRS.__implementedLayouts__)
+            ['Deduce (RECOMMENDED)'] + parser.__implementedLayouts__)
     
         if 'layout' in parameters:
             # Only put layout into GUI if it's among the requested parameters
@@ -536,7 +536,7 @@ class PromptConfig(tk.Frame):
         try:
             # Compile config_text into a pyTRS.Config object, and use
             # Config.saveToFile()
-            success_check = pyTRS.Config(config_text).save_to_file(output_file)
+            success_check = parser.Config(config_text).save_to_file(output_file)
             if success_check != 0:
                 # Only return code of `0` denotes success.
                 failedtosave = True

@@ -25,7 +25,7 @@ setup(
     name='pyTRS',
     version=_constants.__version__,
     packages=[
-        'pyTRS', 'pyTRS.pyTRS', 'pyTRS.check', 'pyTRS.quick', 'pyTRS.utils',
+        'pyTRS', 'pyTRS.parser', 'pyTRS.check', 'pyTRS.quick', 'pyTRS.utils',
         'pyTRS.csv_suite', 'pyTRS.interface_tools'
     ],
     url=_constants.__website__,
@@ -35,4 +35,5 @@ setup(
     description=descrip,
     long_description=long_description,
     long_description_content_type="text/markdown",
+    include_package_data=True
 )

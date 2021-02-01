@@ -16,7 +16,7 @@ def check_flag(target, flag=None, getLines=False):
     this will return None.
     """
 
-    from pyTRS.pyTRS import PLSSDesc, Tract
+    from pyTRS.parser import PLSSDesc, Tract
 
     # Feed in only a PLSSDesc object or Tract object.
     if not isinstance(target, (PLSSDesc, Tract)):
