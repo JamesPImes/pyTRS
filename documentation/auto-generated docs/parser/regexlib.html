@@ -1,0 +1,602 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.9.2" />
+<title>pyTRS.parser.regexlib API documentation</title>
+<meta name="description" content="A library of regex patterns for pyTRS parsing." />
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
+<link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
+<style>:root{--highlight-color:#fe9}.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}h1:target,h2:target,h3:target,h4:target,h5:target,h6:target{background:var(--highlight-color);padding:.2em 0}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}dt:target .name{background:var(--highlight-color)}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}td{padding:0 .5em}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/highlight.min.js" integrity="sha256-Uv3H6lx7dJmRfRvH8TH6kJD1TSK1aFcwgx+mdg3epi8=" crossorigin></script>
+<script>window.addEventListener('DOMContentLoaded', () => hljs.initHighlighting())</script>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>pyTRS.parser.regexlib</code></h1>
+</header>
+<section id="section-intro">
+<p>A library of regex patterns for pyTRS parsing.</p>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">&#34;&#34;&#34;
+A library of regex patterns for pyTRS parsing.
+&#34;&#34;&#34;
+
+import re
+
+# Township &amp; Range + Section regexes...
+
+# Should find township &amp; ranges, formatted with up to 3 digits for twp
+# and for rge (&#39;000n000w&#39; or &#39;0n0w&#39; or between).
+# Note that this is somewhat more complicated than it /should/ be because a
+# Range of &#39;2&#39; can accidentally capture as a Range number in, for example
+# &#34;N2N2, W2E2&#34; (i.e. could match as &#39;T2N-R2W&#39;). So we disallow specifically
+# a singular &#39;2&#39; when &#39;R&#39; (or the word &#39;Range&#39;) does not precede it.
+twprge_regex = re.compile(
+    r&#34;&#34;&#34;
+    (T[ownship]{0,9})?
+    [\.\-–—,\s]*
+    (\d{1,3})
+    [\.\-–—,\s]*
+    (N[orth]{0,5}|S[outh]{0,5})
+    [\.\-–—,;\|_~\s]*
+    # If &#39;R&#39; (or &#39;Range&#39;) does not appear, then we DISALLOW a range of singular &#39;2&#39;. This 
+    # is to prevent over-matching &#34;Lot 2, N2 W2&#34; as &lt;&#39;T2N-R2W&#39;&gt; (for example). Otherwise, 
+    # we are liable to have some aliquots break out T&amp;R capturing, and vice-versa.
+    (
+    (R[ange]{0,6})?
+    [\.\-–—,\s]*
+    (\d{2,3}|[013-9])
+    [\.\-–—,\s]*
+    ((W[est]{0,3})|(E[ast]{0,3}))
+
+    |
+
+    (
+    (R[ange]{0,6})
+    [\.\-–—,\s]*
+    (\d)  # This time, allow singular &#39;2&#39;, because we specified &#39;R&#39; (or &#39;Range&#39;) beforehand
+    [\.\-–—,\s]*
+    ((W[est]{0,3})|(E[ast]{0,3}))))
+    &#34;&#34;&#34;, re.IGNORECASE | re.VERBOSE)
+# A singular &#39;2&#39; will show up as .group(12); and direction is .group(13).
+# Otherwise, Range number is .group(6), and direction is .group(8)
+
+# A more broadly-capturing regex for our standard T&amp;R format (this one does
+# not require &#39;T&#39; or &#39;R&#39;, but also incorrectly captures &#34;Lot 2, N2 W2&#34; as
+# &#39;T2N-R2W&#39;. Should not be used for unprocessed text.)
+twprge_broad_regex = re.compile(
+    r&#34;&#34;&#34;(T[ownship]{0,9})?
+    [\.\-–—,\s]*
+    (\d{1,3})  # Township number
+    [\.\-–—,\s]*
+    (N[orth]{0,5}|S[outh]{0,5})  # Township N/S
+    [\.\-–—,;\|_~\s]*
+    ((R[ange]{0,6})?
+    [\.\-–—,\s]*
+    (\d{1,3})  # Range number
+    [\.\-–—,\s]*
+    ((W[est]{0,3})|(E[ast]{0,3})))  # range E/W&#34;&#34;&#34;,
+    re.IGNORECASE | re.VERBOSE)
+
+# This should find sections formatted with up to 3 digits (e.g., &#39;013&#39;, &#39;009&#39;,
+# etc. should be captured):
+sec_regex = re.compile(
+    r&#34;&#34;&#34;
+    ((Section|Sect\.?|Sec\.?|Secion|Secton|Seciton|Sectn|Secn|§)s?  # The word &#34;section&#34;
+    [\.\-–—\s]*
+    (\d{1,3})\s*)  # Section number, between 1 and 3 digits
+    &#34;&#34;&#34;, re.IGNORECASE | re.VERBOSE)
+
+# This should find multiple sections, formatted up to 3 digits (e.g.,
+# &#34;Sections 5, 6, 8 - 12&#34;). Unpack with: unpack_sections()
+# Note that this will also match a single section, so individual sections
+# must be ruled out (i.e. individual section matches will have
+# mo.group(12) != None). Can use funcs is_multisec() and is_singlesec()
+# on the match objects.  This regex will also capture an optional colon
+# at the end.
+multiSec_regex = re.compile(
+    r&#34;&#34;&#34;
+    (
+    ((Section|Sect\.?|Sec\.?|Secion|Secton|Seciton|Sectn|Secn|§)(s)?)  # i.e. &#34;section(s)&#34;
+    \s*
+    (\d{1,3})  # Section number (1 to 3 digits)
+    )  # Will stop here for individual sections
+    \s*
+    (
+    ([,;]?\s*([\.,\-\/–—]|th[rough]{3,6}\.?|thru\.?|to|[\.,;:]?\s*and|&amp;)?)*  # &#39;thru&#39; or &#39;and&#39;
+    \s*
+    ((Section|Sect|Sec|Secion|Secton|Sectn|§)(s)?)?  # Optionally &#34;section(s)&#34; again
+    \s*
+    (\d{1,3})  # Section number (1 to 3 digits)
+    )*  # Will go to here for multiSections
+    \s*(:)?  # Finally, capture an optional colon at end (intervening whitespace allowed).
+    &#34;&#34;&#34;, re.IGNORECASE | re.VERBOSE)
+
+# A multiSec regex that knows if a comma is behind:
+comma_multiSec_regex = re.compile(
+    r&#34;&#34;&#34;
+    (
+    ,\s*  # Looking for a comma before the multiSec. Otherwise the same as multiSec_regex
+    (
+    ((Section|Sect\.?|Sec\.?|Secion|Seciton|Secton|Sectn|Secn|§)(s)?)
+    \s*
+    (\d{1,3})
+    )
+
+    \s*
+    (
+    ([,;]?\s*([\.,\-\/–—]|th[rough]{3,6}\.?|thru\.?|to|[\.,;:]?\s*and|&amp;)?)*
+    \s*
+    ((Section|Sect|Sec|Secion|Secton|Sectn|§)(s)?)?
+    \s*
+    (\d{1,3})
+    )*
+    )
+     &#34;&#34;&#34;, re.IGNORECASE | re.VERBOSE)
+
+# A regex that will match &#39;Section&#39; (or equivalent abbreviation / typo),
+# even when there&#39;s no number:
+noNum_sec_regex = re.compile(
+    r&#39;((Section|Sect\.?|Sec\.?|Secion|Seciton|Secton|Sectn|Secn|§)[\.\-–—\s]*(\d{0})\s*)&#39;,
+    re.IGNORECASE)
+
+
+########################################################################
+# prepro regexes...
+#
+# Broader T&amp;R captures for the description preprocessing algorithm.
+# They&#39;re mostly the same as the normal twprge_regex, but with some
+# characters being allowed outside various groupings i.e. some don&#39;t
+# REQUIRE &#39;T&#39;, but will still match it if it&#39;s there). kwargs or config
+# for defaultNS=‘n’ and defaultEW=‘w’ will fill in the township and
+# range letters, as needed. Abbreviations and typos for &#39;Township&#39; have
+# also been locked down somewhat, to avoid excessive false matches.
+########################################################################
+
+# require T and R, but not n/s or e/w  (will need to fill in with
+# kwarg-specified default):
+preproTR_noNSWE_regex = re.compile(
+    r&#34;&#34;&#34;
+    T(  # Move &#39;T&#39; to outside the optional match, because &#39;T&#39; is required
+    w\.?|
+    wp\.?|
+    o{0,2}w{0,2}n{0,2}s{1,2}h{1,2}i{0,2}p{0,2}|
+    w{1,2}o{1,2}n{1,2}s{1,2}h{1,2}i{0,2}p{0,2}|
+    o{1,2}w{1,2}n{1,2}s{1,2}h{1,2}i{0,2}p{0,2}|
+    o{1,2}w{1,2}s{1,2}n{1,2}h{1,2}i{0,2}p{0,2}|
+    o{1,2}w{1,2}n{1,2}h{1,2}s{1,2}i{0,2}p{0,2}|
+    o{1,2}w{1,2}n{1,2}s{1,2}i{0,2}h{1,2}p{0,2}
+    )?
+    [\.\-–—,\s]*
+    (\d{1,3})
+    [\.\-–—,\s]*
+    (N?[orth]{0,5}|S?[outh]{0,5})  # N/S is not required
+    [\.\-–—,;\|_~\s]+
+    (R([ange]{0,6})?  # &#39;R&#39; is required
+    [\.\-–—,\s]*
+    (\d{1,3})
+    [\.\-–—,\s]*
+    ((W[est]{0,3})|(E[ast]{0,3}))?)  # E/W is not required
+    &#34;&#34;&#34;, re.IGNORECASE | re.VERBOSE)
+
+# require T and w/e, but not R or n/s:
+preproTR_noR_noNS_regex = re.compile(
+    r&#34;&#34;&#34;
+    T(  # Move &#39;T&#39; to outside the optional match, because &#39;T&#39; is required
+    w\.?|
+    wp\.?|
+    o{0,2}w{0,2}n{0,2}s{1,2}h{1,2}i{0,2}p{0,2}|
+    w{1,2}o{1,2}n{1,2}s{1,2}h{1,2}i{0,2}p{0,2}|
+    o{1,2}w{1,2}n{1,2}s{1,2}h{1,2}i{0,2}p{0,2}|
+    o{1,2}w{1,2}s{1,2}n{1,2}h{1,2}i{0,2}p{0,2}|
+    o{1,2}w{1,2}n{1,2}h{1,2}s{1,2}i{0,2}p{0,2}|
+    o{1,2}w{1,2}n{1,2}s{1,2}i{0,2}h{1,2}p{0,2}
+    )?
+    [\.\-–—,\s]*
+    (\d{1,3})
+    [\.\-–—,\s]*
+    (N?[orth]{0,5}|S?[outh]{0,5})  # N/S is not required
+    [\.\-–—,;\|_~\s]+
+    ((R[ange]{0,6})?  # &#39;R&#39; is not required
+    [\.\-–—,\s]*
+    (\d{1,3})
+    [\.\-–—,\s]*
+    ((W[est]{0,3})|(E[ast]{0,3})))  # E/W is required
+    &#34;&#34;&#34;, re.IGNORECASE | re.VERBOSE)
+
+# require R and n/s, but not T or e/w:
+preproTR_noT_noWE_regex = re.compile(
+    r&#34;&#34;&#34;
+    (  # Various Abbrevs / misspellings of Township
+    T|
+    Tw\.?|
+    Twp\.?|
+    To{0,2}w{0,2}n{0,2}s{1,2}h{1,2}i{0,2}p{0,2}|
+    Tw{1,2}o{1,2}n{1,2}s{1,2}h{1,2}i{0,2}p{0,2}|
+    To{1,2}w{1,2}n{1,2}s{1,2}h{1,2}i{0,2}p{0,2}|
+    To{1,2}w{1,2}s{1,2}n{1,2}h{1,2}i{0,2}p{0,2}|
+    To{1,2}w{1,2}n{1,2}h{1,2}s{1,2}i{0,2}p{0,2}|
+    To{1,2}w{1,2}n{1,2}s{1,2}i{0,2}h{1,2}p{0,2}
+    )?   # &#39;T&#39; is not required.
+    [\.\-–—,\s]*
+    (\d{1,3})
+    [\.\-–—,\s]*
+    (N[orth]{0,5}|S[outh]{0,5})  # N/S is required
+    [\.\-–—,;\|_~\s]+
+    (R([ange]{0,6})?  # &#39;R&#39; is required
+    [\.\-–—,\s]*
+    (\d{1,3})
+    [\.\-–—,\s]*
+    ((W[est]{0,3})|(E[ast]{0,3}))?)  # E/W is not required
+    &#34;&#34;&#34;, re.IGNORECASE | re.VERBOSE)
+
+# With enough context, will capture T&amp;R&#39;s with OCR artifacts (e.g.
+# &#34;TIS4N-R97W&#34; instead of intended &#34;T154N-R97W&#34;).  Gets converted to
+# numerics in preprocess_tr_mo().
+twprge_ocrScrub_regex = re.compile(
+    r&#34;&#34;&#34;
+    T(  # Move &#39;T&#39; to outside the optional match, because &#39;T&#39; is required
+    w\.?|
+    wp\.?|                                                 # Note that many characters are 
+    [o0]{0,2}w{0,2}n{0,2}[s5]{1,2}h{1,2}[Il1]{0,2}p{0,2}|  #    interchangeable here:
+    w{1,2}[o0]{1,2}n{1,2}s{1,2}h{1,2}[Il1]{0,2}p{0,2}|     #       &#39;o&#39; / &#39;0&#39;, and
+    [o0]{1,2}w{1,2}n{1,2}s{1,2}h{1,2}[Il1]{0,2}p{0,2}|     #       &#39;1&#39; / &#39;l&#39; / &#39;I&#39;
+    [o0]{1,2}w{1,2}s{1,2}n{1,2}h{1,2}[Il1]{0,2}p{0,2}|     #       &#39;5&#39; / &#39;S&#39;
+    [o0]{1,2}w{1,2}n{1,2}h{1,2}s{1,2}[Il1]{0,2}p{0,2}|     # (These are commonly swapped 
+    [o0]{1,2}w{1,2}n{1,2}s{1,2}[Il1]{0,2}h{1,2}p{0,2}      #                      by OCR)
+    )?
+    [\.\-–—,\s]*
+    ([0-9SOIl\]\|]{1,3})  # Twp num, but capturing some OCR non-numeric letters / symbols
+    [\.\-–—,\s]*
+    (N[orth]{0,5}|S[outh]{0,5})  # Township N/S
+    [\.\-–—,;\|_~\s]*
+    # If &#39;R&#39; (or &#39;Range&#39;) does not appear, then we DISALLOW a range of singular &#39;2&#39;. This 
+    # is to prevent over-matching &#34;Lot 2, N2 W2&#34; as &lt;&#39;T2N-R2W&#39;&gt; (for example). Otherwise, 
+    # we are liable to have some aliquots break out T&amp;R capturing, and vice-versa.
+    (
+    (R[ange]{0,6})?
+    [\.\-–—,\s]*
+    # Rge num, but capturing some OCR non-numeric letters / sym (singular &#39;2&#39; not allowed):
+    ([0-9SOIl\]\|]{2,3}|[013-9SOIl\]\|])
+    [\.\-–—,\s]*
+    ((W[est]{0,3})|(E[ast]{0,3}))
+
+    |
+
+    (
+    (R[ange]{0,6})
+    [\.\-–—,\s]*
+    (\d)  # This time, allow singular &#39;2&#39;, because we specified &#39;R&#39; (or &#39;Range&#39;) beforehand 
+    [\.\-–—,\s]*
+    ((W[est]{0,3})|(E[ast]{0,3}))))  # range E/W&#34;&#34;&#34;,
+    re.IGNORECASE | re.VERBOSE)
+
+# A regex for extra context around TR_noR_noNS (need to rule out &#34;Lots&#34;
+# at the start of such a match):
+lots_context_regex = re.compile(r&#39;Lo?ts?|Lo?s?t&#39;, re.IGNORECASE)
+
+########################################################################
+# Note that twprge_regex will match between 0 and 9 characters in
+# [ownship] and between 0 and 5 characters in [ange]. This was done to
+# capture common typos / abbreviations of &#34;Township&#34; and &#34;Range&#34;. This
+# was the best trade-off of robust functionality vs. risk of false
+# positives. It should return pretty good results when known PLSS
+# descriptions are fed through the algorithm. However, there remains the
+# possibility of false positives, especially if unvetted text is fed
+# into the algorithm (i.e. if a user feeds in text that hasn&#39;t been
+# pared down to a known PLSS description).
+#
+# The same methodology was NOT used for sections, because the section
+# regex do not have nearly the same amount of context built into it.
+# r&#39;S[ection]{0,7}&#39; would probably match way too many false positives to
+# be useful.
+#
+# If you&#39;re working with a data set that is formatted in such a way that
+# requires a broader regex, either for twprge or for section, you will
+# likely need to redefine the regexes accordingly.  (Probably also true
+# for the depth_regex below.)
+########################################################################
+
+# For unpacking TRS into its component parts -- break into twp, rge, sec
+# with break_trs():
+TRS_unpacker_regex = re.compile(
+    r&#34;&#34;&#34;((\d{1,3}[ns])(\d{1,3}[we])|(TRerr)_?)
+    ((\d{1,2})|(secError))?&#34;&#34;&#34;, re.VERBOSE | re.IGNORECASE)
+
+
+########################################################################
+# These are used for warning flags:
+########################################################################
+
+# Will be used to flag possible wellbore exceptions:
+well_regex = re.compile(r&#39;(wellbore|well)&#39;, re.IGNORECASE)
+
+# Will be used to flag possible depth limitations:
+depth_regex = re.compile(r&#39;(depth|formation|surf|down|form|top|base)&#39;, re.IGNORECASE)
+
+# Will be used to flag &#39;including&#39; language:
+including_regex = re.compile(r&#39;incl&#39;, re.IGNORECASE)
+
+# Will be used to flag possible exceptions/limitations:
+less_except_regex = re.compile(r&#39;(less|except|limit)&#39;, re.IGNORECASE)
+
+# Looking for &#39;insofar&#39; language:
+isfa_except_regex = re.compile(r&#39;(in\s?so\s?far)&#39;, re.IGNORECASE)
+
+
+########################################################################
+# The next block of regexes are for parsing aliquots into QQ&#39;s and
+# pulling standard Lots from PLSS descriptions:
+########################################################################
+
+# QQ regexes
+NE_regex = re.compile(
+    r&#39;(\b|¼|4|½|2)(NE|Nort[h]?\s*East)\s*((One)?\s*Q[uarter]{4,7}|1\/?4|\/?4|¼)&#39;,
+    re.IGNORECASE)
+SE_regex = re.compile(
+    r&#39;(\b|¼|4|½|2)(SE|Sout[h]?\s*East)\s*((One)?\s*Q[uarter]{4,7}|1\/?4|\/?4|¼)&#39;,
+    re.IGNORECASE)
+NW_regex = re.compile(
+    r&#39;(\b|¼|4|½|2)(NW|Nort[h]?\s*West)\s*((One)?\s*Q[uarter]{4,7}|1\/?4|\/?4|¼)&#39;,
+    re.IGNORECASE)
+SW_regex = re.compile(
+    r&#39;(\b|¼|4|½|2)(SW|Sout[h]?\s*West)\s*((One)?\s*Q[uarter]{4,7}|1\/?4|\/?4|¼)&#39;,
+    re.IGNORECASE)
+
+N2_regex = re.compile(
+    r&#39;(\b|¼|4|½|2)(N\.?|No\.?|Nort[h]?)\s*((One)?\s*Half|1\/?2|\/?2|½)&#39;, re.IGNORECASE)
+S2_regex = re.compile(
+    r&#39;(\b|¼|4|½|2)(S\.?|So\.?|Sout[h]?)\s*((One)?\s*Half|1\/?2|\/?2|½)&#39;, re.IGNORECASE)
+E2_regex = re.compile(
+    r&#39;(\b|¼|4|½|2)(E\.?|East)\s*((One)?\s*Half|1\/?2|\/?2|½)&#39;, re.IGNORECASE)
+W2_regex = re.compile(
+    r&#39;(\b|¼|4|½|2)(W\.?|West)\s*((One)?\s*Half|1\/?2|\/?2|½)&#39;, re.IGNORECASE)
+
+# Find &#39;ALL&#39;, with options for context. Will only match &#39;ALL&#39; at the beginning of a word
+# boundary.
+ALL_regex = re.compile(r&#39;\b(ALL)(.{1,6})?&#39;, re.IGNORECASE)
+
+# For culling context around &#34;ALL&#34;:
+ALL_context_regex = re.compile(r&#39;(in+|of+|th[eatiso]{0,3}|l[ying]{0,5})&#39;, re.IGNORECASE)
+
+# cleanQQ regexes, for parsing aliquots under cleanQQ=True conditions.
+# Will match much more broadly.
+cleanNE_regex = re.compile(
+    r&#39;()(NE|Nort[h]?\s*East)\s*((One)?\s*Q[uarter]{4,7}|1\/?4|\/?4|¼)?&#39;, re.IGNORECASE)
+cleanSE_regex = re.compile(
+    r&#39;()(SE|Sout[h]?\s*East)\s*((One)?\s*Q[uarter]{4,7}|1\/?4|\/?4|¼)?&#39;, re.IGNORECASE)
+cleanNW_regex = re.compile(
+    r&#39;()(NW|Nort[h]?\s*West)\s*((One)?\s*Q[uarter]{4,7}|1\/?4|\/?4|¼)?&#39;, re.IGNORECASE)
+cleanSW_regex = re.compile(
+    r&#39;()(SW|Sout[h]?\s*West)\s*((One)?\s*Q[uarter]{4,7}|1\/?4|\/?4|¼)?&#39;, re.IGNORECASE)
+
+# N2, S2, E2, and W2 are the same under cleanQQ conditions, since there
+# still must be SOME designator that it&#39;s a &#39;half&#39;.
+
+# &#39;E2NE&#39; should be enough context to interpret it as the E½NE¼. This
+# regex can be applied after subbing the other &#39;half&#39; regexes in for
+# their cleaner counterparts, so &#39;E2NE&#39; -&gt; &#39;E½NE&#39; --&gt; &#39;E½NE¼&#39;.
+# Must be at word boundaries, per \b.
+halfPlusQ_regex = re.compile(
+    r&#39;(\b|½)((N|E|S|W)½(\s*| of | of the )(NE|NW|SE|SW))¼?\b&#39;, re.IGNORECASE)
+
+# For breaking down the identified lots strings:
+through_regex = re.compile(r&#39;([\-–—]|th[rough]{3,6}\.?|thru\.?|to)&#39;, re.IGNORECASE)
+
+# Lot regex (should capture entire match, but then requires some processing
+# to unpack it):
+lot_regex = re.compile(
+    r&#34;&#34;&#34;
+    (((()(()))))  # Blank groups, so that the structure is identical to lot_with_aliquot_regex
+    ((
+    (L\.?o?t?(s?))
+    \s*
+    (\d{1,3})
+    \s*
+    (\(\d{0,3}[\.,]?\d{0,4}\))?
+    )  # If just one lot, will stop here
+    (
+    (
+    \s*
+    ([\.,\-–—]|th[rough]{3,6}\.?|thru\.?|to|[\.,;:]?\s*and|&amp;)  # &#39;through&#39; or &#39;and&#39;
+    \s*
+    ((and|\&amp;)?\s*L\.?o?t?(s?))?  # &#39;and lots&#39;
+    \s*
+    (\d{1,3})
+    \s*
+    (\(\d{0,3}[\.,]?\d{0,4}\))?  # Stated acreage, i.e. the &#39;(43.59)&#39; in &#39;Lots 5(43.59)&#39;
+    )+
+    )?)
+    &#34;&#34;&#34;, re.IGNORECASE | re.VERBOSE)
+# Guide to lot_regex .groups:
+# group(11) is the first lot;
+# group(12) is the stated acreage of the first lot.
+# The following exist IF AND ONLY IF more than one lot was found:
+#     group(19) is the right-most lot IF AND ONLY IF more than 1 lot was found;
+#     group(15) is the connector between the last lot and the lot before it,
+#         possibly with superfluous text / characters (&#39;and&#39; or &#39;through&#39;
+#         -- or equivalent symbol / abbrev)
+#     group(14) ends with the stated acreage of the last lot ONLY when it occurs
+#         at the end of the matched string.  Get that stated acreage with
+#         lotAcres_unpacker_regex, which is baked into the get_lot_acres()
+#         function.
+
+
+lot_with_aliquot_regex = re.compile(
+    r&#34;&#34;&#34;
+    (((([NESW]½)|((NE|NW|SE|SW)¼))+)\ ?of\ )?  # optional leading aliquot division
+    ((
+    (L\.?o?t?(s?))
+    \s*
+    (\d{1,3})
+    \s*
+    (\(\d{0,3}[\.,]?\d{0,4}\))?
+    )  # If just one lot, will stop here
+    (
+    (
+    \s*
+    ([\.,\-–—]|th[rough]{3,6}\.?|thru\.?|to|[\.,;:]?\s*and|&amp;)  # &#39;through&#39; or &#39;and&#39;
+    \s*
+    ((and|\&amp;)?\s*L\.?o?t?(s?))?  # &#39;and lots&#39;
+    \s*
+    (\d{1,3})
+    \s*
+    (\(\d{0,3}[\.,]?\d{0,4}\))?  # Stated acreage, i.e. the &#39;(43.59)&#39; in &#39;Lots 5(43.59)&#39;
+    )+
+    )?)
+    &#34;&#34;&#34;, re.IGNORECASE | re.VERBOSE)
+# Guide to lot_with_aliquot_regex groups (using &#34;N½N½ of Lots 1 - 3&#34; as
+# the example):
+#  -- group(1) is the entire aliquot component + &#39; of &#39;
+#       (i.e. &#39;N½N½ of &#39; in the example);
+#  -- group(2) is the entire aliquot component without the &#39;of&#39;
+#       (i.e. &#39;N½N½&#39; in the example);
+#  -- group(7) is the entire lots component
+#       (i.e. &#39;Lots 1 - 3&#39; in the example)
+
+lotAcres_unpacker_regex = re.compile(r&#39;\((\d{0,3}[\.,]?\d{0,4})\)&#39;)
+
+########################################################################
+# QQ Unpacker regexes
+########################################################################
+aliquot_unpacker_regex = re.compile(
+    r&#39;(([NESW]½)|((NE|NW|SE|SW)¼))*(([NESW]½)|((NE|NW|SE|SW)¼))&#39;)
+# The last group is always the dominant (right-most) division (may or
+# may not have the fraction attached). Everything to the left of that
+# needs to be recursively processed.
+
+# For cutting out whitespace and &#39;of the&#39; or &#39;of&#39; between identified
+# aliquot components:
+aliquot_intervener_remover_regex = re.compile(
+    r&#34;&#34;&#34;
+    (([NESW]½)|((NE|NW|SE|SW)¼))  # first aliquot component
+    \s*  # any amount of whitespace (to be removed)
+    (
+    (\s+|of|o|f|o+f+)\s*(t+h+e+|t+e+h+|t+h+|t+)?  # &#39;of the&#39; or &#39;of&#39; (to be removed)
+    \s*  # any amount of whitespace (to be removed)
+    )
+    (([NESW]½)|((NE|NW|SE|SW)¼))  # second aliquot component
+    &#34;&#34;&#34;, re.IGNORECASE | re.VERBOSE)
+### group(1) is the first aliquot component
+#   (i.e. &#39;N½&#39; in the example &#34;N½ of the NE¼&#34;);
+### group(8) is the second aliquot component
+#   (i.e. &#39;NE¼&#39; in the example &#34;N½ of the NE¼&#34;).
+
+
+# For cutting out whitespace and &#39;of the&#39; or &#39;of&#39; between an aliquot and
+# lot (for handling &#39;N/2 of Lot 1&#39;):
+aliquot_lot_intervener_scrubber_regex = re.compile(
+    r&#34;&#34;&#34;
+    (([NESW]½)|((NE|NW|SE|SW)¼))  # first aliquot component
+    \s*  # any amount of whitespace (to be removed)
+    (
+    \s*(of|o+f+)\s*(t+h+e+|t+e+h+|t+h+|t+)?  # &#39;of the&#39; or &#39;of&#39; (to be converted to &#39; of &#39;)
+    \s*  # any amount of whitespace (to be removed)
+    )
+    (  # Lot component starts at the beginning of this line
+    (L\.?o?t?(s?))
+    \s*
+    (\d{1,3})
+    )  # The lot component ends here
+    &#34;&#34;&#34;, re.IGNORECASE | re.VERBOSE)
+### group(1) is the first aliquot component
+#   (i.e. &#39;N½&#39; in the example &#34;N½ of the NE¼&#34;);
+### group(8) is the second aliquot component
+#   (i.e. &#39;NE¼&#39; in the example &#34;N½ of the NE¼&#34;).
+
+
+# Looking for the phrase (or abbreviation for) &#39;Principal Meridian&#39; and
+# following symbols and whitespace. Not the cleanest definition, but
+# will only be used in limited places (between a twprge_regex match and
+# a sec_regex match), so it need not be too tight:
+pm_regex = re.compile(
+    r&#34;&#34;&#34;(P\.?\s{0,10}M\.?|
+    P{1,2}r{1,2}i{0,2}n{0,2}c{0,2}i{0,2}p{0,2}a{0,2}l{0,2}\s
+    {0,10}M{1,2}e{0,2}r{0,2}i{0,2}d{0,2}i{0,2}a{0,2}n{0,2})
+    \s*[:,;\.\-–—]*\s*
+    &#34;&#34;&#34;, re.IGNORECASE | re.VERBOSE)
+
+# A twprge regex that should also capture P.M.
+twprge_pm_regex = re.compile(
+    r&#34;&#34;&#34;(T[ownship]{0,9})?
+    [\.\-–—,\s]*
+    (\d{1,3})  # Township number
+    [\.\-–—,\s]*
+    (N[orth]{0,5}|S[outh]{0,5})  # Township N/S
+    [\.\-–—,;\|_~\s]*
+    # If &#39;R&#39; (or &#39;Range&#39;) does not appear, then we DISALLOW a range of singular &#39;2&#39;. This 
+    # is to prevent over-matching &#34;Lot 2, N2 W2&#34; as &lt;&#39;T2N-R2W&#39;&gt; (for example). Otherwise,
+    # we are liable to have some aliquots break out T&amp;R capturing, and vice-versa.
+    (
+    (R[ange]{0,6})?
+    [\.\-–—,\s]*
+    (\d{2,3}|[013-9])
+    [\.\-–—,\s]*
+    ((W[est]{0,3})|(E[ast]{0,3}))
+
+    |
+
+    (
+    (R[ange]{0,6})
+    [\.\-–—,\s]*
+    (\d)  # This time, allow singular &#39;2&#39;, because we&#39;ve specified &#39;R&#39; (or &#39;Range&#39;) beforehand. 
+    [\.\-–—,\s]*
+    ((W[est]{0,3})|(E[ast]{0,3}))))
+    (\s*[:,;\.\-–—]*\s*(o*f*)?\s*(t*h*e*|t*e*h*|h*t*e|h*e*t*)?\s*(.{0,15})\s*(P\.?\s{0,10}M\.?|
+    P{1,2}r{1,2}i{0,2}n{0,2}c{0,2}i{0,2}p{0,2}a{0,2}l{0,2}\s
+    {0,10}M{1,2}e{0,2}r{0,2}i{0,2}d{0,2}i{0,2}a{0,2}n{0,2}))?
+    &#34;&#34;&#34;, re.IGNORECASE | re.VERBOSE)
+
+# When the section number(s) occur /within/ the description block (e.g.,
+# &#39;That portion of Section 14 lying west of RR&#39;)
+sec_within_desc_regex = re.compile(
+    r&#34;&#34;&#34;
+    .{3,}
+    (
+    (((Section|Sect|Sec|Secion|Secton|Sectn|Secn|§)(s)?)\s*(\d{1,3}))
+    \s*
+    (([,;]?\s*([\.,\-\/–—]|th[rough]{3,6}\.?|thru\.?|to|[\.,;:]?\s*and|&amp;)?)*
+    \s*((Section|Sect|Sec|Secion|Secton|Sectn|§)(s)?)?
+    \s*(\d{1,3}))?
+    .*)+
+    &#34;&#34;&#34;, re.IGNORECASE | re.VERBOSE)</code></pre>
+</details>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+</section>
+</article>
+<nav id="sidebar">
+<h1>Index</h1>
+<div class="toc">
+<ul></ul>
+</div>
+<ul id="index">
+<li><h3>Super-module</h3>
+<ul>
+<li><code><a title="pyTRS.parser" href="index.html">pyTRS.parser</a></code></li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p>Generated by <a href="https://pdoc3.github.io/pdoc"><cite>pdoc</cite> 0.9.2</a>.</p>
+</footer>
+</body>
+</html>

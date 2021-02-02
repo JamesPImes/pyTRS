@@ -1,0 +1,1473 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.9.2" />
+<title>pyTRS.interface_tools.config_popup API documentation</title>
+<meta name="description" content="A GUI app for choosing Config parameters for pyTRS parsing;
+results can be saved to .txt file or returned as text parameters (a
+string) or as a …" />
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
+<link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
+<style>:root{--highlight-color:#fe9}.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}h1:target,h2:target,h3:target,h4:target,h5:target,h6:target{background:var(--highlight-color);padding:.2em 0}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}dt:target .name{background:var(--highlight-color)}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}td{padding:0 .5em}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/highlight.min.js" integrity="sha256-Uv3H6lx7dJmRfRvH8TH6kJD1TSK1aFcwgx+mdg3epi8=" crossorigin></script>
+<script>window.addEventListener('DOMContentLoaded', () => hljs.initHighlighting())</script>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>pyTRS.interface_tools.config_popup</code></h1>
+</header>
+<section id="section-intro">
+<p>A GUI app for choosing Config parameters for pyTRS parsing;
+results can be saved to .txt file or returned as text parameters (a
+string) or as a compiled pyTRS.Config object.
+A PromptConfig object can be used directly in a tkinter application; or
+the prompt_config() function can be used to hold up the program while
+the user makes their choices, and then continue when it returns.</p>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python"># Copyright (c) 2020, James P. Imes, all rights reserved
+
+&#34;&#34;&#34;
+A GUI app for choosing Config parameters for pyTRS parsing;
+results can be saved to .txt file or returned as text parameters (a
+string) or as a compiled pyTRS.Config object.
+A PromptConfig object can be used directly in a tkinter application; or
+the prompt_config() function can be used to hold up the program while
+the user makes their choices, and then continue when it returns.
+&#34;&#34;&#34;
+
+# Note: If `show_ok==True` and `exit_after_ok==True`, then the
+# `prompt_config()` function can function as a &#39;go button&#39; for a parsing
+# application: It will wait for the user to hit &#39;OK&#39;, then close the
+# window and return the config parameters to the program that called the
+# function. It may be useful to specify the parameter
+# `ok_button_text=&lt;&#39;string&#39;&gt;` with the appropriate context for how the
+# function is incorporated into your program.
+
+import tkinter as tk
+from tkinter import messagebox
+from tkinter.ttk import Combobox
+from pyTRS import parser
+
+
+def prompt_config(
+        parameters=&#39;all&#39;, show_ok=True, show_cancel=False, show_save=True,
+        prompt_after_ok=None, ok_button_text=&#39;Confirm Config Parameters&#39;,
+        cancel_button_text=&#39;Cancel&#39;, confirm_cancel_prompt=None):
+    &#34;&#34;&#34;
+    Launch a PromptConfig tkinter frame, for the user to set config
+    parameters. Will wait for the PromptConfig window to close, and then
+    will return the config parameters as a string.
+
+    IMPORTANT: If allowing the user to see the Cancel button, be aware
+    that clicking Cancel will return the string &#39;CANCEL&#39;.
+
+    All parameters have the same effect as they do in __init__() for a
+    PromptAttrib object, although not all parameters are available in
+    this function.
+    :param parameters:
+    :param show_ok:
+    :param show_cancel:
+    :param show_save:
+    :param prompt_after_ok:
+    :param ok_button_text:
+    :param cancel_button_text:
+    :param confirm_cancel_prompt:
+    :return: A string of the user&#39;s chosen config parameters.
+    &#34;&#34;&#34;
+
+    config_holder = {&#39;config_text&#39;: &#39;&#39;}
+
+    popup = PromptConfig(
+        master=None, target_config_var=None, parameters=parameters,
+        show_ok=show_ok, show_cancel=show_cancel, show_save=show_save,
+        prompt_after_ok=prompt_after_ok, cancel_button_text=cancel_button_text,
+        ok_button_text=ok_button_text, exit_after_ok=True,
+        external_target_var=config_holder,
+        confirm_cancel_prompt=confirm_cancel_prompt)
+    popup.master.mainloop()
+    return config_holder[&#39;config_text&#39;]
+
+
+class PromptConfig(tk.Frame):
+    &#34;&#34;&#34;A tkinter frame for configuring pyTRS parsing parameters (i.e.
+    pyTRS.Config objects).&#34;&#34;&#34;
+
+    # Parameters that are set via radiobuttons:
+    RB_PARAMS = [&#39;cleanQQ&#39;, &#39;includeLotDivs&#39;, &#39;requireColon&#39;, &#39;ocrScrub&#39;,
+                 &#39;segment&#39;, &#39;initPreprocess&#39;, &#39;initParse&#39;, &#39;initParseQQ&#39;]
+
+    def __init__(
+            self, master=None, target_config_var=None, parameters=&#39;all&#39;,
+            show_ok=True, show_cancel=False, show_save=True,
+            prompt_after_ok=None, exit_after_ok=True, external_target_var=None,
+            ok_button_text=&#39;Confirm Config Parameters&#39;,
+            cancel_button_text=&#39;Cancel&#39;, confirm_cancel_prompt=None, **kw):
+        &#34;&#34;&#34;
+        A tkinter Frame for setting pyTRS config parameters.
+        IMPORTANT: If the Cancel button (or the OK button, if parameter
+        `exit_after_ok=True` is used at init) is used, it will destroy
+        `master`, and not just `self`.
+
+        :param master: The tkinter master (same as for tkinter.Frame)
+        :param target_config_var: A tk.StringVar to which Config data
+        should be stored when the OK button is clicked.
+        :param parameters: A list or string containing the parameters
+        that should be available to the user. If `parameters=&#39;all&#39;`,
+        will display all possible parameters. If passed as a string,
+        parameter names should be separate by a comma and no spaces.
+        Note: defaultNS and defaultEW are always on.
+        :param show_ok: Include the OK button.
+        :param ok_button_text: A string, for custom text for the OK
+        button.
+        :param prompt_after_ok: A string to display in a messagebox
+        after the OK button has been clicked. Defaults to None.
+        :param exit_after_ok: Whether to close the window after OK 
+        button is clicked. Defaults to False.
+        :param cancel_button_text: A string, for custom text for the
+        Cancel button.
+        :param show_cancel: Include the Cancel button.
+        IMPORTANT: If the Cancel button is clicked, it will set the
+        `target_config_var` to the string &#39;CANCEL&#39; and close the window.
+        :param show_save: Include the Save button.
+        :param confirm_cancel_prompt: A string to display in a
+        yes/no messagebox when the Cancel button is clicked. Defaults
+        to None.
+        :param external_target_var: A dict with the key &#39;config_text&#39;,
+        to which the compiled config parameters should be set. (Used if
+        this PromptConfig object is NOT being incorporated into a
+        tkinter app, since a dict can exist outside of tkinter, whereas
+        a tk.StringVar cannot.)
+        :param kw: Kwargs to pass through to tkinter.Frame at init.
+        &#34;&#34;&#34;
+        default_master = False
+        if master is None:
+            default_master = True
+            master = tk.Tk()
+            master.title(&#34;pyTRS Config Options&#34;)
+        tk.Frame.__init__(self, master, **kw)
+        self.master = master
+        if default_master:
+            self.pack(padx=20, pady=10)
+        self.default_master = default_master
+
+        if target_config_var is None:
+            target_config_var = tk.StringVar()
+        self.target_config_var = target_config_var
+        
+        # Determine which parameters the user is allowed to set:
+        if parameters is None:
+            parameters = &#39;all&#39;
+        
+        if isinstance(parameters, str):
+            if parameters.lower() == &#39;all&#39;:
+                parameters = parser.Config.__ConfigAttribs__
+            else:
+                parameters = parameters.replace(&#39; &#39;, &#39;&#39;).split(&#39;,&#39;)
+
+        if external_target_var is None:
+            external_target_var = {&#39;config_text&#39;: &#39;&#39;}
+        self.external_target_var = external_target_var
+
+        self.parameters = parameters
+
+        self.show_ok = show_ok
+        self.show_cancel = show_cancel
+        self.show_save = show_save
+        self.prompt_after_ok = prompt_after_ok
+        self.exit_after_ok = exit_after_ok
+        self.ok_button_text = ok_button_text
+        self.cancel_button_text = cancel_button_text
+        self.confirm_cancel_prompt = confirm_cancel_prompt
+
+        # A dict of the possible config variables, with nested dicts for
+        # respective variable and help text (variables are set later)
+        self.CONFIG_DEF = {
+            &#39;defaultNS&#39;:
+                {&#39;help&#39;:
+                     &#34;If the dataset contains a Township whose N/S &#34;
+                     &#34;direction was not specified, the program will assume &#34;
+                     &#34;this specified direction.&#34;
+                 },
+            &#39;defaultEW&#39;:
+                {&#39;help&#39;:
+                     &#34;If the dataset contains a Range whose E/W direction &#34;
+                     &#34;was not specified, the program will assume this &#34;
+                     &#34;specified direction.&#34;
+                 },
+            &#39;layout&#39;:
+                {&#39;help&#39;:
+                     &#34;If you know that the dataset is all laid out in the &#34;
+                     &#34;same format, you may get more accurate results if &#34;
+                     &#34;you force parsing according to one of these formats. &#34;
+                     &#34;However, if there are multiple layouts, or unknown &#34;
+                     &#34;layouts, it is probably wise to let the program &#34;
+                     &#34;deduce the layout for each.\n\n&#34;
+                     &#34;Below are examples of the possible layouts:\n\n&#34;
+                     f&#34;{parser.__implementedLayoutExamples__}&#34;
+                 },
+            &#39;cleanQQ&#39;:
+                {&#39;help&#39;:
+                     &#34;Dataset contains only clean aliquots and lots; no &#34;
+                     &#34;metes-and-bounds, exceptions, or limitations. &#34;
+                     &#34;Anything that resembles an aliquot may be captured &#34;
+                     &#34;as such. For example, &#39;NE&#39; will be captured as &#39;NE¼&#39;.&#34;
+                     &#34;\n\nThis may allow for broader parsing of lots and &#34;
+                     &#34;QQ&#39;s, but it can also result in numerous false &#34;
+                     &#34;matches, if the dataset is not simple and clean. For &#34;
+                     &#34;example, &#39;Northernmost one hundred feet of the NW/4&#39; &#34;
+                     &#34;would match as &#39;Northernmost oNE¼ hundred feet of &#34;
+                     &#34;the NW¼&#39;.\n\n&#34;
+                     &#34;Default: off (`False`)&#34;
+                 },
+
+            &#39;includeLotDivs&#39;:
+                {&#39;help&#39;:
+                     &#34;If parsing lots, report any divisions of lots. For &#34;
+                     &#34;example, if True, &#39;N/2 of Lot 1&#39; would be reported &#34;
+                     &#34;as &#39;N2 of L1&#39;. If this is turned off, it would be &#34;
+                     &#34;reported as &#39;L1&#39;.\n\n&#34;
+                     &#34;Default: on (`True`)&#34;
+                 },
+
+            &#39;requireColon&#39;:
+                {&#39;help&#39;:
+                     &#34;Instruct a PLSSDesc object (whose layout is &#34;
+                     &#34;`TRS_desc` or `S_desc_TR`) to require a colon &#34;
+                     &#34;between the section number and the following &#34;
+                     &#34;description -- i.e. &#39;Section 14 NE/4&#39; would NOT be &#34;
+                     &#34;picked up if &#39;requireColon&#39; is on (`True`).  If &#34;
+                     &#34;turned off (`False`), then &#39;Section 14 NE/4&#39; would &#34;
+                     &#34;be captured. However, this may result in false &#34;
+                     &#34;matches, depending on the dataset.\n\n&#34;
+                     &#34;(Note that the default parsing method is to first &#34;
+                     &#34;pass over instances that do not have a colon. If no &#34;
+                     &#34;sections are matched, it will make a second pass, &#34;
+                     &#34;this time allowing section numbers that are NOT &#34;
+                     &#34;followed by colon. If not set here, the potentially &#34;
+                     &#34;two-pass method will be used by default.)\n\n&#34;
+                     &#34;If set to on (`True`) here, that second-pass method &#34;
+                     &#34;will be prevented. If set to off (`False`) here, it &#34;
+                     &#34;will broadly capture all such instances, and the &#34;
+                     &#34;second-pass method will not be needed. (Again, &#34;
+                     &#34;beware false matches.)&#34;
+                 },
+
+            &#39;ocrScrub&#39;:
+                {&#39;help&#39;:
+                     &#34;Attempt to iron out common OCR artifacts in a &#34;
+                     &#34;PLSSDesc object or Tract object (e.g., &#39;TIS4N-R97W&#39; &#34;
+                     &#34;that should have been &#39;T154N-R97W&#39;. (WARNING: may &#34;
+                     &#34;cause other issues.)\n\n&#34;
+                     &#34;Default: off (`False`).&#34;
+                 },
+
+            &#39;segment&#39;:
+                {&#39;help&#39;:
+                     &#34;While parsing, segment each description by T&amp;R &#34;
+                     &#34;before identifying tracts, which MIGHT capture SOME &#34;
+                     &#34;descriptions whose layout changes partway through. &#34;
+                     &#34;(However, this cannot capture ALL changes in &#34;
+                     &#34;layouts.)\n\n&#34;
+                     &#34;Default: off (`False`)&#34;
+                 },
+
+            &#39;initPreprocess&#39;:
+                {&#39;help&#39;:
+                     &#34;Preprocess PLSS descriptions and Tracts upon &#34;
+                     &#34;initialization.\n\n&#34;
+                     &#34;Default: on (`True`)&#34;
+                 },
+
+            &#39;initParse&#39;:
+                {&#39;help&#39;:
+                     &#34;Parse PLSS descriptions upon initialization (roughly &#34;
+                     &#34;equivalent to initializing a PLSSDesc object with &#34;
+                     &#34;`initParse=True`).\n\n&#34;
+                     &#34;Default: off (`False`)&#34;
+                 },
+
+            &#39;initParseQQ&#39;:
+                {&#39;help&#39;:
+                     &#34;Parse PLSS descriptions AND Tracts (i.e. lots and &#34;
+                     &#34;QQ&#39;s) upon initialization (roughly equivalent to &#34;
+                     &#34;initializing an PLSSDesc or Tract object with &#34;
+                     &#34;`initParseQQ=True`).\n\n&#34;
+                     &#34;Default: off (`False`)&#34;
+                 }
+        }
+
+        # --------------------------------------------------------------
+        # A frame for NS, EW, and Layout comboboxes and labels
+        combo_frame = tk.Frame(self)
+        combo_frame.grid(row=0, column=1, sticky=&#39;nwe&#39;)
+
+        combo_frame_row = 0
+
+        # Prompt for default N/S
+        defaultNSPrompt = tk.Label(
+            combo_frame,
+            text=&#34;Default unspecified Townships to [North] or [South]?&#34;)
+        defaultNShbtn = tk.Button(
+            combo_frame, text=&#39;?&#39;, padx=5,
+            command=lambda: self.cf_help_clicked(&#39;defaultNS&#39;))
+        self.defaultNScombo = Combobox(combo_frame, width=8)
+        self.defaultNScombo[&#39;values&#39;] = (&#39;North&#39;, &#39;South&#39;)
+        defaultNSPrompt.grid(column=1, row=combo_frame_row, sticky=&#39;e&#39;)
+        defaultNShbtn.grid(column=2, row=combo_frame_row)
+        self.defaultNScombo.grid(column=3, row=combo_frame_row, sticky=&#39;w&#39;)
+        combo_frame_row += 1
+    
+        # Prompt for default E/W
+        defaultEWPrompt = tk.Label(
+            combo_frame, text=&#34;Default unspecified Ranges to [West] or [East]?&#34;)
+        defaultEWPrompt.grid(column=1, row=combo_frame_row, sticky=&#39;e&#39;)
+        defaultEWhbtn = tk.Button(
+            combo_frame, text=&#39;?&#39;, padx=5,
+            command=lambda: self.cf_help_clicked(&#39;defaultEW&#39;))
+        defaultEWhbtn.grid(column=2, row=combo_frame_row)
+        self.defaultEWcombo = Combobox(combo_frame, width=8)
+        self.defaultEWcombo[&#39;values&#39;] = (&#39;West&#39;, &#39;East&#39;)
+        self.defaultEWcombo.grid(column=3, row=combo_frame_row, sticky=&#39;w&#39;)
+        combo_frame_row += 1
+    
+        # Prompt for layout
+        self.layoutcombo = Combobox(combo_frame, width=25)
+        self.layoutcombo[&#39;values&#39;] = tuple(
+            [&#39;Deduce (RECOMMENDED)&#39;] + parser.__implementedLayouts__)
+    
+        if &#39;layout&#39; in parameters:
+            # Only put layout into GUI if it&#39;s among the requested parameters
+            layoutPrompt = tk.Label(
+                combo_frame, text=&#34;Force parsing as a particular layout?&#34;)
+            layoutPrompt.grid(column=1, row=combo_frame_row, sticky=&#39;e&#39;)
+            layouthbtn = tk.Button(
+                combo_frame, text=&#39;?&#39;, padx=5,
+                command=lambda: self.cf_help_clicked(&#39;layout&#39;))
+            layouthbtn.grid(column=2, row=combo_frame_row)
+            self.layoutcombo.grid(column=3, row=combo_frame_row, sticky=&#39;w&#39;)
+
+        # --------------------------------------------------------------
+        # Parameters set via radiobuttons (i.e. RB_PARAMS)
+        cur_row = 11
+
+        lbl = tk.Label(self, text=&#39;&#39;)
+        lbl.grid(row=cur_row, column=1)
+        cur_row += 1
+
+        # Set a new tk.IntVar for each variable name --
+        #   i.e. var_name &#39;cleanQQ&#39; -&gt; `self.cleanQQVar`, storing a tk.IntVar;
+        #   and set this tk.IntVar to the `self.CONFIG_DEF` dict for &#39;cleanQQ&#39;
+        #   (etc.)
+        for var_name in self.RB_PARAMS:
+            new_var = tk.IntVar()
+            setattr(self, var_name + &#39;Var&#39;, new_var)
+            self.CONFIG_DEF[var_name][&#39;var&#39;] = new_var
+
+        # Generate radiobuttons for the remaining parameters
+        pr = self.RadioSetter(self, writing_header=True)
+        pr.grid(row=cur_row, column=1, sticky=&#39;w&#39;)
+        cur_row += 1
+        for cf in parameters:
+            if cf in [&#39;defaultNS&#39;, &#39;defaultEW&#39;, &#39;layout&#39;]:
+                continue
+            pr = self.RadioSetter(
+                self, parameter=cf, target_var=self.CONFIG_DEF[cf][&#39;var&#39;])
+            pr.grid(row=cur_row, column=1, sticky=&#39;w&#39;)
+
+            cur_row += 1
+
+        # Set defaults for all of the parameters
+        self.set_defaults()
+
+        # --------------------------------------------------------------
+        # Controls
+
+        control_frame = tk.Frame(self)
+        control_frame.grid(row=cur_row, column=1, sticky=&#39;s&#39;)
+        ctrl_col = 0
+        CTRL_BTN_INNER_PADY = 5
+        CTRL_BTN_INNER_PADX = 5
+        CTRL_PADY = 10
+        CTRL_COL_PADX = 20
+
+        defaultButton = tk.Button(
+            control_frame, text=&#39;Reset to Defaults&#39;, command=self.set_defaults,
+            padx=CTRL_BTN_INNER_PADX, pady=CTRL_BTN_INNER_PADY)
+        defaultButton.grid(
+            column=ctrl_col, row=0, padx=CTRL_COL_PADX, pady=CTRL_PADY)
+        ctrl_col += 1
+
+        if show_cancel:
+            cancelButton = tk.Button(
+                control_frame, text=cancel_button_text,
+                command=self.cancel_clicked,
+                padx=CTRL_BTN_INNER_PADX, pady=CTRL_BTN_INNER_PADY)
+            cancelButton.grid(
+                column=ctrl_col, row=0, padx=CTRL_COL_PADX, pady=CTRL_PADY)
+            ctrl_col += 1
+
+        if show_save:
+            saveButton = tk.Button(
+                control_frame, text=&#39;Save config as...&#39;,
+                command=self.save_clicked,
+                padx=CTRL_BTN_INNER_PADX, pady=CTRL_BTN_INNER_PADY)
+            saveButton.grid(
+                column=ctrl_col, row=0, padx=CTRL_COL_PADX, pady=CTRL_PADY)
+            ctrl_col += 1
+
+        if show_ok:
+            compileButton = tk.Button(
+                control_frame, text=ok_button_text,
+                command=self.ok_clicked,
+                padx=CTRL_BTN_INNER_PADX, pady=CTRL_BTN_INNER_PADY)
+            compileButton.grid(
+                column=ctrl_col, row=0, padx=CTRL_COL_PADX, pady=CTRL_PADY)
+            ctrl_col += 1
+
+    def set_defaults(self):
+        &#34;&#34;&#34;Set or reset all config variables to their defaults.&#34;&#34;&#34;
+        for var_name in self.RB_PARAMS:
+            # Pull the tk.IntVar associated with this var_name, and set to -1
+            tkintvar = getattr(self, var_name + &#39;Var&#39;)
+            tkintvar.set(-1)
+        self.defaultNScombo.current(0)
+        self.defaultEWcombo.current(0)
+        self.layoutcombo.current(0)
+
+    def cf_help_clicked(self, attrib):
+        tk.messagebox.showinfo(attrib, self.CONFIG_DEF[attrib][&#39;help&#39;])
+
+    class RadioSetter(tk.Frame):
+        &#34;&#34;&#34;
+        A sub-widget for setting a config parameter with 3 radiobuttons.
+        &#34;&#34;&#34;
+
+        RB_COL_WIDTH = 5
+
+        def __init__(self, master=None, writing_header=False, parameter=None,
+                     target_var=None, **kw):
+            tk.Frame.__init__(self, master, **kw)
+            self.master = master
+
+            if writing_header:
+                # If `writing_header`, will only write these:
+                radLabel1 = tk.Label(self, text=&#39;Off&#39;, width=self.RB_COL_WIDTH)
+                radLabel2 = tk.Label(self, text=&#39;Default&#39;, width=self.RB_COL_WIDTH)
+                radLabel3 = tk.Label(self, text=&#39;On&#39;, width=self.RB_COL_WIDTH)
+                radLabel1.grid(column=1, row=0, sticky=&#39;w&#39;)
+                radLabel2.grid(column=2, row=0, sticky=&#39;w&#39;)
+                radLabel3.grid(column=3, row=0, sticky=&#39;w&#39;)
+                return
+
+            for i in range(1, 4):
+                lbl = tk.Label(self, width=self.RB_COL_WIDTH)
+                lbl.grid(column=i, row=0)
+
+            cb = tk.Radiobutton(self, value=0, variable=target_var)
+            cb.grid(column=1, row=0, sticky=&#39;n&#39;)
+            cb = tk.Radiobutton(self, value=-1, variable=target_var)
+            cb.grid(column=2, row=0, sticky=&#39;n&#39;)
+            cb = tk.Radiobutton(self, value=1, variable=target_var)
+            cb.grid(column=3, row=0, sticky=&#39;n&#39;)
+
+            help_btn = tk.Button(
+                self, text=&#39;?&#39;, padx=5,
+                command=lambda: self.master.cf_help_clicked(parameter))
+            help_btn.grid(column=4, row=0)
+
+            lbl = tk.Label(self, text=parameter)
+            lbl.grid(column=5, row=0)
+
+    def compile_config_text(self) -&gt; str:
+        &#34;&#34;&#34;
+        Compile and return the config text.
+        &#34;&#34;&#34;
+        param_vals = []
+        
+        param_vals.append(self.defaultNScombo.get()[0].lower())
+        param_vals.append(self.defaultEWcombo.get()[0].lower())
+
+        if &#39;layout&#39; in self.parameters:
+            val = self.layoutcombo.get()
+            if val in parser.__implementedLayouts__:
+                param_vals.append(val)
+
+        # Check each of the requested variables. If not default (i.e. -1),
+        # then append the parameter+value.
+        for param in set(self.RB_PARAMS).intersection(set(self.parameters)):
+            val = self.CONFIG_DEF[param][&#39;var&#39;].get()
+            if val != -1:
+                param_vals.append(f&#34;{param}.{bool(val)}&#34;)
+
+        # Join the list of param/vals into a string, and return it
+        config_text = &#39;,&#39;.join(param_vals)
+        return config_text
+
+    def ok_clicked(self):
+        &#34;&#34;&#34;
+        Compile the config text, and set it to the target config
+        variable. Show the configured prompt_after_ok message (if any),
+        and destroy the window (if so configured).
+        &#34;&#34;&#34;
+
+        config_text = self.compile_config_text()
+
+        # Set the target tk.StringVar to the compiled config_text
+        self.target_config_var.set(config_text)
+        self.external_target_var[&#39;config_text&#39;] = config_text
+
+        if self.prompt_after_ok is not None:
+            messagebox.showinfo(&#39;&#39;, self.prompt_after_ok)
+
+        if self.exit_after_ok:
+            self.master.destroy()
+
+    def cancel_clicked(self):
+        &#34;&#34;&#34;
+        Set it to the target config variable to &#39;CANCEL&#39;. Show
+        configured confirm_cancel_prompt message (if any),
+        and destroy the window (if so configured).
+        &#34;&#34;&#34;
+        confirm = True
+        if self.confirm_cancel_prompt is not None:
+            confirm = messagebox.askyesno(&#39;Cancel?&#39;, self.confirm_cancel_prompt)
+        if confirm:
+            self.target_config_var.set(&#39;CANCEL&#39;)
+            self.external_target_var[&#39;config_text&#39;] = &#39;CANCEL&#39;
+            self.master.destroy()
+
+    def save_clicked(self):
+        &#34;&#34;&#34;Call the config text compiler, and then save the results to a
+         user-specified filepath.&#34;&#34;&#34;
+        config_text = self.compile_config_text()
+
+        # The user will specify the output filename:
+        from tkinter import filedialog
+        output_file = filedialog.asksaveasfilename(
+            initialdir=&#39;/&#39;, initialfile=&#39;pyTRS_config_data.txt&#39;,
+            filetypes=((&#34;Text File&#34;, &#34;*.txt&#34;), (&#34;All Files&#34;, &#34;*.*&#34;)),
+            title=&#34;Save as...&#34;)
+        if output_file in [&#39;&#39;, None]:
+            return 2
+        if not output_file.lower().endswith(&#39;.txt&#39;):
+            messagebox.showerror(&#39;ERROR&#39;, &#39;Filename must end in .txt!&#39;)
+            return 1
+
+        self.do_save(config_text, output_file)
+
+    def do_save(self, config_text, output_file):
+        &#34;&#34;&#34;Save the config_text (or compiled Config object data) to file.&#34;&#34;&#34;
+        # Returns 0 for successful save; 1 for unsuccessful save.
+
+        failedtosave = False
+        try:
+            # Compile config_text into a pyTRS.Config object, and use
+            # Config.saveToFile()
+            success_check = parser.Config(config_text).save_to_file(output_file)
+            if success_check != 0:
+                # Only return code of `0` denotes success.
+                failedtosave = True
+        except:
+            failedtosave = True
+
+        if failedtosave:
+            messagebox.showerror(
+                &#39;ERROR&#39;,
+                f&#34;Could not save to &#39;{output_file}&#39;. Check read/write access, &#34;
+                &#34;and ensure &#39;.txt&#39; file extension.&#34;
+            )
+            return 1
+
+        return 0
+
+
+if __name__ == &#39;__main__&#39;:
+    # If run on its own, can serve as a utility to generate Config data
+    # .txt files, used with pyTRS.Config.fromFile()
+    pc = PromptConfig(show_save=True, show_ok=False, show_cancel=False)
+    pc.master.mainloop()</code></pre>
+</details>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-functions">Functions</h2>
+<dl>
+<dt id="pyTRS.interface_tools.config_popup.prompt_config"><code class="name flex">
+<span>def <span class="ident">prompt_config</span></span>(<span>parameters='all', show_ok=True, show_cancel=False, show_save=True, prompt_after_ok=None, ok_button_text='Confirm Config Parameters', cancel_button_text='Cancel', confirm_cancel_prompt=None)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Launch a PromptConfig tkinter frame, for the user to set config
+parameters. Will wait for the PromptConfig window to close, and then
+will return the config parameters as a string.</p>
+<p>IMPORTANT: If allowing the user to see the Cancel button, be aware
+that clicking Cancel will return the string 'CANCEL'.</p>
+<p>All parameters have the same effect as they do in <strong>init</strong>() for a
+PromptAttrib object, although not all parameters are available in
+this function.
+:param parameters:
+:param show_ok:
+:param show_cancel:
+:param show_save:
+:param prompt_after_ok:
+:param ok_button_text:
+:param cancel_button_text:
+:param confirm_cancel_prompt:
+:return: A string of the user's chosen config parameters.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def prompt_config(
+        parameters=&#39;all&#39;, show_ok=True, show_cancel=False, show_save=True,
+        prompt_after_ok=None, ok_button_text=&#39;Confirm Config Parameters&#39;,
+        cancel_button_text=&#39;Cancel&#39;, confirm_cancel_prompt=None):
+    &#34;&#34;&#34;
+    Launch a PromptConfig tkinter frame, for the user to set config
+    parameters. Will wait for the PromptConfig window to close, and then
+    will return the config parameters as a string.
+
+    IMPORTANT: If allowing the user to see the Cancel button, be aware
+    that clicking Cancel will return the string &#39;CANCEL&#39;.
+
+    All parameters have the same effect as they do in __init__() for a
+    PromptAttrib object, although not all parameters are available in
+    this function.
+    :param parameters:
+    :param show_ok:
+    :param show_cancel:
+    :param show_save:
+    :param prompt_after_ok:
+    :param ok_button_text:
+    :param cancel_button_text:
+    :param confirm_cancel_prompt:
+    :return: A string of the user&#39;s chosen config parameters.
+    &#34;&#34;&#34;
+
+    config_holder = {&#39;config_text&#39;: &#39;&#39;}
+
+    popup = PromptConfig(
+        master=None, target_config_var=None, parameters=parameters,
+        show_ok=show_ok, show_cancel=show_cancel, show_save=show_save,
+        prompt_after_ok=prompt_after_ok, cancel_button_text=cancel_button_text,
+        ok_button_text=ok_button_text, exit_after_ok=True,
+        external_target_var=config_holder,
+        confirm_cancel_prompt=confirm_cancel_prompt)
+    popup.master.mainloop()
+    return config_holder[&#39;config_text&#39;]</code></pre>
+</details>
+</dd>
+</dl>
+</section>
+<section>
+<h2 class="section-title" id="header-classes">Classes</h2>
+<dl>
+<dt id="pyTRS.interface_tools.config_popup.PromptConfig"><code class="flex name class">
+<span>class <span class="ident">PromptConfig</span></span>
+<span>(</span><span>master=None, target_config_var=None, parameters='all', show_ok=True, show_cancel=False, show_save=True, prompt_after_ok=None, exit_after_ok=True, external_target_var=None, ok_button_text='Confirm Config Parameters', cancel_button_text='Cancel', confirm_cancel_prompt=None, **kw)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>A tkinter frame for configuring pyTRS parsing parameters (i.e.
+pyTRS.Config objects).</p>
+<p>A tkinter Frame for setting pyTRS config parameters.
+IMPORTANT: If the Cancel button (or the OK button, if parameter
+<code>exit_after_ok=True</code> is used at init) is used, it will destroy
+<code>master</code>, and not just <code>self</code>.</p>
+<p>:param master: The tkinter master (same as for tkinter.Frame)
+:param target_config_var: A tk.StringVar to which Config data
+should be stored when the OK button is clicked.
+:param parameters: A list or string containing the parameters
+that should be available to the user. If <code>parameters='all'</code>,
+will display all possible parameters. If passed as a string,
+parameter names should be separate by a comma and no spaces.
+Note: defaultNS and defaultEW are always on.
+:param show_ok: Include the OK button.
+:param ok_button_text: A string, for custom text for the OK
+button.
+:param prompt_after_ok: A string to display in a messagebox
+after the OK button has been clicked. Defaults to None.
+:param exit_after_ok: Whether to close the window after OK
+button is clicked. Defaults to False.
+:param cancel_button_text: A string, for custom text for the
+Cancel button.
+:param show_cancel: Include the Cancel button.
+IMPORTANT: If the Cancel button is clicked, it will set the
+<code>target_config_var</code> to the string 'CANCEL' and close the window.
+:param show_save: Include the Save button.
+:param confirm_cancel_prompt: A string to display in a
+yes/no messagebox when the Cancel button is clicked. Defaults
+to None.
+:param external_target_var: A dict with the key 'config_text',
+to which the compiled config parameters should be set. (Used if
+this PromptConfig object is NOT being incorporated into a
+tkinter app, since a dict can exist outside of tkinter, whereas
+a tk.StringVar cannot.)
+:param kw: Kwargs to pass through to tkinter.Frame at init.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class PromptConfig(tk.Frame):
+    &#34;&#34;&#34;A tkinter frame for configuring pyTRS parsing parameters (i.e.
+    pyTRS.Config objects).&#34;&#34;&#34;
+
+    # Parameters that are set via radiobuttons:
+    RB_PARAMS = [&#39;cleanQQ&#39;, &#39;includeLotDivs&#39;, &#39;requireColon&#39;, &#39;ocrScrub&#39;,
+                 &#39;segment&#39;, &#39;initPreprocess&#39;, &#39;initParse&#39;, &#39;initParseQQ&#39;]
+
+    def __init__(
+            self, master=None, target_config_var=None, parameters=&#39;all&#39;,
+            show_ok=True, show_cancel=False, show_save=True,
+            prompt_after_ok=None, exit_after_ok=True, external_target_var=None,
+            ok_button_text=&#39;Confirm Config Parameters&#39;,
+            cancel_button_text=&#39;Cancel&#39;, confirm_cancel_prompt=None, **kw):
+        &#34;&#34;&#34;
+        A tkinter Frame for setting pyTRS config parameters.
+        IMPORTANT: If the Cancel button (or the OK button, if parameter
+        `exit_after_ok=True` is used at init) is used, it will destroy
+        `master`, and not just `self`.
+
+        :param master: The tkinter master (same as for tkinter.Frame)
+        :param target_config_var: A tk.StringVar to which Config data
+        should be stored when the OK button is clicked.
+        :param parameters: A list or string containing the parameters
+        that should be available to the user. If `parameters=&#39;all&#39;`,
+        will display all possible parameters. If passed as a string,
+        parameter names should be separate by a comma and no spaces.
+        Note: defaultNS and defaultEW are always on.
+        :param show_ok: Include the OK button.
+        :param ok_button_text: A string, for custom text for the OK
+        button.
+        :param prompt_after_ok: A string to display in a messagebox
+        after the OK button has been clicked. Defaults to None.
+        :param exit_after_ok: Whether to close the window after OK 
+        button is clicked. Defaults to False.
+        :param cancel_button_text: A string, for custom text for the
+        Cancel button.
+        :param show_cancel: Include the Cancel button.
+        IMPORTANT: If the Cancel button is clicked, it will set the
+        `target_config_var` to the string &#39;CANCEL&#39; and close the window.
+        :param show_save: Include the Save button.
+        :param confirm_cancel_prompt: A string to display in a
+        yes/no messagebox when the Cancel button is clicked. Defaults
+        to None.
+        :param external_target_var: A dict with the key &#39;config_text&#39;,
+        to which the compiled config parameters should be set. (Used if
+        this PromptConfig object is NOT being incorporated into a
+        tkinter app, since a dict can exist outside of tkinter, whereas
+        a tk.StringVar cannot.)
+        :param kw: Kwargs to pass through to tkinter.Frame at init.
+        &#34;&#34;&#34;
+        default_master = False
+        if master is None:
+            default_master = True
+            master = tk.Tk()
+            master.title(&#34;pyTRS Config Options&#34;)
+        tk.Frame.__init__(self, master, **kw)
+        self.master = master
+        if default_master:
+            self.pack(padx=20, pady=10)
+        self.default_master = default_master
+
+        if target_config_var is None:
+            target_config_var = tk.StringVar()
+        self.target_config_var = target_config_var
+        
+        # Determine which parameters the user is allowed to set:
+        if parameters is None:
+            parameters = &#39;all&#39;
+        
+        if isinstance(parameters, str):
+            if parameters.lower() == &#39;all&#39;:
+                parameters = parser.Config.__ConfigAttribs__
+            else:
+                parameters = parameters.replace(&#39; &#39;, &#39;&#39;).split(&#39;,&#39;)
+
+        if external_target_var is None:
+            external_target_var = {&#39;config_text&#39;: &#39;&#39;}
+        self.external_target_var = external_target_var
+
+        self.parameters = parameters
+
+        self.show_ok = show_ok
+        self.show_cancel = show_cancel
+        self.show_save = show_save
+        self.prompt_after_ok = prompt_after_ok
+        self.exit_after_ok = exit_after_ok
+        self.ok_button_text = ok_button_text
+        self.cancel_button_text = cancel_button_text
+        self.confirm_cancel_prompt = confirm_cancel_prompt
+
+        # A dict of the possible config variables, with nested dicts for
+        # respective variable and help text (variables are set later)
+        self.CONFIG_DEF = {
+            &#39;defaultNS&#39;:
+                {&#39;help&#39;:
+                     &#34;If the dataset contains a Township whose N/S &#34;
+                     &#34;direction was not specified, the program will assume &#34;
+                     &#34;this specified direction.&#34;
+                 },
+            &#39;defaultEW&#39;:
+                {&#39;help&#39;:
+                     &#34;If the dataset contains a Range whose E/W direction &#34;
+                     &#34;was not specified, the program will assume this &#34;
+                     &#34;specified direction.&#34;
+                 },
+            &#39;layout&#39;:
+                {&#39;help&#39;:
+                     &#34;If you know that the dataset is all laid out in the &#34;
+                     &#34;same format, you may get more accurate results if &#34;
+                     &#34;you force parsing according to one of these formats. &#34;
+                     &#34;However, if there are multiple layouts, or unknown &#34;
+                     &#34;layouts, it is probably wise to let the program &#34;
+                     &#34;deduce the layout for each.\n\n&#34;
+                     &#34;Below are examples of the possible layouts:\n\n&#34;
+                     f&#34;{parser.__implementedLayoutExamples__}&#34;
+                 },
+            &#39;cleanQQ&#39;:
+                {&#39;help&#39;:
+                     &#34;Dataset contains only clean aliquots and lots; no &#34;
+                     &#34;metes-and-bounds, exceptions, or limitations. &#34;
+                     &#34;Anything that resembles an aliquot may be captured &#34;
+                     &#34;as such. For example, &#39;NE&#39; will be captured as &#39;NE¼&#39;.&#34;
+                     &#34;\n\nThis may allow for broader parsing of lots and &#34;
+                     &#34;QQ&#39;s, but it can also result in numerous false &#34;
+                     &#34;matches, if the dataset is not simple and clean. For &#34;
+                     &#34;example, &#39;Northernmost one hundred feet of the NW/4&#39; &#34;
+                     &#34;would match as &#39;Northernmost oNE¼ hundred feet of &#34;
+                     &#34;the NW¼&#39;.\n\n&#34;
+                     &#34;Default: off (`False`)&#34;
+                 },
+
+            &#39;includeLotDivs&#39;:
+                {&#39;help&#39;:
+                     &#34;If parsing lots, report any divisions of lots. For &#34;
+                     &#34;example, if True, &#39;N/2 of Lot 1&#39; would be reported &#34;
+                     &#34;as &#39;N2 of L1&#39;. If this is turned off, it would be &#34;
+                     &#34;reported as &#39;L1&#39;.\n\n&#34;
+                     &#34;Default: on (`True`)&#34;
+                 },
+
+            &#39;requireColon&#39;:
+                {&#39;help&#39;:
+                     &#34;Instruct a PLSSDesc object (whose layout is &#34;
+                     &#34;`TRS_desc` or `S_desc_TR`) to require a colon &#34;
+                     &#34;between the section number and the following &#34;
+                     &#34;description -- i.e. &#39;Section 14 NE/4&#39; would NOT be &#34;
+                     &#34;picked up if &#39;requireColon&#39; is on (`True`).  If &#34;
+                     &#34;turned off (`False`), then &#39;Section 14 NE/4&#39; would &#34;
+                     &#34;be captured. However, this may result in false &#34;
+                     &#34;matches, depending on the dataset.\n\n&#34;
+                     &#34;(Note that the default parsing method is to first &#34;
+                     &#34;pass over instances that do not have a colon. If no &#34;
+                     &#34;sections are matched, it will make a second pass, &#34;
+                     &#34;this time allowing section numbers that are NOT &#34;
+                     &#34;followed by colon. If not set here, the potentially &#34;
+                     &#34;two-pass method will be used by default.)\n\n&#34;
+                     &#34;If set to on (`True`) here, that second-pass method &#34;
+                     &#34;will be prevented. If set to off (`False`) here, it &#34;
+                     &#34;will broadly capture all such instances, and the &#34;
+                     &#34;second-pass method will not be needed. (Again, &#34;
+                     &#34;beware false matches.)&#34;
+                 },
+
+            &#39;ocrScrub&#39;:
+                {&#39;help&#39;:
+                     &#34;Attempt to iron out common OCR artifacts in a &#34;
+                     &#34;PLSSDesc object or Tract object (e.g., &#39;TIS4N-R97W&#39; &#34;
+                     &#34;that should have been &#39;T154N-R97W&#39;. (WARNING: may &#34;
+                     &#34;cause other issues.)\n\n&#34;
+                     &#34;Default: off (`False`).&#34;
+                 },
+
+            &#39;segment&#39;:
+                {&#39;help&#39;:
+                     &#34;While parsing, segment each description by T&amp;R &#34;
+                     &#34;before identifying tracts, which MIGHT capture SOME &#34;
+                     &#34;descriptions whose layout changes partway through. &#34;
+                     &#34;(However, this cannot capture ALL changes in &#34;
+                     &#34;layouts.)\n\n&#34;
+                     &#34;Default: off (`False`)&#34;
+                 },
+
+            &#39;initPreprocess&#39;:
+                {&#39;help&#39;:
+                     &#34;Preprocess PLSS descriptions and Tracts upon &#34;
+                     &#34;initialization.\n\n&#34;
+                     &#34;Default: on (`True`)&#34;
+                 },
+
+            &#39;initParse&#39;:
+                {&#39;help&#39;:
+                     &#34;Parse PLSS descriptions upon initialization (roughly &#34;
+                     &#34;equivalent to initializing a PLSSDesc object with &#34;
+                     &#34;`initParse=True`).\n\n&#34;
+                     &#34;Default: off (`False`)&#34;
+                 },
+
+            &#39;initParseQQ&#39;:
+                {&#39;help&#39;:
+                     &#34;Parse PLSS descriptions AND Tracts (i.e. lots and &#34;
+                     &#34;QQ&#39;s) upon initialization (roughly equivalent to &#34;
+                     &#34;initializing an PLSSDesc or Tract object with &#34;
+                     &#34;`initParseQQ=True`).\n\n&#34;
+                     &#34;Default: off (`False`)&#34;
+                 }
+        }
+
+        # --------------------------------------------------------------
+        # A frame for NS, EW, and Layout comboboxes and labels
+        combo_frame = tk.Frame(self)
+        combo_frame.grid(row=0, column=1, sticky=&#39;nwe&#39;)
+
+        combo_frame_row = 0
+
+        # Prompt for default N/S
+        defaultNSPrompt = tk.Label(
+            combo_frame,
+            text=&#34;Default unspecified Townships to [North] or [South]?&#34;)
+        defaultNShbtn = tk.Button(
+            combo_frame, text=&#39;?&#39;, padx=5,
+            command=lambda: self.cf_help_clicked(&#39;defaultNS&#39;))
+        self.defaultNScombo = Combobox(combo_frame, width=8)
+        self.defaultNScombo[&#39;values&#39;] = (&#39;North&#39;, &#39;South&#39;)
+        defaultNSPrompt.grid(column=1, row=combo_frame_row, sticky=&#39;e&#39;)
+        defaultNShbtn.grid(column=2, row=combo_frame_row)
+        self.defaultNScombo.grid(column=3, row=combo_frame_row, sticky=&#39;w&#39;)
+        combo_frame_row += 1
+    
+        # Prompt for default E/W
+        defaultEWPrompt = tk.Label(
+            combo_frame, text=&#34;Default unspecified Ranges to [West] or [East]?&#34;)
+        defaultEWPrompt.grid(column=1, row=combo_frame_row, sticky=&#39;e&#39;)
+        defaultEWhbtn = tk.Button(
+            combo_frame, text=&#39;?&#39;, padx=5,
+            command=lambda: self.cf_help_clicked(&#39;defaultEW&#39;))
+        defaultEWhbtn.grid(column=2, row=combo_frame_row)
+        self.defaultEWcombo = Combobox(combo_frame, width=8)
+        self.defaultEWcombo[&#39;values&#39;] = (&#39;West&#39;, &#39;East&#39;)
+        self.defaultEWcombo.grid(column=3, row=combo_frame_row, sticky=&#39;w&#39;)
+        combo_frame_row += 1
+    
+        # Prompt for layout
+        self.layoutcombo = Combobox(combo_frame, width=25)
+        self.layoutcombo[&#39;values&#39;] = tuple(
+            [&#39;Deduce (RECOMMENDED)&#39;] + parser.__implementedLayouts__)
+    
+        if &#39;layout&#39; in parameters:
+            # Only put layout into GUI if it&#39;s among the requested parameters
+            layoutPrompt = tk.Label(
+                combo_frame, text=&#34;Force parsing as a particular layout?&#34;)
+            layoutPrompt.grid(column=1, row=combo_frame_row, sticky=&#39;e&#39;)
+            layouthbtn = tk.Button(
+                combo_frame, text=&#39;?&#39;, padx=5,
+                command=lambda: self.cf_help_clicked(&#39;layout&#39;))
+            layouthbtn.grid(column=2, row=combo_frame_row)
+            self.layoutcombo.grid(column=3, row=combo_frame_row, sticky=&#39;w&#39;)
+
+        # --------------------------------------------------------------
+        # Parameters set via radiobuttons (i.e. RB_PARAMS)
+        cur_row = 11
+
+        lbl = tk.Label(self, text=&#39;&#39;)
+        lbl.grid(row=cur_row, column=1)
+        cur_row += 1
+
+        # Set a new tk.IntVar for each variable name --
+        #   i.e. var_name &#39;cleanQQ&#39; -&gt; `self.cleanQQVar`, storing a tk.IntVar;
+        #   and set this tk.IntVar to the `self.CONFIG_DEF` dict for &#39;cleanQQ&#39;
+        #   (etc.)
+        for var_name in self.RB_PARAMS:
+            new_var = tk.IntVar()
+            setattr(self, var_name + &#39;Var&#39;, new_var)
+            self.CONFIG_DEF[var_name][&#39;var&#39;] = new_var
+
+        # Generate radiobuttons for the remaining parameters
+        pr = self.RadioSetter(self, writing_header=True)
+        pr.grid(row=cur_row, column=1, sticky=&#39;w&#39;)
+        cur_row += 1
+        for cf in parameters:
+            if cf in [&#39;defaultNS&#39;, &#39;defaultEW&#39;, &#39;layout&#39;]:
+                continue
+            pr = self.RadioSetter(
+                self, parameter=cf, target_var=self.CONFIG_DEF[cf][&#39;var&#39;])
+            pr.grid(row=cur_row, column=1, sticky=&#39;w&#39;)
+
+            cur_row += 1
+
+        # Set defaults for all of the parameters
+        self.set_defaults()
+
+        # --------------------------------------------------------------
+        # Controls
+
+        control_frame = tk.Frame(self)
+        control_frame.grid(row=cur_row, column=1, sticky=&#39;s&#39;)
+        ctrl_col = 0
+        CTRL_BTN_INNER_PADY = 5
+        CTRL_BTN_INNER_PADX = 5
+        CTRL_PADY = 10
+        CTRL_COL_PADX = 20
+
+        defaultButton = tk.Button(
+            control_frame, text=&#39;Reset to Defaults&#39;, command=self.set_defaults,
+            padx=CTRL_BTN_INNER_PADX, pady=CTRL_BTN_INNER_PADY)
+        defaultButton.grid(
+            column=ctrl_col, row=0, padx=CTRL_COL_PADX, pady=CTRL_PADY)
+        ctrl_col += 1
+
+        if show_cancel:
+            cancelButton = tk.Button(
+                control_frame, text=cancel_button_text,
+                command=self.cancel_clicked,
+                padx=CTRL_BTN_INNER_PADX, pady=CTRL_BTN_INNER_PADY)
+            cancelButton.grid(
+                column=ctrl_col, row=0, padx=CTRL_COL_PADX, pady=CTRL_PADY)
+            ctrl_col += 1
+
+        if show_save:
+            saveButton = tk.Button(
+                control_frame, text=&#39;Save config as...&#39;,
+                command=self.save_clicked,
+                padx=CTRL_BTN_INNER_PADX, pady=CTRL_BTN_INNER_PADY)
+            saveButton.grid(
+                column=ctrl_col, row=0, padx=CTRL_COL_PADX, pady=CTRL_PADY)
+            ctrl_col += 1
+
+        if show_ok:
+            compileButton = tk.Button(
+                control_frame, text=ok_button_text,
+                command=self.ok_clicked,
+                padx=CTRL_BTN_INNER_PADX, pady=CTRL_BTN_INNER_PADY)
+            compileButton.grid(
+                column=ctrl_col, row=0, padx=CTRL_COL_PADX, pady=CTRL_PADY)
+            ctrl_col += 1
+
+    def set_defaults(self):
+        &#34;&#34;&#34;Set or reset all config variables to their defaults.&#34;&#34;&#34;
+        for var_name in self.RB_PARAMS:
+            # Pull the tk.IntVar associated with this var_name, and set to -1
+            tkintvar = getattr(self, var_name + &#39;Var&#39;)
+            tkintvar.set(-1)
+        self.defaultNScombo.current(0)
+        self.defaultEWcombo.current(0)
+        self.layoutcombo.current(0)
+
+    def cf_help_clicked(self, attrib):
+        tk.messagebox.showinfo(attrib, self.CONFIG_DEF[attrib][&#39;help&#39;])
+
+    class RadioSetter(tk.Frame):
+        &#34;&#34;&#34;
+        A sub-widget for setting a config parameter with 3 radiobuttons.
+        &#34;&#34;&#34;
+
+        RB_COL_WIDTH = 5
+
+        def __init__(self, master=None, writing_header=False, parameter=None,
+                     target_var=None, **kw):
+            tk.Frame.__init__(self, master, **kw)
+            self.master = master
+
+            if writing_header:
+                # If `writing_header`, will only write these:
+                radLabel1 = tk.Label(self, text=&#39;Off&#39;, width=self.RB_COL_WIDTH)
+                radLabel2 = tk.Label(self, text=&#39;Default&#39;, width=self.RB_COL_WIDTH)
+                radLabel3 = tk.Label(self, text=&#39;On&#39;, width=self.RB_COL_WIDTH)
+                radLabel1.grid(column=1, row=0, sticky=&#39;w&#39;)
+                radLabel2.grid(column=2, row=0, sticky=&#39;w&#39;)
+                radLabel3.grid(column=3, row=0, sticky=&#39;w&#39;)
+                return
+
+            for i in range(1, 4):
+                lbl = tk.Label(self, width=self.RB_COL_WIDTH)
+                lbl.grid(column=i, row=0)
+
+            cb = tk.Radiobutton(self, value=0, variable=target_var)
+            cb.grid(column=1, row=0, sticky=&#39;n&#39;)
+            cb = tk.Radiobutton(self, value=-1, variable=target_var)
+            cb.grid(column=2, row=0, sticky=&#39;n&#39;)
+            cb = tk.Radiobutton(self, value=1, variable=target_var)
+            cb.grid(column=3, row=0, sticky=&#39;n&#39;)
+
+            help_btn = tk.Button(
+                self, text=&#39;?&#39;, padx=5,
+                command=lambda: self.master.cf_help_clicked(parameter))
+            help_btn.grid(column=4, row=0)
+
+            lbl = tk.Label(self, text=parameter)
+            lbl.grid(column=5, row=0)
+
+    def compile_config_text(self) -&gt; str:
+        &#34;&#34;&#34;
+        Compile and return the config text.
+        &#34;&#34;&#34;
+        param_vals = []
+        
+        param_vals.append(self.defaultNScombo.get()[0].lower())
+        param_vals.append(self.defaultEWcombo.get()[0].lower())
+
+        if &#39;layout&#39; in self.parameters:
+            val = self.layoutcombo.get()
+            if val in parser.__implementedLayouts__:
+                param_vals.append(val)
+
+        # Check each of the requested variables. If not default (i.e. -1),
+        # then append the parameter+value.
+        for param in set(self.RB_PARAMS).intersection(set(self.parameters)):
+            val = self.CONFIG_DEF[param][&#39;var&#39;].get()
+            if val != -1:
+                param_vals.append(f&#34;{param}.{bool(val)}&#34;)
+
+        # Join the list of param/vals into a string, and return it
+        config_text = &#39;,&#39;.join(param_vals)
+        return config_text
+
+    def ok_clicked(self):
+        &#34;&#34;&#34;
+        Compile the config text, and set it to the target config
+        variable. Show the configured prompt_after_ok message (if any),
+        and destroy the window (if so configured).
+        &#34;&#34;&#34;
+
+        config_text = self.compile_config_text()
+
+        # Set the target tk.StringVar to the compiled config_text
+        self.target_config_var.set(config_text)
+        self.external_target_var[&#39;config_text&#39;] = config_text
+
+        if self.prompt_after_ok is not None:
+            messagebox.showinfo(&#39;&#39;, self.prompt_after_ok)
+
+        if self.exit_after_ok:
+            self.master.destroy()
+
+    def cancel_clicked(self):
+        &#34;&#34;&#34;
+        Set it to the target config variable to &#39;CANCEL&#39;. Show
+        configured confirm_cancel_prompt message (if any),
+        and destroy the window (if so configured).
+        &#34;&#34;&#34;
+        confirm = True
+        if self.confirm_cancel_prompt is not None:
+            confirm = messagebox.askyesno(&#39;Cancel?&#39;, self.confirm_cancel_prompt)
+        if confirm:
+            self.target_config_var.set(&#39;CANCEL&#39;)
+            self.external_target_var[&#39;config_text&#39;] = &#39;CANCEL&#39;
+            self.master.destroy()
+
+    def save_clicked(self):
+        &#34;&#34;&#34;Call the config text compiler, and then save the results to a
+         user-specified filepath.&#34;&#34;&#34;
+        config_text = self.compile_config_text()
+
+        # The user will specify the output filename:
+        from tkinter import filedialog
+        output_file = filedialog.asksaveasfilename(
+            initialdir=&#39;/&#39;, initialfile=&#39;pyTRS_config_data.txt&#39;,
+            filetypes=((&#34;Text File&#34;, &#34;*.txt&#34;), (&#34;All Files&#34;, &#34;*.*&#34;)),
+            title=&#34;Save as...&#34;)
+        if output_file in [&#39;&#39;, None]:
+            return 2
+        if not output_file.lower().endswith(&#39;.txt&#39;):
+            messagebox.showerror(&#39;ERROR&#39;, &#39;Filename must end in .txt!&#39;)
+            return 1
+
+        self.do_save(config_text, output_file)
+
+    def do_save(self, config_text, output_file):
+        &#34;&#34;&#34;Save the config_text (or compiled Config object data) to file.&#34;&#34;&#34;
+        # Returns 0 for successful save; 1 for unsuccessful save.
+
+        failedtosave = False
+        try:
+            # Compile config_text into a pyTRS.Config object, and use
+            # Config.saveToFile()
+            success_check = parser.Config(config_text).save_to_file(output_file)
+            if success_check != 0:
+                # Only return code of `0` denotes success.
+                failedtosave = True
+        except:
+            failedtosave = True
+
+        if failedtosave:
+            messagebox.showerror(
+                &#39;ERROR&#39;,
+                f&#34;Could not save to &#39;{output_file}&#39;. Check read/write access, &#34;
+                &#34;and ensure &#39;.txt&#39; file extension.&#34;
+            )
+            return 1
+
+        return 0</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>tkinter.Frame</li>
+<li>tkinter.Widget</li>
+<li>tkinter.BaseWidget</li>
+<li>tkinter.Misc</li>
+<li>tkinter.Pack</li>
+<li>tkinter.Place</li>
+<li>tkinter.Grid</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="pyTRS.interface_tools.config_popup.PromptConfig.RB_PARAMS"><code class="name">var <span class="ident">RB_PARAMS</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="pyTRS.interface_tools.config_popup.PromptConfig.RadioSetter"><code class="name">var <span class="ident">RadioSetter</span></code></dt>
+<dd>
+<div class="desc"><p>A sub-widget for setting a config parameter with 3 radiobuttons.</p></div>
+</dd>
+</dl>
+<h3>Methods</h3>
+<dl>
+<dt id="pyTRS.interface_tools.config_popup.PromptConfig.cancel_clicked"><code class="name flex">
+<span>def <span class="ident">cancel_clicked</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Set it to the target config variable to 'CANCEL'. Show
+configured confirm_cancel_prompt message (if any),
+and destroy the window (if so configured).</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def cancel_clicked(self):
+    &#34;&#34;&#34;
+    Set it to the target config variable to &#39;CANCEL&#39;. Show
+    configured confirm_cancel_prompt message (if any),
+    and destroy the window (if so configured).
+    &#34;&#34;&#34;
+    confirm = True
+    if self.confirm_cancel_prompt is not None:
+        confirm = messagebox.askyesno(&#39;Cancel?&#39;, self.confirm_cancel_prompt)
+    if confirm:
+        self.target_config_var.set(&#39;CANCEL&#39;)
+        self.external_target_var[&#39;config_text&#39;] = &#39;CANCEL&#39;
+        self.master.destroy()</code></pre>
+</details>
+</dd>
+<dt id="pyTRS.interface_tools.config_popup.PromptConfig.cf_help_clicked"><code class="name flex">
+<span>def <span class="ident">cf_help_clicked</span></span>(<span>self, attrib)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def cf_help_clicked(self, attrib):
+    tk.messagebox.showinfo(attrib, self.CONFIG_DEF[attrib][&#39;help&#39;])</code></pre>
+</details>
+</dd>
+<dt id="pyTRS.interface_tools.config_popup.PromptConfig.compile_config_text"><code class="name flex">
+<span>def <span class="ident">compile_config_text</span></span>(<span>self) ‑> str</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Compile and return the config text.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def compile_config_text(self) -&gt; str:
+    &#34;&#34;&#34;
+    Compile and return the config text.
+    &#34;&#34;&#34;
+    param_vals = []
+    
+    param_vals.append(self.defaultNScombo.get()[0].lower())
+    param_vals.append(self.defaultEWcombo.get()[0].lower())
+
+    if &#39;layout&#39; in self.parameters:
+        val = self.layoutcombo.get()
+        if val in parser.__implementedLayouts__:
+            param_vals.append(val)
+
+    # Check each of the requested variables. If not default (i.e. -1),
+    # then append the parameter+value.
+    for param in set(self.RB_PARAMS).intersection(set(self.parameters)):
+        val = self.CONFIG_DEF[param][&#39;var&#39;].get()
+        if val != -1:
+            param_vals.append(f&#34;{param}.{bool(val)}&#34;)
+
+    # Join the list of param/vals into a string, and return it
+    config_text = &#39;,&#39;.join(param_vals)
+    return config_text</code></pre>
+</details>
+</dd>
+<dt id="pyTRS.interface_tools.config_popup.PromptConfig.do_save"><code class="name flex">
+<span>def <span class="ident">do_save</span></span>(<span>self, config_text, output_file)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Save the config_text (or compiled Config object data) to file.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def do_save(self, config_text, output_file):
+    &#34;&#34;&#34;Save the config_text (or compiled Config object data) to file.&#34;&#34;&#34;
+    # Returns 0 for successful save; 1 for unsuccessful save.
+
+    failedtosave = False
+    try:
+        # Compile config_text into a pyTRS.Config object, and use
+        # Config.saveToFile()
+        success_check = parser.Config(config_text).save_to_file(output_file)
+        if success_check != 0:
+            # Only return code of `0` denotes success.
+            failedtosave = True
+    except:
+        failedtosave = True
+
+    if failedtosave:
+        messagebox.showerror(
+            &#39;ERROR&#39;,
+            f&#34;Could not save to &#39;{output_file}&#39;. Check read/write access, &#34;
+            &#34;and ensure &#39;.txt&#39; file extension.&#34;
+        )
+        return 1
+
+    return 0</code></pre>
+</details>
+</dd>
+<dt id="pyTRS.interface_tools.config_popup.PromptConfig.ok_clicked"><code class="name flex">
+<span>def <span class="ident">ok_clicked</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Compile the config text, and set it to the target config
+variable. Show the configured prompt_after_ok message (if any),
+and destroy the window (if so configured).</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def ok_clicked(self):
+    &#34;&#34;&#34;
+    Compile the config text, and set it to the target config
+    variable. Show the configured prompt_after_ok message (if any),
+    and destroy the window (if so configured).
+    &#34;&#34;&#34;
+
+    config_text = self.compile_config_text()
+
+    # Set the target tk.StringVar to the compiled config_text
+    self.target_config_var.set(config_text)
+    self.external_target_var[&#39;config_text&#39;] = config_text
+
+    if self.prompt_after_ok is not None:
+        messagebox.showinfo(&#39;&#39;, self.prompt_after_ok)
+
+    if self.exit_after_ok:
+        self.master.destroy()</code></pre>
+</details>
+</dd>
+<dt id="pyTRS.interface_tools.config_popup.PromptConfig.save_clicked"><code class="name flex">
+<span>def <span class="ident">save_clicked</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Call the config text compiler, and then save the results to a
+user-specified filepath.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def save_clicked(self):
+    &#34;&#34;&#34;Call the config text compiler, and then save the results to a
+     user-specified filepath.&#34;&#34;&#34;
+    config_text = self.compile_config_text()
+
+    # The user will specify the output filename:
+    from tkinter import filedialog
+    output_file = filedialog.asksaveasfilename(
+        initialdir=&#39;/&#39;, initialfile=&#39;pyTRS_config_data.txt&#39;,
+        filetypes=((&#34;Text File&#34;, &#34;*.txt&#34;), (&#34;All Files&#34;, &#34;*.*&#34;)),
+        title=&#34;Save as...&#34;)
+    if output_file in [&#39;&#39;, None]:
+        return 2
+    if not output_file.lower().endswith(&#39;.txt&#39;):
+        messagebox.showerror(&#39;ERROR&#39;, &#39;Filename must end in .txt!&#39;)
+        return 1
+
+    self.do_save(config_text, output_file)</code></pre>
+</details>
+</dd>
+<dt id="pyTRS.interface_tools.config_popup.PromptConfig.set_defaults"><code class="name flex">
+<span>def <span class="ident">set_defaults</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Set or reset all config variables to their defaults.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def set_defaults(self):
+    &#34;&#34;&#34;Set or reset all config variables to their defaults.&#34;&#34;&#34;
+    for var_name in self.RB_PARAMS:
+        # Pull the tk.IntVar associated with this var_name, and set to -1
+        tkintvar = getattr(self, var_name + &#39;Var&#39;)
+        tkintvar.set(-1)
+    self.defaultNScombo.current(0)
+    self.defaultEWcombo.current(0)
+    self.layoutcombo.current(0)</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+</dl>
+</section>
+</article>
+<nav id="sidebar">
+<h1>Index</h1>
+<div class="toc">
+<ul></ul>
+</div>
+<ul id="index">
+<li><h3>Super-module</h3>
+<ul>
+<li><code><a title="pyTRS.interface_tools" href="index.html">pyTRS.interface_tools</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-functions">Functions</a></h3>
+<ul class="">
+<li><code><a title="pyTRS.interface_tools.config_popup.prompt_config" href="#pyTRS.interface_tools.config_popup.prompt_config">prompt_config</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-classes">Classes</a></h3>
+<ul>
+<li>
+<h4><code><a title="pyTRS.interface_tools.config_popup.PromptConfig" href="#pyTRS.interface_tools.config_popup.PromptConfig">PromptConfig</a></code></h4>
+<ul class="two-column">
+<li><code><a title="pyTRS.interface_tools.config_popup.PromptConfig.RB_PARAMS" href="#pyTRS.interface_tools.config_popup.PromptConfig.RB_PARAMS">RB_PARAMS</a></code></li>
+<li><code><a title="pyTRS.interface_tools.config_popup.PromptConfig.RadioSetter" href="#pyTRS.interface_tools.config_popup.PromptConfig.RadioSetter">RadioSetter</a></code></li>
+<li><code><a title="pyTRS.interface_tools.config_popup.PromptConfig.cancel_clicked" href="#pyTRS.interface_tools.config_popup.PromptConfig.cancel_clicked">cancel_clicked</a></code></li>
+<li><code><a title="pyTRS.interface_tools.config_popup.PromptConfig.cf_help_clicked" href="#pyTRS.interface_tools.config_popup.PromptConfig.cf_help_clicked">cf_help_clicked</a></code></li>
+<li><code><a title="pyTRS.interface_tools.config_popup.PromptConfig.compile_config_text" href="#pyTRS.interface_tools.config_popup.PromptConfig.compile_config_text">compile_config_text</a></code></li>
+<li><code><a title="pyTRS.interface_tools.config_popup.PromptConfig.do_save" href="#pyTRS.interface_tools.config_popup.PromptConfig.do_save">do_save</a></code></li>
+<li><code><a title="pyTRS.interface_tools.config_popup.PromptConfig.ok_clicked" href="#pyTRS.interface_tools.config_popup.PromptConfig.ok_clicked">ok_clicked</a></code></li>
+<li><code><a title="pyTRS.interface_tools.config_popup.PromptConfig.save_clicked" href="#pyTRS.interface_tools.config_popup.PromptConfig.save_clicked">save_clicked</a></code></li>
+<li><code><a title="pyTRS.interface_tools.config_popup.PromptConfig.set_defaults" href="#pyTRS.interface_tools.config_popup.PromptConfig.set_defaults">set_defaults</a></code></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p>Generated by <a href="https://pdoc3.github.io/pdoc"><cite>pdoc</cite> 0.9.2</a>.</p>
+</footer>
+</body>
+</html>

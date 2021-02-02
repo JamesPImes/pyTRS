@@ -1,0 +1,678 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.9.2" />
+<title>pyTRS.csv_suite.pyTRS_parse_csv API documentation</title>
+<meta name="description" content="A program to parse PLSS descriptions in a .csv file, and write the
+parsed results at the end of each row, inserting rows as necessary such
+that there …" />
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
+<link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
+<style>:root{--highlight-color:#fe9}.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}h1:target,h2:target,h3:target,h4:target,h5:target,h6:target{background:var(--highlight-color);padding:.2em 0}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}dt:target .name{background:var(--highlight-color)}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}td{padding:0 .5em}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/highlight.min.js" integrity="sha256-Uv3H6lx7dJmRfRvH8TH6kJD1TSK1aFcwgx+mdg3epi8=" crossorigin></script>
+<script>window.addEventListener('DOMContentLoaded', () => hljs.initHighlighting())</script>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>pyTRS.csv_suite.pyTRS_parse_csv</code></h1>
+</header>
+<section id="section-intro">
+<p>A program to parse PLSS descriptions in a .csv file, and write the
+parsed results at the end of each row, inserting rows as necessary such
+that there is one Tract per row; saves to a new .csv file.
+Built on the pyTRS library.</p>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python"># Copyright (c) 2020, James P. Imes, all rights reserved.
+
+&#34;&#34;&#34;
+A program to parse PLSS descriptions in a .csv file, and write the
+parsed results at the end of each row, inserting rows as necessary such
+that there is one Tract per row; saves to a new .csv file.
+Built on the pyTRS library.
+&#34;&#34;&#34;
+
+def parse_csv(
+        in_file : str, desc_col : int, first_row=1, last_row=-1, header_row=-1,
+        attribs=None, out_file=None, config_col=None, config=None,
+        layout_col=None, resume=False, write_headers=True, unpack=False,
+        copy_data=False, tract_level=False, include_uid=False,
+        include_unparsed=True, num_tracts=False):
+    &#34;&#34;&#34;
+    Parse the PLSS descriptions in a .csv file, and write the results
+    in new columns at the end, inserting rows as necessary for one
+    parsed Tract per row; save to new .csv file.
+    NOTE: Columns/Rows are indexed to 1 (not 0).
+
+    :param in_file: Filepath to the .csv to read from.
+    :param desc_col: Integer, specifying which column to read from for
+    the PLSS descriptions to parse. (Indexed from 1, rather than 0.)
+    :param first_row: An integer, specifying the row containing the
+    first description to parse. (Indexed from 1, rather than 0.)
+    :param last_row: An integer, specifying the row after which to stop
+    parsing. If not specified, will parse all rows. (Indexed from 1,
+    rather than 0.)
+    :param header_row: An integer specifying the row in the input file
+    containing headers, if any. (Indexed from 1, rather than 0.)
+    :param attribs: Which pyTRS.Tract attributes (instance variables) to
+    write to the csv. Pass as a list of strings, or as a single string
+    with attribute names separated by comma.
+    For &#39;tract-level&#39; parsing (i.e. only parsing tracts into Lots/QQ&#39;s)
+    :param out_file: Filepath to the .csv to write to.
+    :param config_col: Column in the .csv file containing the pyTRS
+    config parameters to use for parsing that row.
+    :param config: Standard pyTRS config parameters to be used for every
+    description, entered as a string with parameters separated by comma,
+    or as a pyTRS.Config object.
+    NOTE: In the event of conflict between parameters in config and in
+    config_col, config_col will control.
+    :param layout_col: (Optional) Column in the .csv file containing the
+    pyTRS layout name to use for that row. (If not specified, will use
+    `config` parameters; and if not specified there, will deduce it when
+    parsed.)
+    :param resume: Whether to overwrite (i.e. `resume=False`) an
+    existing file if found at the filepath specified at `out_file`, or
+    to continue writing at the end of it (`resume=True`). Defaults to
+    True.
+    NOTE: If no existing file is found, this will create a new file
+    regardless of `resume`.
+    NOTE ALSO: If resuming a previous output, but with different
+    attributes (or differently ordered) than before, the columns will be
+    misaligned.
+    :param write_headers: Whether to write headers. Defaults to True.
+    :param unpack: Whether to try to flatten and join lists, or
+    simply write them as they appear. (Defaults to `False`)
+    :param copy_data: Copy the the unparsed data for every new row (i.e.
+    whether to copy the data OTHER than the parsed descriptions, or to
+    just leave it in the original row). Defaults to False.
+    :param tract_level: If the .csv already has lands broken into one
+    Twp/Rge/Sec combo (TRS) per row, specify `tract_level=True` to parse
+    the text into lots and QQs only. Defaults to False.
+    :param include_uid: Include a unique identifier number for each row
+    in the format &#39;0000-a.g&#39; (where the digits refer to the row in the
+    original .csv, and the letters refer to how many rows were written
+    by the csv parser). Defaults to False.
+    :param include_unparsed: Copy rows that were not parsed.
+    :param num_tracts: INTERNAL USE. Write a separate .csv file with
+    each row containing the number of how many rows were written for the
+    corresponding row in the main .csv. (Probably don&#39;t use it.)
+    :return: Returns 0 on success.
+    &#34;&#34;&#34;
+
+    from pyTRS.parser import PLSSDesc, Tract
+    import os, csv
+    from pyTRS.utils import flatten, alpha_to_num, num_to_alpha
+
+    if out_file is None:
+        from datetime import datetime
+        t = datetime.now()
+        timestamp = (
+            f&#34;{t.year}{str(t.month).rjust(2, &#39;0&#39;)}{str(t.day).rjust(2, &#39;0&#39;)}&#34;
+            f&#34;_{str(t.hour).rjust(2, &#39;0&#39;)}{str(t.minute).rjust(2, &#39;0&#39;)}&#34;
+            f&#34;{str(t.second).rjust(2, &#39;0&#39;)}&#34;
+        )
+        out_file = f&#34;{in_file[:-4]}_pyTRS_parsed_{timestamp}.csv&#34;
+
+    # Ensure input and output filepaths lead to .csv files.
+    if not (in_file.lower().endswith(&#39;.csv&#39;) and out_file.lower().endswith(&#39;.csv&#39;)):
+        raise ValueError(&#34;Error: input and output filepath must end in &#39;.csv&#39;&#34;)
+
+    if desc_col &lt; 1:
+        raise ValueError(
+            f&#34;Error: Integer for column must be equal to or greater than 1. &#34;
+            f&#34;~~desc_col={desc_col}&#34;)
+
+    if header_row is not None:
+        if not first_row &gt; header_row:
+            raise ValueError(
+                f&#34;Error: first_row must be greater than header_row. &#34;
+                f&#34;~~first_row={first_row}, header_row={header_row}&#34;)
+
+    if attribs in [None, &#39;&#39;]:
+        # If not specified, set default attribs, which are different for
+        # `tract_level` than otherwise.
+        if tract_level:
+            attribs = &#39;ppDesc,lotList,QQList&#39;
+        else:
+            attribs = &#39;trs,desc&#39;
+
+    if isinstance(attribs, str):
+        # Split attribute string into list of Tract attribute names:
+        attribs = attribs.replace(&#39; &#39;, &#39;&#39;).split(&#39;,&#39;)
+
+    read_file = open(in_file)
+    reader = csv.reader(read_file)
+
+    # If the file already exists and we&#39;re not writing a new file, turn
+    # off headers
+    if os.path.isfile(out_file) and resume:
+        write_headers = False
+
+    # Default to opening in `write` mode (create new file). However...
+    openMode = &#39;w&#39;
+    if resume:
+        # If we don&#39;t want to create a new file, will open in `append`
+        # mode instead.
+        openMode = &#39;a&#39;
+
+    write_file = open(out_file, openMode, newline=&#39;&#39;)
+    writer = csv.writer(write_file)
+
+    # If a .csv of number of rows has been requested, create and open
+    # that .csv file, using the same openMode as for `writer`
+    if num_tracts:
+        num_out_file = f&#34;{out_file[:-4]}_numTracts.csv&#34;
+        num_write_file = open(num_out_file, openMode, newline=&#39;&#39;)
+        num_writer = csv.writer(num_write_file)
+        if not resume and write_headers:
+            num_writer.writerow([&#39;Rows_written_in_output&#39;])
+
+    # Whether we should stop after a certain number of rows
+    end_early = False
+    if last_row &gt; 0:
+        end_early = True
+
+    print(f&#34;Parsing descriptions in &#39;{in_file}&#39;...&#34;)
+    # Which row we&#39;re on (vis-a-vis the original .csv):
+    cur_row = 0
+    # Number of rows encountered /after/ the header (identical to
+    # cur_row if no header in original). For UID:
+    parse_num = 0
+    for row in reader:
+        cur_row += 1
+
+        if write_headers:
+            if cur_row == header_row:
+                writer.writerow(row + [&#39;parse_UID&#39;] * include_uid + attribs)
+                write_headers = False
+                continue
+            elif cur_row == first_row and (header_row is None or header_row &lt; 1):
+                # In this scenario, write headers just above first-parsed row
+                writer.writerow(
+                    [&#39;&#39; for _ in row] + [&#39;parse_UID&#39;] * include_uid + attribs)
+                write_headers = False
+                # Do not continue yet, because we still need to parse
+                # and write results.
+
+        if include_unparsed \
+                and ((cur_row &lt; first_row) or (cur_row &gt; last_row and end_early)):
+            writer.writerow(row)
+            continue
+
+        elif cur_row &lt; first_row:
+            continue
+
+        elif cur_row &gt; last_row and end_early:
+            break
+
+        parse_num += 1
+
+        # Note: config_col, layout_col, and desc_col are 1-indexed, but
+        # are used to access elements in 0-indexed list, so we subtract
+        # 1 from each here:
+
+        # Get `config` parameters either from the .csv, or from the
+        # kwarg `config` (preference given to config_col)
+        try:
+            config = row[config_col-1]
+        except:
+            pass
+        if config is None:
+            config = &#39;&#39;
+
+        # If user has specified a column for layout, add that layout to
+        # the end of the `config` string.
+        try:
+            config = f&#34;{config},{row[layout_col-1]}&#34;
+        except:
+            pass
+
+        # Get text of description from row.
+        try:
+            desc_text = row[desc_col-1]
+        except:
+            print(
+                f&#34;Warning: Could not access PLSS description at row {cur_row}, &#34;
+                f&#34;column {desc_col}.&#34;)
+            desc_text = &#39;&#39;
+
+        # Parse the description.
+        if tract_level:
+            # If we&#39;re parsing lots/QQ&#39;s in an already-parsed Tract (or
+            # equivalent), do it, and pack the attributes into a nested list:
+            t = Tract(desc=desc_text, trs=&#39;&#39;, config=config, initParseQQ=True)
+            all_Tract_data = [t.to_list(attribs)]
+        else:
+            # Otherwise, parsing a full PLSS description, and the
+            # `.tracts_to_list()` method outputs an already-nested list:
+            d = PLSSDesc(desc_text, config=config, initParseQQ=True)
+            all_Tract_data = d.tracts_to_list(attribs)
+
+        # We will write a row for each Tract object, but if none were found,
+        # we want to write a minimum of 1 row.
+        num_rows_to_write = len(all_Tract_data)
+        if num_rows_to_write == 0:
+            num_rows_to_write = 1
+
+        for i in range(num_rows_to_write):
+            if i == 0 or copy_data:
+                # Copy the original row data
+                to_write = row.copy()
+            else:
+                # Blank data for inserted rows, if `copy_data` was not requested
+                to_write = [&#39;&#39; for _ in row]
+
+            if include_uid:
+                # Generate UID in the format &#39;0032.a-j&#39;:
+                uid = (
+                    f&#34;{str(parse_num).rjust(4, &#39;0&#39;)}&#34;
+                    f&#34;.{num_to_alpha(i + 1).lower()}&#34;
+                    f&#34;-{num_to_alpha(num_rows_to_write).lower()}&#34;
+                )
+                to_write.append(uid)
+
+            try:
+                # Add the parsed Tract Data
+                for val in all_Tract_data[i]:
+                    if isinstance(val, (list, tuple)) and unpack:
+                        # If requested, `unpack` and join lists/tuples
+                        # before writing:
+                        to_write.append(&#39;, &#39;.join(flatten(val)))
+                    else:
+                        to_write.append(val)
+            except:
+                # If no data for this Tract (e.g., no tracts identified
+                # in the PLSSDesc object), fill with dummy data.
+                to_write.extend([f&#34;{attrib}: n/a&#34; for attrib in attribs])
+
+            writer.writerow(to_write)
+
+        # Write number of tracts to separate csv if requested with
+        # `num_tracts=True`:
+        if num_tracts:
+            num_writer.writerow([num_rows_to_write])
+
+    print(
+        f&#34;Done. Results written to &#39;{out_file}&#39;. &#34;
+        f&#34;Be sure to examine results for fidelity.&#34;
+    )
+    return 0</code></pre>
+</details>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-functions">Functions</h2>
+<dl>
+<dt id="pyTRS.csv_suite.pyTRS_parse_csv.parse_csv"><code class="name flex">
+<span>def <span class="ident">parse_csv</span></span>(<span>in_file: str, desc_col: int, first_row=1, last_row=-1, header_row=-1, attribs=None, out_file=None, config_col=None, config=None, layout_col=None, resume=False, write_headers=True, unpack=False, copy_data=False, tract_level=False, include_uid=False, include_unparsed=True, num_tracts=False)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Parse the PLSS descriptions in a .csv file, and write the results
+in new columns at the end, inserting rows as necessary for one
+parsed Tract per row; save to new .csv file.
+NOTE: Columns/Rows are indexed to 1 (not 0).</p>
+<p>:param in_file: Filepath to the .csv to read from.
+:param desc_col: Integer, specifying which column to read from for
+the PLSS descriptions to parse. (Indexed from 1, rather than 0.)
+:param first_row: An integer, specifying the row containing the
+first description to parse. (Indexed from 1, rather than 0.)
+:param last_row: An integer, specifying the row after which to stop
+parsing. If not specified, will parse all rows. (Indexed from 1,
+rather than 0.)
+:param header_row: An integer specifying the row in the input file
+containing headers, if any. (Indexed from 1, rather than 0.)
+:param attribs: Which pyTRS.Tract attributes (instance variables) to
+write to the csv. Pass as a list of strings, or as a single string
+with attribute names separated by comma.
+For 'tract-level' parsing (i.e. only parsing tracts into Lots/QQ's)
+:param out_file: Filepath to the .csv to write to.
+:param config_col: Column in the .csv file containing the pyTRS
+config parameters to use for parsing that row.
+:param config: Standard pyTRS config parameters to be used for every
+description, entered as a string with parameters separated by comma,
+or as a pyTRS.Config object.
+NOTE: In the event of conflict between parameters in config and in
+config_col, config_col will control.
+:param layout_col: (Optional) Column in the .csv file containing the
+pyTRS layout name to use for that row. (If not specified, will use
+<code>config</code> parameters; and if not specified there, will deduce it when
+parsed.)
+:param resume: Whether to overwrite (i.e. <code>resume=False</code>) an
+existing file if found at the filepath specified at <code>out_file</code>, or
+to continue writing at the end of it (<code>resume=True</code>). Defaults to
+True.
+NOTE: If no existing file is found, this will create a new file
+regardless of <code>resume</code>.
+NOTE ALSO: If resuming a previous output, but with different
+attributes (or differently ordered) than before, the columns will be
+misaligned.
+:param write_headers: Whether to write headers. Defaults to True.
+:param unpack: Whether to try to flatten and join lists, or
+simply write them as they appear. (Defaults to <code>False</code>)
+:param copy_data: Copy the the unparsed data for every new row (i.e.
+whether to copy the data OTHER than the parsed descriptions, or to
+just leave it in the original row). Defaults to False.
+:param tract_level: If the .csv already has lands broken into one
+Twp/Rge/Sec combo (TRS) per row, specify <code>tract_level=True</code> to parse
+the text into lots and QQs only. Defaults to False.
+:param include_uid: Include a unique identifier number for each row
+in the format '0000-a.g' (where the digits refer to the row in the
+original .csv, and the letters refer to how many rows were written
+by the csv parser). Defaults to False.
+:param include_unparsed: Copy rows that were not parsed.
+:param num_tracts: INTERNAL USE. Write a separate .csv file with
+each row containing the number of how many rows were written for the
+corresponding row in the main .csv. (Probably don't use it.)
+:return: Returns 0 on success.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def parse_csv(
+        in_file : str, desc_col : int, first_row=1, last_row=-1, header_row=-1,
+        attribs=None, out_file=None, config_col=None, config=None,
+        layout_col=None, resume=False, write_headers=True, unpack=False,
+        copy_data=False, tract_level=False, include_uid=False,
+        include_unparsed=True, num_tracts=False):
+    &#34;&#34;&#34;
+    Parse the PLSS descriptions in a .csv file, and write the results
+    in new columns at the end, inserting rows as necessary for one
+    parsed Tract per row; save to new .csv file.
+    NOTE: Columns/Rows are indexed to 1 (not 0).
+
+    :param in_file: Filepath to the .csv to read from.
+    :param desc_col: Integer, specifying which column to read from for
+    the PLSS descriptions to parse. (Indexed from 1, rather than 0.)
+    :param first_row: An integer, specifying the row containing the
+    first description to parse. (Indexed from 1, rather than 0.)
+    :param last_row: An integer, specifying the row after which to stop
+    parsing. If not specified, will parse all rows. (Indexed from 1,
+    rather than 0.)
+    :param header_row: An integer specifying the row in the input file
+    containing headers, if any. (Indexed from 1, rather than 0.)
+    :param attribs: Which pyTRS.Tract attributes (instance variables) to
+    write to the csv. Pass as a list of strings, or as a single string
+    with attribute names separated by comma.
+    For &#39;tract-level&#39; parsing (i.e. only parsing tracts into Lots/QQ&#39;s)
+    :param out_file: Filepath to the .csv to write to.
+    :param config_col: Column in the .csv file containing the pyTRS
+    config parameters to use for parsing that row.
+    :param config: Standard pyTRS config parameters to be used for every
+    description, entered as a string with parameters separated by comma,
+    or as a pyTRS.Config object.
+    NOTE: In the event of conflict between parameters in config and in
+    config_col, config_col will control.
+    :param layout_col: (Optional) Column in the .csv file containing the
+    pyTRS layout name to use for that row. (If not specified, will use
+    `config` parameters; and if not specified there, will deduce it when
+    parsed.)
+    :param resume: Whether to overwrite (i.e. `resume=False`) an
+    existing file if found at the filepath specified at `out_file`, or
+    to continue writing at the end of it (`resume=True`). Defaults to
+    True.
+    NOTE: If no existing file is found, this will create a new file
+    regardless of `resume`.
+    NOTE ALSO: If resuming a previous output, but with different
+    attributes (or differently ordered) than before, the columns will be
+    misaligned.
+    :param write_headers: Whether to write headers. Defaults to True.
+    :param unpack: Whether to try to flatten and join lists, or
+    simply write them as they appear. (Defaults to `False`)
+    :param copy_data: Copy the the unparsed data for every new row (i.e.
+    whether to copy the data OTHER than the parsed descriptions, or to
+    just leave it in the original row). Defaults to False.
+    :param tract_level: If the .csv already has lands broken into one
+    Twp/Rge/Sec combo (TRS) per row, specify `tract_level=True` to parse
+    the text into lots and QQs only. Defaults to False.
+    :param include_uid: Include a unique identifier number for each row
+    in the format &#39;0000-a.g&#39; (where the digits refer to the row in the
+    original .csv, and the letters refer to how many rows were written
+    by the csv parser). Defaults to False.
+    :param include_unparsed: Copy rows that were not parsed.
+    :param num_tracts: INTERNAL USE. Write a separate .csv file with
+    each row containing the number of how many rows were written for the
+    corresponding row in the main .csv. (Probably don&#39;t use it.)
+    :return: Returns 0 on success.
+    &#34;&#34;&#34;
+
+    from pyTRS.parser import PLSSDesc, Tract
+    import os, csv
+    from pyTRS.utils import flatten, alpha_to_num, num_to_alpha
+
+    if out_file is None:
+        from datetime import datetime
+        t = datetime.now()
+        timestamp = (
+            f&#34;{t.year}{str(t.month).rjust(2, &#39;0&#39;)}{str(t.day).rjust(2, &#39;0&#39;)}&#34;
+            f&#34;_{str(t.hour).rjust(2, &#39;0&#39;)}{str(t.minute).rjust(2, &#39;0&#39;)}&#34;
+            f&#34;{str(t.second).rjust(2, &#39;0&#39;)}&#34;
+        )
+        out_file = f&#34;{in_file[:-4]}_pyTRS_parsed_{timestamp}.csv&#34;
+
+    # Ensure input and output filepaths lead to .csv files.
+    if not (in_file.lower().endswith(&#39;.csv&#39;) and out_file.lower().endswith(&#39;.csv&#39;)):
+        raise ValueError(&#34;Error: input and output filepath must end in &#39;.csv&#39;&#34;)
+
+    if desc_col &lt; 1:
+        raise ValueError(
+            f&#34;Error: Integer for column must be equal to or greater than 1. &#34;
+            f&#34;~~desc_col={desc_col}&#34;)
+
+    if header_row is not None:
+        if not first_row &gt; header_row:
+            raise ValueError(
+                f&#34;Error: first_row must be greater than header_row. &#34;
+                f&#34;~~first_row={first_row}, header_row={header_row}&#34;)
+
+    if attribs in [None, &#39;&#39;]:
+        # If not specified, set default attribs, which are different for
+        # `tract_level` than otherwise.
+        if tract_level:
+            attribs = &#39;ppDesc,lotList,QQList&#39;
+        else:
+            attribs = &#39;trs,desc&#39;
+
+    if isinstance(attribs, str):
+        # Split attribute string into list of Tract attribute names:
+        attribs = attribs.replace(&#39; &#39;, &#39;&#39;).split(&#39;,&#39;)
+
+    read_file = open(in_file)
+    reader = csv.reader(read_file)
+
+    # If the file already exists and we&#39;re not writing a new file, turn
+    # off headers
+    if os.path.isfile(out_file) and resume:
+        write_headers = False
+
+    # Default to opening in `write` mode (create new file). However...
+    openMode = &#39;w&#39;
+    if resume:
+        # If we don&#39;t want to create a new file, will open in `append`
+        # mode instead.
+        openMode = &#39;a&#39;
+
+    write_file = open(out_file, openMode, newline=&#39;&#39;)
+    writer = csv.writer(write_file)
+
+    # If a .csv of number of rows has been requested, create and open
+    # that .csv file, using the same openMode as for `writer`
+    if num_tracts:
+        num_out_file = f&#34;{out_file[:-4]}_numTracts.csv&#34;
+        num_write_file = open(num_out_file, openMode, newline=&#39;&#39;)
+        num_writer = csv.writer(num_write_file)
+        if not resume and write_headers:
+            num_writer.writerow([&#39;Rows_written_in_output&#39;])
+
+    # Whether we should stop after a certain number of rows
+    end_early = False
+    if last_row &gt; 0:
+        end_early = True
+
+    print(f&#34;Parsing descriptions in &#39;{in_file}&#39;...&#34;)
+    # Which row we&#39;re on (vis-a-vis the original .csv):
+    cur_row = 0
+    # Number of rows encountered /after/ the header (identical to
+    # cur_row if no header in original). For UID:
+    parse_num = 0
+    for row in reader:
+        cur_row += 1
+
+        if write_headers:
+            if cur_row == header_row:
+                writer.writerow(row + [&#39;parse_UID&#39;] * include_uid + attribs)
+                write_headers = False
+                continue
+            elif cur_row == first_row and (header_row is None or header_row &lt; 1):
+                # In this scenario, write headers just above first-parsed row
+                writer.writerow(
+                    [&#39;&#39; for _ in row] + [&#39;parse_UID&#39;] * include_uid + attribs)
+                write_headers = False
+                # Do not continue yet, because we still need to parse
+                # and write results.
+
+        if include_unparsed \
+                and ((cur_row &lt; first_row) or (cur_row &gt; last_row and end_early)):
+            writer.writerow(row)
+            continue
+
+        elif cur_row &lt; first_row:
+            continue
+
+        elif cur_row &gt; last_row and end_early:
+            break
+
+        parse_num += 1
+
+        # Note: config_col, layout_col, and desc_col are 1-indexed, but
+        # are used to access elements in 0-indexed list, so we subtract
+        # 1 from each here:
+
+        # Get `config` parameters either from the .csv, or from the
+        # kwarg `config` (preference given to config_col)
+        try:
+            config = row[config_col-1]
+        except:
+            pass
+        if config is None:
+            config = &#39;&#39;
+
+        # If user has specified a column for layout, add that layout to
+        # the end of the `config` string.
+        try:
+            config = f&#34;{config},{row[layout_col-1]}&#34;
+        except:
+            pass
+
+        # Get text of description from row.
+        try:
+            desc_text = row[desc_col-1]
+        except:
+            print(
+                f&#34;Warning: Could not access PLSS description at row {cur_row}, &#34;
+                f&#34;column {desc_col}.&#34;)
+            desc_text = &#39;&#39;
+
+        # Parse the description.
+        if tract_level:
+            # If we&#39;re parsing lots/QQ&#39;s in an already-parsed Tract (or
+            # equivalent), do it, and pack the attributes into a nested list:
+            t = Tract(desc=desc_text, trs=&#39;&#39;, config=config, initParseQQ=True)
+            all_Tract_data = [t.to_list(attribs)]
+        else:
+            # Otherwise, parsing a full PLSS description, and the
+            # `.tracts_to_list()` method outputs an already-nested list:
+            d = PLSSDesc(desc_text, config=config, initParseQQ=True)
+            all_Tract_data = d.tracts_to_list(attribs)
+
+        # We will write a row for each Tract object, but if none were found,
+        # we want to write a minimum of 1 row.
+        num_rows_to_write = len(all_Tract_data)
+        if num_rows_to_write == 0:
+            num_rows_to_write = 1
+
+        for i in range(num_rows_to_write):
+            if i == 0 or copy_data:
+                # Copy the original row data
+                to_write = row.copy()
+            else:
+                # Blank data for inserted rows, if `copy_data` was not requested
+                to_write = [&#39;&#39; for _ in row]
+
+            if include_uid:
+                # Generate UID in the format &#39;0032.a-j&#39;:
+                uid = (
+                    f&#34;{str(parse_num).rjust(4, &#39;0&#39;)}&#34;
+                    f&#34;.{num_to_alpha(i + 1).lower()}&#34;
+                    f&#34;-{num_to_alpha(num_rows_to_write).lower()}&#34;
+                )
+                to_write.append(uid)
+
+            try:
+                # Add the parsed Tract Data
+                for val in all_Tract_data[i]:
+                    if isinstance(val, (list, tuple)) and unpack:
+                        # If requested, `unpack` and join lists/tuples
+                        # before writing:
+                        to_write.append(&#39;, &#39;.join(flatten(val)))
+                    else:
+                        to_write.append(val)
+            except:
+                # If no data for this Tract (e.g., no tracts identified
+                # in the PLSSDesc object), fill with dummy data.
+                to_write.extend([f&#34;{attrib}: n/a&#34; for attrib in attribs])
+
+            writer.writerow(to_write)
+
+        # Write number of tracts to separate csv if requested with
+        # `num_tracts=True`:
+        if num_tracts:
+            num_writer.writerow([num_rows_to_write])
+
+    print(
+        f&#34;Done. Results written to &#39;{out_file}&#39;. &#34;
+        f&#34;Be sure to examine results for fidelity.&#34;
+    )
+    return 0</code></pre>
+</details>
+</dd>
+</dl>
+</section>
+<section>
+</section>
+</article>
+<nav id="sidebar">
+<h1>Index</h1>
+<div class="toc">
+<ul></ul>
+</div>
+<ul id="index">
+<li><h3>Super-module</h3>
+<ul>
+<li><code><a title="pyTRS.csv_suite" href="index.html">pyTRS.csv_suite</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-functions">Functions</a></h3>
+<ul class="">
+<li><code><a title="pyTRS.csv_suite.pyTRS_parse_csv.parse_csv" href="#pyTRS.csv_suite.pyTRS_parse_csv.parse_csv">parse_csv</a></code></li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p>Generated by <a href="https://pdoc3.github.io/pdoc"><cite>pdoc</cite> 0.9.2</a>.</p>
+</footer>
+</body>
+</html>

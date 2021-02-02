@@ -1,0 +1,1156 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.9.2" />
+<title>pyTRS.csv_suite.pyTRS_parse_csv_gui API documentation</title>
+<meta name="description" content="A GUI for the csv_suite of the pyTRS library." />
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
+<link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
+<style>:root{--highlight-color:#fe9}.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}h1:target,h2:target,h3:target,h4:target,h5:target,h6:target{background:var(--highlight-color);padding:.2em 0}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}dt:target .name{background:var(--highlight-color)}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}td{padding:0 .5em}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/highlight.min.js" integrity="sha256-Uv3H6lx7dJmRfRvH8TH6kJD1TSK1aFcwgx+mdg3epi8=" crossorigin></script>
+<script>window.addEventListener('DOMContentLoaded', () => hljs.initHighlighting())</script>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>pyTRS.csv_suite.pyTRS_parse_csv_gui</code></h1>
+</header>
+<section id="section-intro">
+<p>A GUI for the csv_suite of the pyTRS library.</p>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python"># Copyright (c) 2020, James P. Imes, all rights reserved.
+
+&#34;&#34;&#34;A GUI for the csv_suite of the pyTRS library.&#34;&#34;&#34;
+
+import tkinter as tk
+from tkinter import messagebox, filedialog
+from tkinter.ttk import Checkbutton
+
+from pyTRS.interface_tools import PromptConfig, PromptAttrib
+from pyTRS.csv_suite.pyTRS_parse_csv import parse_csv
+from pyTRS import version as pyTRS_version
+from pyTRS import _constants as pyTRS_constants
+
+
+__version__ = &#39;0.3.0&#39;
+__versionDate__ = &#39;9/24/2020&#39;
+__author__ = &#39;James P. Imes&#39;
+__email__ = &#39;jamesimes@gmail.com&#39;
+
+def version():
+    return f&#34;v{__version__} - {__versionDate__}&#34;
+
+
+class AppWindow(tk.Tk):
+    
+    SPLASH_INFO = (
+        f&#34;pyTRS CSV Parser {version()}\n&#34;
+        f&#34;Built on pyTRS {pyTRS_version()}.\n&#34;
+        &#34;Copyright (c) 2020, James P. Imes, all rights reserved.\n\n&#34;
+        f&#34;Contact: &lt;{__email__}&gt;\n\n&#34;
+        &#34;A program for parsing PLSS land descriptions (&#39;legal &#34;
+        &#34;descriptions&#39;) in a .csv file into their component parts.\n\n&#34;
+        &#34;Be sure to read the disclaimer prior to using this program.\n\n&#34;
+        &#34;Read disclaimer now?&#34;
+    )
+
+    # A dict of parsing program options -- i.e. for kwargs in `parse_csv()`.
+    OUTPUT_PARAM_DICT = {
+        &#39;tract_level&#39;: [
+            &#34;Tract parsing (TRS and desc. block have already been separated)&#34;, 0
+            ],
+        &#39;write_headers&#39;: [&#34;Write headers to first row&#34;, 1],
+        &#39;include_uid&#39;: [&#34;Generate Unique ID (UID) numbers for each parsed row&#34;, 1],
+        &#39;copy_data&#39;: [&#34;Copy existing data into newly inserted rows&#34;, 0],
+        &#39;include_unparsed&#39;: [&#34;Also include any unparsed rows&#34;, 1],
+        &#39;unpack&#39;: [&#34;Unpack lists&#34;, 1]
+        }
+
+    def __init__(self):
+        tk.Tk.__init__(self)
+        self.title(&#39;pyTRS CSV Parser&#39;)
+        
+        self.config_text = tk.StringVar()
+        self.config_text.set(&#39;&#39;)
+        
+        self.in_file = tk.StringVar()
+        self.in_file.set(&#39;&#39;)
+
+        # Show the start-up messagebox
+        self.about()
+
+        self.at_frame = PromptAttrib(
+            self, target_attrib_var=None, show_ok=False, show_cancel=False)
+        self.at_frame.grid(row=0, column=1, sticky=&#39;n&#39;, padx=5, pady=5)
+    
+        io_param_frame = tk.Frame(self)
+        io_param_frame.grid(row=0, column=2, sticky=&#39;n&#39;, padx=5, pady=5)
+    
+        io_btn_frame = tk.Frame(io_param_frame)
+        io_btn_frame.grid(row=10, column=1, sticky=&#39;s&#39;, padx=5, pady=5)
+
+        # I/O parameters
+        cur_row = 0
+        try:
+            io_lbl = tk.Label(
+                io_param_frame, text=&#34;Input / Output .csv Options&#34;,
+                font=&#39;&#34;Arial Black&#34;&#39;)
+        except:
+            io_lbl = tk.Label(
+                io_param_frame, text=&#34;Input / Output .csv Options&#34;)
+        io_lbl.grid(row=cur_row, column=1)
+
+        about_btn = tk.Button(
+            io_param_frame, text=&#39;?&#39;, padx=5, command=self.about)
+        about_btn.grid(row=cur_row, column=1, sticky=&#39;e&#39;)
+
+        cur_row += 1
+
+        # Generate a new IntVar for each available IO option, set its
+        # value to the default value per OUTPUT_PARAM_DICT, store it as
+        # an instance variable, and also set it to the io_param_dict.
+        # Finally, create a checkbutton for that parameter.
+        # So for attribute &#39;tract_level&#39;:
+        #   -&gt; self.tract_levelVar --&gt; a tk.IntVar with initial value 0
+        #   -&gt; self.io_param_dict[&#39;tract_level&#39;] --&gt; self.tract_levelVar
+        #   -&gt; &lt;create a checkbutton for tract_level&gt;
+        self.io_param_dict = {}
+        for param in self.OUTPUT_PARAM_DICT:
+            new_var = tk.IntVar()
+            new_var.set(self.OUTPUT_PARAM_DICT[param][1])
+            setattr(self, param + &#39;Var&#39;, new_var)
+            self.io_param_dict[param] = new_var
+            cb = Checkbutton(
+                io_param_frame, text=self.OUTPUT_PARAM_DICT[param][0],
+                var=self.io_param_dict[param])
+            cb.grid(row=cur_row, column=1, sticky=&#39;w&#39;, pady=2)
+            cur_row += 1
+
+        choose_file_button = tk.Button(
+            io_btn_frame, text=&#39;Select File&#39;, height=2, width=10,
+            command=self.choose_file_clicked)
+        choose_file_button.grid(row=1, column=1, pady=10)
+
+        desc_colPrompt = tk.Label(
+            io_btn_frame, text=&#39;Column with text to parse:&#39;)
+        desc_colPrompt.grid(row=4, column=1, sticky=&#39;e&#39;)
+        self.desc_col_entry = tk.Entry(io_btn_frame, width=5)
+        self.desc_col_entry.grid(row=4, column=2, sticky=&#39;w&#39;)
+
+        header_rowPrompt = tk.Label(
+            io_btn_frame, text=&#39;Header row (leave blank if none):&#39;)
+        header_rowPrompt.grid(row=5, column=1, sticky=&#39;e&#39;)
+        self.header_row_entry = tk.Entry(io_btn_frame, width=5)
+        self.header_row_entry.grid(row=5, column=2, sticky=&#39;w&#39;)
+
+        first_rowPrompt = tk.Label(io_btn_frame, text=&#39;First row to parse:&#39;)
+        first_rowPrompt.grid(row=6, column=1, sticky=&#39;e&#39;)
+        self.first_row_entry = tk.Entry(io_btn_frame, width=5)
+        self.first_row_entry.grid(row=6, column=2, sticky=&#39;w&#39;)
+
+        last_rowPrompt = tk.Label(
+            io_btn_frame, text=&#39;Last row to parse (leave blank for all):&#39;)
+        last_rowPrompt.grid(row=7, column=1, sticky=&#39;e&#39;)
+        self.last_row_entry = tk.Entry(io_btn_frame, width=5)
+        self.last_row_entry.grid(row=7, column=2, sticky=&#39;w&#39;)
+
+        cf_button = tk.Button(
+            io_btn_frame, text=&#39;Choose Config Parameters&#39;, height=2,
+            command=self.cf_btn_clicked)
+        cf_button.grid(row=20, column=1, pady=10)
+
+        go_btn = tk.Button(
+            io_btn_frame, text=&#39;Parse!&#39;, height=2, width=10, command=self.go)
+        go_btn.grid(row=20, column=2, sticky=&#39;e&#39;, pady=10)
+
+    def go(self):
+        &#34;&#34;&#34;
+        Pull the variables from all over, prompt for save-to filepath,
+        and run it.
+        &#34;&#34;&#34;
+        in_file = self.in_file.get()
+
+        # Ensure `in_file` points to a .csv file.
+        if not in_file.lower().endswith(&#39;csv&#39;):
+            messagebox.showerror(
+                &#39;Error&#39;, &#34;Choose an input file with &#39;.csv&#39; extension&#34;)
+            return
+
+        # Prompt for save-to filepath, with default filename modified
+        # from in_file.
+        def_file_name = f&#34;{in_file.split(&#39;/&#39;)[-1][:-4]}_pyTRS_parsed.csv&#34;
+        out_file = filedialog.asksaveasfilename(
+            initialdir=in_file, initialfile=def_file_name,
+            filetypes=[(&#34;CSV Files&#34;, &#34;*.csv&#34;)], title=&#39;Save to...&#39;)
+        # Ensure `out_file` points to a .csv file.
+        if out_file == &#39;&#39;:
+            return
+
+        elif not out_file.lower().endswith(&#39;csv&#39;):
+            messagebox.showerror(
+                &#39;Error&#39;, &#34;Choose a filename with &#39;.csv&#39; extension&#34;)
+            return
+
+        # Compile the attribs
+        attribs = self.at_frame.compile_attributes()
+
+        # Compile all of the input/output parameters
+        config_text = self.config_text.get()
+        write_headers = bool(self.write_headersVar.get())
+        unpack = bool(self.unpackVar.get())
+        copy_data = bool(self.copy_dataVar.get())
+        tract_level = bool(self.tract_levelVar.get())
+        include_uid = bool(self.include_uidVar.get())
+        include_unparsed = bool(self.include_unparsedVar.get())
+
+        # Get desc_col; whether entered as number or alpha, convert to int.
+        desc_col = self.desc_col_entry.get()
+        if not desc_col:
+            messagebox.showerror(
+                &#39;Error!&#39;,
+                &#39;Fill in the column containing descriptions to be parsed.&#39;)
+            return
+        elif desc_col.isalpha() and len(desc_col) &lt;= 2:
+            desc_col = int(alpha_to_num(desc_col))
+        elif desc_col.isnumeric() and len(desc_col) &lt;= 2:
+            desc_col = int(desc_col)
+
+        first_row = self.first_row_entry.get()
+        if not first_row:
+            messagebox.showerror(
+                &#39;Error!&#39;,
+                &#39;Specify the first row containing descriptions to be parsed.&#39;)
+            return
+        try:
+            first_row = int(first_row)
+        except:
+            messagebox.showerror(
+                &#39;Error!&#39;,
+                &#39;Enter a number for the first row containing descriptions to &#39;
+                &#39;be parsed.&#39;)
+            return
+
+        last_row = self.last_row_entry.get()
+        if last_row:
+            try:
+                last_row = int(last_row)
+            except:
+                messagebox.showerror(
+                    &#39;Error!&#39;,
+                    &#39;If you only want to parse some rows, enter a number for &#39;
+                    &#39;the last row containing descriptions to be parsed.&#39;)
+                return
+        else:
+            last_row = -1
+
+        header_row = self.header_row_entry.get()
+        if header_row:
+            try:
+                header_row = int(header_row)
+            except:
+                messagebox.showerror(
+                    &#39;Error!&#39;,
+                    &#39;To specify the row containing headers in the input &#39;
+                    &#39;.csv file, enter a number for that row.&#39;)
+                return
+        else:
+            header_row = None
+
+        # Run the parser
+        success_check = 1  # Set to 0 on success.
+        try:
+            success_check = parse_csv(
+                in_file=in_file, desc_col=desc_col, attribs=attribs,
+                out_file=out_file, first_row=first_row, last_row=last_row,
+                header_row=header_row, config=config_text,
+                write_headers=write_headers, unpack=unpack,
+                copy_data=copy_data, tract_level=tract_level,
+                include_uid=include_uid, num_tracts=False,
+                include_unparsed=include_unparsed)
+        except:
+            messagebox.showerror(
+                &#39;Error!&#39;,
+                f&#34;Unknown error. Possibly could not open file at &#39;{in_file}&#39; &#34;
+                f&#34;or could not save to &#39;{out_file}&#39;. Ensure you have &#34;
+                f&#34;read/write access to the directory and try again.&#34;)
+
+        if success_check == 0:
+            if messagebox.askyesno(
+                    &#39;Success!&#39;,
+                    f&#34;File successfully parsed and saved to:\n&#39;{out_file}&#39;\n\n&#34;
+                    &#34;Be sure to examine results for accuracy!\n\n&#34;
+                    &#34;Open file now?&#34;):
+                import os
+                os.startfile(out_file)
+
+    def choose_file_clicked(self):
+        in_file = filedialog.askopenfilename(
+            initialdir=&#39;/&#39;,
+            filetypes=[(&#34;CSV Files&#34;, &#34;*.csv&#34;)],
+            title=&#39;CSV to parse...&#39;
+        )
+        self.in_file.set(in_file)
+        self.title(f&#34;pyTRS CSV Parser - {in_file}&#34;)
+        if in_file:
+            self.deduce_desc_column(in_file)
+
+    def cf_btn_clicked(self):
+        &#34;&#34;&#34;
+        Config button was clicked; launch popup window to get Config
+        parameters from user (results are stored in StringVar
+        `self.config_text`).
+        &#34;&#34;&#34;
+        try:
+            self.config_popup_tk.destroy()
+        except:
+            pass
+
+        self.config_popup_tk = tk.Toplevel()
+        self.config_popup_tk.title(&#39;Set pyTRS Config Parameters&#39;)
+        pc = PromptConfig(
+            master=self.config_popup_tk, target_config_var=self.config_text,
+            parameters=[&#39;cleanQQ&#39;, &#39;includeLotDivs&#39;, &#39;requireColon&#39;, &#39;ocrScrub&#39;,
+                        &#39;segment&#39;, &#39;layout&#39;],
+            show_save=False, show_cancel=False, exit_after_ok=True)
+        pc.pack(padx=20, pady=10)
+
+
+    def deduce_desc_column(self, in_file):
+        self.desc_col_entry.delete(0, &#39;end&#39;)
+        self.first_row_entry.delete(0, &#39;end&#39;)
+        self.header_row_entry.delete(0, &#39;end&#39;)
+
+        import csv
+        from pyTRS.parser import find_sec, find_tr
+        try:
+            csv_file = open(in_file, &#39;r&#39;)
+        except:
+            messagebox.showerror(
+                &#39;Error!&#39;, f&#34;Could not open file:\n &#39;{in_file}&#39;&#34;)
+            return
+
+        reader = csv.reader(csv_file)
+        rowsToTry = 10
+        colMatch = None
+        rowMatch = None
+        row_num = 0
+        for row in reader:
+            if row_num &gt; rowsToTry:
+                break
+            for col_num in range(len(row)):
+                text = row[col_num]
+                if text is None:
+                    continue
+
+                elif len(find_sec(text)) &gt; 0 and len(find_tr(text)) &gt; 0:
+                    # If the cell contains &gt; 0 sections and &gt; 0 T&amp;R, assume it&#39;s
+                    # our first match. Add 1 to convert row/column nums from
+                    # 0-indexed to 1-indexed:
+                    rowMatch = row_num + 1
+                    colMatch = col_num + 1
+
+                    break
+            if rowMatch:
+                break
+            row_num += 1
+
+        if rowMatch:
+            self.desc_col_entry.insert(&#39;end&#39;, num_to_alpha(colMatch))
+            self.first_row_entry.insert(&#39;end&#39;, str(rowMatch))
+            if rowMatch &gt; 1:
+                self.header_row_entry.insert(&#39;end&#39;, str(rowMatch - 1))
+
+        csv_file.close()
+
+    def about(self):
+        confirm = messagebox.askquestion(&#39;pyTRS CSV Parser&#39;, self.SPLASH_INFO)
+        if confirm == &#39;yes&#39;:
+            messagebox.showinfo(
+                &#39;pyTRS Disclaimer&#39;, pyTRS_constants.__disclaimer__)
+
+
+def launch_app():
+    app = AppWindow()
+    app.mainloop()
+
+
+def alpha_to_num(alpha):
+    &#34;&#34;&#34;Convert an alpha into an integer (&#39;A&#39; --&gt; 1, &#39;Z&#39; --&gt; 26,
+    &#39;AA&#39; --&gt; 27) -- from A through ZZ.&#34;&#34;&#34;
+    val = 0
+    if len(alpha) &gt; 2:
+        return None
+    if len(alpha) == 2:
+        char = alpha[0]
+        val = ((ord(char.upper()) - ord(&#39;A&#39;)) + 1) * 26
+    char = alpha[-1]
+    val += ((ord(char.upper()) - ord(&#39;A&#39;)) + 1)
+    return val
+
+
+def num_to_alpha(num):
+    &#34;&#34;&#34;Convert a number (integer) into an alpha (1 --&gt; &#39;A&#39;,
+    26 --&gt; &#39;Z&#39;, 27 -- &gt; &#39;AA&#39;) -- from A through ZZ.&#34;&#34;&#34;
+    return ((num - 1) // 26 &gt; 0) * chr((num - 1) // 26 + ord(&#39;A&#39;) - 1) \
+        + chr((num - 1) % 26 + ord(&#39;A&#39;))
+
+
+if __name__ == &#39;__main__&#39;:
+    launch_app()</code></pre>
+</details>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-functions">Functions</h2>
+<dl>
+<dt id="pyTRS.csv_suite.pyTRS_parse_csv_gui.alpha_to_num"><code class="name flex">
+<span>def <span class="ident">alpha_to_num</span></span>(<span>alpha)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Convert an alpha into an integer ('A' &ndash;&gt; 1, 'Z' &ndash;&gt; 26,
+'AA' &ndash;&gt; 27) &ndash; from A through ZZ.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def alpha_to_num(alpha):
+    &#34;&#34;&#34;Convert an alpha into an integer (&#39;A&#39; --&gt; 1, &#39;Z&#39; --&gt; 26,
+    &#39;AA&#39; --&gt; 27) -- from A through ZZ.&#34;&#34;&#34;
+    val = 0
+    if len(alpha) &gt; 2:
+        return None
+    if len(alpha) == 2:
+        char = alpha[0]
+        val = ((ord(char.upper()) - ord(&#39;A&#39;)) + 1) * 26
+    char = alpha[-1]
+    val += ((ord(char.upper()) - ord(&#39;A&#39;)) + 1)
+    return val</code></pre>
+</details>
+</dd>
+<dt id="pyTRS.csv_suite.pyTRS_parse_csv_gui.launch_app"><code class="name flex">
+<span>def <span class="ident">launch_app</span></span>(<span>)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def launch_app():
+    app = AppWindow()
+    app.mainloop()</code></pre>
+</details>
+</dd>
+<dt id="pyTRS.csv_suite.pyTRS_parse_csv_gui.num_to_alpha"><code class="name flex">
+<span>def <span class="ident">num_to_alpha</span></span>(<span>num)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Convert a number (integer) into an alpha (1 &ndash;&gt; 'A',
+26 &ndash;&gt; 'Z', 27 &ndash; &gt; 'AA') &ndash; from A through ZZ.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def num_to_alpha(num):
+    &#34;&#34;&#34;Convert a number (integer) into an alpha (1 --&gt; &#39;A&#39;,
+    26 --&gt; &#39;Z&#39;, 27 -- &gt; &#39;AA&#39;) -- from A through ZZ.&#34;&#34;&#34;
+    return ((num - 1) // 26 &gt; 0) * chr((num - 1) // 26 + ord(&#39;A&#39;) - 1) \
+        + chr((num - 1) % 26 + ord(&#39;A&#39;))</code></pre>
+</details>
+</dd>
+<dt id="pyTRS.csv_suite.pyTRS_parse_csv_gui.version"><code class="name flex">
+<span>def <span class="ident">version</span></span>(<span>)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def version():
+    return f&#34;v{__version__} - {__versionDate__}&#34;</code></pre>
+</details>
+</dd>
+</dl>
+</section>
+<section>
+<h2 class="section-title" id="header-classes">Classes</h2>
+<dl>
+<dt id="pyTRS.csv_suite.pyTRS_parse_csv_gui.AppWindow"><code class="flex name class">
+<span>class <span class="ident">AppWindow</span></span>
+</code></dt>
+<dd>
+<div class="desc"><p>Toplevel widget of Tk which represents mostly the main window
+of an application. It has an associated Tcl interpreter.</p>
+<p>Return a new Toplevel widget on screen SCREENNAME. A new Tcl interpreter will
+be created. BASENAME will be used for the identification of the profile file (see
+readprofile).
+It is constructed from sys.argv[0] without extensions if None is given. CLASSNAME
+is the name of the widget class.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class AppWindow(tk.Tk):
+    
+    SPLASH_INFO = (
+        f&#34;pyTRS CSV Parser {version()}\n&#34;
+        f&#34;Built on pyTRS {pyTRS_version()}.\n&#34;
+        &#34;Copyright (c) 2020, James P. Imes, all rights reserved.\n\n&#34;
+        f&#34;Contact: &lt;{__email__}&gt;\n\n&#34;
+        &#34;A program for parsing PLSS land descriptions (&#39;legal &#34;
+        &#34;descriptions&#39;) in a .csv file into their component parts.\n\n&#34;
+        &#34;Be sure to read the disclaimer prior to using this program.\n\n&#34;
+        &#34;Read disclaimer now?&#34;
+    )
+
+    # A dict of parsing program options -- i.e. for kwargs in `parse_csv()`.
+    OUTPUT_PARAM_DICT = {
+        &#39;tract_level&#39;: [
+            &#34;Tract parsing (TRS and desc. block have already been separated)&#34;, 0
+            ],
+        &#39;write_headers&#39;: [&#34;Write headers to first row&#34;, 1],
+        &#39;include_uid&#39;: [&#34;Generate Unique ID (UID) numbers for each parsed row&#34;, 1],
+        &#39;copy_data&#39;: [&#34;Copy existing data into newly inserted rows&#34;, 0],
+        &#39;include_unparsed&#39;: [&#34;Also include any unparsed rows&#34;, 1],
+        &#39;unpack&#39;: [&#34;Unpack lists&#34;, 1]
+        }
+
+    def __init__(self):
+        tk.Tk.__init__(self)
+        self.title(&#39;pyTRS CSV Parser&#39;)
+        
+        self.config_text = tk.StringVar()
+        self.config_text.set(&#39;&#39;)
+        
+        self.in_file = tk.StringVar()
+        self.in_file.set(&#39;&#39;)
+
+        # Show the start-up messagebox
+        self.about()
+
+        self.at_frame = PromptAttrib(
+            self, target_attrib_var=None, show_ok=False, show_cancel=False)
+        self.at_frame.grid(row=0, column=1, sticky=&#39;n&#39;, padx=5, pady=5)
+    
+        io_param_frame = tk.Frame(self)
+        io_param_frame.grid(row=0, column=2, sticky=&#39;n&#39;, padx=5, pady=5)
+    
+        io_btn_frame = tk.Frame(io_param_frame)
+        io_btn_frame.grid(row=10, column=1, sticky=&#39;s&#39;, padx=5, pady=5)
+
+        # I/O parameters
+        cur_row = 0
+        try:
+            io_lbl = tk.Label(
+                io_param_frame, text=&#34;Input / Output .csv Options&#34;,
+                font=&#39;&#34;Arial Black&#34;&#39;)
+        except:
+            io_lbl = tk.Label(
+                io_param_frame, text=&#34;Input / Output .csv Options&#34;)
+        io_lbl.grid(row=cur_row, column=1)
+
+        about_btn = tk.Button(
+            io_param_frame, text=&#39;?&#39;, padx=5, command=self.about)
+        about_btn.grid(row=cur_row, column=1, sticky=&#39;e&#39;)
+
+        cur_row += 1
+
+        # Generate a new IntVar for each available IO option, set its
+        # value to the default value per OUTPUT_PARAM_DICT, store it as
+        # an instance variable, and also set it to the io_param_dict.
+        # Finally, create a checkbutton for that parameter.
+        # So for attribute &#39;tract_level&#39;:
+        #   -&gt; self.tract_levelVar --&gt; a tk.IntVar with initial value 0
+        #   -&gt; self.io_param_dict[&#39;tract_level&#39;] --&gt; self.tract_levelVar
+        #   -&gt; &lt;create a checkbutton for tract_level&gt;
+        self.io_param_dict = {}
+        for param in self.OUTPUT_PARAM_DICT:
+            new_var = tk.IntVar()
+            new_var.set(self.OUTPUT_PARAM_DICT[param][1])
+            setattr(self, param + &#39;Var&#39;, new_var)
+            self.io_param_dict[param] = new_var
+            cb = Checkbutton(
+                io_param_frame, text=self.OUTPUT_PARAM_DICT[param][0],
+                var=self.io_param_dict[param])
+            cb.grid(row=cur_row, column=1, sticky=&#39;w&#39;, pady=2)
+            cur_row += 1
+
+        choose_file_button = tk.Button(
+            io_btn_frame, text=&#39;Select File&#39;, height=2, width=10,
+            command=self.choose_file_clicked)
+        choose_file_button.grid(row=1, column=1, pady=10)
+
+        desc_colPrompt = tk.Label(
+            io_btn_frame, text=&#39;Column with text to parse:&#39;)
+        desc_colPrompt.grid(row=4, column=1, sticky=&#39;e&#39;)
+        self.desc_col_entry = tk.Entry(io_btn_frame, width=5)
+        self.desc_col_entry.grid(row=4, column=2, sticky=&#39;w&#39;)
+
+        header_rowPrompt = tk.Label(
+            io_btn_frame, text=&#39;Header row (leave blank if none):&#39;)
+        header_rowPrompt.grid(row=5, column=1, sticky=&#39;e&#39;)
+        self.header_row_entry = tk.Entry(io_btn_frame, width=5)
+        self.header_row_entry.grid(row=5, column=2, sticky=&#39;w&#39;)
+
+        first_rowPrompt = tk.Label(io_btn_frame, text=&#39;First row to parse:&#39;)
+        first_rowPrompt.grid(row=6, column=1, sticky=&#39;e&#39;)
+        self.first_row_entry = tk.Entry(io_btn_frame, width=5)
+        self.first_row_entry.grid(row=6, column=2, sticky=&#39;w&#39;)
+
+        last_rowPrompt = tk.Label(
+            io_btn_frame, text=&#39;Last row to parse (leave blank for all):&#39;)
+        last_rowPrompt.grid(row=7, column=1, sticky=&#39;e&#39;)
+        self.last_row_entry = tk.Entry(io_btn_frame, width=5)
+        self.last_row_entry.grid(row=7, column=2, sticky=&#39;w&#39;)
+
+        cf_button = tk.Button(
+            io_btn_frame, text=&#39;Choose Config Parameters&#39;, height=2,
+            command=self.cf_btn_clicked)
+        cf_button.grid(row=20, column=1, pady=10)
+
+        go_btn = tk.Button(
+            io_btn_frame, text=&#39;Parse!&#39;, height=2, width=10, command=self.go)
+        go_btn.grid(row=20, column=2, sticky=&#39;e&#39;, pady=10)
+
+    def go(self):
+        &#34;&#34;&#34;
+        Pull the variables from all over, prompt for save-to filepath,
+        and run it.
+        &#34;&#34;&#34;
+        in_file = self.in_file.get()
+
+        # Ensure `in_file` points to a .csv file.
+        if not in_file.lower().endswith(&#39;csv&#39;):
+            messagebox.showerror(
+                &#39;Error&#39;, &#34;Choose an input file with &#39;.csv&#39; extension&#34;)
+            return
+
+        # Prompt for save-to filepath, with default filename modified
+        # from in_file.
+        def_file_name = f&#34;{in_file.split(&#39;/&#39;)[-1][:-4]}_pyTRS_parsed.csv&#34;
+        out_file = filedialog.asksaveasfilename(
+            initialdir=in_file, initialfile=def_file_name,
+            filetypes=[(&#34;CSV Files&#34;, &#34;*.csv&#34;)], title=&#39;Save to...&#39;)
+        # Ensure `out_file` points to a .csv file.
+        if out_file == &#39;&#39;:
+            return
+
+        elif not out_file.lower().endswith(&#39;csv&#39;):
+            messagebox.showerror(
+                &#39;Error&#39;, &#34;Choose a filename with &#39;.csv&#39; extension&#34;)
+            return
+
+        # Compile the attribs
+        attribs = self.at_frame.compile_attributes()
+
+        # Compile all of the input/output parameters
+        config_text = self.config_text.get()
+        write_headers = bool(self.write_headersVar.get())
+        unpack = bool(self.unpackVar.get())
+        copy_data = bool(self.copy_dataVar.get())
+        tract_level = bool(self.tract_levelVar.get())
+        include_uid = bool(self.include_uidVar.get())
+        include_unparsed = bool(self.include_unparsedVar.get())
+
+        # Get desc_col; whether entered as number or alpha, convert to int.
+        desc_col = self.desc_col_entry.get()
+        if not desc_col:
+            messagebox.showerror(
+                &#39;Error!&#39;,
+                &#39;Fill in the column containing descriptions to be parsed.&#39;)
+            return
+        elif desc_col.isalpha() and len(desc_col) &lt;= 2:
+            desc_col = int(alpha_to_num(desc_col))
+        elif desc_col.isnumeric() and len(desc_col) &lt;= 2:
+            desc_col = int(desc_col)
+
+        first_row = self.first_row_entry.get()
+        if not first_row:
+            messagebox.showerror(
+                &#39;Error!&#39;,
+                &#39;Specify the first row containing descriptions to be parsed.&#39;)
+            return
+        try:
+            first_row = int(first_row)
+        except:
+            messagebox.showerror(
+                &#39;Error!&#39;,
+                &#39;Enter a number for the first row containing descriptions to &#39;
+                &#39;be parsed.&#39;)
+            return
+
+        last_row = self.last_row_entry.get()
+        if last_row:
+            try:
+                last_row = int(last_row)
+            except:
+                messagebox.showerror(
+                    &#39;Error!&#39;,
+                    &#39;If you only want to parse some rows, enter a number for &#39;
+                    &#39;the last row containing descriptions to be parsed.&#39;)
+                return
+        else:
+            last_row = -1
+
+        header_row = self.header_row_entry.get()
+        if header_row:
+            try:
+                header_row = int(header_row)
+            except:
+                messagebox.showerror(
+                    &#39;Error!&#39;,
+                    &#39;To specify the row containing headers in the input &#39;
+                    &#39;.csv file, enter a number for that row.&#39;)
+                return
+        else:
+            header_row = None
+
+        # Run the parser
+        success_check = 1  # Set to 0 on success.
+        try:
+            success_check = parse_csv(
+                in_file=in_file, desc_col=desc_col, attribs=attribs,
+                out_file=out_file, first_row=first_row, last_row=last_row,
+                header_row=header_row, config=config_text,
+                write_headers=write_headers, unpack=unpack,
+                copy_data=copy_data, tract_level=tract_level,
+                include_uid=include_uid, num_tracts=False,
+                include_unparsed=include_unparsed)
+        except:
+            messagebox.showerror(
+                &#39;Error!&#39;,
+                f&#34;Unknown error. Possibly could not open file at &#39;{in_file}&#39; &#34;
+                f&#34;or could not save to &#39;{out_file}&#39;. Ensure you have &#34;
+                f&#34;read/write access to the directory and try again.&#34;)
+
+        if success_check == 0:
+            if messagebox.askyesno(
+                    &#39;Success!&#39;,
+                    f&#34;File successfully parsed and saved to:\n&#39;{out_file}&#39;\n\n&#34;
+                    &#34;Be sure to examine results for accuracy!\n\n&#34;
+                    &#34;Open file now?&#34;):
+                import os
+                os.startfile(out_file)
+
+    def choose_file_clicked(self):
+        in_file = filedialog.askopenfilename(
+            initialdir=&#39;/&#39;,
+            filetypes=[(&#34;CSV Files&#34;, &#34;*.csv&#34;)],
+            title=&#39;CSV to parse...&#39;
+        )
+        self.in_file.set(in_file)
+        self.title(f&#34;pyTRS CSV Parser - {in_file}&#34;)
+        if in_file:
+            self.deduce_desc_column(in_file)
+
+    def cf_btn_clicked(self):
+        &#34;&#34;&#34;
+        Config button was clicked; launch popup window to get Config
+        parameters from user (results are stored in StringVar
+        `self.config_text`).
+        &#34;&#34;&#34;
+        try:
+            self.config_popup_tk.destroy()
+        except:
+            pass
+
+        self.config_popup_tk = tk.Toplevel()
+        self.config_popup_tk.title(&#39;Set pyTRS Config Parameters&#39;)
+        pc = PromptConfig(
+            master=self.config_popup_tk, target_config_var=self.config_text,
+            parameters=[&#39;cleanQQ&#39;, &#39;includeLotDivs&#39;, &#39;requireColon&#39;, &#39;ocrScrub&#39;,
+                        &#39;segment&#39;, &#39;layout&#39;],
+            show_save=False, show_cancel=False, exit_after_ok=True)
+        pc.pack(padx=20, pady=10)
+
+
+    def deduce_desc_column(self, in_file):
+        self.desc_col_entry.delete(0, &#39;end&#39;)
+        self.first_row_entry.delete(0, &#39;end&#39;)
+        self.header_row_entry.delete(0, &#39;end&#39;)
+
+        import csv
+        from pyTRS.parser import find_sec, find_tr
+        try:
+            csv_file = open(in_file, &#39;r&#39;)
+        except:
+            messagebox.showerror(
+                &#39;Error!&#39;, f&#34;Could not open file:\n &#39;{in_file}&#39;&#34;)
+            return
+
+        reader = csv.reader(csv_file)
+        rowsToTry = 10
+        colMatch = None
+        rowMatch = None
+        row_num = 0
+        for row in reader:
+            if row_num &gt; rowsToTry:
+                break
+            for col_num in range(len(row)):
+                text = row[col_num]
+                if text is None:
+                    continue
+
+                elif len(find_sec(text)) &gt; 0 and len(find_tr(text)) &gt; 0:
+                    # If the cell contains &gt; 0 sections and &gt; 0 T&amp;R, assume it&#39;s
+                    # our first match. Add 1 to convert row/column nums from
+                    # 0-indexed to 1-indexed:
+                    rowMatch = row_num + 1
+                    colMatch = col_num + 1
+
+                    break
+            if rowMatch:
+                break
+            row_num += 1
+
+        if rowMatch:
+            self.desc_col_entry.insert(&#39;end&#39;, num_to_alpha(colMatch))
+            self.first_row_entry.insert(&#39;end&#39;, str(rowMatch))
+            if rowMatch &gt; 1:
+                self.header_row_entry.insert(&#39;end&#39;, str(rowMatch - 1))
+
+        csv_file.close()
+
+    def about(self):
+        confirm = messagebox.askquestion(&#39;pyTRS CSV Parser&#39;, self.SPLASH_INFO)
+        if confirm == &#39;yes&#39;:
+            messagebox.showinfo(
+                &#39;pyTRS Disclaimer&#39;, pyTRS_constants.__disclaimer__)</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>tkinter.Tk</li>
+<li>tkinter.Misc</li>
+<li>tkinter.Wm</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="pyTRS.csv_suite.pyTRS_parse_csv_gui.AppWindow.OUTPUT_PARAM_DICT"><code class="name">var <span class="ident">OUTPUT_PARAM_DICT</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="pyTRS.csv_suite.pyTRS_parse_csv_gui.AppWindow.SPLASH_INFO"><code class="name">var <span class="ident">SPLASH_INFO</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+<h3>Methods</h3>
+<dl>
+<dt id="pyTRS.csv_suite.pyTRS_parse_csv_gui.AppWindow.about"><code class="name flex">
+<span>def <span class="ident">about</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def about(self):
+    confirm = messagebox.askquestion(&#39;pyTRS CSV Parser&#39;, self.SPLASH_INFO)
+    if confirm == &#39;yes&#39;:
+        messagebox.showinfo(
+            &#39;pyTRS Disclaimer&#39;, pyTRS_constants.__disclaimer__)</code></pre>
+</details>
+</dd>
+<dt id="pyTRS.csv_suite.pyTRS_parse_csv_gui.AppWindow.cf_btn_clicked"><code class="name flex">
+<span>def <span class="ident">cf_btn_clicked</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Config button was clicked; launch popup window to get Config
+parameters from user (results are stored in StringVar
+<code>self.config_text</code>).</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def cf_btn_clicked(self):
+    &#34;&#34;&#34;
+    Config button was clicked; launch popup window to get Config
+    parameters from user (results are stored in StringVar
+    `self.config_text`).
+    &#34;&#34;&#34;
+    try:
+        self.config_popup_tk.destroy()
+    except:
+        pass
+
+    self.config_popup_tk = tk.Toplevel()
+    self.config_popup_tk.title(&#39;Set pyTRS Config Parameters&#39;)
+    pc = PromptConfig(
+        master=self.config_popup_tk, target_config_var=self.config_text,
+        parameters=[&#39;cleanQQ&#39;, &#39;includeLotDivs&#39;, &#39;requireColon&#39;, &#39;ocrScrub&#39;,
+                    &#39;segment&#39;, &#39;layout&#39;],
+        show_save=False, show_cancel=False, exit_after_ok=True)
+    pc.pack(padx=20, pady=10)</code></pre>
+</details>
+</dd>
+<dt id="pyTRS.csv_suite.pyTRS_parse_csv_gui.AppWindow.choose_file_clicked"><code class="name flex">
+<span>def <span class="ident">choose_file_clicked</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def choose_file_clicked(self):
+    in_file = filedialog.askopenfilename(
+        initialdir=&#39;/&#39;,
+        filetypes=[(&#34;CSV Files&#34;, &#34;*.csv&#34;)],
+        title=&#39;CSV to parse...&#39;
+    )
+    self.in_file.set(in_file)
+    self.title(f&#34;pyTRS CSV Parser - {in_file}&#34;)
+    if in_file:
+        self.deduce_desc_column(in_file)</code></pre>
+</details>
+</dd>
+<dt id="pyTRS.csv_suite.pyTRS_parse_csv_gui.AppWindow.deduce_desc_column"><code class="name flex">
+<span>def <span class="ident">deduce_desc_column</span></span>(<span>self, in_file)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def deduce_desc_column(self, in_file):
+    self.desc_col_entry.delete(0, &#39;end&#39;)
+    self.first_row_entry.delete(0, &#39;end&#39;)
+    self.header_row_entry.delete(0, &#39;end&#39;)
+
+    import csv
+    from pyTRS.parser import find_sec, find_tr
+    try:
+        csv_file = open(in_file, &#39;r&#39;)
+    except:
+        messagebox.showerror(
+            &#39;Error!&#39;, f&#34;Could not open file:\n &#39;{in_file}&#39;&#34;)
+        return
+
+    reader = csv.reader(csv_file)
+    rowsToTry = 10
+    colMatch = None
+    rowMatch = None
+    row_num = 0
+    for row in reader:
+        if row_num &gt; rowsToTry:
+            break
+        for col_num in range(len(row)):
+            text = row[col_num]
+            if text is None:
+                continue
+
+            elif len(find_sec(text)) &gt; 0 and len(find_tr(text)) &gt; 0:
+                # If the cell contains &gt; 0 sections and &gt; 0 T&amp;R, assume it&#39;s
+                # our first match. Add 1 to convert row/column nums from
+                # 0-indexed to 1-indexed:
+                rowMatch = row_num + 1
+                colMatch = col_num + 1
+
+                break
+        if rowMatch:
+            break
+        row_num += 1
+
+    if rowMatch:
+        self.desc_col_entry.insert(&#39;end&#39;, num_to_alpha(colMatch))
+        self.first_row_entry.insert(&#39;end&#39;, str(rowMatch))
+        if rowMatch &gt; 1:
+            self.header_row_entry.insert(&#39;end&#39;, str(rowMatch - 1))
+
+    csv_file.close()</code></pre>
+</details>
+</dd>
+<dt id="pyTRS.csv_suite.pyTRS_parse_csv_gui.AppWindow.go"><code class="name flex">
+<span>def <span class="ident">go</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Pull the variables from all over, prompt for save-to filepath,
+and run it.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def go(self):
+    &#34;&#34;&#34;
+    Pull the variables from all over, prompt for save-to filepath,
+    and run it.
+    &#34;&#34;&#34;
+    in_file = self.in_file.get()
+
+    # Ensure `in_file` points to a .csv file.
+    if not in_file.lower().endswith(&#39;csv&#39;):
+        messagebox.showerror(
+            &#39;Error&#39;, &#34;Choose an input file with &#39;.csv&#39; extension&#34;)
+        return
+
+    # Prompt for save-to filepath, with default filename modified
+    # from in_file.
+    def_file_name = f&#34;{in_file.split(&#39;/&#39;)[-1][:-4]}_pyTRS_parsed.csv&#34;
+    out_file = filedialog.asksaveasfilename(
+        initialdir=in_file, initialfile=def_file_name,
+        filetypes=[(&#34;CSV Files&#34;, &#34;*.csv&#34;)], title=&#39;Save to...&#39;)
+    # Ensure `out_file` points to a .csv file.
+    if out_file == &#39;&#39;:
+        return
+
+    elif not out_file.lower().endswith(&#39;csv&#39;):
+        messagebox.showerror(
+            &#39;Error&#39;, &#34;Choose a filename with &#39;.csv&#39; extension&#34;)
+        return
+
+    # Compile the attribs
+    attribs = self.at_frame.compile_attributes()
+
+    # Compile all of the input/output parameters
+    config_text = self.config_text.get()
+    write_headers = bool(self.write_headersVar.get())
+    unpack = bool(self.unpackVar.get())
+    copy_data = bool(self.copy_dataVar.get())
+    tract_level = bool(self.tract_levelVar.get())
+    include_uid = bool(self.include_uidVar.get())
+    include_unparsed = bool(self.include_unparsedVar.get())
+
+    # Get desc_col; whether entered as number or alpha, convert to int.
+    desc_col = self.desc_col_entry.get()
+    if not desc_col:
+        messagebox.showerror(
+            &#39;Error!&#39;,
+            &#39;Fill in the column containing descriptions to be parsed.&#39;)
+        return
+    elif desc_col.isalpha() and len(desc_col) &lt;= 2:
+        desc_col = int(alpha_to_num(desc_col))
+    elif desc_col.isnumeric() and len(desc_col) &lt;= 2:
+        desc_col = int(desc_col)
+
+    first_row = self.first_row_entry.get()
+    if not first_row:
+        messagebox.showerror(
+            &#39;Error!&#39;,
+            &#39;Specify the first row containing descriptions to be parsed.&#39;)
+        return
+    try:
+        first_row = int(first_row)
+    except:
+        messagebox.showerror(
+            &#39;Error!&#39;,
+            &#39;Enter a number for the first row containing descriptions to &#39;
+            &#39;be parsed.&#39;)
+        return
+
+    last_row = self.last_row_entry.get()
+    if last_row:
+        try:
+            last_row = int(last_row)
+        except:
+            messagebox.showerror(
+                &#39;Error!&#39;,
+                &#39;If you only want to parse some rows, enter a number for &#39;
+                &#39;the last row containing descriptions to be parsed.&#39;)
+            return
+    else:
+        last_row = -1
+
+    header_row = self.header_row_entry.get()
+    if header_row:
+        try:
+            header_row = int(header_row)
+        except:
+            messagebox.showerror(
+                &#39;Error!&#39;,
+                &#39;To specify the row containing headers in the input &#39;
+                &#39;.csv file, enter a number for that row.&#39;)
+            return
+    else:
+        header_row = None
+
+    # Run the parser
+    success_check = 1  # Set to 0 on success.
+    try:
+        success_check = parse_csv(
+            in_file=in_file, desc_col=desc_col, attribs=attribs,
+            out_file=out_file, first_row=first_row, last_row=last_row,
+            header_row=header_row, config=config_text,
+            write_headers=write_headers, unpack=unpack,
+            copy_data=copy_data, tract_level=tract_level,
+            include_uid=include_uid, num_tracts=False,
+            include_unparsed=include_unparsed)
+    except:
+        messagebox.showerror(
+            &#39;Error!&#39;,
+            f&#34;Unknown error. Possibly could not open file at &#39;{in_file}&#39; &#34;
+            f&#34;or could not save to &#39;{out_file}&#39;. Ensure you have &#34;
+            f&#34;read/write access to the directory and try again.&#34;)
+
+    if success_check == 0:
+        if messagebox.askyesno(
+                &#39;Success!&#39;,
+                f&#34;File successfully parsed and saved to:\n&#39;{out_file}&#39;\n\n&#34;
+                &#34;Be sure to examine results for accuracy!\n\n&#34;
+                &#34;Open file now?&#34;):
+            import os
+            os.startfile(out_file)</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+</dl>
+</section>
+</article>
+<nav id="sidebar">
+<h1>Index</h1>
+<div class="toc">
+<ul></ul>
+</div>
+<ul id="index">
+<li><h3>Super-module</h3>
+<ul>
+<li><code><a title="pyTRS.csv_suite" href="index.html">pyTRS.csv_suite</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-functions">Functions</a></h3>
+<ul class="">
+<li><code><a title="pyTRS.csv_suite.pyTRS_parse_csv_gui.alpha_to_num" href="#pyTRS.csv_suite.pyTRS_parse_csv_gui.alpha_to_num">alpha_to_num</a></code></li>
+<li><code><a title="pyTRS.csv_suite.pyTRS_parse_csv_gui.launch_app" href="#pyTRS.csv_suite.pyTRS_parse_csv_gui.launch_app">launch_app</a></code></li>
+<li><code><a title="pyTRS.csv_suite.pyTRS_parse_csv_gui.num_to_alpha" href="#pyTRS.csv_suite.pyTRS_parse_csv_gui.num_to_alpha">num_to_alpha</a></code></li>
+<li><code><a title="pyTRS.csv_suite.pyTRS_parse_csv_gui.version" href="#pyTRS.csv_suite.pyTRS_parse_csv_gui.version">version</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-classes">Classes</a></h3>
+<ul>
+<li>
+<h4><code><a title="pyTRS.csv_suite.pyTRS_parse_csv_gui.AppWindow" href="#pyTRS.csv_suite.pyTRS_parse_csv_gui.AppWindow">AppWindow</a></code></h4>
+<ul class="two-column">
+<li><code><a title="pyTRS.csv_suite.pyTRS_parse_csv_gui.AppWindow.OUTPUT_PARAM_DICT" href="#pyTRS.csv_suite.pyTRS_parse_csv_gui.AppWindow.OUTPUT_PARAM_DICT">OUTPUT_PARAM_DICT</a></code></li>
+<li><code><a title="pyTRS.csv_suite.pyTRS_parse_csv_gui.AppWindow.SPLASH_INFO" href="#pyTRS.csv_suite.pyTRS_parse_csv_gui.AppWindow.SPLASH_INFO">SPLASH_INFO</a></code></li>
+<li><code><a title="pyTRS.csv_suite.pyTRS_parse_csv_gui.AppWindow.about" href="#pyTRS.csv_suite.pyTRS_parse_csv_gui.AppWindow.about">about</a></code></li>
+<li><code><a title="pyTRS.csv_suite.pyTRS_parse_csv_gui.AppWindow.cf_btn_clicked" href="#pyTRS.csv_suite.pyTRS_parse_csv_gui.AppWindow.cf_btn_clicked">cf_btn_clicked</a></code></li>
+<li><code><a title="pyTRS.csv_suite.pyTRS_parse_csv_gui.AppWindow.choose_file_clicked" href="#pyTRS.csv_suite.pyTRS_parse_csv_gui.AppWindow.choose_file_clicked">choose_file_clicked</a></code></li>
+<li><code><a title="pyTRS.csv_suite.pyTRS_parse_csv_gui.AppWindow.deduce_desc_column" href="#pyTRS.csv_suite.pyTRS_parse_csv_gui.AppWindow.deduce_desc_column">deduce_desc_column</a></code></li>
+<li><code><a title="pyTRS.csv_suite.pyTRS_parse_csv_gui.AppWindow.go" href="#pyTRS.csv_suite.pyTRS_parse_csv_gui.AppWindow.go">go</a></code></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p>Generated by <a href="https://pdoc3.github.io/pdoc"><cite>pdoc</cite> 0.9.2</a>.</p>
+</footer>
+</body>
+</html>
