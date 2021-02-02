@@ -320,7 +320,7 @@ t_obj_1 = pyTRS.Tract(desc='NE/4', trs='154n97w14', config='cleanQQ')
 
 
 # Alternative method, when your source of Twp/Rge/Sec are separate:
-t_obj_2 = pyTRS.Tract.from_TwpRgeSec(desc='NE/4', twp='154n', rge='97w', sec=14, config='cleanQQ')
+t_obj_2 = pyTRS.Tract.from_twprgesec(desc='NE/4', twp='154n', rge='97w', sec=14, config='cleanQQ')
 ```
 
 
