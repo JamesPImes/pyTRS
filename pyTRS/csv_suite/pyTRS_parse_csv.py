@@ -74,7 +74,7 @@ def parse_csv(
     :return: Returns 0 on success.
     """
 
-    from pyTRS.pyTRS import PLSSDesc, Tract
+    from pyTRS.parser import PLSSDesc, Tract
     import os, csv
     from pyTRS.utils import flatten, alpha_to_num, num_to_alpha
 

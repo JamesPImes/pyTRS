@@ -12,6 +12,12 @@ pyTRS, together with all accompanying programs and modules, is licensed under a 
 Contact <jamesimes@gmail.com> with inquiries regarding commercial or for-profit use.
 
 
+## To install
+
+```
+pip install git+https://github.com/JamesPImes/pyTRS@master
+```
+
 
 ## Demonstration
 

@@ -41,17 +41,19 @@ def disclaimer():
 
 
 # Primary parsing classes
-from pyTRS.pyTRS import PLSSDesc, Tract, TractList, Config
+from pyTRS.parser import PLSSDesc, Tract, TractList, Config
 
 # Misc. functions for examining / handling descriptions:
-from pyTRS.pyTRS import find_tr, find_sec, decompile_twprge, find_multisec, break_trs
+from pyTRS.parser import (
+    find_tr, find_sec, decompile_twprge, find_multisec, break_trs
+)
 
 # For outputting parsed data to csv files
-from pyTRS.pyTRS import output_to_csv
+from pyTRS.parser import output_to_csv
 
 # A current list of implemented layouts
-from pyTRS.pyTRS import __implementedLayouts__
-from pyTRS.pyTRS import __implementedLayoutExamples__
+from pyTRS.parser import __implementedLayouts__
+from pyTRS.parser import __implementedLayoutExamples__
 
 # Other modules
 from pyTRS import check, quick, utils, interface_tools, csv_suite

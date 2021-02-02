@@ -301,7 +301,7 @@ class AppWindow(tk.Tk):
         self.header_row_entry.delete(0, 'end')
 
         import csv
-        from pyTRS.pyTRS import find_sec, find_tr
+        from pyTRS.parser import find_sec, find_tr
         try:
             csv_file = open(in_file, 'r')
         except:
