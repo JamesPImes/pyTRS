@@ -4012,7 +4012,7 @@ def scrub_aliquots(text, cleanQQ=False) -> str:
     return text
 
 
-def unpack_aliquots(aliqTextBlock) -> list:
+def unpack_aliquots(aliquot_text_block, min_depth=2, max_depth=None) -> list:
     """
     INTERNAL USE:
     Convert an aliquot with fraction symbols into a list of clean
@@ -4020,23 +4020,25 @@ def unpack_aliquots(aliqTextBlock) -> list:
         'N½SW¼NE¼' -> ['N2SWNE']
         'N½SW¼' -> ['NESW', 'NWSW']
 
-    NOTE: Input a single aliqTextBlock (i.e. feed only 'N½SW¼NE¼', even
-    if we have a larger list of ['N½SW¼NE¼', 'NW¼'] to process).
+    NOTE: Input a single aliquot_text_block (i.e. feed only 'N½SW¼NE¼',
+    even if we have a larger list of ['N½SW¼NE¼', 'NW¼'] to process).
     """
 
-    # To do this, we break down an aliqTextBlock into its smaller
+    # To do this, we break down an aliquot_text_block into its smaller
     # components (if any), and place them all in a nested list (each
     # deeper level of the nested list is another division of the level
     # above it). Then we call rebuild_aliquots() on that nested list to
     # rebuild the components appropriately and return a flattened list
     # of aliquots, sized QQ and smaller.
 
-    def rebuild_aliquots(aliqNestedList) -> list:
-        """A nested list of aliquot components is returned as a flattened
-        list of rebuilt aliquots."""
+    def rebuild_aliquots(aliquot_nested_list) -> list:
+        """
+        A nested list of aliquot components is returned as a flattened
+        list of rebuilt aliquots.
+        """
 
         # The S/2S/2N/2 should be fed in as
-        #       ['NE', 'NW', ['SE','SW', ['S2']]]
+        #       ['NE', 'NW', ['SE', 'SW', ['S2']]]
         #   and will return:
         #       ['S2SENE', 'S2SWNE', 'S2SENW', 'S2SENW']
         # Similarly, the E/2SW/4NE/4 can be fed in as
@@ -4044,37 +4046,45 @@ def unpack_aliquots(aliqTextBlock) -> list:
         #   and will spit out
         #       ['E2SWNE']
 
-        moveUpList = []
-        if not isinstance(aliqNestedList[-1], list):
-        # We've hit the final list.
-            return aliqNestedList
+        move_up_list = []
+        if not isinstance(aliquot_nested_list[-1], list):
+            # We've hit the final list.
+            return aliquot_nested_list
 
         else:  # if there are more lists...
-            if isinstance(aliqNestedList[:-1], str):
-                match_to_list = [aliqNestedList[0]]
+            if isinstance(aliquot_nested_list[:-1], str):
+                match_to_list = [aliquot_nested_list[0]]
             else:
-                match_to_list = aliqNestedList[:-1]
-            next_list = rebuild_aliquots(aliqNestedList[-1])
+                match_to_list = aliquot_nested_list[:-1]
+            next_list = rebuild_aliquots(aliquot_nested_list[-1])
             for match_to_string in match_to_list:
                 for element in next_list:
                     wAliquot = element + match_to_string
-                    moveUpList.append(wAliquot)
-            return moveUpList
+                    move_up_list.append(wAliquot)
+            return move_up_list
+
+    # How each half marker should be broken down into its equivalent quarters
+    halves_to_qs = {
+        'N': ['NE', 'NW'],
+        'S': ['SE', 'SW'],
+        'E': ['NE', 'SE'],
+        'W': ['NW', 'SW']
+    }
 
     # Get a list of the component parts of the aliquot string, in
     # reverse -- i.e. 'N½SW¼NE¼' becomes ['NE', 'SW', 'N']
-    remainingAliqText = aliqTextBlock
+    remaining_aliq_text = aliquot_text_block
 
     # list of component parts of the aliquot, from last-to-first
     # -- ex. ['NE', 'SW', 'N']
-    # Note that componentList is a flat list (NOT nested).
-    componentList = []
+    # Note that component_list is a flat list (NOT nested).
+    component_list = []
 
     while True:
-        aliq_mo = aliquot_unpacker_regex.search(remainingAliqText)
+        aliq_mo = aliquot_unpacker_regex.search(remaining_aliq_text)
         if aliq_mo is None:
-            if remainingAliqText.lower() == 'all':
-                componentList.append('ALL')
+            if remaining_aliq_text.lower() == 'all':
+                component_list.append('ALL')
             break
 
         # Quick explanation of the relevant regex match object groups:
@@ -4083,31 +4093,31 @@ def unpack_aliquots(aliqTextBlock) -> list:
         # None. In that case, the rightmost component will be a half
         # (e.g., 'E½' in 'W½E½') and will be in group(6).
 
-        # mainAliq is intended to be the rightmost component.
-        mainAliq = aliq_mo.group(8)
+        # main_aliquot is intended to be the rightmost component.
+        main_aliquot = aliq_mo.group(8)
         if aliq_mo.group(8) is None:
-            mainAliq = aliq_mo.group(6)
+            main_aliquot = aliq_mo.group(6)
             # Cut off the last component to rerun the loop:
-            remainingAliqText = remainingAliqText[:aliq_mo.start(6)]
+            remaining_aliq_text = remaining_aliq_text[:aliq_mo.start(6)]
         else:
             # Cut off the last component to rerun the loop:
-            remainingAliqText = remainingAliqText[:aliq_mo.start(8)]
+            remaining_aliq_text = remaining_aliq_text[:aliq_mo.start(8)]
         # Cut off the half fraction from 'E½', for example:
-        mainAliq = mainAliq.replace('½', '')
-        componentList.append(mainAliq)
+        main_aliquot = main_aliquot.replace('½', '')
+        component_list.append(main_aliquot)
 
-    componentList.reverse()
+    component_list.reverse()
 
-    # (Remember that the componentList is ordered last-to-first
+    # (Remember that the component_list is ordered last-to-first
     # vis-a-vis the original aliquot string.)
-    numComponents = len(componentList)
+    num_components = len(component_list)
 
-    if numComponents == 1:
+    if num_components == 1:
         # If this is the only component, we break it into QQs and call it good.
 
         # Could do this more elegantly, but the possible inputs are so limited,
         # that there's no reason to complicate it.
-        component = componentList[0]
+        component = component_list[0]
         if component == 'N':
             QQList = ['NENE', 'NWNE', 'SENE', 'SWNE',
                       'NENW', 'NWNW', 'SENW', 'SWNW']
@@ -4144,41 +4154,24 @@ def unpack_aliquots(aliqTextBlock) -> list:
         return QQList
 
     # But if there's more than one component, we have to convert the flat
-    # componentList into a nested list (mainList), then run
+    # component_list into a nested list (main_list), then run
     # rebuild_aliquots() on it.
 
     # A list, to be passed through rebuild_aliquots(), which will return QQ's:
-    mainList = []
-    for i in range(numComponents):
-        component = componentList[i]
+    main_list = []
+    for i in range(num_components):
+        component = component_list[i]
 
         # The final component -- i.e. the 'NW' from 'E2NW',
-        # previously stored in ['NW', 'E']:
-        if i == numComponents - 1:
-            if component == 'N':
-                attachList = ['NE', 'NW']
-            elif component == 'S':
-                attachList = ['SE', 'SW']
-            elif component == 'E':
-                attachList = ['NE', 'SE']
-            elif component == 'W':
-                attachList = ['NW', 'SW']
-            else:
-                attachList = [component]
-
-        # For the second-to-last component -- i.e. the 'E' from 'E2NW',
-        # previously stored in ['NW', 'E']:
-        elif i == numComponents - 2:
-            if component == 'N':
-                attachList = ['NE', 'NW']
-            elif component == 'S':
-                attachList = ['SE', 'SW']
-            elif component == 'E':
-                attachList = ['NE', 'SE']
-            elif component == 'W':
-                attachList = ['NW', 'SW']
-            else:
-                attachList = [component]
+        # previously stored in ['NW', 'E']; OR the second-to-last
+        # component -- i.e. the 'E' from 'E2NW', previously stored in
+        # ['NW', 'E']:
+        if i == num_components - 1 or i == num_components - 2:
+            # If the component is a half marker ('N', 'E', 'W', or 'S'), break
+            # it down into quarters -- eg., 'N' -> ['NE', 'NW'].
+            # Otherwise, it's a quarter already, so put the component in a list
+            # by itself -- eg., 'NE' -> ['NE']
+            attach_list = halves_to_qs.get(component, [component])
 
         # For any components deeper than the second (i.e. either 'N'
         # in 'N2N2S2NE'), we can pass them through:
@@ -4188,20 +4181,20 @@ def unpack_aliquots(aliqTextBlock) -> list:
                 # clean appearance (i.e. so it might be 'N2N2NENW'
                 # instead of 'NNNENW')
                 component = component + '2'
-            attachList = [component]
+            attach_list = [component]
 
-        moveDownList = []
-        for comp in attachList:
-            moveDownList.append(comp)
-        if len(mainList) > 0:
-            # Unless this is the first loop through, nest the mainList
-            # at the end of moveDownList.
-            moveDownList.append(mainList)
-        # And set the mainList to the moveDownList.
-        mainList = moveDownList
+        move_down_list = []
+        for comp in attach_list:
+            move_down_list.append(comp)
+        if len(main_list) > 0:
+            # Unless this is the first loop through, nest the main_list
+            # at the end of move_down_list.
+            move_down_list.append(main_list)
+        # And set the main_list to the move_down_list.
+        main_list = move_down_list
 
     # And last, convert this nested list to QQ's by calling rebuild_aliquots()
-    QQList = rebuild_aliquots(mainList)
+    QQList = rebuild_aliquots(main_list)
     return QQList
 
 
