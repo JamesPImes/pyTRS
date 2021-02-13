@@ -4071,9 +4071,21 @@ def unpack_aliquots(aliquot_text_block, min_depth=2, max_depth=None) -> list:
         'W': ['NW', 'SW']
     }
 
+    # How each quarter can be broken into its equivalent quarter-quarters
+    qs_to_qqs = {
+        'NE': ['NENE', 'NWNE', 'SENE', 'SWNE'],
+        'NW': ['NENW', 'NWNW', 'SENW', 'SWNW'],
+        'SE': ['NESE', 'NWSE', 'SESE', 'SWSE'],
+        'SW': ['NESW', 'NWSW', 'SESW', 'SWSW']
+    }
+
+    # ------------------------------------------------------------------
     # Get a list of the component parts of the aliquot string, in
     # reverse -- i.e. 'N½SW¼NE¼' becomes ['NE', 'SW', 'N']
-    remaining_aliq_text = aliquot_text_block
+
+    # TODO: Refactor this to use `aliquot_unpacker_regex.search(... pos=i)`
+
+    remaining_aliquot_text = aliquot_text_block
 
     # list of component parts of the aliquot, from last-to-first
     # -- ex. ['NE', 'SW', 'N']
@@ -4081,9 +4093,9 @@ def unpack_aliquots(aliquot_text_block, min_depth=2, max_depth=None) -> list:
     component_list = []
 
     while True:
-        aliq_mo = aliquot_unpacker_regex.search(remaining_aliq_text)
+        aliq_mo = aliquot_unpacker_regex.search(remaining_aliquot_text)
         if aliq_mo is None:
-            if remaining_aliq_text.lower() == 'all':
+            if remaining_aliquot_text.lower() == 'all':
                 component_list.append('ALL')
             break
 
@@ -4098,18 +4110,22 @@ def unpack_aliquots(aliquot_text_block, min_depth=2, max_depth=None) -> list:
         if aliq_mo.group(8) is None:
             main_aliquot = aliq_mo.group(6)
             # Cut off the last component to rerun the loop:
-            remaining_aliq_text = remaining_aliq_text[:aliq_mo.start(6)]
+            remaining_aliquot_text = remaining_aliquot_text[:aliq_mo.start(6)]
         else:
             # Cut off the last component to rerun the loop:
-            remaining_aliq_text = remaining_aliq_text[:aliq_mo.start(8)]
+            remaining_aliquot_text = remaining_aliquot_text[:aliq_mo.start(8)]
         # Cut off the half fraction from 'E½', for example:
         main_aliquot = main_aliquot.replace('½', '')
         component_list.append(main_aliquot)
 
     component_list.reverse()
 
+    # ------------------------------------------------------------------
+    # Convert the components into aliquot strings
+
     # (Remember that the component_list is ordered last-to-first
     # vis-a-vis the original aliquot string.)
+
     num_components = len(component_list)
 
     if num_components == 1:
