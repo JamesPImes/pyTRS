@@ -12,6 +12,7 @@ The main parsing package. Primary classes:
 """
 
 import re
+import warnings
 from .regexlib import (
     twprge_regex, twprge_broad_regex, sec_regex, multiSec_regex,
     comma_multiSec_regex, noNum_sec_regex, preproTR_noNSWE_regex,
@@ -1283,6 +1284,12 @@ class Tract:
         # i.e. ['NENE', 'NENW', 'N2SENW', ... ]:
         self.QQList = []
 
+        # Attributes to control how QQ's should be parsed.
+        # TODO: Add these parameters to Config objects.
+        self.min_depth = 2
+        self.max_depth = None
+        self.break_all_halves = False
+
         # A list of standard lots, ['L1', 'L2', 'N2 of L5', ...]:
         self.lotList = []
 
@@ -1560,7 +1567,8 @@ class Tract:
 
     def parse(
             self, text=None, commit=True, cleanQQ=None, includeLotDivs=None,
-            preprocess=None):
+            preprocess=None, min_depth=None, max_depth=None,
+            break_all_halves=None):
         """
 
         :param text: The text to be parsed into lots and QQ's. If not
@@ -1580,6 +1588,23 @@ class Tract:
                     `False` -> 'L1'
         :param preprocess: Whether to preprocess the text before parsing
         it (if the preprocess has not already been done).
+        :param min_depth: An int, specifying the minimum depth of the
+        parse. If not set here, will default to settings from init (if
+        any), which in turn default to 2, i.e. to quarter-quarters
+        (e.g., 'N/2NE/4' -> ['NENE', 'NENE']). Setting to 3 would return
+        10-acre subdivisions (i.e. dividing the 'NENE' into ['NENENE',
+        'NWNENE', 'SENENE', 'SWNENE']), and so forth.
+        WARNING: Higher than a few levels of depth will result in very
+        slow performance.
+        :param max_depth: (Optional) An int, specifying the maximum
+        depth of the parse. If set as 2, any subdivision smaller than
+        quarter-quarter (e.g., 'NENE') would be discarded -- so, for
+        example, the 'N/2NE/4NE/4' would simply become the 'NENE'. Must
+        be greater than or equal to `min_depth`. (Defaults to None --
+        i.e. no maximum. Can also be configured at init.)
+        :param break_all_halves: Whether to break halves into quarters,
+        even if we're beyond the min_depth. (False by default, but can
+        be configured at init.)
         :return: Returns the a single list of identified lots and QQ's
         (equivalent to what would be stored in `.lotQQList`).
         """
@@ -1716,9 +1741,16 @@ class Tract:
         #   ex:  ['NE¼', 'E½NE¼NW¼']
         #           -> ['NENE' , 'NWNE' , 'SENE' , 'SWNE', 'E2NENW']
 
+        if min_depth is None:
+            min_depth = self.min_depth
+        if max_depth is None:
+            max_depth = self.max_depth
+        if break_all_halves is None:
+            break_all_halves = self.break_all_halves
         QQList = []
         for aliqTextBlock in aliqTextBlocks:
-            wQQList = unpack_aliquots(aliqTextBlock)
+            wQQList = unpack_aliquots(
+                aliqTextBlock, min_depth, max_depth, break_all_halves)
             QQList.extend(wQQList)
 
         plqqParseBag.QQList = QQList
@@ -4145,10 +4177,11 @@ def unpack_aliquots(
         return compiled
 
     if max_depth is not None and max_depth < min_depth:
-        # TODO: This should maybe be a warning instead of an error.
-        raise ValueError(
-            f"If specified, `max_depth` (entered as {max_depth}) must be "
-            f"greater than or equal to `min_depth` (entered as {min_depth}).")
+        warnings.warn(
+            "If specified, `max_depth` should be greater than or equal to "
+            f"`min_depth` (passed as {max_depth} and {min_depth}, "
+            "respectively). Using a larger max_depth than min_depth may result "
+            "in more QQ's being returned than actually exist in the Tract.")
 
     # ------------------------------------------------------------------
     # Get a list of the component parts of the aliquot string, in
