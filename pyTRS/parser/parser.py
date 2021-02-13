@@ -4012,7 +4012,9 @@ def scrub_aliquots(text, cleanQQ=False) -> str:
     return text
 
 
-def unpack_aliquots(aliquot_text_block, min_depth=2, max_depth=None) -> list:
+def unpack_aliquots(
+        aliquot_text_block, min_depth=2, max_depth=None,
+        break_all_halves=False) -> list:
     """
     INTERNAL USE:
     Convert an aliquot with fraction symbols into a list of clean
@@ -4022,6 +4024,8 @@ def unpack_aliquots(aliquot_text_block, min_depth=2, max_depth=None) -> list:
 
     NOTE: Input a single aliquot_text_block (i.e. feed only 'N½SW¼NE¼',
     even if we have a larger list of ['N½SW¼NE¼', 'NW¼'] to process).
+    :param break_all_halves: Whether to break halves into quarters, even
+    if we're beyond the min_depth. (False by default.)
     """
 
     # To do this, we break down an aliquot_text_block into its smaller
@@ -4063,21 +4067,98 @@ def unpack_aliquots(aliquot_text_block, min_depth=2, max_depth=None) -> list:
                     move_up_list.append(wAliquot)
             return move_up_list
 
-    # How each half marker should be broken down into its equivalent quarters
-    halves_to_qs = {
-        'N': ['NE', 'NW'],
-        'S': ['SE', 'SW'],
-        'E': ['NE', 'SE'],
-        'W': ['NW', 'SW']
+    quarters = ('NE', 'NW', 'SE', 'SW')
+    halves = ('N', 'S', 'E', 'W')
+
+    subdivide_definitions = {
+        'ALL': quarters,
+        'N': ('NE', 'NW'),
+        'S': ('SE', 'SW'),
+        'E': ('NE', 'SE'),
+        'W': ('NW', 'SW'),
     }
 
-    # How each quarter can be broken into its equivalent quarter-quarters
-    qs_to_qqs = {
-        'NE': ['NENE', 'NWNE', 'SENE', 'SWNE'],
-        'NW': ['NENW', 'NWNW', 'SENW', 'SWNW'],
-        'SE': ['NESE', 'NWSE', 'SESE', 'SWSE'],
-        'SW': ['NESW', 'NWSW', 'SESW', 'SWSW']
-    }
+    def subdivide_component(aliquot_component: str, divisions_remaining: int):
+        """
+        Recursively subdivide an aliquot component into a nested list,
+        to a depth equal to `divisions_remaining`. (The more deeply an
+        element is nested, the smaller the subdivision.)
+
+        examples:
+        subdivide_component('N', 1)
+            ->  ['NE', 'NW']
+        subdivide_component('ALL', 1)
+            ->  ['NE', 'NW', 'SE', 'SW']
+        subdivide_component('ALL', 2)
+            ->  [
+                    ['NE', ['NE', 'NW', 'SE', 'SW']],
+                    ['NW', ['NE', 'NW', 'SE', 'SW']],
+                    ['SE', ['NE', 'NW', 'SE', 'SW']],
+                    ['SW', ['NE', 'NW', 'SE', 'SW']]
+                ]
+        subdivide_component('N', 2)
+            ->  [
+                    ['NE', ['NE', 'NW', 'SE', 'SW']],
+                    ['SE', ['NE', 'NW', 'SE', 'SW']]
+                ]
+        :param aliquot_component:
+        :param divisions_remaining:
+        :return:
+        """
+        if divisions_remaining <= 0:
+            if aliquot_component in halves:
+                return aliquot_component + "2"
+            return aliquot_component
+        if aliquot_component in quarters:
+            # Break quarters down.
+            # example:   'NE'    -> ['NE', ['NE', 'NW', 'SE', 'SW']]
+            # (equivalent to NENE, NWNE, SENE, SWNE, once it gets compiled)
+            quarter_definition = [
+                subdivide_component(q, divisions_remaining - 1)
+                for q in quarters
+            ]
+            return [aliquot_component, quarter_definition]
+        else:
+            next_components = list(subdivide_definitions[aliquot_component])
+            subdivided = []
+            for comp in next_components:
+                subdivided.append(
+                    subdivide_component(comp, divisions_remaining - 1))
+            return subdivided
+
+    def rebuild(nested_aliquot_list: list):
+        """
+                subdivide_component('ALL', 2)
+        ->  [
+                ['NE', ['NE', 'NW', 'SE', 'SW']],
+                ['NW', ['NE', 'NW', 'SE', 'SW']],
+                ['SE', ['NE', 'NW', 'SE', 'SW']],
+                ['SW', ['NE', 'NW', 'SE', 'SW']]
+            ]
+
+        ['SW', 'SE', ['NE', 'NW', 'SE', 'SW']]
+        :param nested_aliquot_list:
+        :return:
+        """
+        if all(isinstance(elem, list) for elem in nested_aliquot_list):
+            # Each element in our list is another list.
+            compiled = []
+            for element in nested_aliquot_list:
+                compiled.extend(rebuild(element))
+            return compiled
+        if all(isinstance(elem, str) for elem in nested_aliquot_list):
+            # All elements in our list are strings, which means we've
+            # reached the final depth.
+            return nested_aliquot_list
+        # Otherwise, we're at a level where we need to join aliquot
+        # components at this level with the further subdivisions in lower
+        # levels
+        compiled = []
+        next_level_down = rebuild(nested_aliquot_list.pop(-1))
+        for this_level_aliquot in nested_aliquot_list:
+            for component in next_level_down:
+                compiled.append(component + this_level_aliquot)
+        return compiled
 
     # ------------------------------------------------------------------
     # Get a list of the component parts of the aliquot string, in
@@ -4118,8 +4199,6 @@ def unpack_aliquots(aliquot_text_block, min_depth=2, max_depth=None) -> list:
         main_aliquot = main_aliquot.replace('½', '')
         component_list.append(main_aliquot)
 
-    component_list.reverse()
-
     # ------------------------------------------------------------------
     # Convert the components into aliquot strings
 
@@ -4128,90 +4207,80 @@ def unpack_aliquots(aliquot_text_block, min_depth=2, max_depth=None) -> list:
 
     num_components = len(component_list)
 
-    if num_components == 1:
-        # If this is the only component, we break it into QQs and call it good.
+    # Discard any subdivisions greater than the max_depth, if it was set.
+    if max_depth is not None and len(component_list) > max_depth:
+        component_list = component_list[-max_depth:]
 
-        # Could do this more elegantly, but the possible inputs are so limited,
-        # that there's no reason to complicate it.
-        component = component_list[0]
-        if component == 'N':
-            QQList = ['NENE', 'NWNE', 'SENE', 'SWNE',
-                      'NENW', 'NWNW', 'SENW', 'SWNW']
-        elif component == 'S':
-            QQList = ['NESE', 'NWSE', 'SESE', 'SWSE',
-                      'NESW', 'NWSW', 'SESW', 'SWSW']
-        elif component == 'E':
-            QQList = ['NENE', 'NWNE', 'SENE', 'SWNE',
-                      'NESE', 'NWSE', 'SESE', 'SWSE']
-        elif component == 'W':
-            QQList = ['NENW', 'NWNW', 'SENW', 'SWNW',
-                      'NESW', 'NWSW', 'SESW', 'SWSW']
-        elif component == 'NE':
-            QQList = ['NENE', 'NWNE', 'SENE', 'SWNE']
-        elif component == 'NW':
-            QQList = ['NENW', 'NWNW', 'SENW', 'SWNW']
-        elif component == 'SE':
-            QQList = ['NESE', 'NWSE', 'SESE', 'SWSE']
-        elif component == 'SW':
-            QQList = ['NESW', 'NWSW', 'SESW', 'SWSW']
-        elif component == 'ALL':
-            # NOTE: 'ALL' assumes a standard section consisting of
-            # 16 QQ's and no lots. This may not be accurate for all sections.
-            # TODO: wFlag stating the assumption that 'ALL' became 16 QQ's.
-            QQList = ['NENE', 'NWNE', 'SENE', 'SWNE',
-                      'NENW', 'NWNW', 'SENW', 'SWNW',
-                      'NESE', 'NWSE', 'SESE', 'SWSE',
-                      'NESW', 'NWSW', 'SESW', 'SWSW']
-        else:
-            # It should never get to this point, but here's a stopgap
-            QQList = []
-        # This is as deep as we need to go for single-component aliquot
-        # strings, so return now.
-        return QQList
+    subdivided_component_list = []
+    depth_remaining = min_depth - len(component_list)
+    for i, comp in enumerate(component_list, start=1):
+        depth = 0
+        if i == min_depth:
+            depth = 1
+            # DEV -- YES, in conjunciton with quarters --> minus 1.
+        elif i == len(component_list) and len(component_list) < min_depth:
+            depth = min_depth - i + 1
+        if comp in quarters:
+            # Quarters (by definition) are already 1 depth more broken down
+            # than halves (or 'ALL'), so subtract 1 to account for that
+            depth -= 1
+        if depth == 0 and comp in halves and break_all_halves:
+            depth = 1
+        new_comp = subdivide_component(comp, depth)
+        new_comp = rebuild(new_comp)
+        subdivided_component_list.append(new_comp)
 
-    # But if there's more than one component, we have to convert the flat
-    # component_list into a nested list (main_list), then run
-    # rebuild_aliquots() on it.
+    subdivided_component_list.reverse()
+    deep_nested = [subdivided_component_list.pop(0)]
+    for elem in subdivided_component_list:
+        deep_nested = [elem, deep_nested]
 
-    # A list, to be passed through rebuild_aliquots(), which will return QQ's:
-    main_list = []
-    for i in range(num_components):
-        component = component_list[i]
+    return rebuild(deep_nested)
 
-        # The final component -- i.e. the 'NW' from 'E2NW',
-        # previously stored in ['NW', 'E']; OR the second-to-last
-        # component -- i.e. the 'E' from 'E2NW', previously stored in
-        # ['NW', 'E']:
-        if i == num_components - 1 or i == num_components - 2:
-            # If the component is a half marker ('N', 'E', 'W', or 'S'), break
-            # it down into quarters -- eg., 'N' -> ['NE', 'NW'].
-            # Otherwise, it's a quarter already, so put the component in a list
-            # by itself -- eg., 'NE' -> ['NE']
-            attach_list = halves_to_qs.get(component, [component])
-
-        # For any components deeper than the second (i.e. either 'N'
-        # in 'N2N2S2NE'), we can pass them through:
-        else:
-            if len(component) == 1:
-                # If it's a half call, add a '2' to the end of it, for
-                # clean appearance (i.e. so it might be 'N2N2NENW'
-                # instead of 'NNNENW')
-                component = component + '2'
-            attach_list = [component]
-
-        move_down_list = []
-        for comp in attach_list:
-            move_down_list.append(comp)
-        if len(main_list) > 0:
-            # Unless this is the first loop through, nest the main_list
-            # at the end of move_down_list.
-            move_down_list.append(main_list)
-        # And set the main_list to the move_down_list.
-        main_list = move_down_list
-
-    # And last, convert this nested list to QQ's by calling rebuild_aliquots()
-    QQList = rebuild_aliquots(main_list)
-    return QQList
+    #
+    # # But if there's more than one component, we have to convert the flat
+    # # component_list into a nested list (main_list), then run
+    # # rebuild_aliquots() on it.
+    #
+    # # A list, to be passed through rebuild_aliquots(), which will return QQ's:
+    # main_list = []
+    # for i in range(num_components):
+    #     component = component_list[i]
+    #
+    #     # The final component -- i.e. the 'NW' from 'E2NW',
+    #     # previously stored in ['NW', 'E']; OR the second-to-last
+    #     # component -- i.e. the 'E' from 'E2NW', previously stored in
+    #     # ['NW', 'E']:
+    #     if i == num_components - 1 or i == num_components - 2:
+    #         # If the component is a half marker ('N', 'E', 'W', or 'S'), break
+    #         # it down into quarters -- eg., 'N' -> ['NE', 'NW'].
+    #         # Otherwise, it's a quarter already, so put the component in a list
+    #         # by itself -- eg., 'NE' -> ['NE']
+    #         attach_list = halves_to_qs.get(component, [component])
+    #
+    #     # For any components deeper than the second (i.e. either 'N'
+    #     # in 'N2N2S2NE'), we can pass them through:
+    #     else:
+    #         if len(component) == 1:
+    #             # If it's a half call, add a '2' to the end of it, for
+    #             # clean appearance (i.e. so it might be 'N2N2NENW'
+    #             # instead of 'NNNENW')
+    #             component = component + '2'
+    #         attach_list = [component]
+    #
+    #     move_down_list = []
+    #     for comp in attach_list:
+    #         move_down_list.append(comp)
+    #     if len(main_list) > 0:
+    #         # Unless this is the first loop through, nest the main_list
+    #         # at the end of move_down_list.
+    #         move_down_list.append(main_list)
+    #     # And set the main_list to the move_down_list.
+    #     main_list = move_down_list
+    #
+    # # And last, convert this nested list to QQ's by calling rebuild_aliquots()
+    # QQList = rebuild_aliquots(main_list)
+    # return QQList
 
 
 def unpack_lots(lotTextBlock, includeLotDivs=True):
