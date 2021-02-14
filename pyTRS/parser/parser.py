@@ -236,6 +236,11 @@ class PLSSDesc:
         # capture descriptions with multiple layouts):
         self.segment = False
 
+        # Attributes to control how QQ's should be parsed.
+        self.qq_min_depth = 2
+        self.qq_max_depth = None
+        self.break_all_halves = False
+
         # Apply settings from `config=`.
         self.set_config(config)
 
@@ -364,7 +369,8 @@ class PLSSDesc:
     def parse(
             self, text=None, layout=None, cleanUp=None, initParseQQ=None,
             cleanQQ=None, requireColon='default_colon', segment=None,
-            commit=True):
+            commit=True, qq_min_depth=None, qq_max_depth=None,
+            break_all_halves=None):
         """
         Parse the description. If parameter `commit=True` (defaults to
         on), the results will be stored to the various instance
@@ -411,6 +417,27 @@ class PLSSDesc:
         specified here, defaults to whatever is set in `self.segment`.
         :param commit: Whether to commit the results to the appropriate
         instance attributes. Defaults to `True`.
+        :param qq_min_depth: (Optional, and only relevant if parsing
+        Tracts into lots and QQs.) An int, specifying the minimum depth
+        of the parse. If not set here, will default to settings from
+        init (if any), which in turn default to 2, i.e. to
+        quarter-quarters (e.g., 'N/2NE/4' -> ['NENE', 'NENE']).
+        Setting to 3 would return 10-acre subdivisions (i.e. dividing
+        the 'NENE' into ['NENENE', 'NWNENE', 'SENENE', 'SWNENE']), and
+        so forth.
+        WARNING: Higher than a few levels of depth will result in very
+        slow performance.
+        :param qq_max_depth: (Optional, and only relevant if parsing
+        Tracts into lots and QQs.) An int, specifying the maximum depth
+        of the parse. If set as 2, any subdivision smaller than
+        quarter-quarter (e.g., 'NENE') would be discarded -- so, for
+        example, the 'N/2NE/4NE/4' would simply become the 'NENE'. Must
+        be greater than or equal to `qq_min_depth`. (Defaults to None --
+        i.e. no maximum. Can also be configured at init.)
+        :param break_all_halves: (Optional, and only relevant if parsing
+        Tracts into lots and QQs.) Whether to break halves into
+        quarters, even if we're beyond the qq_min_depth. (False by
+        default, but can be configured at init.)
         :return: Returns a pyTRS.TractList object (a subclass of 'list')
         of all of the resulting pyTRS.Tract objects.
         """
@@ -464,6 +491,14 @@ class PLSSDesc:
             # is 'copy_all'
             segment = False
 
+        # For QQ parsing (if applicable)
+        if break_all_halves is None:
+            break_all_halves = self.break_all_halves
+        if qq_min_depth is None:
+            qq_min_depth = self.qq_min_depth
+        if qq_max_depth is None:
+            qq_max_depth = self.qq_max_depth
+
         # ParseBag obj for storing the data generated throughout.
         bigPB = ParseBag(parentType='PLSSDesc')
 
@@ -504,23 +539,16 @@ class PLSSDesc:
         # Parse each segment into a separate ParseBag obj, then absorb
         # that PB into the big PB each time:
         for textBlock in trTextBlocks:
-            if layout == 'copy_all':
-                midParseBag = parse_segment(
-                    textBlock[1], cleanUp=cleanUp, requireColon=requireColon,
-                    layout='copy_all', handedDownConfig=config,
-                    initParseQQ=initParseQQ, cleanQQ=cleanQQ)
-            elif segment:
+            use_layout = layout
+            if segment and layout != "copy_all":
                 # Let the segment parser deduce layout for each textBlock.
-                midParseBag = parse_segment(
-                    textBlock[1], cleanUp=cleanUp, requireColon=requireColon,
-                    layout=None, handedDownConfig=config,
-                    initParseQQ=initParseQQ, cleanQQ=cleanQQ)
-            else:
-                midParseBag = parse_segment(
-                    textBlock[1], cleanUp=cleanUp, requireColon=requireColon,
-                    layout=layout, handedDownConfig=config,
-                    initParseQQ=initParseQQ, cleanQQ=cleanQQ)
-
+                use_layout = None
+            midParseBag = parse_segment(
+                textBlock[1], cleanUp=cleanUp, requireColon=requireColon,
+                layout=use_layout, handedDownConfig=config,
+                initParseQQ=initParseQQ, cleanQQ=cleanQQ,
+                qq_min_depth=qq_min_depth, qq_max_depth=qq_max_depth,
+                break_all_halves=break_all_halves)
             bigPB.absorb(midParseBag)
 
         # If we've still not discovered any Tracts, run a final parse in
@@ -530,7 +558,9 @@ class PLSSDesc:
                 parse_segment(
                     text, layout='copy_all', cleanUp=False, requireColon=False,
                     handedDownConfig=config, initParseQQ=initParseQQ,
-                    cleanQQ=cleanQQ))
+                    cleanQQ=cleanQQ, qq_min_depth=qq_min_depth,
+                    qq_max_depth=qq_max_depth,
+                    break_all_halves=break_all_halves))
             bigPB.descIsFlawed = True
 
         for TractObj in bigPB.parsedTracts:
@@ -1285,7 +1315,6 @@ class Tract:
         self.QQList = []
 
         # Attributes to control how QQ's should be parsed.
-        # TODO: Add these parameters to Config objects.
         self.qq_min_depth = 2
         self.qq_max_depth = None
         self.break_all_halves = False
@@ -2908,7 +2937,8 @@ def findall_matching_sec(text, layout=None, requireColon='default_colon'):
 
 def parse_segment(
         textBlock, layout=None, cleanUp=None, requireColon='default_colon',
-        handedDownConfig=None, initParseQQ=False, cleanQQ=None):
+        handedDownConfig=None, initParseQQ=False, cleanQQ=None,
+        qq_min_depth=None, qq_max_depth=None, break_all_halves=None):
     """
     INTERNAL USE:
 
@@ -2943,6 +2973,27 @@ def parse_segment(
     :param handedDownConfig: A Config object to be passed to any Tract
     object that is created, so that they are configured identically to
     a parent PLSSDesc object (if any). Defaults to None.
+    :param qq_min_depth: (Optional, and only relevant if parsing
+    Tracts into lots and QQs.) An int, specifying the minimum depth
+    of the parse. If not set here, will default to settings from
+    init (if any), which in turn default to 2, i.e. to
+    quarter-quarters (e.g., 'N/2NE/4' -> ['NENE', 'NENE']).
+    Setting to 3 would return 10-acre subdivisions (i.e. dividing
+    the 'NENE' into ['NENENE', 'NWNENE', 'SENENE', 'SWNENE']), and
+    so forth.
+    WARNING: Higher than a few levels of depth will result in very
+    slow performance.
+    :param qq_max_depth: (Optional, and only relevant if parsing
+    Tracts into lots and QQs.) An int, specifying the maximum depth
+    of the parse. If set as 2, any subdivision smaller than
+    quarter-quarter (e.g., 'NENE') would be discarded -- so, for
+    example, the 'N/2NE/4NE/4' would simply become the 'NENE'. Must
+    be greater than or equal to `qq_min_depth`. (Defaults to None --
+    i.e. no maximum. Can also be configured at init.)
+    :param break_all_halves: (Optional, and only relevant if parsing
+    Tracts into lots and QQs.) Whether to break halves into
+    quarters, even if we're beyond the qq_min_depth. (False by
+    default, but can be configured at init.)
     :return: a pyTRS.ParseBag object with the parsed data.
     """
 
@@ -2986,6 +3037,13 @@ def parse_segment(
     handedDownConfig = Config(handedDownConfig)
     if isinstance(cleanQQ, bool):
         handedDownConfig.set_str_to_values(f"cleanQQ.{cleanQQ}")
+    if break_all_halves is not None:
+        handedDownConfig.set_str_to_values(
+            f"break_all_halves.{break_all_halves}")
+    if qq_min_depth is not None:
+        handedDownConfig.set_str_to_values(f"qq_min_depth.{qq_min_depth}")
+    if qq_max_depth is not None:
+        handedDownConfig.set_str_to_values(f"qq_max_depth.{qq_max_depth}")
 
     if not isinstance(cleanUp, bool):
         # if cleanUp has not been specified as a bool, then use these defaults:
