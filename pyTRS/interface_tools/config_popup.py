@@ -633,6 +633,22 @@ class PromptConfig(tk.Frame):
             lbl = tk.Label(self, text=parameter)
             lbl.grid(column=5, row=0)
 
+    @staticmethod
+    def warn_deep_depths(num):
+        """
+        Warn the user that parsing QQ's to depths > 5 or so might result
+        in very slow computing times.
+        :param num:
+        :return:
+        """
+        msg = (
+            "WARNING: Parsing QQ's to a minimum (or exact) depth greater "
+            "than 5 is possible but is likely to take a long time to "
+            "process.\n\n"
+            f"Do you want to proceed with setting it to {num}?"
+        )
+        return messagebox.askokcancel("WARNING", msg)
+
     def compile_config_text(self) -> str:
         """
         Compile and return the config text.
@@ -641,6 +657,12 @@ class PromptConfig(tk.Frame):
         
         param_vals.append(self.defaultNScombo.get()[0].lower())
         param_vals.append(self.defaultEWcombo.get()[0].lower())
+
+        # Setting qq_depth or qq_depth_min to larger than this will prompt
+        # a warning.
+        QQ_DEPTH_WARN_THRESHOLD = 6
+
+        proceed = True
 
         if 'layout' in self.parameters:
             val = self.layoutcombo.get()
@@ -664,6 +686,10 @@ class PromptConfig(tk.Frame):
                 val = None
             if val is not None:
                 param_vals.append(f"{param}.{val}")
+            if val is not None \
+                    and param in ["qq_depth", "qq_depth_min"] \
+                    and val >= QQ_DEPTH_WARN_THRESHOLD:
+                proceed = self.warn_deep_depths(val)
             if param == "qq_depth" and val is not None:
                 # if qq_depth was set, we don't want to pull the
                 # _min and _max, so break out of the loop
@@ -671,6 +697,8 @@ class PromptConfig(tk.Frame):
 
         # Join the list of param/vals into a string, and return it
         config_text = ','.join(param_vals)
+        if not proceed:
+            return None
         return config_text
 
     def ok_clicked(self):
@@ -681,6 +709,8 @@ class PromptConfig(tk.Frame):
         """
 
         config_text = self.compile_config_text()
+        if config_text is None:
+            return None
 
         # Set the target tk.StringVar to the compiled config_text
         self.target_config_var.set(config_text)
@@ -710,6 +740,8 @@ class PromptConfig(tk.Frame):
         """Call the config text compiler, and then save the results to a
          user-specified filepath."""
         config_text = self.compile_config_text()
+        if config_text is None:
+            return None
 
         # The user will specify the output filename:
         from tkinter import filedialog
