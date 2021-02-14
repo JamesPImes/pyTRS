@@ -236,9 +236,12 @@ class PLSSDesc:
         # capture descriptions with multiple layouts):
         self.segment = False
 
-        # Attributes to control how QQ's should be parsed.
-        self.qq_min_depth = 2
-        self.qq_max_depth = None
+        # Attributes to control how deeply QQ's should be parsed.
+        # If `.qq_depth` is set, it will override `.qq_depth_min` and
+        # `.qq_depth_max`
+        self.qq_depth = None
+        self.qq_depth_min = 2
+        self.qq_depth_max = None
         self.break_all_halves = False
 
         # Apply settings from `config=`.
@@ -369,7 +372,7 @@ class PLSSDesc:
     def parse(
             self, text=None, layout=None, cleanUp=None, initParseQQ=None,
             cleanQQ=None, requireColon='default_colon', segment=None,
-            commit=True, qq_min_depth=None, qq_max_depth=None,
+            commit=True, qq_depth_min=None, qq_depth_max=None, qq_depth=None,
             break_all_halves=None):
         """
         Parse the description. If parameter `commit=True` (defaults to
@@ -417,7 +420,7 @@ class PLSSDesc:
         specified here, defaults to whatever is set in `self.segment`.
         :param commit: Whether to commit the results to the appropriate
         instance attributes. Defaults to `True`.
-        :param qq_min_depth: (Optional, and only relevant if parsing
+        :param qq_depth_min: (Optional, and only relevant if parsing
         Tracts into lots and QQs.) An int, specifying the minimum depth
         of the parse. If not set here, will default to settings from
         init (if any), which in turn default to 2, i.e. to
@@ -427,16 +430,22 @@ class PLSSDesc:
         so forth.
         WARNING: Higher than a few levels of depth will result in very
         slow performance.
-        :param qq_max_depth: (Optional, and only relevant if parsing
+        :param qq_depth_max: (Optional, and only relevant if parsing
         Tracts into lots and QQs.) An int, specifying the maximum depth
         of the parse. If set as 2, any subdivision smaller than
         quarter-quarter (e.g., 'NENE') would be discarded -- so, for
         example, the 'N/2NE/4NE/4' would simply become the 'NENE'. Must
-        be greater than or equal to `qq_min_depth`. (Defaults to None --
+        be greater than or equal to `qq_depth_min`. (Defaults to None --
         i.e. no maximum. Can also be configured at init.)
+        :param qq_depth: (Optional, and only relevant if parsing Tracts
+        into lots and QQs.) An int, specifying both the minimum and
+        maximum depth of the parse. If specified, will override both
+        `qq_depth_min` and `qq_depth_max`. (Defaults to None -- i.e. use
+        qq_depth_min and optionally qq_depth_max; and can optionally be
+        configured at init.)
         :param break_all_halves: (Optional, and only relevant if parsing
         Tracts into lots and QQs.) Whether to break halves into
-        quarters, even if we're beyond the qq_min_depth. (False by
+        quarters, even if we're beyond the qq_depth_min. (False by
         default, but can be configured at init.)
         :return: Returns a pyTRS.TractList object (a subclass of 'list')
         of all of the resulting pyTRS.Tract objects.
@@ -494,10 +503,12 @@ class PLSSDesc:
         # For QQ parsing (if applicable)
         if break_all_halves is None:
             break_all_halves = self.break_all_halves
-        if qq_min_depth is None:
-            qq_min_depth = self.qq_min_depth
-        if qq_max_depth is None:
-            qq_max_depth = self.qq_max_depth
+        if qq_depth is None and qq_depth_min is None and qq_depth_max is None:
+            qq_depth = self.qq_depth
+        if qq_depth_min is None:
+            qq_depth_min = self.qq_depth_min
+        if qq_depth_max is None:
+            qq_depth_max = self.qq_depth_max
 
         # ParseBag obj for storing the data generated throughout.
         bigPB = ParseBag(parentType='PLSSDesc')
@@ -547,8 +558,8 @@ class PLSSDesc:
                 textBlock[1], cleanUp=cleanUp, requireColon=requireColon,
                 layout=use_layout, handedDownConfig=config,
                 initParseQQ=initParseQQ, cleanQQ=cleanQQ,
-                qq_min_depth=qq_min_depth, qq_max_depth=qq_max_depth,
-                break_all_halves=break_all_halves)
+                qq_depth_min=qq_depth_min, qq_depth_max=qq_depth_max,
+                qq_depth=qq_depth, break_all_halves=break_all_halves)
             bigPB.absorb(midParseBag)
 
         # If we've still not discovered any Tracts, run a final parse in
@@ -558,8 +569,8 @@ class PLSSDesc:
                 parse_segment(
                     text, layout='copy_all', cleanUp=False, requireColon=False,
                     handedDownConfig=config, initParseQQ=initParseQQ,
-                    cleanQQ=cleanQQ, qq_min_depth=qq_min_depth,
-                    qq_max_depth=qq_max_depth,
+                    cleanQQ=cleanQQ, qq_depth_min=qq_depth_min,
+                    qq_depth_max=qq_depth_max, qq_depth=qq_depth,
                     break_all_halves=break_all_halves))
             bigPB.descIsFlawed = True
 
@@ -1314,9 +1325,12 @@ class Tract:
         # i.e. ['NENE', 'NENW', 'N2SENW', ... ]:
         self.QQList = []
 
-        # Attributes to control how QQ's should be parsed.
-        self.qq_min_depth = 2
-        self.qq_max_depth = None
+        # Attributes to control how deeply QQ's should be parsed.
+        # If `.qq_depth` is set, it will override `.qq_depth_min` and
+        # `.qq_depth_max`
+        self.qq_depth = None
+        self.qq_depth_min = 2
+        self.qq_depth_max = None
         self.break_all_halves = False
 
         # A list of standard lots, ['L1', 'L2', 'N2 of L5', ...]:
@@ -1331,7 +1345,7 @@ class Tract:
         # A bool to track whether the preprocess has been completed
         self.preproComplete = False
 
-        #---------------------------------------------------------------
+        # --------------------------------------------------------------
         # Configure how the Tract should be parsed:
 
         # If a T&R is identified without 'North/South' specified, fall
@@ -1596,9 +1610,10 @@ class Tract:
 
     def parse(
             self, text=None, commit=True, cleanQQ=None, includeLotDivs=None,
-            preprocess=None, qq_min_depth=None, qq_max_depth=None,
-            break_all_halves=None):
+            preprocess=None, qq_depth_min=None, qq_depth_max=None,
+            qq_depth=None, break_all_halves=None):
         """
+        Parse the description block of this Tract into lots and QQ's.
 
         :param text: The text to be parsed into lots and QQ's. If not
         specified, will pull from `self.ppDesc` (i.e. the preprocessed
@@ -1617,7 +1632,7 @@ class Tract:
                     `False` -> 'L1'
         :param preprocess: Whether to preprocess the text before parsing
         it (if the preprocess has not already been done).
-        :param qq_min_depth: An int, specifying the minimum depth of the
+        :param qq_depth_min: An int, specifying the minimum depth of the
         parse. If not set here, will default to settings from init (if
         any), which in turn default to 2, i.e. to quarter-quarters
         (e.g., 'N/2NE/4' -> ['NENE', 'NENE']). Setting to 3 would return
@@ -1625,14 +1640,19 @@ class Tract:
         'NWNENE', 'SENENE', 'SWNENE']), and so forth.
         WARNING: Higher than a few levels of depth will result in very
         slow performance.
-        :param qq_max_depth: (Optional) An int, specifying the maximum
+        :param qq_depth_max: (Optional) An int, specifying the maximum
         depth of the parse. If set as 2, any subdivision smaller than
         quarter-quarter (e.g., 'NENE') would be discarded -- so, for
         example, the 'N/2NE/4NE/4' would simply become the 'NENE'. Must
-        be greater than or equal to `qq_min_depth`. (Defaults to None --
+        be greater than or equal to `qq_depth_min`. (Defaults to None --
         i.e. no maximum. Can also be configured at init.)
+        :param qq_depth: (Optional) An int, specifying both the min and
+        max depth of the parse. If specified, will override both
+        `qq_depth_min` and `qq_depth_max`. (Defaults to None -- i.e. use
+        qq_depth_min and optionally qq_depth_max; but can also be
+        configured at init.)
         :param break_all_halves: Whether to break halves into quarters,
-        even if we're beyond the qq_min_depth. (False by default, but can
+        even if we're beyond the qq_depth_min. (False by default, but can
         be configured at init.)
         :return: Returns the a single list of identified lots and QQ's
         (equivalent to what would be stored in `.lotQQList`).
@@ -1764,22 +1784,43 @@ class Tract:
             #  disregardable context around "ALL" (e.g., punctuation)
             #  that could currently prevent it from being picked up.
 
+        # --------------------------------------------------------------
         # Now that we have list of text blocks, each containing a separate
         # aliquot, parse each of them into QQ's (or smaller, if further
         # divided).
         #   ex:  ['NE¼', 'E½NE¼NW¼']
         #           -> ['NENE' , 'NWNE' , 'SENE' , 'SWNE', 'E2NENW']
 
-        if qq_min_depth is None:
-            qq_min_depth = self.qq_min_depth
-        if qq_max_depth is None:
-            qq_max_depth = self.qq_max_depth
+        # Determine whether to use the _min and _max, or to use the
+        # qq_depth -- and whether to use the arg-specified or what was
+        # set in the instance attributes.
+        # If qq_depth is specified as an arg, that gets top priority.
+        # If qq_depth_min or qq_depth_max are specified as an arg, we
+        # will NOT use the instance attribute `self.qq_depth`.
+        # If none of them were set as arguments, we will use
+        # `self.qq_depth` (as long as it is not None) or else fall back
+        # to `self.qq_depth_min` and `self.qq_depth_max`.
+        use_min_max = False
+        if qq_depth_min is None:
+            qq_depth_min = self.qq_depth_min
+        else:
+            use_min_max = True
+        if qq_depth_max is None:
+            qq_depth_max = self.qq_depth_max
+        else:
+            use_min_max = True
+        if qq_depth is not None:
+            qq_depth_min = qq_depth_max = qq_depth
+        elif not use_min_max and self.qq_depth is not None:
+            qq_depth_min = qq_depth_max = self.qq_depth
+
         if break_all_halves is None:
             break_all_halves = self.break_all_halves
         QQList = []
         for aliqTextBlock in aliqTextBlocks:
             wQQList = unpack_aliquots(
-                aliqTextBlock, qq_min_depth, qq_max_depth, break_all_halves)
+                aliqTextBlock, qq_depth_min, qq_depth_max, qq_depth,
+                break_all_halves)
             QQList.extend(wQQList)
 
         plqqParseBag.QQList = QQList
@@ -2251,8 +2292,9 @@ class Config:
         -- 'includeLotDivs'  vs.  'includeLotDivs.False'
         -- 'ocrScrub'  vs.  'ocrScrub.False'
         -- 'segment'  vs.  'segment.False'
-        -- 'qq_min_depth.<int>'  (defaults to 'qq_min_depth.2')
-        -- 'qq_max_depth.<int>'  (defaults to 'qq_max_depth.None')
+        -- 'qq_depth_min.<int>'  (defaults to 'qq_depth_min.2')
+        -- 'qq_depth_max.<int>'  (defaults to 'qq_depth_max.None')
+        -- 'qq_depth.<int>'  (defaults to 'qq_depth.None')
         -- 'break_all_halves'  vs.  'break_all_halves.False'
         Only one of the following may be passed -- and none of these are
         recommended:
@@ -2267,7 +2309,8 @@ class Config:
     __ConfigAttribs__ = [
         'defaultNS', 'defaultEW', 'initPreprocess', 'layout', 'initParse',
         'initParseQQ', 'cleanQQ', 'requireColon', 'includeLotDivs', 'ocrScrub',
-        'segment', 'qq_min_depth', 'qq_max_depth', 'break_all_halves'
+        'segment', 'qq_depth', 'qq_depth_min', 'qq_depth_max',
+        'break_all_halves'
     ]
 
     # A list of attribute names whose values should be a bool:
@@ -2278,7 +2321,7 @@ class Config:
     ]
 
     __intTypeAttribs__ = [
-        'qq_min_depth', 'qq_max_depth'
+        'qq_depth_min', 'qq_depth_max', 'qq_depth'
     ]
 
     # Those attributes relevant to PLSSDesc objects:
@@ -2287,8 +2330,8 @@ class Config:
     # Those attributes relevant to Tract objects:
     __TractAttribs__ = [
         'defaultNS', 'defaultEW', 'initPreprocess', 'initParseQQ', 'cleanQQ',
-        'includeLotDivs', 'ocrScrub', 'qq_min_depth', 'qq_max_depth',
-        'break_all_halves'
+        'includeLotDivs', 'ocrScrub', 'qq_depth', 'qq_depth_min',
+        'qq_depth_max', 'break_all_halves'
     ]
 
     def __init__(self, configText='', configName=''):
@@ -2313,8 +2356,9 @@ class Config:
         -- 'includeLotDivs'  vs.  'includeLotDivs.False'
         -- 'ocrScrub'  vs.  'ocrScrub.False'
         -- 'segment'  vs.  'segment.False'
-        -- 'qq_min_depth.<int>'  (defaults to 'qq_min_depth.2')
-        -- 'qq_max_depth.<int>'  (defaults to 'qq_max_depth.None')
+        -- 'qq_depth_min.<int>'  (defaults to 'qq_depth_min.2')
+        -- 'qq_depth_max.<int>'  (defaults to 'qq_depth_max.None')
+        -- 'qq_depth.<int>'  (defaults to 'qq_depth.None')
         -- 'break_all_halves'  vs.  'break_all_halves.False'
         Only one of the following may be passed -- and none of these are
         recommended:
@@ -2938,7 +2982,8 @@ def findall_matching_sec(text, layout=None, requireColon='default_colon'):
 def parse_segment(
         textBlock, layout=None, cleanUp=None, requireColon='default_colon',
         handedDownConfig=None, initParseQQ=False, cleanQQ=None,
-        qq_min_depth=None, qq_max_depth=None, break_all_halves=None):
+        qq_depth_min=None, qq_depth_max=None, qq_depth=None,
+        break_all_halves=None):
     """
     INTERNAL USE:
 
@@ -2973,7 +3018,7 @@ def parse_segment(
     :param handedDownConfig: A Config object to be passed to any Tract
     object that is created, so that they are configured identically to
     a parent PLSSDesc object (if any). Defaults to None.
-    :param qq_min_depth: (Optional, and only relevant if parsing
+    :param qq_depth_min: (Optional, and only relevant if parsing
     Tracts into lots and QQs.) An int, specifying the minimum depth
     of the parse. If not set here, will default to settings from
     init (if any), which in turn default to 2, i.e. to
@@ -2983,16 +3028,22 @@ def parse_segment(
     so forth.
     WARNING: Higher than a few levels of depth will result in very
     slow performance.
-    :param qq_max_depth: (Optional, and only relevant if parsing
+    :param qq_depth_max: (Optional, and only relevant if parsing
     Tracts into lots and QQs.) An int, specifying the maximum depth
     of the parse. If set as 2, any subdivision smaller than
     quarter-quarter (e.g., 'NENE') would be discarded -- so, for
     example, the 'N/2NE/4NE/4' would simply become the 'NENE'. Must
-    be greater than or equal to `qq_min_depth`. (Defaults to None --
+    be greater than or equal to `qq_depth_min`. (Defaults to None --
     i.e. no maximum. Can also be configured at init.)
+    :param qq_depth: (Optional, and only relevant if parsing Tracts
+    into lots and QQs.) An int, specifying both the minimum and
+    maximum depth of the parse. If specified, will override both
+    `qq_depth_min` and `qq_depth_max`. (Defaults to None -- i.e. use
+    qq_depth_min and optionally qq_depth_max; and can optionally be
+    configured at init.)
     :param break_all_halves: (Optional, and only relevant if parsing
     Tracts into lots and QQs.) Whether to break halves into
-    quarters, even if we're beyond the qq_min_depth. (False by
+    quarters, even if we're beyond the qq_depth_min. (False by
     default, but can be configured at init.)
     :return: a pyTRS.ParseBag object with the parsed data.
     """
@@ -3040,10 +3091,12 @@ def parse_segment(
     if break_all_halves is not None:
         handedDownConfig.set_str_to_values(
             f"break_all_halves.{break_all_halves}")
-    if qq_min_depth is not None:
-        handedDownConfig.set_str_to_values(f"qq_min_depth.{qq_min_depth}")
-    if qq_max_depth is not None:
-        handedDownConfig.set_str_to_values(f"qq_max_depth.{qq_max_depth}")
+    if qq_depth_min is not None:
+        handedDownConfig.set_str_to_values(f"qq_depth_min.{qq_depth_min}")
+    if qq_depth_max is not None:
+        handedDownConfig.set_str_to_values(f"qq_depth_max.{qq_depth_max}")
+    if qq_depth is not None:
+        handedDownConfig.set_str_to_values(f"qq_depth.{qq_depth}")
 
     if not isinstance(cleanUp, bool):
         # if cleanUp has not been specified as a bool, then use these defaults:
@@ -4118,7 +4171,7 @@ def scrub_aliquots(text, cleanQQ=False) -> str:
 
 
 def unpack_aliquots(
-        aliquot_text_block, qq_min_depth=2, qq_max_depth=None,
+        aliquot_text_block, qq_depth_min=2, qq_depth_max=None, qq_depth=None,
         break_all_halves=False) -> list:
     """
     INTERNAL USE:
@@ -4132,20 +4185,24 @@ def unpack_aliquots(
 
     :param aliquot_text_block: A clean string, as generated by the
     `Tract.parse()` method.
-    :param qq_min_depth: An int, specifying the minimum depth of the parse.
+    :param qq_depth_min: An int, specifying the minimum depth of the parse.
     Defaults to 2, i.e. to quarter-quarters (e.g., 'N/2NE/4' -> ['NENE',
     'NENE']). Setting to 3 would return 10-acre subdivisions (i.e.
     dividing the 'NENE' into ['NENENE', 'NWNENE', 'SENENE', 'SWNENE']),
     and so forth.
     WARNING: Higher than a few levels of depth will result in very slow
     performance.
-    :param qq_max_depth: (Optional) An int, specifying the maximum depth of
+    :param qq_depth_max: (Optional) An int, specifying the maximum depth of
     the parse. If set as 2, any subdivision smaller than quarter-quarter
     (e.g., 'NENE') would be discarded -- so, for example, the
     'N/2NE/4NE/4' would simply become the 'NENE'. Must be greater than
-    or equal to `qq_min_depth`. (Defaults to None -- i.e. no maximum.)
+    or equal to `qq_depth_min`. (Defaults to None -- i.e. no maximum.)
+    :param qq_depth: (Optional) An int, specifying both the min and max
+    depth of the parse. If specified, will override both `qq_depth_min`
+    and `qq_depth_max`. (Defaults to None -- i.e. use qq_depth_min and
+    optionally qq_depth_max.)
     :param break_all_halves: Whether to break halves into quarters, even
-    if we're beyond the qq_min_depth. (False by default.)
+    if we're beyond the qq_depth_min. (False by default.)
     """
 
     # To do this, we break down an aliquot_text_block into its smaller
@@ -4224,12 +4281,15 @@ def unpack_aliquots(
                     subdivide_aliquot(comp, divisions_remaining - 1))
             return subdivided
 
-    if qq_max_depth is not None and qq_max_depth < qq_min_depth:
+    if qq_depth is not None:
+        qq_depth_min = qq_depth_max = qq_depth
+    
+    if qq_depth_max is not None and qq_depth_max < qq_depth_min:
         import warnings
         msg = (
-            "If specified, `qq_max_depth` should be greater than or equal to "
-            f"`qq_min_depth` (passed as {qq_max_depth} and {qq_min_depth}, "
-            "respectively). Using a larger qq_max_depth than qq_min_depth may "
+            "If specified, `qq_depth_max` should be greater than or equal to "
+            f"`qq_depth_min` (passed as {qq_depth_max} and {qq_depth_min}, "
+            "respectively). Using a larger qq_depth_max than qq_depth_min may "
             "result in more QQ's being returned than actually exist in the "
             "Tract."
         )
@@ -4283,21 +4343,21 @@ def unpack_aliquots(
     # (Remember that the component_list is ordered last-to-first
     # vis-a-vis the original aliquot string.)
 
-    # Discard any subdivisions greater than the qq_max_depth, if it was set.
-    if qq_max_depth is not None and len(component_list) > qq_max_depth:
-        component_list = component_list[:qq_max_depth]
+    # Discard any subdivisions greater than the qq_depth_max, if it was set.
+    if qq_depth_max is not None and len(component_list) > qq_depth_max:
+        component_list = component_list[:qq_depth_max]
 
     subdivided_component_list = []
     for i, comp in enumerate(component_list, start=1):
         # Determine how deeply we need to subdivide (i.e. break down) each
-        # component, such that we ultimately capture the intended qq_min_depth.
+        # component, such that we ultimately capture the intended qq_depth_min.
 
         depth = 0
-        if i == qq_min_depth:
+        if i == qq_depth_min:
             depth = 1
-        elif i == len(component_list) and len(component_list) < qq_min_depth:
-            depth = qq_min_depth - i + 1
-        elif comp in halves and (i < qq_min_depth or break_all_halves):
+        elif i == len(component_list) and len(component_list) < qq_depth_min:
+            depth = qq_depth_min - i + 1
+        elif comp in halves and (i < qq_depth_min or break_all_halves):
             depth = 1
         if comp in quarters:
             # Quarters (by definition) are already 1 depth more broken down
@@ -4315,7 +4375,7 @@ def unpack_aliquots(
 
     # subdivided_component_list is now in the format:
     #   `[['SE'], ['NW', 'SW'], ['E2']]`
-    # ...for E/2W/2SE/4, parsed to a qq_min_depth of 2.
+    # ...for E/2W/2SE/4, parsed to a qq_depth_min of 2.
 
     # Convert the 1-depth nested list into the final QQ list and return.
     return rebuild_aliquots_shallow(subdivided_component_list)
@@ -4371,9 +4431,9 @@ def rebuild_aliquots_shallow(nested_aliquot_list: list):
     :param nested_aliquot_list: A single-depth nested list of aliquot
     components, arranged by subdivision size, largest to smallest. For
     example:  [['SE'], ['NW', 'SW'], ['E2']]  ...for 'E/2W/2SE/4',
-    parsed to a qq_min_depth of 2.
+    parsed to a qq_depth_min of 2.
     :return: A clean QQ list, in the format ['E2NWSE', 'E2SWSE'] (or
-    smaller, strings, if parsed to a less qq_min_depth).
+    smaller, strings, if parsed to a less qq_depth_min).
     """
     QQList = []
     while len(nested_aliquot_list) > 0:
