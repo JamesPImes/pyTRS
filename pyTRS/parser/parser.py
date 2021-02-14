@@ -242,7 +242,7 @@ class PLSSDesc:
         self.qq_depth = None
         self.qq_depth_min = 2
         self.qq_depth_max = None
-        self.break_all_halves = False
+        self.break_halves = False
 
         # Apply settings from `config=`.
         self.set_config(config)
@@ -373,7 +373,7 @@ class PLSSDesc:
             self, text=None, layout=None, cleanUp=None, initParseQQ=None,
             cleanQQ=None, requireColon='default_colon', segment=None,
             commit=True, qq_depth_min=None, qq_depth_max=None, qq_depth=None,
-            break_all_halves=None):
+            break_halves=None):
         """
         Parse the description. If parameter `commit=True` (defaults to
         on), the results will be stored to the various instance
@@ -443,7 +443,7 @@ class PLSSDesc:
         `qq_depth_min` and `qq_depth_max`. (Defaults to None -- i.e. use
         qq_depth_min and optionally qq_depth_max; and can optionally be
         configured at init.)
-        :param break_all_halves: (Optional, and only relevant if parsing
+        :param break_halves: (Optional, and only relevant if parsing
         Tracts into lots and QQs.) Whether to break halves into
         quarters, even if we're beyond the qq_depth_min. (False by
         default, but can be configured at init.)
@@ -501,8 +501,8 @@ class PLSSDesc:
             segment = False
 
         # For QQ parsing (if applicable)
-        if break_all_halves is None:
-            break_all_halves = self.break_all_halves
+        if break_halves is None:
+            break_halves = self.break_halves
         if qq_depth is None and qq_depth_min is None and qq_depth_max is None:
             qq_depth = self.qq_depth
         if qq_depth_min is None:
@@ -559,7 +559,7 @@ class PLSSDesc:
                 layout=use_layout, handedDownConfig=config,
                 initParseQQ=initParseQQ, cleanQQ=cleanQQ,
                 qq_depth_min=qq_depth_min, qq_depth_max=qq_depth_max,
-                qq_depth=qq_depth, break_all_halves=break_all_halves)
+                qq_depth=qq_depth, break_halves=break_halves)
             bigPB.absorb(midParseBag)
 
         # If we've still not discovered any Tracts, run a final parse in
@@ -571,7 +571,7 @@ class PLSSDesc:
                     handedDownConfig=config, initParseQQ=initParseQQ,
                     cleanQQ=cleanQQ, qq_depth_min=qq_depth_min,
                     qq_depth_max=qq_depth_max, qq_depth=qq_depth,
-                    break_all_halves=break_all_halves))
+                    break_halves=break_halves))
             bigPB.descIsFlawed = True
 
         for TractObj in bigPB.parsedTracts:
@@ -1331,7 +1331,7 @@ class Tract:
         self.qq_depth = None
         self.qq_depth_min = 2
         self.qq_depth_max = None
-        self.break_all_halves = False
+        self.break_halves = False
 
         # A list of standard lots, ['L1', 'L2', 'N2 of L5', ...]:
         self.lotList = []
@@ -1611,7 +1611,7 @@ class Tract:
     def parse(
             self, text=None, commit=True, cleanQQ=None, includeLotDivs=None,
             preprocess=None, qq_depth_min=None, qq_depth_max=None,
-            qq_depth=None, break_all_halves=None):
+            qq_depth=None, break_halves=None):
         """
         Parse the description block of this Tract into lots and QQ's.
 
@@ -1651,7 +1651,7 @@ class Tract:
         `qq_depth_min` and `qq_depth_max`. (Defaults to None -- i.e. use
         qq_depth_min and optionally qq_depth_max; but can also be
         configured at init.)
-        :param break_all_halves: Whether to break halves into quarters,
+        :param break_halves: Whether to break halves into quarters,
         even if we're beyond the qq_depth_min. (False by default, but can
         be configured at init.)
         :return: Returns the a single list of identified lots and QQ's
@@ -1814,13 +1814,13 @@ class Tract:
         elif not use_min_max and self.qq_depth is not None:
             qq_depth_min = qq_depth_max = self.qq_depth
 
-        if break_all_halves is None:
-            break_all_halves = self.break_all_halves
+        if break_halves is None:
+            break_halves = self.break_halves
         QQList = []
         for aliqTextBlock in aliqTextBlocks:
             wQQList = unpack_aliquots(
                 aliqTextBlock, qq_depth_min, qq_depth_max, qq_depth,
-                break_all_halves)
+                break_halves)
             QQList.extend(wQQList)
 
         plqqParseBag.QQList = QQList
@@ -2295,7 +2295,7 @@ class Config:
         -- 'qq_depth_min.<int>'  (defaults to 'qq_depth_min.2')
         -- 'qq_depth_max.<int>'  (defaults to 'qq_depth_max.None')
         -- 'qq_depth.<int>'  (defaults to 'qq_depth.None')
-        -- 'break_all_halves'  vs.  'break_all_halves.False'
+        -- 'break_halves'  vs.  'break_halves.False'
         Only one of the following may be passed -- and none of these are
         recommended:
         -- 'TRS_desc'  <or>  'layout.TRS_desc'
@@ -2310,14 +2310,14 @@ class Config:
         'defaultNS', 'defaultEW', 'initPreprocess', 'layout', 'initParse',
         'initParseQQ', 'cleanQQ', 'requireColon', 'includeLotDivs', 'ocrScrub',
         'segment', 'qq_depth', 'qq_depth_min', 'qq_depth_max',
-        'break_all_halves'
+        'break_halves'
     ]
 
     # A list of attribute names whose values should be a bool:
     __boolTypeAttribs__ = [
         'initParse', 'initParseQQ', 'cleanQQ', 'includeLotDivs',
         'initPreprocess', 'requireColon', 'ocrScrub', 'segment',
-        'break_all_halves'
+        'break_halves'
     ]
 
     __intTypeAttribs__ = [
@@ -2331,7 +2331,7 @@ class Config:
     __TractAttribs__ = [
         'defaultNS', 'defaultEW', 'initPreprocess', 'initParseQQ', 'cleanQQ',
         'includeLotDivs', 'ocrScrub', 'qq_depth', 'qq_depth_min',
-        'qq_depth_max', 'break_all_halves'
+        'qq_depth_max', 'break_halves'
     ]
 
     def __init__(self, configText='', configName=''):
@@ -2359,7 +2359,7 @@ class Config:
         -- 'qq_depth_min.<int>'  (defaults to 'qq_depth_min.2')
         -- 'qq_depth_max.<int>'  (defaults to 'qq_depth_max.None')
         -- 'qq_depth.<int>'  (defaults to 'qq_depth.None')
-        -- 'break_all_halves'  vs.  'break_all_halves.False'
+        -- 'break_halves'  vs.  'break_halves.False'
         Only one of the following may be passed -- and none of these are
         recommended:
         -- 'TRS_desc'  <or>  'layout.TRS_desc'
@@ -2983,7 +2983,7 @@ def parse_segment(
         textBlock, layout=None, cleanUp=None, requireColon='default_colon',
         handedDownConfig=None, initParseQQ=False, cleanQQ=None,
         qq_depth_min=None, qq_depth_max=None, qq_depth=None,
-        break_all_halves=None):
+        break_halves=None):
     """
     INTERNAL USE:
 
@@ -3041,7 +3041,7 @@ def parse_segment(
     `qq_depth_min` and `qq_depth_max`. (Defaults to None -- i.e. use
     qq_depth_min and optionally qq_depth_max; and can optionally be
     configured at init.)
-    :param break_all_halves: (Optional, and only relevant if parsing
+    :param break_halves: (Optional, and only relevant if parsing
     Tracts into lots and QQs.) Whether to break halves into
     quarters, even if we're beyond the qq_depth_min. (False by
     default, but can be configured at init.)
@@ -3088,9 +3088,9 @@ def parse_segment(
     handedDownConfig = Config(handedDownConfig)
     if isinstance(cleanQQ, bool):
         handedDownConfig.set_str_to_values(f"cleanQQ.{cleanQQ}")
-    if break_all_halves is not None:
+    if break_halves is not None:
         handedDownConfig.set_str_to_values(
-            f"break_all_halves.{break_all_halves}")
+            f"break_halves.{break_halves}")
     if qq_depth_min is not None:
         handedDownConfig.set_str_to_values(f"qq_depth_min.{qq_depth_min}")
     if qq_depth_max is not None:
@@ -4172,7 +4172,7 @@ def scrub_aliquots(text, cleanQQ=False) -> str:
 
 def unpack_aliquots(
         aliquot_text_block, qq_depth_min=2, qq_depth_max=None, qq_depth=None,
-        break_all_halves=False) -> list:
+        break_halves=False) -> list:
     """
     INTERNAL USE:
     Convert an aliquot with fraction symbols into a list of clean
@@ -4201,7 +4201,7 @@ def unpack_aliquots(
     depth of the parse. If specified, will override both `qq_depth_min`
     and `qq_depth_max`. (Defaults to None -- i.e. use qq_depth_min and
     optionally qq_depth_max.)
-    :param break_all_halves: Whether to break halves into quarters, even
+    :param break_halves: Whether to break halves into quarters, even
     if we're beyond the qq_depth_min. (False by default.)
     """
 
@@ -4357,7 +4357,7 @@ def unpack_aliquots(
             depth = 1
         elif i == len(component_list) and len(component_list) < qq_depth_min:
             depth = qq_depth_min - i + 1
-        elif comp in halves and (i < qq_depth_min or break_all_halves):
+        elif comp in halves and (i < qq_depth_min or break_halves):
             depth = 1
         if comp in quarters:
             # Quarters (by definition) are already 1 depth more broken down
@@ -4433,7 +4433,7 @@ def rebuild_aliquots_shallow(nested_aliquot_list: list):
     example:  [['SE'], ['NW', 'SW'], ['E2']]  ...for 'E/2W/2SE/4',
     parsed to a qq_depth_min of 2.
     :return: A clean QQ list, in the format ['E2NWSE', 'E2SWSE'] (or
-    smaller, strings, if parsed to a less qq_depth_min).
+    smaller strings, if parsed to a less qq_depth_min).
     """
     QQList = []
     while len(nested_aliquot_list) > 0:
