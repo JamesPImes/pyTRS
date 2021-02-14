@@ -12,6 +12,7 @@ The main parsing package. Primary classes:
 """
 
 import re
+from itertools import zip_longest
 from .regexlib import (
     twprge_regex, twprge_broad_regex, sec_regex, multiSec_regex,
     comma_multiSec_regex, noNum_sec_regex, preproTR_noNSWE_regex,
@@ -235,6 +236,14 @@ class PLSSDesc:
         # capture descriptions with multiple layouts):
         self.segment = False
 
+        # Attributes to control how deeply QQ's should be parsed.
+        # If `.qq_depth` is set, it will override `.qq_depth_min` and
+        # `.qq_depth_max`
+        self.qq_depth = None
+        self.qq_depth_min = 2
+        self.qq_depth_max = None
+        self.break_halves = False
+
         # Apply settings from `config=`.
         self.set_config(config)
 
@@ -363,7 +372,8 @@ class PLSSDesc:
     def parse(
             self, text=None, layout=None, cleanUp=None, initParseQQ=None,
             cleanQQ=None, requireColon='default_colon', segment=None,
-            commit=True):
+            commit=True, qq_depth_min=None, qq_depth_max=None, qq_depth=None,
+            break_halves=None):
         """
         Parse the description. If parameter `commit=True` (defaults to
         on), the results will be stored to the various instance
@@ -410,6 +420,33 @@ class PLSSDesc:
         specified here, defaults to whatever is set in `self.segment`.
         :param commit: Whether to commit the results to the appropriate
         instance attributes. Defaults to `True`.
+        :param qq_depth_min: (Optional, and only relevant if parsing
+        Tracts into lots and QQs.) An int, specifying the minimum depth
+        of the parse. If not set here, will default to settings from
+        init (if any), which in turn default to 2, i.e. to
+        quarter-quarters (e.g., 'N/2NE/4' -> ['NENE', 'NENE']).
+        Setting to 3 would return 10-acre subdivisions (i.e. dividing
+        the 'NENE' into ['NENENE', 'NWNENE', 'SENENE', 'SWNENE']), and
+        so forth.
+        WARNING: Higher than a few levels of depth will result in very
+        slow performance.
+        :param qq_depth_max: (Optional, and only relevant if parsing
+        Tracts into lots and QQs.) An int, specifying the maximum depth
+        of the parse. If set as 2, any subdivision smaller than
+        quarter-quarter (e.g., 'NENE') would be discarded -- so, for
+        example, the 'N/2NE/4NE/4' would simply become the 'NENE'. Must
+        be greater than or equal to `qq_depth_min`. (Defaults to None --
+        i.e. no maximum. Can also be configured at init.)
+        :param qq_depth: (Optional, and only relevant if parsing Tracts
+        into lots and QQs.) An int, specifying both the minimum and
+        maximum depth of the parse. If specified, will override both
+        `qq_depth_min` and `qq_depth_max`. (Defaults to None -- i.e. use
+        qq_depth_min and optionally qq_depth_max; and can optionally be
+        configured at init.)
+        :param break_halves: (Optional, and only relevant if parsing
+        Tracts into lots and QQs.) Whether to break halves into
+        quarters, even if we're beyond the qq_depth_min. (False by
+        default, but can be configured at init.)
         :return: Returns a pyTRS.TractList object (a subclass of 'list')
         of all of the resulting pyTRS.Tract objects.
         """
@@ -463,6 +500,16 @@ class PLSSDesc:
             # is 'copy_all'
             segment = False
 
+        # For QQ parsing (if applicable)
+        if break_halves is None:
+            break_halves = self.break_halves
+        if qq_depth is None and qq_depth_min is None and qq_depth_max is None:
+            qq_depth = self.qq_depth
+        if qq_depth_min is None:
+            qq_depth_min = self.qq_depth_min
+        if qq_depth_max is None:
+            qq_depth_max = self.qq_depth_max
+
         # ParseBag obj for storing the data generated throughout.
         bigPB = ParseBag(parentType='PLSSDesc')
 
@@ -503,23 +550,16 @@ class PLSSDesc:
         # Parse each segment into a separate ParseBag obj, then absorb
         # that PB into the big PB each time:
         for textBlock in trTextBlocks:
-            if layout == 'copy_all':
-                midParseBag = parse_segment(
-                    textBlock[1], cleanUp=cleanUp, requireColon=requireColon,
-                    layout='copy_all', handedDownConfig=config,
-                    initParseQQ=initParseQQ, cleanQQ=cleanQQ)
-            elif segment:
+            use_layout = layout
+            if segment and layout != "copy_all":
                 # Let the segment parser deduce layout for each textBlock.
-                midParseBag = parse_segment(
-                    textBlock[1], cleanUp=cleanUp, requireColon=requireColon,
-                    layout=None, handedDownConfig=config,
-                    initParseQQ=initParseQQ, cleanQQ=cleanQQ)
-            else:
-                midParseBag = parse_segment(
-                    textBlock[1], cleanUp=cleanUp, requireColon=requireColon,
-                    layout=layout, handedDownConfig=config,
-                    initParseQQ=initParseQQ, cleanQQ=cleanQQ)
-
+                use_layout = None
+            midParseBag = parse_segment(
+                textBlock[1], cleanUp=cleanUp, requireColon=requireColon,
+                layout=use_layout, handedDownConfig=config,
+                initParseQQ=initParseQQ, cleanQQ=cleanQQ,
+                qq_depth_min=qq_depth_min, qq_depth_max=qq_depth_max,
+                qq_depth=qq_depth, break_halves=break_halves)
             bigPB.absorb(midParseBag)
 
         # If we've still not discovered any Tracts, run a final parse in
@@ -529,7 +569,9 @@ class PLSSDesc:
                 parse_segment(
                     text, layout='copy_all', cleanUp=False, requireColon=False,
                     handedDownConfig=config, initParseQQ=initParseQQ,
-                    cleanQQ=cleanQQ))
+                    cleanQQ=cleanQQ, qq_depth_min=qq_depth_min,
+                    qq_depth_max=qq_depth_max, qq_depth=qq_depth,
+                    break_halves=break_halves))
             bigPB.descIsFlawed = True
 
         for TractObj in bigPB.parsedTracts:
@@ -893,9 +935,9 @@ class PLSSDesc:
     def gen_flags(self, text=None, commit=False):
         """
         Return a ParseBag object containing wFlagList, wFlagLines,
-        eFlagList,and eFlagLine, and maybe descIsFlawed. Each element in
-        wFlagLines or eFlagLines is a tuple, the first element being the
-        warning or error flag, and the second element being the line
+        eFlagList, and eFlagLine, and maybe descIsFlawed. Each element
+        in wFlagLines or eFlagLines is a tuple, the first element being
+        the warning or error flag, and the second element being the line
         that raised the flag.  If parameter `commit=True` is passed (off
         by default), it will commit them to the PLSSDesc object's
         attributes--which is probably already done by the .parse()
@@ -1283,6 +1325,14 @@ class Tract:
         # i.e. ['NENE', 'NENW', 'N2SENW', ... ]:
         self.QQList = []
 
+        # Attributes to control how deeply QQ's should be parsed.
+        # If `.qq_depth` is set, it will override `.qq_depth_min` and
+        # `.qq_depth_max`
+        self.qq_depth = None
+        self.qq_depth_min = 2
+        self.qq_depth_max = None
+        self.break_halves = False
+
         # A list of standard lots, ['L1', 'L2', 'N2 of L5', ...]:
         self.lotList = []
 
@@ -1295,7 +1345,7 @@ class Tract:
         # A bool to track whether the preprocess has been completed
         self.preproComplete = False
 
-        #---------------------------------------------------------------
+        # --------------------------------------------------------------
         # Configure how the Tract should be parsed:
 
         # If a T&R is identified without 'North/South' specified, fall
@@ -1408,7 +1458,7 @@ class Tract:
             ocrScrub = configObj.ocrScrub
 
         # Get twp in a standardized format, if we can
-        if not isinstance(twp, (int,str)):
+        if not isinstance(twp, (int, str)):
             twp = ''
         elif isinstance(twp, int):
             twp = f'{str(twp)}{defaultNS}'
@@ -1436,7 +1486,7 @@ class Tract:
             rge = rge.lower()
 
         # Get sec in a standardized format, if we can
-        if not isinstance(sec, (int,str)):
+        if not isinstance(sec, (int, str)):
             sec = ''
         elif isinstance(sec, int):
             sec = str(sec)
@@ -1560,8 +1610,10 @@ class Tract:
 
     def parse(
             self, text=None, commit=True, cleanQQ=None, includeLotDivs=None,
-            preprocess=None):
+            preprocess=None, qq_depth_min=None, qq_depth_max=None,
+            qq_depth=None, break_halves=None):
         """
+        Parse the description block of this Tract into lots and QQ's.
 
         :param text: The text to be parsed into lots and QQ's. If not
         specified, will pull from `self.ppDesc` (i.e. the preprocessed
@@ -1580,6 +1632,28 @@ class Tract:
                     `False` -> 'L1'
         :param preprocess: Whether to preprocess the text before parsing
         it (if the preprocess has not already been done).
+        :param qq_depth_min: An int, specifying the minimum depth of the
+        parse. If not set here, will default to settings from init (if
+        any), which in turn default to 2, i.e. to quarter-quarters
+        (e.g., 'N/2NE/4' -> ['NENE', 'NENE']). Setting to 3 would return
+        10-acre subdivisions (i.e. dividing the 'NENE' into ['NENENE',
+        'NWNENE', 'SENENE', 'SWNENE']), and so forth.
+        WARNING: Higher than a few levels of depth will result in very
+        slow performance.
+        :param qq_depth_max: (Optional) An int, specifying the maximum
+        depth of the parse. If set as 2, any subdivision smaller than
+        quarter-quarter (e.g., 'NENE') would be discarded -- so, for
+        example, the 'N/2NE/4NE/4' would simply become the 'NENE'. Must
+        be greater than or equal to `qq_depth_min`. (Defaults to None --
+        i.e. no maximum. Can also be configured at init.)
+        :param qq_depth: (Optional) An int, specifying both the min and
+        max depth of the parse. If specified, will override both
+        `qq_depth_min` and `qq_depth_max`. (Defaults to None -- i.e. use
+        qq_depth_min and optionally qq_depth_max; but can also be
+        configured at init.)
+        :param break_halves: Whether to break halves into quarters,
+        even if we're beyond the qq_depth_min. (False by default, but can
+        be configured at init.)
         :return: Returns the a single list of identified lots and QQ's
         (equivalent to what would be stored in `.lotQQList`).
         """
@@ -1710,15 +1784,43 @@ class Tract:
             #  disregardable context around "ALL" (e.g., punctuation)
             #  that could currently prevent it from being picked up.
 
+        # --------------------------------------------------------------
         # Now that we have list of text blocks, each containing a separate
         # aliquot, parse each of them into QQ's (or smaller, if further
         # divided).
         #   ex:  ['NE¼', 'E½NE¼NW¼']
         #           -> ['NENE' , 'NWNE' , 'SENE' , 'SWNE', 'E2NENW']
 
+        # Determine whether to use the _min and _max, or to use the
+        # qq_depth -- and whether to use the arg-specified or what was
+        # set in the instance attributes.
+        # If qq_depth is specified as an arg, that gets top priority.
+        # If qq_depth_min or qq_depth_max are specified as an arg, we
+        # will NOT use the instance attribute `self.qq_depth`.
+        # If none of them were set as arguments, we will use
+        # `self.qq_depth` (as long as it is not None) or else fall back
+        # to `self.qq_depth_min` and `self.qq_depth_max`.
+        use_min_max = False
+        if qq_depth_min is None:
+            qq_depth_min = self.qq_depth_min
+        else:
+            use_min_max = True
+        if qq_depth_max is None:
+            qq_depth_max = self.qq_depth_max
+        else:
+            use_min_max = True
+        if qq_depth is not None:
+            qq_depth_min = qq_depth_max = qq_depth
+        elif not use_min_max and self.qq_depth is not None:
+            qq_depth_min = qq_depth_max = self.qq_depth
+
+        if break_halves is None:
+            break_halves = self.break_halves
         QQList = []
         for aliqTextBlock in aliqTextBlocks:
-            wQQList = unpack_aliquots(aliqTextBlock)
+            wQQList = unpack_aliquots(
+                aliqTextBlock, qq_depth_min, qq_depth_max, qq_depth,
+                break_halves)
             QQList.extend(wQQList)
 
         plqqParseBag.QQList = QQList
@@ -2190,6 +2292,10 @@ class Config:
         -- 'includeLotDivs'  vs.  'includeLotDivs.False'
         -- 'ocrScrub'  vs.  'ocrScrub.False'
         -- 'segment'  vs.  'segment.False'
+        -- 'qq_depth_min.<int>'  (defaults to 'qq_depth_min.2')
+        -- 'qq_depth_max.<int>'  (defaults to 'qq_depth_max.None')
+        -- 'qq_depth.<int>'  (defaults to 'qq_depth.None')
+        -- 'break_halves'  vs.  'break_halves.False'
         Only one of the following may be passed -- and none of these are
         recommended:
         -- 'TRS_desc'  <or>  'layout.TRS_desc'
@@ -2203,13 +2309,19 @@ class Config:
     __ConfigAttribs__ = [
         'defaultNS', 'defaultEW', 'initPreprocess', 'layout', 'initParse',
         'initParseQQ', 'cleanQQ', 'requireColon', 'includeLotDivs', 'ocrScrub',
-        'segment'
+        'segment', 'qq_depth', 'qq_depth_min', 'qq_depth_max',
+        'break_halves'
     ]
 
     # A list of attribute names whose values should be a bool:
     __boolTypeAttribs__ = [
         'initParse', 'initParseQQ', 'cleanQQ', 'includeLotDivs',
-        'initPreprocess', 'requireColon', 'ocrScrub', 'segment'
+        'initPreprocess', 'requireColon', 'ocrScrub', 'segment',
+        'break_halves'
+    ]
+
+    __intTypeAttribs__ = [
+        'qq_depth_min', 'qq_depth_max', 'qq_depth'
     ]
 
     # Those attributes relevant to PLSSDesc objects:
@@ -2218,7 +2330,8 @@ class Config:
     # Those attributes relevant to Tract objects:
     __TractAttribs__ = [
         'defaultNS', 'defaultEW', 'initPreprocess', 'initParseQQ', 'cleanQQ',
-        'includeLotDivs', 'ocrScrub'
+        'includeLotDivs', 'ocrScrub', 'qq_depth', 'qq_depth_min',
+        'qq_depth_max', 'break_halves'
     ]
 
     def __init__(self, configText='', configName=''):
@@ -2243,6 +2356,10 @@ class Config:
         -- 'includeLotDivs'  vs.  'includeLotDivs.False'
         -- 'ocrScrub'  vs.  'ocrScrub.False'
         -- 'segment'  vs.  'segment.False'
+        -- 'qq_depth_min.<int>'  (defaults to 'qq_depth_min.2')
+        -- 'qq_depth_max.<int>'  (defaults to 'qq_depth_max.None')
+        -- 'qq_depth.<int>'  (defaults to 'qq_depth.None')
+        -- 'break_halves'  vs.  'break_halves.False'
         Only one of the following may be passed -- and none of these are
         recommended:
         -- 'TRS_desc'  <or>  'layout.TRS_desc'
@@ -2276,7 +2393,7 @@ class Config:
         # Remove all spaces from configText:
         configText = configText.replace(' ', '')
 
-        # Separate config commands with ','  or  ';'  or '|'
+        # Separate config parameters with ','  or  ';'
         configLines = re.split(r'[;,]', configText)
 
         for line in configLines:
@@ -2440,7 +2557,7 @@ class Config:
 
         def str_to_value(text):
             """
-            Convert string to None or bool, if appropriate.
+            Convert string to None or bool or int, if appropriate.
             """
             if text == 'None':
                 return None
@@ -2449,7 +2566,10 @@ class Config:
             elif text == 'False':
                 return False
             else:
-                return text
+                try:
+                    return int(text)
+                except ValueError:
+                    return text
 
         # split attribute/value pair by '.' or '='
         #   ex: 'defaultNS.n' or 'defaultNS=n' -> ['defaultNS', 'n']
@@ -2861,7 +2981,9 @@ def findall_matching_sec(text, layout=None, requireColon='default_colon'):
 
 def parse_segment(
         textBlock, layout=None, cleanUp=None, requireColon='default_colon',
-        handedDownConfig=None, initParseQQ=False, cleanQQ=None):
+        handedDownConfig=None, initParseQQ=False, cleanQQ=None,
+        qq_depth_min=None, qq_depth_max=None, qq_depth=None,
+        break_halves=None):
     """
     INTERNAL USE:
 
@@ -2896,6 +3018,33 @@ def parse_segment(
     :param handedDownConfig: A Config object to be passed to any Tract
     object that is created, so that they are configured identically to
     a parent PLSSDesc object (if any). Defaults to None.
+    :param qq_depth_min: (Optional, and only relevant if parsing
+    Tracts into lots and QQs.) An int, specifying the minimum depth
+    of the parse. If not set here, will default to settings from
+    init (if any), which in turn default to 2, i.e. to
+    quarter-quarters (e.g., 'N/2NE/4' -> ['NENE', 'NENE']).
+    Setting to 3 would return 10-acre subdivisions (i.e. dividing
+    the 'NENE' into ['NENENE', 'NWNENE', 'SENENE', 'SWNENE']), and
+    so forth.
+    WARNING: Higher than a few levels of depth will result in very
+    slow performance.
+    :param qq_depth_max: (Optional, and only relevant if parsing
+    Tracts into lots and QQs.) An int, specifying the maximum depth
+    of the parse. If set as 2, any subdivision smaller than
+    quarter-quarter (e.g., 'NENE') would be discarded -- so, for
+    example, the 'N/2NE/4NE/4' would simply become the 'NENE'. Must
+    be greater than or equal to `qq_depth_min`. (Defaults to None --
+    i.e. no maximum. Can also be configured at init.)
+    :param qq_depth: (Optional, and only relevant if parsing Tracts
+    into lots and QQs.) An int, specifying both the minimum and
+    maximum depth of the parse. If specified, will override both
+    `qq_depth_min` and `qq_depth_max`. (Defaults to None -- i.e. use
+    qq_depth_min and optionally qq_depth_max; and can optionally be
+    configured at init.)
+    :param break_halves: (Optional, and only relevant if parsing
+    Tracts into lots and QQs.) Whether to break halves into
+    quarters, even if we're beyond the qq_depth_min. (False by
+    default, but can be configured at init.)
     :return: a pyTRS.ParseBag object with the parsed data.
     """
 
@@ -2939,6 +3088,15 @@ def parse_segment(
     handedDownConfig = Config(handedDownConfig)
     if isinstance(cleanQQ, bool):
         handedDownConfig.set_str_to_values(f"cleanQQ.{cleanQQ}")
+    if break_halves is not None:
+        handedDownConfig.set_str_to_values(
+            f"break_halves.{break_halves}")
+    if qq_depth_min is not None:
+        handedDownConfig.set_str_to_values(f"qq_depth_min.{qq_depth_min}")
+    if qq_depth_max is not None:
+        handedDownConfig.set_str_to_values(f"qq_depth_max.{qq_depth_max}")
+    if qq_depth is not None:
+        handedDownConfig.set_str_to_values(f"qq_depth.{qq_depth}")
 
     if not isinstance(cleanUp, bool):
         # if cleanUp has not been specified as a bool, then use these defaults:
@@ -4012,7 +4170,9 @@ def scrub_aliquots(text, cleanQQ=False) -> str:
     return text
 
 
-def unpack_aliquots(aliqTextBlock) -> list:
+def unpack_aliquots(
+        aliquot_text_block, qq_depth_min=2, qq_depth_max=None, qq_depth=None,
+        break_halves=False) -> list:
     """
     INTERNAL USE:
     Convert an aliquot with fraction symbols into a list of clean
@@ -4020,61 +4180,139 @@ def unpack_aliquots(aliqTextBlock) -> list:
         'N½SW¼NE¼' -> ['N2SWNE']
         'N½SW¼' -> ['NESW', 'NWSW']
 
-    NOTE: Input a single aliqTextBlock (i.e. feed only 'N½SW¼NE¼', even
-    if we have a larger list of ['N½SW¼NE¼', 'NW¼'] to process).
+    NOTE: Input a single aliquot_text_block (i.e. feed only 'N½SW¼NE¼',
+    even if we have a larger list of ['N½SW¼NE¼', 'NW¼'] to process).
+
+    :param aliquot_text_block: A clean string, as generated by the
+    `Tract.parse()` method.
+    :param qq_depth_min: An int, specifying the minimum depth of the parse.
+    Defaults to 2, i.e. to quarter-quarters (e.g., 'N/2NE/4' -> ['NENE',
+    'NENE']). Setting to 3 would return 10-acre subdivisions (i.e.
+    dividing the 'NENE' into ['NENENE', 'NWNENE', 'SENENE', 'SWNENE']),
+    and so forth.
+    WARNING: Higher than a few levels of depth will result in very slow
+    performance.
+    :param qq_depth_max: (Optional) An int, specifying the maximum depth of
+    the parse. If set as 2, any subdivision smaller than quarter-quarter
+    (e.g., 'NENE') would be discarded -- so, for example, the
+    'N/2NE/4NE/4' would simply become the 'NENE'. Must be greater than
+    or equal to `qq_depth_min`. (Defaults to None -- i.e. no maximum.)
+    :param qq_depth: (Optional) An int, specifying both the min and max
+    depth of the parse. If specified, will override both `qq_depth_min`
+    and `qq_depth_max`. (Defaults to None -- i.e. use qq_depth_min and
+    optionally qq_depth_max.)
+    :param break_halves: Whether to break halves into quarters, even
+    if we're beyond the qq_depth_min. (False by default.)
     """
 
-    # To do this, we break down an aliqTextBlock into its smaller
+    # To do this, we break down an aliquot_text_block into its smaller
     # components (if any), and place them all in a nested list (each
     # deeper level of the nested list is another division of the level
     # above it). Then we call rebuild_aliquots() on that nested list to
     # rebuild the components appropriately and return a flattened list
     # of aliquots, sized QQ and smaller.
 
-    def rebuild_aliquots(aliqNestedList) -> list:
-        """A nested list of aliquot components is returned as a flattened
-        list of rebuilt aliquots."""
+    halves = ('N', 'S', 'E', 'W')
+    quarters = ('NE', 'NW', 'SE', 'SW')
+    subdivide_definitions = {
+        'ALL': quarters,
+        'N': ('NE', 'NW'),
+        'S': ('SE', 'SW'),
+        'E': ('NE', 'SE'),
+        'W': ('NW', 'SW'),
+    }
 
-        # The S/2S/2N/2 should be fed in as
-        #       ['NE', 'NW', ['SE','SW', ['S2']]]
-        #   and will return:
-        #       ['S2SENE', 'S2SWNE', 'S2SENW', 'S2SENW']
-        # Similarly, the E/2SW/4NE/4 can be fed in as
-        #       ['NE', ['SW', ['E2']]]
-        #   and will spit out
-        #       ['E2SWNE']
+    def subdivide_aliquot(aliquot_component: str, divisions_remaining: int):
+        """
+        Recursively subdivide an aliquot component into a deep-nested
+        list, to a depth equal to `divisions_remaining`. (The more
+        deeply an element is nested, the smaller the subdivision.)
 
-        moveUpList = []
-        if not isinstance(aliqNestedList[-1], list):
-        # We've hit the final list.
-            return aliqNestedList
+        Return examples:
 
-        else:  # if there are more lists...
-            if isinstance(aliqNestedList[:-1], str):
-                match_to_list = [aliqNestedList[0]]
-            else:
-                match_to_list = aliqNestedList[:-1]
-            next_list = rebuild_aliquots(aliqNestedList[-1])
-            for match_to_string in match_to_list:
-                for element in next_list:
-                    wAliquot = element + match_to_string
-                    moveUpList.append(wAliquot)
-            return moveUpList
+        subdivide_aliquot('N', 1)
+        ->  ['NE', 'NW']
 
+        subdivide_aliquot('ALL', 1)
+        ->  ['NE', 'NW', 'SE', 'SW']
+
+        subdivide_aliquot('ALL', 2)
+        ->  [
+                ['NE', ['NE', 'NW', 'SE', 'SW']],
+                ['NW', ['NE', 'NW', 'SE', 'SW']],
+                ['SE', ['NE', 'NW', 'SE', 'SW']],
+                ['SW', ['NE', 'NW', 'SE', 'SW']]
+            ]
+
+        subdivide_aliquot('N', 2)
+        ->  [
+                ['NE', ['NE', 'NW', 'SE', 'SW']],
+                ['SE', ['NE', 'NW', 'SE', 'SW']]
+            ]
+
+        :param aliquot_component: Any element that appears in the
+        variable `quarters` or as a key in `subdivide_definitions`
+        above.
+
+        :param divisions_remaining: How many times to subdivide this
+        aliquot (i.e. halves or 'ALL' into quarters, or quarters into
+        more quarters).
+
+        :return: A nested list, in the format shown above.
+        """
+        if divisions_remaining <= 0:
+            if aliquot_component in halves:
+                return aliquot_component + "2"
+            return aliquot_component
+        if aliquot_component in quarters:
+            # Break quarters down.
+            # example:   'NE'    -> ['NE', ['NE', 'NW', 'SE', 'SW']]
+            # (equivalent to NENE, NWNE, SENE, SWNE, once it gets compiled)
+            quarter_definition = [
+                subdivide_aliquot(q, divisions_remaining - 1)
+                for q in quarters
+            ]
+            return [aliquot_component, quarter_definition]
+        else:
+            next_components = list(subdivide_definitions[aliquot_component])
+            subdivided = []
+            for comp in next_components:
+                subdivided.append(
+                    subdivide_aliquot(comp, divisions_remaining - 1))
+            return subdivided
+
+    if qq_depth is not None:
+        qq_depth_min = qq_depth_max = qq_depth
+    
+    if qq_depth_max is not None and qq_depth_max < qq_depth_min:
+        import warnings
+        msg = (
+            "If specified, `qq_depth_max` should be greater than or equal to "
+            f"`qq_depth_min` (passed as {qq_depth_max} and {qq_depth_min}, "
+            "respectively). Using a larger qq_depth_max than qq_depth_min may "
+            "result in more QQ's being returned than actually exist in the "
+            "Tract."
+        )
+        warnings.warn(msg)
+
+    # ------------------------------------------------------------------
     # Get a list of the component parts of the aliquot string, in
     # reverse -- i.e. 'N½SW¼NE¼' becomes ['NE', 'SW', 'N']
-    remainingAliqText = aliqTextBlock
+
+    # TODO: Refactor this to use `aliquot_unpacker_regex.search(... pos=i)`
+
+    remaining_aliquot_text = aliquot_text_block
 
     # list of component parts of the aliquot, from last-to-first
     # -- ex. ['NE', 'SW', 'N']
-    # Note that componentList is a flat list (NOT nested).
-    componentList = []
+    # Note that component_list is a flat list (NOT nested).
+    component_list = []
 
     while True:
-        aliq_mo = aliquot_unpacker_regex.search(remainingAliqText)
+        aliq_mo = aliquot_unpacker_regex.search(remaining_aliquot_text)
         if aliq_mo is None:
-            if remainingAliqText.lower() == 'all':
-                componentList.append('ALL')
+            if remaining_aliquot_text.lower() == 'all':
+                component_list.append('ALL')
             break
 
         # Quick explanation of the relevant regex match object groups:
@@ -4083,125 +4321,137 @@ def unpack_aliquots(aliqTextBlock) -> list:
         # None. In that case, the rightmost component will be a half
         # (e.g., 'E½' in 'W½E½') and will be in group(6).
 
-        # mainAliq is intended to be the rightmost component.
-        mainAliq = aliq_mo.group(8)
+        # main_aliquot is intended to be the rightmost component.
+        main_aliquot = aliq_mo.group(8)
         if aliq_mo.group(8) is None:
-            mainAliq = aliq_mo.group(6)
+            main_aliquot = aliq_mo.group(6)
             # Cut off the last component to rerun the loop:
-            remainingAliqText = remainingAliqText[:aliq_mo.start(6)]
+            remaining_aliquot_text = remaining_aliquot_text[:aliq_mo.start(6)]
         else:
             # Cut off the last component to rerun the loop:
-            remainingAliqText = remainingAliqText[:aliq_mo.start(8)]
+            remaining_aliquot_text = remaining_aliquot_text[:aliq_mo.start(8)]
         # Cut off the half fraction from 'E½', for example:
-        mainAliq = mainAliq.replace('½', '')
-        componentList.append(mainAliq)
+        main_aliquot = main_aliquot.replace('½', '')
+        component_list.append(main_aliquot)
 
-    componentList.reverse()
+    if len(component_list) == 0:
+        return component_list
 
-    # (Remember that the componentList is ordered last-to-first
+    # ------------------------------------------------------------------
+    # Convert the components into aliquot strings
+
+    # (Remember that the component_list is ordered last-to-first
     # vis-a-vis the original aliquot string.)
-    numComponents = len(componentList)
 
-    if numComponents == 1:
-        # If this is the only component, we break it into QQs and call it good.
+    # Discard any subdivisions greater than the qq_depth_max, if it was set.
+    if qq_depth_max is not None and len(component_list) > qq_depth_max:
+        component_list = component_list[:qq_depth_max]
 
-        # Could do this more elegantly, but the possible inputs are so limited,
-        # that there's no reason to complicate it.
-        component = componentList[0]
-        if component == 'N':
-            QQList = ['NENE', 'NWNE', 'SENE', 'SWNE',
-                      'NENW', 'NWNW', 'SENW', 'SWNW']
-        elif component == 'S':
-            QQList = ['NESE', 'NWSE', 'SESE', 'SWSE',
-                      'NESW', 'NWSW', 'SESW', 'SWSW']
-        elif component == 'E':
-            QQList = ['NENE', 'NWNE', 'SENE', 'SWNE',
-                      'NESE', 'NWSE', 'SESE', 'SWSE']
-        elif component == 'W':
-            QQList = ['NENW', 'NWNW', 'SENW', 'SWNW',
-                      'NESW', 'NWSW', 'SESW', 'SWSW']
-        elif component == 'NE':
-            QQList = ['NENE', 'NWNE', 'SENE', 'SWNE']
-        elif component == 'NW':
-            QQList = ['NENW', 'NWNW', 'SENW', 'SWNW']
-        elif component == 'SE':
-            QQList = ['NESE', 'NWSE', 'SESE', 'SWSE']
-        elif component == 'SW':
-            QQList = ['NESW', 'NWSW', 'SESW', 'SWSW']
-        elif component == 'ALL':
-            # NOTE: 'ALL' assumes a standard section consisting of
-            # 16 QQ's and no lots. This may not be accurate for all sections.
-            # TODO: wFlag stating the assumption that 'ALL' became 16 QQ's.
-            QQList = ['NENE', 'NWNE', 'SENE', 'SWNE',
-                      'NENW', 'NWNW', 'SENW', 'SWNW',
-                      'NESE', 'NWSE', 'SESE', 'SWSE',
-                      'NESW', 'NWSW', 'SESW', 'SWSW']
-        else:
-            # It should never get to this point, but here's a stopgap
-            QQList = []
-        # This is as deep as we need to go for single-component aliquot
-        # strings, so return now.
-        return QQList
+    subdivided_component_list = []
+    for i, comp in enumerate(component_list, start=1):
+        # Determine how deeply we need to subdivide (i.e. break down) each
+        # component, such that we ultimately capture the intended qq_depth_min.
 
-    # But if there's more than one component, we have to convert the flat
-    # componentList into a nested list (mainList), then run
-    # rebuild_aliquots() on it.
+        depth = 0
+        if i == qq_depth_min:
+            depth = 1
+        elif i == len(component_list) and len(component_list) < qq_depth_min:
+            depth = qq_depth_min - i + 1
+        elif comp in halves and (i < qq_depth_min or break_halves):
+            depth = 1
+        if comp in quarters:
+            # Quarters (by definition) are already 1 depth more broken down
+            # than halves (or 'ALL'), so subtract 1 to account for that
+            depth -= 1
 
-    # A list, to be passed through rebuild_aliquots(), which will return QQ's:
-    mainList = []
-    for i in range(numComponents):
-        component = componentList[i]
+        # Subdivide this aliquot component, as deep as needed
+        new_comp = subdivide_aliquot(comp, depth)
 
-        # The final component -- i.e. the 'NW' from 'E2NW',
-        # previously stored in ['NW', 'E']:
-        if i == numComponents - 1:
-            if component == 'N':
-                attachList = ['NE', 'NW']
-            elif component == 'S':
-                attachList = ['SE', 'SW']
-            elif component == 'E':
-                attachList = ['NE', 'SE']
-            elif component == 'W':
-                attachList = ['NW', 'SW']
-            else:
-                attachList = [component]
+        # Rebuild this (raw) subdivided component into clean QQ-style
+        # components -- e.g., ['NE', ['NE', 'NW', 'SE', 'SW']]
+        # into --> ['NENE', 'NWNE', 'SENE', 'SWNE']
+        new_comp = rebuild_aliquots_deep(new_comp)
+        subdivided_component_list.append(new_comp)
 
-        # For the second-to-last component -- i.e. the 'E' from 'E2NW',
-        # previously stored in ['NW', 'E']:
-        elif i == numComponents - 2:
-            if component == 'N':
-                attachList = ['NE', 'NW']
-            elif component == 'S':
-                attachList = ['SE', 'SW']
-            elif component == 'E':
-                attachList = ['NE', 'SE']
-            elif component == 'W':
-                attachList = ['NW', 'SW']
-            else:
-                attachList = [component]
+    # subdivided_component_list is now in the format:
+    #   `[['SE'], ['NW', 'SW'], ['E2']]`
+    # ...for E/2W/2SE/4, parsed to a qq_depth_min of 2.
 
-        # For any components deeper than the second (i.e. either 'N'
-        # in 'N2N2S2NE'), we can pass them through:
-        else:
-            if len(component) == 1:
-                # If it's a half call, add a '2' to the end of it, for
-                # clean appearance (i.e. so it might be 'N2N2NENW'
-                # instead of 'NNNENW')
-                component = component + '2'
-            attachList = [component]
+    # Convert the 1-depth nested list into the final QQ list and return.
+    return rebuild_aliquots_shallow(subdivided_component_list)
 
-        moveDownList = []
-        for comp in attachList:
-            moveDownList.append(comp)
-        if len(mainList) > 0:
-            # Unless this is the first loop through, nest the mainList
-            # at the end of moveDownList.
-            moveDownList.append(mainList)
-        # And set the mainList to the moveDownList.
-        mainList = moveDownList
 
-    # And last, convert this nested list to QQ's by calling rebuild_aliquots()
-    QQList = rebuild_aliquots(mainList)
+def rebuild_aliquots_deep(nested_aliquot_list: list):
+    """
+    INTERNAL USE:
+
+    A deep-nested list of aliquot components is returned as a flattened
+    list of rebuilt aliquots.
+
+    Use on the returned value from `subdivide_aliquot()` within the
+    unpack_aliquots() function, e.g.:
+    `subdivide_aliquot('N', 2)`
+    ->  [
+            ['NE', ['NE', 'NW', 'SE', 'SW']],
+            ['SE', ['NE', 'NW', 'SE', 'SW']]
+        ]
+    ...which this function parses into:
+    -> ['NENE', 'NWNE', 'SENE', 'SWNE', 'NESE', 'NWSE', 'SESE', 'SWSE']
+    """
+    if isinstance(nested_aliquot_list, str):
+        return [nested_aliquot_list]
+    elif all(isinstance(element, list) for element in nested_aliquot_list):
+        # Each element in our list is another list.
+        rebuilt = []
+        for element in nested_aliquot_list:
+            rebuilt.extend(rebuild_aliquots_deep(element))
+        return rebuilt
+    elif all(isinstance(element, str) for element in nested_aliquot_list):
+        # All elements in our list are strings, which means we've
+        # reached the final depth.
+        return nested_aliquot_list
+    # Otherwise, we're at a level where we need to join aliquot
+    # components at this level with the further subdivisions in lower
+    # levels
+    rebuilt = []
+    next_level_down = rebuild_aliquots_deep(nested_aliquot_list.pop(-1))
+    for this_level_aliquot in nested_aliquot_list:
+        for component in next_level_down:
+            rebuilt.append(component + this_level_aliquot)
+    return rebuilt
+
+
+def rebuild_aliquots_shallow(nested_aliquot_list: list):
+    """
+    INTERNAL USE:
+
+    A shallow-nested (single-depth) list of aliquot components is
+    returned as a flattened list of rebuilt aliquots.
+
+    :param nested_aliquot_list: A single-depth nested list of aliquot
+    components, arranged by subdivision size, largest to smallest. For
+    example:  [['SE'], ['NW', 'SW'], ['E2']]  ...for 'E/2W/2SE/4',
+    parsed to a qq_depth_min of 2.
+    :return: A clean QQ list, in the format ['E2NWSE', 'E2SWSE'] (or
+    smaller strings, if parsed to a less qq_depth_min).
+    """
+    QQList = []
+    while len(nested_aliquot_list) > 0:
+        deepest = nested_aliquot_list.pop(-1)
+        if len(nested_aliquot_list) == 0:
+            # deepest is our final QQ list
+            QQList = deepest
+            break
+        second_deepest = nested_aliquot_list.pop(-1)
+        rebuilt = []
+        for aliquot_component in second_deepest:
+            rebuilt.extend(map(
+                lambda x: f"{x[0]}{x[1]}",
+                zip_longest(deepest, [], fillvalue=aliquot_component)
+            ))
+
+        nested_aliquot_list.append(rebuilt)
+
     return QQList
 
 

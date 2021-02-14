@@ -67,8 +67,16 @@ class PromptConfig(tk.Frame):
     pyTRS.Config objects)."""
 
     # Parameters that are set via radiobuttons:
-    RB_PARAMS = ['cleanQQ', 'includeLotDivs', 'requireColon', 'ocrScrub',
-                 'segment', 'initPreprocess', 'initParse', 'initParseQQ']
+    RB_PARAMS = [
+        'cleanQQ', 'includeLotDivs', 'requireColon', 'ocrScrub', 'segment',
+        'initPreprocess', 'initParse', 'initParseQQ', 'break_halves'
+    ]
+
+    # Parameters that are set to a number and control how deeply to
+    # parse QQ's.
+    # NOTE: "qq_depth" should be first in this list, so that it takes
+    # priority over qq_depth_min and _max when compiling the config text.
+    QQ_DEPTH_CONTROLS = ['qq_depth', 'qq_depth_min', 'qq_depth_max']
 
     def __init__(
             self, master=None, target_config_var=None, parameters='all',
@@ -162,12 +170,14 @@ class PromptConfig(tk.Frame):
                      "direction was not specified, the program will assume "
                      "this specified direction."
                  },
+
             'defaultEW':
                 {'help':
                      "If the dataset contains a Range whose E/W direction "
                      "was not specified, the program will assume this "
                      "specified direction."
                  },
+
             'layout':
                 {'help':
                      "If you know that the dataset is all laid out in the "
@@ -179,6 +189,7 @@ class PromptConfig(tk.Frame):
                      "Below are examples of the possible layouts:\n\n"
                      f"{parser.__implementedLayoutExamples__}"
                  },
+
             'cleanQQ':
                 {'help':
                      "Dataset contains only clean aliquots and lots; no "
@@ -267,11 +278,125 @@ class PromptConfig(tk.Frame):
                      "initializing an PLSSDesc or Tract object with "
                      "`initParseQQ=True`).\n\n"
                      "Default: off (`False`)"
-                 }
+                 },
+
+            'qq_depth_min':
+                {
+                    'help': (
+                         "Specify the MINIMUM 'depth' to which to parse "
+                         "aliquots -- i.e. 2 will result in divisions NO "
+                         "LARGER THAN quarter-quarters (QQs, e.g., 'NENE'); "
+                         "whereas 1 will result in divisions no larger than "
+                         "quarter sections (e.g., 'NE'). Will still include "
+                         "smaller divisions if they exist in the data (i.e. "
+                         "'E/2NE/4NE/4' would become ['E2NENE'] if this is set "
+                         "to 2; or ['NENENE', 'SENENE'] if set to 3).\n\n"
+                         
+                         "Examples (parsing the 'NE/4'):\n\n"
+                         
+                         "1 (quarter sections) -> 'NE'\n\n"
+                         
+                         "2 (QQs) -> 'NENE', 'NWNE', 'SENE', 'SWNE'\n\n"
+                         "3 -> 'NENENE', 'NWNENE', 'SENENE', 'SWNENE', "
+                         "'NENWNE', 'NWNWNE', 'SENWNE', 'SWNWNE', 'NESENE', "
+                         "'NWSENE', 'SESENE', 'SWSENE', 'NESWNE', 'NWSWNE', "
+                         "'SESWNE', 'SWSWNE'\n\n"
+                         
+                         "[etc.]\n\n\n"
+                         
+                         "Default: 2 (i.e. QQs)"
+                    ),
+                    'options': (
+                        "[Default: 2 -> QQ's]", '1 (quarter sections)', '2 (QQs)',
+                        '3', '4', '5'
+                    ),
+                    'default_index': 1
+                 },
+
+            'qq_depth_max':
+                {
+                    'help': (
+                        "Specify the MAXIMUM 'depth' to which to parse "
+                        "aliquots -- i.e. 2 will result in divisions NO "
+                        "SMALLER THAN quarter-quarters (QQs, e.g., 'NENE'); "
+                        "whereas 1 will result in divisions no smaller than "
+                        "quarters (e.g., 'NE'). Will NOT include smaller"
+                        "divisions if they exist in the data (i.e."
+                        "'E/2NE/4NE/4' would become ['NENE'] if this is set "
+                        "to 2).\n\n"
+                        "NOTE: qq_depth_max should be greater than or equal to "
+                        "qq_depth_min.\n\n\n"
+                         
+                        "Examples (parsing the 'NE/4'):\n\n"
+                        
+                        "1 (quarter sections) -> 'NE'\n\n"
+                        
+                        "2 (QQs) -> 'NENE', 'NWNE', 'SENE', 'SWNE'\n\n"
+                        "3 -> 'NENENE', 'NWNENE', 'SENENE', 'SWNENE', "
+                        "'NENWNE', 'NWNWNE', 'SENWNE', 'SWNWNE', 'NESENE', "
+                        "'NWSENE', 'SESENE', 'SWSENE', 'NESWNE', 'NWSWNE', "
+                        "'SESWNE', 'SWSWNE'\n\n"
+                        
+                        "[etc.]\n\n\n"
+                        "Default: None. (Will not cull smaller aliquot "
+                        "divisions, unless explicitly told to do so.)"
+                    ),
+                    'options': (
+                        '[Default - no max]', '1 (quarter sections)',
+                        '2 (QQs)', '3', '4', '5'),
+                    'default_index': 0
+                },
+
+            'qq_depth':
+                {
+                    'help': (
+                        "Specify the EXACT 'depth' to which to parse "
+                        "aliquots -- i.e. 2 will result in exactly "
+                        "quarter-quarters (QQs, e.g., 'NENE'), even if smaller "
+                        "divisions exist in the data. This is equivalent to "
+                        "setting qq_depth_min equal to qq_depth_max.\n\n"
+                        "NOTE: Using `qq_depth` will override `qq_depth_min` "
+                        "and `qq_depth_max`.\n\n\n"
+                         
+                         "Examples (parsing the 'NE/4'):\n\n"
+                         
+                         "1 (quarter sections) -> 'NE'\n\n"
+                         
+                         "2 (QQs) -> 'NENE', 'NWNE', 'SENE', 'SWNE'\n\n"
+                         "3 -> 'NENENE', 'NWNENE', 'SENENE', 'SWNENE', "
+                         "'NENWNE', 'NWNWNE', 'SENWNE', 'SWNWNE', 'NESENE', "
+                         "'NWSENE', 'SESENE', 'SWSENE', 'NESWNE', 'NWSWNE', "
+                         "'SESWNE', 'SWSWNE'\n\n"
+                         
+                         "[etc.]\n\n\n"
+                        "Default: 2 (i.e. QQs)"
+                    ),
+                    'options': (
+                        '[Default - use min and max]',
+                        '1 (quarter sections)',
+                        '2 (QQs)', '3', '4', '5'
+                    ),
+                    'default_index': 0
+                },
+
+            'break_halves':
+                {'help': (
+                    "Whether to break aliquot halves into quarters, EVEN IF "
+                    "we are beyond the `qq_depth_min`.\n\n"
+                    "For example, if qq_depth_min is set to 2, intending "
+                    "to generate QQ's, but out dataset includes the "
+                    "E/2W/2NE/4...\n\n"
+                    "...without `break_halves`, this would parse into "
+                    "['E2NWNE', 'E2SWNE'].\n\n"
+                    "...but with `break_halves` turned on, this would parse into "
+                    "['NENWNE', 'SENWNE', 'NESWNE', 'SESWNE'].\n\n"
+                    "Default: off (`False`)"
+                )}
         }
 
         # --------------------------------------------------------------
         # A frame for NS, EW, and Layout comboboxes and labels
+        self.combos = []
         combo_frame = tk.Frame(self)
         combo_frame.grid(row=0, column=1, sticky='nwe')
 
@@ -289,8 +414,9 @@ class PromptConfig(tk.Frame):
         defaultNSPrompt.grid(column=1, row=combo_frame_row, sticky='e')
         defaultNShbtn.grid(column=2, row=combo_frame_row)
         self.defaultNScombo.grid(column=3, row=combo_frame_row, sticky='w')
+        self.combos.append(self.defaultNScombo)
         combo_frame_row += 1
-    
+
         # Prompt for default E/W
         defaultEWPrompt = tk.Label(
             combo_frame, text="Default unspecified Ranges to [West] or [East]?")
@@ -302,12 +428,14 @@ class PromptConfig(tk.Frame):
         self.defaultEWcombo = Combobox(combo_frame, width=8)
         self.defaultEWcombo['values'] = ('West', 'East')
         self.defaultEWcombo.grid(column=3, row=combo_frame_row, sticky='w')
+        self.combos.append(self.defaultEWcombo)
         combo_frame_row += 1
     
         # Prompt for layout
         self.layoutcombo = Combobox(combo_frame, width=25)
         self.layoutcombo['values'] = tuple(
             ['Deduce (RECOMMENDED)'] + parser.__implementedLayouts__)
+        self.combos.append(self.layoutcombo)
     
         if 'layout' in parameters:
             # Only put layout into GUI if it's among the requested parameters
@@ -319,6 +447,7 @@ class PromptConfig(tk.Frame):
                 command=lambda: self.cf_help_clicked('layout'))
             layouthbtn.grid(column=2, row=combo_frame_row)
             self.layoutcombo.grid(column=3, row=combo_frame_row, sticky='w')
+        combo_frame_row += 1
 
         # --------------------------------------------------------------
         # Parameters set via radiobuttons (i.e. RB_PARAMS)
@@ -337,12 +466,63 @@ class PromptConfig(tk.Frame):
             setattr(self, var_name + 'Var', new_var)
             self.CONFIG_DEF[var_name]['var'] = new_var
 
+        for var_name in self.QQ_DEPTH_CONTROLS:
+            new_var = tk.StringVar()
+            setattr(self, var_name + 'Var', new_var)
+            self.CONFIG_DEF[var_name]['var'] = new_var
+
+        # Prompt for qq_depth_min
+        qq_depth_minPrompt = tk.Label(
+            combo_frame, text="MINIMUM depth to parse QQs")
+        qq_depth_minPrompt.grid(column=1, row=combo_frame_row, sticky='e')
+        qq_depth_minhbtn = tk.Button(
+            combo_frame, text='?', padx=5,
+            command=lambda: self.cf_help_clicked('qq_depth_min'))
+        qq_depth_minhbtn.grid(column=2, row=combo_frame_row)
+        self.qq_depth_mincombo = Combobox(combo_frame, width=25)
+        self.qq_depth_mincombo['values'] = self.CONFIG_DEF["qq_depth_min"]["options"]
+        self.qq_depth_mincombo.grid(column=3, row=combo_frame_row, sticky='w')
+        self.combos.append(self.qq_depth_mincombo)
+        self.CONFIG_DEF["qq_depth_min"]["combo"] = self.qq_depth_mincombo
+        combo_frame_row += 1
+
+        # Prompt for qq_depth_max
+        qq_depth_maxPrompt = tk.Label(
+            combo_frame, text="MAXIMUM depth to parse QQs")
+        qq_depth_maxPrompt.grid(column=1, row=combo_frame_row, sticky='e')
+        qq_depth_maxhbtn = tk.Button(
+            combo_frame, text='?', padx=5,
+            command=lambda: self.cf_help_clicked('qq_depth_max'))
+        qq_depth_maxhbtn.grid(column=2, row=combo_frame_row)
+        self.qq_depth_maxcombo = Combobox(combo_frame, width=25)
+        self.qq_depth_maxcombo['values'] = self.CONFIG_DEF["qq_depth_max"]["options"]
+        self.qq_depth_maxcombo.grid(column=3, row=combo_frame_row, sticky='w')
+        self.combos.append(self.qq_depth_maxcombo)
+        self.CONFIG_DEF["qq_depth_max"]["combo"] = self.qq_depth_maxcombo
+        combo_frame_row += 1
+
+        # Prompt for qq_depth
+        qq_depthPrompt = tk.Label(
+            combo_frame,
+            text="EXACT depth to parse QQs (override min and max)")
+        qq_depthPrompt.grid(column=1, row=combo_frame_row, sticky='e')
+        qq_depthhbtn = tk.Button(
+            combo_frame, text='?', padx=5,
+            command=lambda: self.cf_help_clicked('qq_depth'))
+        qq_depthhbtn.grid(column=2, row=combo_frame_row)
+        self.qq_depthcombo = Combobox(combo_frame, width=25)
+        self.qq_depthcombo['values'] = self.CONFIG_DEF["qq_depth"]["options"]
+        self.qq_depthcombo.grid(column=3, row=combo_frame_row, sticky='w')
+        self.combos.append(self.qq_depthcombo)
+        self.CONFIG_DEF["qq_depth"]["combo"] = self.qq_depthcombo
+        combo_frame_row += 1
+
         # Generate radiobuttons for the remaining parameters
         pr = self.RadioSetter(self, writing_header=True)
         pr.grid(row=cur_row, column=1, sticky='w')
         cur_row += 1
         for cf in parameters:
-            if cf in ['defaultNS', 'defaultEW', 'layout']:
+            if cf not in self.RB_PARAMS:
                 continue
             pr = self.RadioSetter(
                 self, parameter=cf, target_var=self.CONFIG_DEF[cf]['var'])
@@ -404,9 +584,10 @@ class PromptConfig(tk.Frame):
             # Pull the tk.IntVar associated with this var_name, and set to -1
             tkintvar = getattr(self, var_name + 'Var')
             tkintvar.set(-1)
-        self.defaultNScombo.current(0)
-        self.defaultEWcombo.current(0)
-        self.layoutcombo.current(0)
+        for combo in self.combos:
+            combo.current(0)
+            combo.current(0)
+            combo.current(0)
 
     def cf_help_clicked(self, attrib):
         tk.messagebox.showinfo(attrib, self.CONFIG_DEF[attrib]['help'])
@@ -452,6 +633,22 @@ class PromptConfig(tk.Frame):
             lbl = tk.Label(self, text=parameter)
             lbl.grid(column=5, row=0)
 
+    @staticmethod
+    def warn_deep_depths(num):
+        """
+        Warn the user that parsing QQ's to depths > 5 or so might result
+        in very slow computing times.
+        :param num:
+        :return:
+        """
+        msg = (
+            "WARNING: Parsing QQ's to a minimum (or exact) depth greater "
+            "than 5 is possible but is likely to take a long time to "
+            "process.\n\n"
+            f"Do you want to proceed with setting it to {num}?"
+        )
+        return messagebox.askokcancel("WARNING", msg)
+
     def compile_config_text(self) -> str:
         """
         Compile and return the config text.
@@ -460,6 +657,12 @@ class PromptConfig(tk.Frame):
         
         param_vals.append(self.defaultNScombo.get()[0].lower())
         param_vals.append(self.defaultEWcombo.get()[0].lower())
+
+        # Setting qq_depth or qq_depth_min to larger than this will prompt
+        # a warning.
+        QQ_DEPTH_WARN_THRESHOLD = 6
+
+        proceed = True
 
         if 'layout' in self.parameters:
             val = self.layoutcombo.get()
@@ -473,8 +676,29 @@ class PromptConfig(tk.Frame):
             if val != -1:
                 param_vals.append(f"{param}.{bool(val)}")
 
+        for param in [p for p in self.QQ_DEPTH_CONTROLS if p in self.parameters]:
+            try:
+                # We only want the first part (before the first space, if any).
+                val = self.CONFIG_DEF[param]['combo'].get()
+                val = val.split(" ")[0]
+                val = int(val)
+            except ValueError:
+                val = None
+            if val is not None:
+                param_vals.append(f"{param}.{val}")
+            if val is not None \
+                    and param in ["qq_depth", "qq_depth_min"] \
+                    and val >= QQ_DEPTH_WARN_THRESHOLD:
+                proceed = self.warn_deep_depths(val)
+            if param == "qq_depth" and val is not None:
+                # if qq_depth was set, we don't want to pull the
+                # _min and _max, so break out of the loop
+                break
+
         # Join the list of param/vals into a string, and return it
         config_text = ','.join(param_vals)
+        if not proceed:
+            return None
         return config_text
 
     def ok_clicked(self):
@@ -485,6 +709,8 @@ class PromptConfig(tk.Frame):
         """
 
         config_text = self.compile_config_text()
+        if config_text is None:
+            return None
 
         # Set the target tk.StringVar to the compiled config_text
         self.target_config_var.set(config_text)
@@ -514,6 +740,8 @@ class PromptConfig(tk.Frame):
         """Call the config text compiler, and then save the results to a
          user-specified filepath."""
         config_text = self.compile_config_text()
+        if config_text is None:
+            return None
 
         # The user will specify the output filename:
         from tkinter import filedialog
@@ -529,30 +757,28 @@ class PromptConfig(tk.Frame):
 
         self.do_save(config_text, output_file)
 
-    def do_save(self, config_text, output_file):
-        """Save the config_text (or compiled Config object data) to file."""
-        # Returns 0 for successful save; 1 for unsuccessful save.
+    @staticmethod
+    def do_save(config_text, output_file):
+        """
+        Save the config_text (or compiled Config object data) to file.
+        Also pops a messagebox showing success or failure to save.
+        Returns nothing.
+        """
 
-        failedtosave = False
         try:
             # Compile config_text into a pyTRS.Config object, and use
             # Config.saveToFile()
-            success_check = parser.Config(config_text).save_to_file(output_file)
-            if success_check != 0:
-                # Only return code of `0` denotes success.
-                failedtosave = True
+            parser.Config(config_text).save_to_file(output_file)
+            messagebox.showinfo(
+                'Saved!',
+                f"Successfully saved to '{output_file}'."
+            )
         except:
-            failedtosave = True
-
-        if failedtosave:
             messagebox.showerror(
                 'ERROR',
                 f"Could not save to '{output_file}'. Check read/write access, "
                 "and ensure '.txt' file extension."
             )
-            return 1
-
-        return 0
 
 
 if __name__ == '__main__':

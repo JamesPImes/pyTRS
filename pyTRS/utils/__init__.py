@@ -156,7 +156,7 @@ def config_parameters():
     from pyTRS import __implementedLayouts__
 
     # How many spaces to justify parameters before explanation:
-    just = 23
+    just = 24
 
     # String that should be used for indenter:
     # ind = '~~ '
@@ -193,7 +193,7 @@ def config_parameters():
             True),
         (("'requireColon.False'",), "Do not require a colon in that position", False),
         (("'includeLotDivs'", "'includeLotDivs.True'"),
-        "Report lot divisions (i.e., 'N2 of L1' for 'N/2 of Lot 1')", True),
+            "Report lot divisions (i.e., 'N2 of L1' for 'N/2 of Lot 1')", True),
         (("'includeLotDivs.False'",),
             "Do NOT report lot divisions (i.e. just 'L1', even if divided further)",
             False),
@@ -204,7 +204,27 @@ def config_parameters():
             "Segment description before parsing into Tracts (MIGHT capture descriptions "
             "with multiple layouts).",
             False),
-        (("'segment.False",), "Do NOT segment the description before parsing.", True)
+        (("'segment.False",), "Do NOT segment the description before parsing.", True),
+        (("'qq_depth_min.<number>'",),
+            "In QQ parsing, specify the MINIMUM 'depth' to parse aliquots. 2 (the "
+            "default) will parse to AT LEAST quarter-quarters (QQs).",
+            True),
+        (("'qq_depth_max.<number>'",),
+            "In QQ parsing, specify the MAXIMUM 'depth' to parse aliquots, and "
+            "discard any smaller divisions.",
+            False),
+        (("'qq_depth.<number>'",),
+            "In QQ parsing, specify the EXACT 'depth' to parse aliquots (i.e. "
+            "qq_depth_min == qq_depth_max), discarding any smaller divisions.",
+            False),
+        (("'break_halves'", "'break_halves.True'",),
+            "In QQ parsing, break all aliquot halves into quarters, EVEN IF "
+            "we're at divisions smaller than the specified `qq_depth_min`.",
+            False),
+        (("'break_halves.False'",),
+            "In QQ parsing, leave halves as they are (but ONLY IF we're at "
+            "divisions smaller than the specified `qq_depth_min`).",
+            True)
     ]
 
     # Append each of the implemented layouts to the `params` list:
@@ -243,7 +263,7 @@ def config_parameters():
         "USAGE:\n"
         "Combine desired parameters into a single string, separated by comma or "
         "semicolon, like so:\n"
-        "   'defaultNS.n, defaultEW.w, cleanQQ, includeLotDivs.False'\n"
+        "   'defaultNS.n, defaultEW.w, cleanQQ, includeLotDivs.False, qq_depth.2'\n"
         "(Spaces are optional and have no effect.)\n\n"
         "The string should be the first positional argument of a Config object, or the "
         "init parameter `config=` when creating PLSSDesc and/or Tract objects.")
