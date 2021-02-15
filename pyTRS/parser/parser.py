@@ -47,6 +47,17 @@ __implementedLayoutExamples__ = (
     "description, regardless of what the actual layout is."
 )
 
+# For aliquot parsing.
+QQ_HALVES = ('N', 'S', 'E', 'W')
+QQ_QUARTERS = ('NE', 'NW', 'SE', 'SW')
+QQ_SUBDIVIDE_DEFINITIONS = {
+    'ALL': QQ_QUARTERS,
+    'N': ('NE', 'NW'),
+    'S': ('SE', 'SW'),
+    'E': ('NE', 'SE'),
+    'W': ('NW', 'SW'),
+}
+
 
 class PLSSDesc:
     """
@@ -4212,75 +4223,6 @@ def unpack_aliquots(
     # rebuild the components appropriately and return a flattened list
     # of aliquots, sized QQ and smaller.
 
-    halves = ('N', 'S', 'E', 'W')
-    quarters = ('NE', 'NW', 'SE', 'SW')
-    subdivide_definitions = {
-        'ALL': quarters,
-        'N': ('NE', 'NW'),
-        'S': ('SE', 'SW'),
-        'E': ('NE', 'SE'),
-        'W': ('NW', 'SW'),
-    }
-
-    def subdivide_aliquot(aliquot_component: str, divisions_remaining: int):
-        """
-        Recursively subdivide an aliquot component into a deep-nested
-        list, to a depth equal to `divisions_remaining`. (The more
-        deeply an element is nested, the smaller the subdivision.)
-
-        Return examples:
-
-        subdivide_aliquot('N', 1)
-        ->  ['NE', 'NW']
-
-        subdivide_aliquot('ALL', 1)
-        ->  ['NE', 'NW', 'SE', 'SW']
-
-        subdivide_aliquot('ALL', 2)
-        ->  [
-                ['NE', ['NE', 'NW', 'SE', 'SW']],
-                ['NW', ['NE', 'NW', 'SE', 'SW']],
-                ['SE', ['NE', 'NW', 'SE', 'SW']],
-                ['SW', ['NE', 'NW', 'SE', 'SW']]
-            ]
-
-        subdivide_aliquot('N', 2)
-        ->  [
-                ['NE', ['NE', 'NW', 'SE', 'SW']],
-                ['SE', ['NE', 'NW', 'SE', 'SW']]
-            ]
-
-        :param aliquot_component: Any element that appears in the
-        variable `quarters` or as a key in `subdivide_definitions`
-        above.
-
-        :param divisions_remaining: How many times to subdivide this
-        aliquot (i.e. halves or 'ALL' into quarters, or quarters into
-        more quarters).
-
-        :return: A nested list, in the format shown above.
-        """
-        if divisions_remaining <= 0:
-            if aliquot_component in halves:
-                return aliquot_component + "2"
-            return aliquot_component
-        if aliquot_component in quarters:
-            # Break quarters down.
-            # example:   'NE'    -> ['NE', ['NE', 'NW', 'SE', 'SW']]
-            # (equivalent to NENE, NWNE, SENE, SWNE, once it gets compiled)
-            quarter_definition = [
-                subdivide_aliquot(q, divisions_remaining - 1)
-                for q in quarters
-            ]
-            return [aliquot_component, quarter_definition]
-        else:
-            next_components = list(subdivide_definitions[aliquot_component])
-            subdivided = []
-            for comp in next_components:
-                subdivided.append(
-                    subdivide_aliquot(comp, divisions_remaining - 1))
-            return subdivided
-
     if qq_depth is not None:
         qq_depth_min = qq_depth_max = qq_depth
     
@@ -4357,9 +4299,9 @@ def unpack_aliquots(
             depth = 1
         elif i == len(component_list) and len(component_list) < qq_depth_min:
             depth = qq_depth_min - i + 1
-        elif comp in halves and (i < qq_depth_min or break_halves):
+        elif comp in QQ_HALVES and (i < qq_depth_min or break_halves):
             depth = 1
-        if comp in quarters:
+        if comp in QQ_QUARTERS:
             # Quarters (by definition) are already 1 depth more broken down
             # than halves (or 'ALL'), so subtract 1 to account for that
             depth -= 1
@@ -4367,10 +4309,8 @@ def unpack_aliquots(
         # Subdivide this aliquot component, as deep as needed
         new_comp = subdivide_aliquot(comp, depth)
 
-        # Rebuild this (raw) subdivided component into clean QQ-style
-        # components -- e.g., ['NE', ['NE', 'NW', 'SE', 'SW']]
-        # into --> ['NENE', 'NWNE', 'SENE', 'SWNE']
-        new_comp = rebuild_aliquots_deep(new_comp)
+        # Append it to our list of components (with subdivisions arranged
+        # largest-to-smallest).
         subdivided_component_list.append(new_comp)
 
     # subdivided_component_list is now in the format:
@@ -4378,50 +4318,10 @@ def unpack_aliquots(
     # ...for E/2W/2SE/4, parsed to a qq_depth_min of 2.
 
     # Convert the 1-depth nested list into the final QQ list and return.
-    return rebuild_aliquots_shallow(subdivided_component_list)
+    return rebuild_aliquots(subdivided_component_list)
 
 
-def rebuild_aliquots_deep(nested_aliquot_list: list):
-    """
-    INTERNAL USE:
-
-    A deep-nested list of aliquot components is returned as a flattened
-    list of rebuilt aliquots.
-
-    Use on the returned value from `subdivide_aliquot()` within the
-    unpack_aliquots() function, e.g.:
-    `subdivide_aliquot('N', 2)`
-    ->  [
-            ['NE', ['NE', 'NW', 'SE', 'SW']],
-            ['SE', ['NE', 'NW', 'SE', 'SW']]
-        ]
-    ...which this function parses into:
-    -> ['NENE', 'NWNE', 'SENE', 'SWNE', 'NESE', 'NWSE', 'SESE', 'SWSE']
-    """
-    if isinstance(nested_aliquot_list, str):
-        return [nested_aliquot_list]
-    elif all(isinstance(element, list) for element in nested_aliquot_list):
-        # Each element in our list is another list.
-        rebuilt = []
-        for element in nested_aliquot_list:
-            rebuilt.extend(rebuild_aliquots_deep(element))
-        return rebuilt
-    elif all(isinstance(element, str) for element in nested_aliquot_list):
-        # All elements in our list are strings, which means we've
-        # reached the final depth.
-        return nested_aliquot_list
-    # Otherwise, we're at a level where we need to join aliquot
-    # components at this level with the further subdivisions in lower
-    # levels
-    rebuilt = []
-    next_level_down = rebuild_aliquots_deep(nested_aliquot_list.pop(-1))
-    for this_level_aliquot in nested_aliquot_list:
-        for component in next_level_down:
-            rebuilt.append(component + this_level_aliquot)
-    return rebuilt
-
-
-def rebuild_aliquots_shallow(nested_aliquot_list: list):
+def rebuild_aliquots(nested_aliquot_list: list):
     """
     INTERNAL USE:
 
@@ -4444,15 +4344,77 @@ def rebuild_aliquots_shallow(nested_aliquot_list: list):
             break
         second_deepest = nested_aliquot_list.pop(-1)
         rebuilt = []
-        for aliquot_component in second_deepest:
-            rebuilt.extend(map(
-                lambda x: f"{x[0]}{x[1]}",
-                zip_longest(deepest, [], fillvalue=aliquot_component)
-            ))
+        for shallow in second_deepest:
+            rebuilt.extend(map(lambda deep: f"{deep}{shallow}", deepest))
 
         nested_aliquot_list.append(rebuilt)
 
     return QQList
+
+
+def subdivide_aliquot(aliquot_component: str, depth: int):
+    """
+    INTERNAL USE:
+
+    Subdivide an aliquot into smaller pieces, to the specified `depth`.
+
+    Return examples:
+
+    subdivide_aliquot('N', 0)
+    ->  ['N2']
+
+    subdivide_aliquot('N', 1)
+    ->  ['NE', 'NW']
+
+    subdivide_aliquot('N', 2)
+    ->  ['NENE', 'NWNE', 'SENE', 'SWNE', 'NENW', 'NWNW', 'SENW', 'SWNW']
+
+    subdivide_aliquot('NE', 1)
+    ->  ['NENE', 'NWNE', 'SENE', 'SWNE']
+
+    :param aliquot_component: Any element that appears in the variable
+    `QQ_QUARTERS` or as a key in the `QQ_SUBDIVIDE_DEFINITIONS` dict.
+
+    :param depth: How many times to subdivide this aliquot (i.e. halves
+    or 'ALL' into quarters, or quarters into deeper quarters). More
+    precisely stated, the section will be subdivided into a total number
+    of pieces equal to `4^(depth - 1)` -- assuming we're parsing the
+    complete section (i.e. 'ALL'). Thus, setting depth greater than 5 or
+    so will probably take a long time to process.  NOTE: A depth of 0 or
+    less will simply place the aliquot in a list and return it, after
+    adding the half designator '2', if appropriate (i.e. 'NE' -> ['NE'],
+    but 'E' -> ['E2'] ).
+
+    :return: A list of aliquots, in the format shown above.
+    """
+    if depth <= 0:
+        # We don't actually need to subdivide the aliquot component, so
+        # just make sure it is appropriately formatted if it's a half
+        # (i.e. 'N' -> 'N2'), then put it in a list and return it.
+        if aliquot_component in QQ_HALVES:
+            return [aliquot_component + "2"]
+        return [aliquot_component]
+
+    # Construct a nested list, which rebuild_aliquots() requires,
+    # which will process it and spit out a flat list before this function
+    # returns.
+    divided = [[aliquot_component]]
+    for _ in range(depth):
+        if divided[-1][0] in QQ_SUBDIVIDE_DEFINITIONS.keys():
+            # replace halves and 'ALL' with quarters
+            comp = divided.pop(-1)[0]
+            divided.append(list(QQ_SUBDIVIDE_DEFINITIONS[comp]))
+        else:
+            divided.append(list(QQ_QUARTERS))
+
+    # The N/2 (passed to this function as 'N') would now be parsed into
+    # a format (at a depth of 2):
+    #       [['NE', 'NW'], ['NE', 'NW', 'SE', 'SW']]
+    # ... which gets reconstructed to:
+    #       ['NENE', 'NWNE', 'SENE', 'SWNE', 'NENW', 'NWNW', 'SENW', 'SWNW']
+    # ...by `rebuild_aliquots()`
+
+    return rebuild_aliquots(divided)
 
 
 def unpack_lots(lotTextBlock, includeLotDivs=True):
