@@ -12,7 +12,6 @@ The main parsing package. Primary classes:
 """
 
 import re
-from itertools import zip_longest
 from .regexlib import (
     twprge_regex, twprge_broad_regex, sec_regex, multiSec_regex,
     comma_multiSec_regex, noNum_sec_regex, preproTR_noNSWE_regex,
