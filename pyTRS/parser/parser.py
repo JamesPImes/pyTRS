@@ -4221,13 +4221,6 @@ def unpack_aliquots(
     if we're beyond the qq_depth_min. (False by default.)
     """
 
-    # To do this, we break down an aliquot_text_block into its smaller
-    # components (if any), and place them all in a nested list (each
-    # deeper level of the nested list is another division of the level
-    # above it). Then we call rebuild_aliquots() on that nested list to
-    # rebuild the components appropriately and return a flattened list
-    # of aliquots, sized QQ and smaller.
-
     if qq_depth is not None:
         qq_depth_min = qq_depth_max = qq_depth
     
@@ -4258,6 +4251,8 @@ def unpack_aliquots(
     # largest-to-smallest.
     component_list.reverse()
 
+    # ------------------------------------------------------------------
+    # If no components found, there are no QQ's to unpack.
     if len(component_list) == 0:
         return component_list
 
