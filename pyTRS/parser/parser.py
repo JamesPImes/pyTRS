@@ -64,6 +64,24 @@ SAME_AXIS = {
         "W": ("E", "W"),
 }
 
+# `QQ_SCRUBBER_DEFINITIONS` stores what should be replaced by matches of
+# each regex that is used in the scrub_aliquots() function.
+QQ_SCRUBBER_DEFINITIONS = {
+    NE_regex: 'NE¼',
+    NW_regex: 'NW¼',
+    SE_regex: 'SE¼',
+    SW_regex: 'SW¼',
+    N2_regex: 'N½',
+    S2_regex: 'S½',
+    E2_regex: 'E½',
+    W2_regex: 'W½',
+    cleanNE_regex: 'NE¼',
+    cleanNW_regex: 'NW¼',
+    cleanSE_regex: 'SE¼',
+    cleanSW_regex: 'SW¼'
+}
+
+
 class PLSSDesc:
     """
     Each object of this class is a full PLSS description, taking the raw
@@ -4107,35 +4125,26 @@ def scrub_aliquots(text, cleanQQ=False) -> str:
         regex fed as the second arg, and returns the scrubbed text.
         (Will only function properly with specific aliquots regexes.)
         """
-
-        # `rd` (i.e. regexDict) stores what should be replaced by
-        # matches of the specific regex_run. (Done this way to not
-        # overwrite the leading character, if any, which is technically
-        # part of a match of each regex--which is part of the regexes to
-        # rule out false matches.)
-        rd = {
-            NE_regex: 'NE¼',
-            NW_regex: 'NW¼',
-            SE_regex: 'SE¼',
-            SW_regex: 'SW¼',
-            N2_regex: 'N½',
-            S2_regex: 'S½',
-            E2_regex: 'E½',
-            W2_regex: 'W½',
-            cleanNE_regex: 'NE¼',
-            cleanNW_regex: 'NW¼',
-            cleanSE_regex: 'SE¼',
-            cleanSW_regex: 'SW¼'
-        }
-
         remainingText = text
         rebuilt_text = ''
+
+        # NOTE: we do not use the `re.sub()` function because we need to
+        # maintain the first character in the regex match, which provides
+        # necessary context to prevent over-matching. For example, the
+        # `NE_regex` must match '(\b|¼|4|½|2)' at the beginning, so that
+        # we don't capture "one hundred" as "oNE¼ hundred".
+        # (The cleanQQ regexes do not have this requirement.)
+
         while True:
             mo = regex_run.search(remainingText)
             if mo is None:  # If we found no more matches like this.
                 rebuilt_text = rebuilt_text + remainingText
                 break
-            rebuilt_text = rebuilt_text + remainingText[:mo.start(2)] + rd[regex_run]
+            rebuilt_text = "{0}{1}{2}".format(
+                rebuilt_text,
+                remainingText[:mo.start(2)],
+                QQ_SCRUBBER_DEFINITIONS[regex_run]
+            )
             remainingText = remainingText[mo.end():]
         return rebuilt_text
 
