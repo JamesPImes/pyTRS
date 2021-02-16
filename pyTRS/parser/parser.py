@@ -57,15 +57,17 @@ QQ_SUBDIVIDE_DEFINITIONS = {
     'E': ('NE', 'SE'),
     'W': ('NW', 'SW'),
 }
-SAME_AXIS = {
-        "N": ("N", "S"),
-        "S": ("N", "S"),
-        "E": ("E", "W"),
-        "W": ("E", "W"),
+QQ_NS = ("N", "S")
+QQ_EW = ("E", "W")
+QQ_SAME_AXIS = {
+    "N": QQ_NS,
+    "S": QQ_NS,
+    "E": QQ_EW,
+    "W": QQ_EW
 }
 
-# `QQ_SCRUBBER_DEFINITIONS` stores what should be replaced by matches of
-# each regex that is used in the scrub_aliquots() function.
+# Define what should replace matches of each regex that is used in the
+# scrub_aliquots() function.
 QQ_SCRUBBER_DEFINITIONS = {
     NE_regex: 'NE¼',
     NW_regex: 'NW¼',
@@ -4279,7 +4281,7 @@ def unpack_aliquots(
             component_list_clean.append(aq1)
             break
         aq2 = component_list[i + 1]
-        if aq1 in QQ_HALVES and aq2 in QQ_HALVES and aq2 not in SAME_AXIS[aq1]:
+        if aq1 in QQ_HALVES and aq2 in QQ_HALVES and aq2 not in QQ_SAME_AXIS[aq1]:
             # e.g., the current component is 'N' and the next component is 'E';
             # those do not exist on the same axis, so we combine them into
             # the 'NE'. (And make sure the N/S direction goes before E/W.)
