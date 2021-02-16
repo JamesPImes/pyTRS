@@ -56,7 +56,12 @@ QQ_SUBDIVIDE_DEFINITIONS = {
     'E': ('NE', 'SE'),
     'W': ('NW', 'SW'),
 }
-
+SAME_AXIS = {
+        "N": ("N", "S"),
+        "S": ("N", "S"),
+        "E": ("E", "W"),
+        "W": ("E", "W"),
+}
 
 class PLSSDesc:
     """
@@ -4277,6 +4282,34 @@ def unpack_aliquots(
 
     if len(component_list) == 0:
         return component_list
+
+    # ------------------------------------------------------------------
+    # Check for any consecutive halves that are on opposite axes.
+    # E.g., the N/2E/2 should be converted to the NE/4, but the W/2E/2
+    # should be left alone.
+
+    component_list_clean = []
+    i = 0
+    while i < len(component_list):
+        aq1 = component_list[i]
+        if i + 1 == len(component_list):
+            # Last item.
+            component_list_clean.append(aq1)
+            break
+        aq2 = component_list[i + 1]
+        if aq1 in QQ_HALVES and aq2 in QQ_HALVES and aq2 not in SAME_AXIS[aq1]:
+            # e.g., the current component is 'N' and the next component is 'E';
+            # those do not exist on the same axis, so we combine them into
+            # the 'NE'. (And make sure the N/S direction goes before E/W.)
+            new_quarter = f"{aq2}{aq1}" if aq1 in "EW" else f"{aq1}{aq2}"
+            component_list_clean.append(new_quarter)
+            # Skip over the next component, because we already handled it during
+            # this iteration.
+            i += 2
+        else:
+            component_list_clean.append(aq1)
+            i += 1
+    component_list = component_list_clean
 
     # ------------------------------------------------------------------
     # Convert the components into aliquot strings
