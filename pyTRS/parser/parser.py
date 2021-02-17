@@ -2296,14 +2296,14 @@ class ParseBag:
     # varying kinds are temporarily packed into a ParseBag. When it gets
     # back to the PLSSDesc and/or Tract object, that object will
     # .unpack() the contents of the ParseBag into its own attributes
-    # -- i.e. PLSSDescObj.unpack(ParseBagObj).
+    # -- i.e. `plssdesc_object.unpack(parsebag_object)`.
 
     # It was designed this way because different functions process
     # different components of the PLSS description, but almost all of
     # them can generate warning flags and error flags for the user's
     # attention. For UX reasons, we want those warning/error data stored
-    # in a single location (i.e. a PLSSDescObj.wFlagList or .eFlagList).
-    # Tract objects also contain wFlagList and eFlagList.
+    # in a single location (i.e. a in the `.wFlagList` or `.eFlagList`).
+    # Tract objects also contain `.wFlagList` and `.eFlagList`
 
     # So these ParseBag objects will hold those warning/error data (and
     # the TractList, etc.) in one place until the intended endpoint is
@@ -2311,10 +2311,11 @@ class ParseBag:
 
     # A ParseBag object can also absorb a child ParseBag object by
     # appending (but not overwriting) its own data:
-    # ParseBag1.absorb(ParseBag2).  This is done, for example, where
-    # ParseBag2 stores Tract-level parsing data (e.g., QQList, lotList)
-    # -- but where warning flags can also be generated that would be
-    # relevant to the higher-level class PLSSDesc.
+    #       `parent_pb.absorb(child_pb)`
+    # This is done, for example, where `child_pb` stores Tract-level
+    # parsing data (e.g., QQList, lotList) -- but where warning flags
+    # can also be generated that would be relevant to the higher-level
+    # class PLSSDesc.
 
     def __init__(self, parentType='PLSSDesc'):
 
