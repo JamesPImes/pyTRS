@@ -17,7 +17,7 @@ from .regexlib import (
     comma_multiSec_regex, noNum_sec_regex, preproTR_noNSWE_regex,
     preproTR_noR_noNS_regex, preproTR_noT_noWE_regex, twprge_ocrScrub_regex,
     lots_context_regex, TRS_unpacker_regex, well_regex, depth_regex,
-    including_regex, less_except_regex, isfa_except_regex, NE_regex, SE_regex,
+    including_regex, less_except_regex, isfa_regex, NE_regex, SE_regex,
     NW_regex, SW_regex, N2_regex, S2_regex, E2_regex, W2_regex, ALL_regex,
     ALL_context_regex, cleanNE_regex, cleanSE_regex, cleanNW_regex,
     cleanSW_regex, halfPlusQ_regex, through_regex, lot_regex,
@@ -380,8 +380,8 @@ class PLSSDesc:
             configObj = config
         else:
             raise TypeError(
-                '`config` must be either a string or pyTRS.Config object. '
-                f"Passed as type {type(config)}`.")
+                '`config` must be either a str or pyTRS.Config object. '
+                f"Passed as type {type(config)}.")
 
         for attrib in Config.__PLSSDescAttribs__:
             value = getattr(configObj, attrib)
@@ -998,7 +998,7 @@ class PLSSDesc:
         if text is None:
             text = self.origDesc
 
-        flagParseBag = ParseBag(parentType='PLSSDesc')
+        flag_pb = ParseBag(parentType='PLSSDesc')
 
         lines = text.split('\n')
 
@@ -1009,43 +1009,44 @@ class PLSSDesc:
         # Preprocess the text, but only to make sure at least one T&R exists
         ppText = self.preprocess(text=text, commit=False)
         if len(find_tr(ppText)) == 0:
-            flagParseBag.eFlagList.append('noTR')
-            flagParseBag.eFlagLines.append(
+            flag_pb.eFlagList.append('noTR')
+            flag_pb.eFlagLines.append(
                 ('noTR', 'No T&R\'s identified!'))
-            flagParseBag.descIsFlawed = True
+            flag_pb.descIsFlawed = True
 
         # For everything else, we check against the origDesc
         if len(find_sec(text)) == 0 and len(find_multisec(text)) == 0:
-            flagParseBag.eFlagList.append('noSection')
-            flagParseBag.eFlagLines.append(
+            flag_pb.eFlagList.append('noSection')
+            flag_pb.eFlagLines.append(
                 ('noSection', 'No Sections identified!'))
-            flagParseBag.descIsFlawed = True
+            flag_pb.descIsFlawed = True
 
         ################################################################
         # Warning flags
         ################################################################
 
+        # A few warning flag regexes, and the appropriate flag to
+        # generate if one or more matches are found.
+        wflag_regexes = [
+            (isfa_regex, "isfa"),
+            (less_except_regex, "except"),
+            (including_regex, "including")
+        ]
+
+        def check_for_wflag(line, rgx, flag):
+            if len(rgx.findall(line)) > 0:
+                if flag not in flag_pb.wFlagList:
+                    flag_pb.wFlagList.append(flag)
+                flag_pb.wFlagLines.append((flag, line))
+
         for line in lines:
-
-            if len(isfa_except_regex.findall(line)) > 0:
-                if 'isfa' not in flagParseBag.wFlagList:
-                    flagParseBag.wFlagList.append('isfa')
-                flagParseBag.wFlagLines.append(('isfa', line))
-
-            if len(less_except_regex.findall(line)) > 0:
-                if 'except' not in flagParseBag.wFlagList:
-                    flagParseBag.wFlagList.append('except')
-                flagParseBag.wFlagLines.append(('except', line))
-
-            if len(including_regex.findall(line)) > 0:
-                if 'including' not in flagParseBag.wFlagList:
-                    flagParseBag.wFlagList.append('including')
-                flagParseBag.wFlagLines.append(('including', line))
+            for rgx, flag in wflag_regexes:
+                check_for_wflag(line, rgx, flag)
 
         if commit:
-            self.unpack(flagParseBag)
+            self.unpack(flag_pb)
 
-        return flagParseBag
+        return flag_pb
 
     def tracts_to_dict(self, *attributes) -> list:
         """
