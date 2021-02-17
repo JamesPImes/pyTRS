@@ -2065,14 +2065,12 @@ class TractList(list):
             ]
         """
 
-        allTractData = []
+        # Ensure all elements are legal.
+        map(self.check_illegal, self)
 
         attributes = clean_attributes(attributes)
 
-        for tractObj in self:
-            TractList.check_illegal(tractObj)
-            allTractData.append(tractObj.to_dict(attributes))
-        return allTractData
+        return [t.to_dict(attributes) for t in self]
 
     def tracts_to_list(self, *attributes) -> list:
         """
@@ -2106,14 +2104,12 @@ class TractList(list):
             ]
         """
 
-        allTractData = []
+        # Ensure all elements are legal.
+        map(self.check_illegal, self)
 
         attributes = clean_attributes(attributes)
 
-        for tractObj in self:
-            TractList.check_illegal(tractObj)
-            allTractData.append(tractObj.to_list(attributes))
-        return allTractData
+        return [t.to_list(attributes) for t in self]
 
     def tracts_to_str(self, *attributes) -> str:
         """
@@ -2149,25 +2145,24 @@ class TractList(list):
 
         attributes = clean_attributes(attributes)
 
-        # Figure out how far to justify the attribute names in the print out:
-        longest = 0
-        for element in attributes:
-            if len(element) > longest:
-                longest = len(element)
+        # How far to justify the attribute names in the output str:
+        longest = max([len(att) for att in attributes])
 
-        # Print each Tract's data
-        i = 1
-        outputText = ''
-        for TractData in self.tracts_to_dict(attributes):
-            outputText = outputText + f'\nTract #{i}\n'
-            i += 1
-            for key in TractData:
-                if type(TractData[key]) in [list, tuple]:
-                    td = ", ".join(flatten(TractData[key]))
-                else:
-                    td = TractData[key]
-                outputText = outputText + f'{key.ljust(longest, " ")} : {td}\n'
-        return outputText.strip('\n')
+        all_tract_data = ""
+        for i, t_dct in enumerate(self.tracts_to_dict(attributes), start=1):
+            tract_data = f"\n\nTract #{i}"
+            if i == 1:
+                tract_data = f"Tract #{i}"
+            for att_name, v in t_dct.items():
+                # Flatten lists/tuples, but leave everything else as-is
+                if isinstance(v, (list, tuple)):
+                    v = ", ".join(flatten(v))
+                # Justify attribute name and report its value
+                tract_data = tract_data + f"\n{att_name.ljust(longest, ' ')} : {v}"
+
+            all_tract_data = all_tract_data + tract_data
+
+        return all_tract_data
 
     def quick_desc(self, delim=': ', newline='\n') -> str:
         """
