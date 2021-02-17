@@ -1185,6 +1185,21 @@ class PLSSDesc:
         # This functionality is handled by TractList method.
         return self.parsedTracts.quick_desc(delim=delim, newline=newline)
 
+    def quick_desc_short(self, delim=': ', newline='\n', max_len=30) -> str:
+        """
+        Returns the description (`.trs` + `.desc`) of all Tract objects
+        in `.parsedTracts` as a single string, but trims every line down
+        to `max_len`, if needed.
+        :param delim: Specify what separates TRS from the desc.
+        (defaults to ': ').
+        :param newline: Specify what separates Tracts from one another.
+        (defaults to '\n').
+        :param max_len: Maximum length of each string inside the list.
+        (Defaults to 30.)
+        :return: A string of the complete description.
+        """
+        return self.parsedTracts.quick_desc_short(delim, newline, max_len)
+
     # def extractTractData():  # method removed in v0.4.11, 8/25/2020
     # (replaced with more specific .tracts_to_dict() and .tracts_to_list())
 
@@ -2177,7 +2192,8 @@ class TractList(list):
 
     def quick_desc(self, delim=': ', newline='\n') -> str:
         """
-        Returns the entire .parsedTracts list as a single string.
+        Returns the description of all Tract objects (`.trs` + `.desc`)
+        as a single string.
         :param delim: Specify what separates TRS from the desc.
         (defaults to ': ').
         :param newline: Specify what separates Tracts from one another.
@@ -2199,14 +2215,31 @@ class TractList(list):
             154n97w15: Northwest Quarter, North Half South West Quarter
         """
 
-        dlist = []
-        for tractObj in self:
-            TractList.check_illegal(tractObj)
-            dlist.append(tractObj.quick_desc(delim=delim))
+        # Ensure all elements are legal.
+        self.check_illegal()
+
+        dlist = [
+            t.quick_desc(delim=delim) for t in self
+        ]
 
         return newline.join(dlist)
 
-    def snapshot_inside(self, delim=': ', max_len=30):
+    def quick_desc_short(self, delim=': ', newline='\n', max_len=30) -> str:
+        """
+        Returns the description of all Tract objects (`.trs` + `.desc`)
+        as a single string, but trims every line down to `max_len`, if
+        needed.
+        :param delim: Specify what separates TRS from the desc.
+        (defaults to ': ').
+        :param newline: Specify what separates Tracts from one another.
+        (defaults to '\n').
+        :param max_len: Maximum length of each string inside the list.
+        (Defaults to 30.)
+        :return: A string of the complete description.
+        """
+        return newline.join(self.snapshot_inside(delim, max_len))
+
+    def snapshot_inside(self, delim=': ', max_len=30) -> list:
         """
         Get a list of the descriptions ('.trs' + '.desc') of the Tract
         objects, shortened to `max_len` as necessary.
