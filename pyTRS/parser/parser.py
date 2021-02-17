@@ -315,7 +315,17 @@ class PLSSDesc:
             self.parse(commit=True)
 
     def __str__(self):
-        return self.origDesc
+        pt = len(self.parsedTracts)
+        return (
+            "PLSSDesc ({0})\n"
+            "Source: {1}\n"
+            "Tracts: {2}\n"
+            "Original description:\n"
+            "{3}").format(
+                "Unparsed" if pt == 0 else "Parsed",
+                self.source,
+                "n/a" if pt == 0 else pt,
+                self.origDesc)
 
     def set_config(self, config):
         """
