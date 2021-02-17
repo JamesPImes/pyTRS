@@ -1034,10 +1034,11 @@ class PLSSDesc:
         ]
 
         def check_for_wflag(line, rgx, flag):
-            if len(rgx.findall(line)) > 0:
-                if flag not in flag_pb.wFlagList:
-                    flag_pb.wFlagList.append(flag)
-                flag_pb.wFlagLines.append((flag, line))
+            if len(rgx.findall(line)) == 0:
+                return
+            if flag not in flag_pb.wFlagList:
+                flag_pb.wFlagList.append(flag)
+            flag_pb.wFlagLines.append((flag, line))
 
         for line in lines:
             for rgx, flag in wflag_regexes:
