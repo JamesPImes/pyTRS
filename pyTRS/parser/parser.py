@@ -314,6 +314,9 @@ class PLSSDesc:
         if self.initParse or self.initParseQQ:
             self.parse(commit=True)
 
+    def __str__(self):
+        return self.origDesc
+
     def set_config(self, config):
         """
         Apply the relevant settings from a Config object to this object;
@@ -1411,6 +1414,11 @@ class Tract:
         if self.initParseQQ:
             self.parse(commit=True)
 
+    def __str__(self):
+        if self.trs not in ("", None):
+            return self.quick_desc()
+        return self.desc
+
     @staticmethod
     def from_twprgesec(
             desc='', twp='0', rge='0', sec='0', source='', origDesc='',
@@ -1878,22 +1886,7 @@ class Tract:
         # ensure elements are all strings:
         attributes = clean_attributes(attributes)
 
-        def val(att):
-            """
-            Safely get the value of the attribute; and handle instances
-            where the requested attribute does not exist for this
-            object.
-            """
-            if hasattr(self, att):
-                attVal = getattr(self, att)
-            else:
-                attVal = f'{att}: n/a'
-            return attVal
-
-        attDict = {}
-        for attribute in attributes:
-            attDict[attribute] = val(attribute)
-        return attDict
+        return {att: getattr(self, att, f"{att}: n/a") for att in attributes}
 
     def to_list(self, *attributes) -> list:
         """
@@ -1905,12 +1898,7 @@ class Tract:
         """
 
         attributes = clean_attributes(attributes)
-        attDict = self.to_dict(attributes)
-        attList = []
-        for attribute in attributes:
-            attList.append(attDict[attribute])
-
-        return attList
+        return [getattr(self, att, f"{att}: n/a") for att in attributes]
 
     def quick_desc(self, delim=': ') -> str:
         """
@@ -1954,6 +1942,9 @@ class TractList(list):
 
     def __init__(self, *args, **kwargs):
         list.__init__(self, *args, **kwargs)
+
+    def __str__(self):
+        return self.quick_desc()
 
     @staticmethod
     def check_illegal(elem):
@@ -2422,6 +2413,9 @@ class Config:
             else:
                 # For anything else, set it with `.set_str_to_values()`.
                 self.set_str_to_values(line)
+
+    def __str__(self):
+        return self.decompile_to_text()
 
     def save_to_file(self, filepath):
         """
