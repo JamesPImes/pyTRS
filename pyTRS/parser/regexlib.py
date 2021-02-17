@@ -447,6 +447,11 @@ aliquot_unpacker_regex = re.compile(
 # may not have the fraction attached). Everything to the left of that
 # needs to be recursively processed.
 
+# Will capture the aliquot component (without fraction) in group(2), but
+# should only be used on preprocessed aliquot blocks (e.g., "E½NW¼NE¼"
+# or "ALL"):
+single_aliquot_unpacker_regex = re.compile(r"(([NESW]{1,2}|ALL)[½¼]?)")
+
 # For cutting out whitespace and 'of the' or 'of' between identified
 # aliquot components:
 aliquot_intervener_remover_regex = re.compile(
