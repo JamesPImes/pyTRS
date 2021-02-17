@@ -2032,12 +2032,11 @@ class TractList(list):
             "Tracts: {1}").format(
                 len(self), self.snapshot_inside())
 
-    @staticmethod
-    def check_illegal(elem):
+    def check_illegal(self):
         """
-        Ensure a list element is a Tract object, or raise TypeError.
+        Ensure every element is a Tract object, or raise TypeError.
         """
-        if not isinstance(elem, Tract):
+        if not all(isinstance(t, Tract) for t in self):
             raise TypeError(
                 'Only pyTRS.Tract objects should be appended to TractList')
 
@@ -2075,7 +2074,7 @@ class TractList(list):
         """
 
         # Ensure all elements are legal.
-        map(self.check_illegal, self)
+        self.check_illegal()
 
         attributes = clean_attributes(attributes)
 
@@ -2114,7 +2113,7 @@ class TractList(list):
         """
 
         # Ensure all elements are legal.
-        map(self.check_illegal, self)
+        self.check_illegal()
 
         attributes = clean_attributes(attributes)
 
@@ -2151,6 +2150,9 @@ class TractList(list):
             desc   : Northwest Quarter, North Half South West Quarter
             QQList : NENW, NWNW, SENW, SWNW, NESW, NWSW
         """
+
+        # Ensure all elements are legal.
+        self.check_illegal()
 
         attributes = clean_attributes(attributes)
 
