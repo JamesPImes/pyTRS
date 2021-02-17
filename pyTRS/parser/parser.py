@@ -319,12 +319,14 @@ class PLSSDesc:
         return (
             "PLSSDesc ({0})\n"
             "Source: {1}\n"
-            "Tracts: {2}\n"
+            "Total Tracts: {2}\n"
+            "Tracts: {3}\n"
             "Original description:\n"
-            "{3}").format(
+            "{4}").format(
                 "Unparsed" if pt == 0 else "Parsed",
                 self.source,
                 "n/a" if pt == 0 else pt,
+                self.parsedTracts.snapshot_inside(),
                 self.origDesc)
 
     def set_config(self, config):
@@ -1315,6 +1317,9 @@ class Tract:
         # this Tract comes
         self.origDesc = origDesc
 
+        # Whether we have parsed this Tract and committed the results
+        self.parse_complete = False
+
         # If the TRS has been specified (i.e. is in the '000n000w00'
         # format), unpack it into the component parts
         self.twp, self.rge, self.sec = break_trs(trs)
@@ -1425,9 +1430,15 @@ class Tract:
             self.parse(commit=True)
 
     def __str__(self):
-        if self.trs not in ("", None):
-            return self.quick_desc()
-        return self.desc
+        return (
+            "Tract ({0})\n"
+            "{1}\n"
+            "Total QQs: {2}\n"
+            "Total Lots: {3}").format(
+                "Parsed" if self.parse_complete else "Unparsed",
+                self.quick_desc() if self.trs not in ("", None) else self.desc,
+                len(self.QQList) if self.parse_complete else "n/a",
+                len(self.lotList) if self.parse_complete else "n/a")
 
     @staticmethod
     def from_twprgesec(
@@ -1849,6 +1860,7 @@ class Tract:
 
         # Store the results, if instructed to do so.
         if commit:
+            self.parse_complete = True
             self.unpack(plqqParseBag)
 
         return retLotQQList
@@ -1920,6 +1932,22 @@ class Tract:
         """
         return f"{self.trs}{delim}{self.desc}"
 
+    def quick_desc_short(self, delim=': ', max_len=30) -> str:
+        """
+        Get the `.quick_desc()` of this Tract, but if the resulting str
+        is longer than `max_len`, shorten it to that length.
+
+        :param delim: The string that should separate TRS from the
+        description. (Defaults to ': ')
+        :param max_len: Maximum length of the returned string. (Defaults
+        to 30.)
+        :return: A string, no longer than `max_len`.
+        """
+        qd = self.quick_desc(delim)
+        if len(qd) > max_len:
+            qd = qd[:max_len - 3] + "..."
+        return qd
+
     # def extractData():  # method removed in v0.4.11, 8/25/2020
     # (replaced with more specific .to_dict() and .to_list())
 
@@ -1954,7 +1982,10 @@ class TractList(list):
         list.__init__(self, *args, **kwargs)
 
     def __str__(self):
-        return self.quick_desc()
+        return (
+            "TractList\nTotal Tracts: {0}\n"
+            "Tracts: {1}").format(
+                len(self), self.snapshot_inside())
 
     @staticmethod
     def check_illegal(elem):
@@ -2132,6 +2163,19 @@ class TractList(list):
             dlist.append(tractObj.quick_desc(delim=delim))
 
         return newline.join(dlist)
+
+    def snapshot_inside(self, delim=': ', max_len=30):
+        """
+        Get a list of the descriptions ('.trs' + '.desc') of the Tract
+        objects, shortened to `max_len` as necessary.
+        :param delim: Specify what separates TRS from the desc.
+        (defaults to ': ').
+        :param max_len: Maximum length of each string inside the list.
+        (Defaults to 30.)
+        :return: A list of strings, each no longer than `max_len`.
+        """
+        return [t.quick_desc_short(delim, max_len) for t in self]
+
 
     def print_desc(self, delim=': ', newline='\n') -> None:
         """
