@@ -396,35 +396,35 @@ class PLSSDesc:
                 if attrib == 'layout':
                     self.layout_specified = True
 
-    def unpack(self, targetParseBagObj):
+    def unpack(self, target_pb):
         """
         Unpack (append or set) the relevant attributes of the
-        `targetParseBagObj` into self's attributes.
+        `target_pb` into self's attributes.
 
-        :param targetParseBagObj: A ParseBag object containing data from
+        :param target_pb: A ParseBag object containing data from
         the parse.
         """
 
-        if not isinstance(targetParseBagObj, ParseBag):
+        if not isinstance(target_pb, ParseBag):
             return
 
-        if targetParseBagObj.descIsFlawed:
+        if target_pb.descIsFlawed:
             self.descIsFlawed = True
 
-        if len(targetParseBagObj.wFlagList) > 0:
-            self.wFlagList.extend(targetParseBagObj.wFlagList)
+        if len(target_pb.wFlagList) > 0:
+            self.wFlagList.extend(target_pb.wFlagList)
 
-        if len(targetParseBagObj.eFlagList) > 0:
-            self.eFlagList.extend(targetParseBagObj.eFlagList)
+        if len(target_pb.eFlagList) > 0:
+            self.eFlagList.extend(target_pb.eFlagList)
 
-        if len(targetParseBagObj.wFlagLines) > 0:
-            self.wFlagLines.extend(targetParseBagObj.wFlagLines)
+        if len(target_pb.wFlagLines) > 0:
+            self.wFlagLines.extend(target_pb.wFlagLines)
 
-        if len(targetParseBagObj.eFlagLines) > 0:
-            self.eFlagLines.extend(targetParseBagObj.eFlagLines)
+        if len(target_pb.eFlagLines) > 0:
+            self.eFlagLines.extend(target_pb.eFlagLines)
 
-        if len(targetParseBagObj.parsedTracts) > 0:
-            self.parsedTracts.extend(targetParseBagObj.parsedTracts)
+        if len(target_pb.parsedTracts) > 0:
+            self.parsedTracts.extend(target_pb.parsedTracts)
 
     def parse(
             self, text=None, layout=None, cleanUp=None, initParseQQ=None,
@@ -1612,43 +1612,43 @@ class Tract:
             if value is not None:
                 setattr(self, attrib, value)
 
-    def unpack(self, targetParseBagObj):
+    def unpack(self, target_pb):
         """
         Unpack (append or set) the relevant attributes of the
-        `targetParseBagObj` into self's attributes.
+        `target_pb` into self's attributes.
 
-        :param targetParseBagObj: A ParseBag object containing data from
+        :param target_pb: A ParseBag object containing data from
         the parse.
         """
 
-        if not isinstance(targetParseBagObj, ParseBag):
+        if not isinstance(target_pb, ParseBag):
             return
 
-        if targetParseBagObj.descIsFlawed:
+        if target_pb.descIsFlawed:
             self.descIsFlawed = True
 
-        if len(targetParseBagObj.wFlagList) > 0:
-            self.wFlagList.extend(targetParseBagObj.wFlagList)
+        if len(target_pb.wFlagList) > 0:
+            self.wFlagList.extend(target_pb.wFlagList)
 
-        if len(targetParseBagObj.eFlagList) > 0:
-            self.eFlagList.extend(targetParseBagObj.eFlagList)
+        if len(target_pb.eFlagList) > 0:
+            self.eFlagList.extend(target_pb.eFlagList)
 
-        if len(targetParseBagObj.wFlagLines) > 0:
-            self.wFlagLines.extend(targetParseBagObj.wFlagLines)
+        if len(target_pb.wFlagLines) > 0:
+            self.wFlagLines.extend(target_pb.wFlagLines)
 
-        if len(targetParseBagObj.eFlagLines) > 0:
-            self.eFlagLines.extend(targetParseBagObj.eFlagLines)
+        if len(target_pb.eFlagLines) > 0:
+            self.eFlagLines.extend(target_pb.eFlagLines)
 
-        if targetParseBagObj.parentType == 'Tract':
+        if target_pb.parentType == 'Tract':
             # Only if unpacking a Tract-level ParseBag... Otherwise,
             # these attributes won't exist for that ParseBagObj.
 
-            if len(targetParseBagObj.QQList) > 0:
+            if len(target_pb.QQList) > 0:
                 # Only append fresh (non-duplicate) QQ's, and raise a
                 # flag if there are any duplicates
                 dupQQs = []
                 freshQQs = []
-                for QQ in targetParseBagObj.QQList:
+                for QQ in target_pb.QQList:
                     if QQ in self.QQList or QQ in freshQQs:
                         dupQQs.append(QQ)
                     else:
@@ -1659,12 +1659,12 @@ class Tract:
                     self.wFlagLines.append(
                         ('dup_QQ', f'<{self.trs}: {", ".join(dupQQs)}>'))
 
-            if len(targetParseBagObj.lotList) > 0:
+            if len(target_pb.lotList) > 0:
                 # Only append fresh (non-duplicate) Lots, and raise a
                 # flag if there are any duplicates
                 dupLots = []
                 freshLots = []
-                for lot in targetParseBagObj.lotList:
+                for lot in target_pb.lotList:
                     if lot in self.lotList or lot in freshLots:
                         dupLots.append(lot)
                     else:
@@ -1677,8 +1677,8 @@ class Tract:
 
             self.lotQQList = self.lotList + self.QQList
 
-            if len(targetParseBagObj.lotAcres) > 0:
-                self.lotAcres = targetParseBagObj.lotAcres
+            if len(target_pb.lotAcres) > 0:
+                self.lotAcres = target_pb.lotAcres
                 # TODO: Handle discrepancies, if there's already data in
                 #   lotAcres.
 
@@ -2312,35 +2312,35 @@ class ParseBag:
             self.lotList = []
             self.lotAcres = {}
 
-    def absorb(self, targetParseBagObj):
+    def absorb(self, target_pb):
         """
         Absorb (i.e. append or set) the relevant attributes of a child
-        `targetParseBagObj` into the parent (i.e. self).
+        `target_pb` into the parent (i.e. self).
         """
 
-        if not isinstance(targetParseBagObj, ParseBag):
+        if not isinstance(target_pb, ParseBag):
             return
 
         # We do not absorb QQList, lotList, or lotAcres, since those are not
         # relevant to a PLSSDescObj (only TractObj).
 
-        if targetParseBagObj.descIsFlawed:
+        if target_pb.descIsFlawed:
             self.descIsFlawed = True
 
-        if len(targetParseBagObj.wFlagList) > 0:
-            self.wFlagList.extend(targetParseBagObj.wFlagList)
+        if len(target_pb.wFlagList) > 0:
+            self.wFlagList.extend(target_pb.wFlagList)
 
-        if len(targetParseBagObj.eFlagList) > 0:
-            self.eFlagList.extend(targetParseBagObj.eFlagList)
+        if len(target_pb.eFlagList) > 0:
+            self.eFlagList.extend(target_pb.eFlagList)
 
-        if len(targetParseBagObj.wFlagLines) > 0:
-            self.wFlagLines.extend(targetParseBagObj.wFlagLines)
+        if len(target_pb.wFlagLines) > 0:
+            self.wFlagLines.extend(target_pb.wFlagLines)
 
-        if len(targetParseBagObj.eFlagLines) > 0:
-            self.eFlagLines.extend(targetParseBagObj.eFlagLines)
+        if len(target_pb.eFlagLines) > 0:
+            self.eFlagLines.extend(target_pb.eFlagLines)
 
-        if targetParseBagObj.parentType == 'PLSSDesc':
-            self.parsedTracts.extend(targetParseBagObj.parsedTracts)
+        if target_pb.parentType == 'PLSSDesc':
+            self.parsedTracts.extend(target_pb.parsedTracts)
 
 
 class Config:
