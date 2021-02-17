@@ -2225,16 +2225,15 @@ class TractList(list):
         Return a list all the TRS's in this TractList. Optionally remove
         duplicates with remove_duplicates=True.
         """
-        all_TRS = []
-        for TractObj in self:
-            all_TRS.append(TractObj.trs)
+        unique_trs = []
+        all_trs = []
+        for trs in [t.trs for t in self]:
+            all_trs.append(trs)
+            if trs not in unique_trs:
+                unique_trs.append(trs)
         if remove_duplicates:
-            all_TRS_noDup = []
-            for TRS in all_TRS:
-                if TRS not in all_TRS_noDup:
-                    all_TRS_noDup.append(TRS)
-            all_TRS = all_TRS_noDup
-        return all_TRS
+            return unique_trs
+        return all_trs
 
     # Aliases to prevent breaking API on calls to method names with caps
     # TODO: Deprecate these method names
