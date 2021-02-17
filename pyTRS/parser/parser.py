@@ -385,16 +385,12 @@ class PLSSDesc:
         parameters.)
         """
         if isinstance(config, str) or config is None:
-            configObj = Config(config)
-        elif isinstance(config, Config):
-            configObj = config
-        else:
-            raise TypeError(
-                '`config` must be either a str or pyTRS.Config object. '
-                f"Passed as type {type(config)}.")
+            config = Config(config)
+        if not isinstance(config, Config):
+            raise CONFIG_ERROR
 
         for attrib in Config.__PLSSDescAttribs__:
-            value = getattr(configObj, attrib)
+            value = getattr(config, attrib)
             if value is not None:
                 setattr(self, attrib, value)
                 if attrib == 'layout':
@@ -1607,16 +1603,12 @@ class Tract:
         parameters.)
         """
         if isinstance(config, str) or config is None:
-            configObj = Config(config)
-        elif isinstance(config, Config):
-            configObj = config
-        else:
-            raise TypeError(
-                '`config` must be either a string or pyTRS.Config object. '
-                f"Passed as type {type(config)}`.")
+            config = Config(config)
+        if not isinstance(config, Config):
+            raise CONFIG_ERROR
 
         for attrib in Config.__TractAttribs__:
-            value = getattr(configObj, attrib)
+            value = getattr(config, attrib)
             if value is not None:
                 setattr(self, attrib, value)
 
