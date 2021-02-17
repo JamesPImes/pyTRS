@@ -406,7 +406,7 @@ class PLSSDesc:
         """
 
         if not isinstance(target_pb, ParseBag):
-            return
+            raise TypeError("Can only `unpack()` a pyTRS.ParseBag object.")
 
         if target_pb.descIsFlawed:
             self.descIsFlawed = True
@@ -1637,7 +1637,7 @@ class Tract:
         """
 
         if not isinstance(target_pb, ParseBag):
-            return
+            raise TypeError("Can only `unpack()` a pyTRS.ParseBag object.")
 
         if target_pb.descIsFlawed:
             self.descIsFlawed = True
@@ -2251,7 +2251,6 @@ class TractList(list):
         """
         return [t.quick_desc_short(delim, max_len) for t in self]
 
-
     def print_desc(self, delim=': ', newline='\n') -> None:
         """
         Simple printing of the parsed description.
@@ -2354,7 +2353,7 @@ class ParseBag:
         """
 
         if not isinstance(target_pb, ParseBag):
-            return
+            raise TypeError("Can only `absorb()` a pyTRS.ParseBag object.")
 
         # We do not absorb QQList, lotList, or lotAcres, since those are not
         # relevant to a PLSSDescObj (only TractObj).
