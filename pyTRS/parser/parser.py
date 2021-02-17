@@ -83,6 +83,16 @@ QQ_SCRUBBER_DEFINITIONS = {
     cleanSW_regex: 'SW¼'
 }
 
+CONFIG_ERROR = TypeError(
+    "config must be a str, None, or another Config object.")
+
+DEFAULT_NS_ERROR = ValueError(
+    "defaultNS must be either 'n' or 's'."
+)
+
+DEFAULT_EW_ERROR = ValueError(
+    "defaultEW must be either 'e' or 'w'."
+)
 
 class PLSSDesc:
     """
@@ -1334,7 +1344,7 @@ class Tract:
         init. (Defaults to False)
         """
 
-        if not isinstance(trs, str) and not trs is None:
+        if not isinstance(trs, str) and trs is not None:
             raise TypeError("`trs` must be a string or None")
 
         # a string containing the TRS (Township Range and Section),
@@ -1481,13 +1491,18 @@ class Tract:
     @staticmethod
     def from_twprgesec(
             desc='', twp='0', rge='0', sec='0', source='', origDesc='',
-            origIndex=0, descIsFlawed=False, config=None, initParseQQ=None):
+            defaultNS=None, defaultEW=None, origIndex=0, descIsFlawed=False,
+            config=None, initParseQQ=None):
         """
         Create a Tract object from separate Twp, Rge, and Sec components
         rather than joined TRS. All parameters are the same as
-        __init__(), except that `trs=` are replaced with `twp=`, `rge`,
+        __init__(), except that `trs=` is replaced with `twp=`, `rge`,
         and `sec`. (If N/S or E/W are not specified, will pull defaults
         from config parameters.)
+
+        WARNING: This method has fewer guardrails on what gets set to
+        `.twp`, `.rge`, `.sec`, and `.trs` in the resulting Tract; so it
+        may be wise to preprocess those data before passing as args.
 
         :param twp: Township. Pass as a string (i.e. '154n'). If passed
         as an integer, the N/S will be pulled from `config` parameters,
@@ -1502,27 +1517,32 @@ class Tract:
         # Compile the `config=` data into a Config object (or use the
         # provided object, if already provided as `Config` type), so we
         # can extract `defaultNS` and `defaultEW`
-        if isinstance(config, Config):
-            configObj = config
-        elif isinstance(config, str):
-            configObj = Config(config)
-        else:
-            configObj = Config(None)
+        if isinstance(config, str) or config is None:
+            config = Config(config)
+        if not isinstance(config, Config):
+            raise CONFIG_ERROR
 
-        # Get our defaultNS and defaultEW from config
-        defaultNS = configObj.defaultNS
-        defaultEW = configObj.defaultEW
-        if defaultNS is None: defaultNS = 'n'
-        if defaultEW is None: defaultEW = 'w'
-        if defaultNS.lower() not in ['n', 'north', 's', 'south']:
+        # Get our defaultNS and defaultEW from kwargs or config
+        if defaultNS is None:
+            defaultNS = config.defaultNS
+        if defaultEW is None:
+            defaultEW = config.defaultEW
+        # If still not specified (i.e. neither set in kwarg, nor in config),
+        # default to 'n' and 'w', respectively.
+        if defaultNS is None:
             defaultNS = 'n'
-        if defaultEW.lower() not in ['w', 'west', 'e', 'east']:
+        if defaultEW is None:
             defaultEW = 'w'
+        # Ensure legal N/S and E/W values.
+        if defaultNS.lower() not in ['n', 'north', 's', 'south']:
+            raise DEFAULT_NS_ERROR
+        if defaultEW.lower() not in ['w', 'west', 'e', 'east']:
+            raise DEFAULT_EW_ERROR
 
         # Whether to scrub twp, rge, and sec strings for OCR artifacts
         ocrScrub = False
-        if configObj.ocrScrub is not None:
-            ocrScrub = configObj.ocrScrub
+        if config.ocrScrub is not None:
+            ocrScrub = config.ocrScrub
 
         # Get twp in a standardized format, if we can
         if not isinstance(twp, (int, str)):
@@ -1554,33 +1574,28 @@ class Tract:
 
         # Get sec in a standardized format, if we can
         if not isinstance(sec, (int, str)):
-            sec = ''
-        elif isinstance(sec, int):
-            sec = str(sec)
-        elif isinstance(sec, str):
-            try:
-                sec = str(int(sec)).rjust(2, '0')
-                if ocrScrub:
-                    # If configured so, OCR-scrub all characters
-                    sec = ocr_scrub_alpha_to_num(sec)
-            except:
-                pass
+            raise TypeError("`sec` must be an int or str.")
+        sec = str(sec)
+        try:
+            sec = str(int(sec)).rjust(2, '0')
+            if ocrScrub:
+                # If configured so, OCR-scrub all characters
+                sec = ocr_scrub_alpha_to_num(sec)
+        except ValueError:
+            pass
 
         # compile a TRS, and see if it matches our known format
         trs = f'{twp}{rge}{sec}'
-        if TRS_unpacker_regex.search(trs) is None:
-            # If not, set `trs` as an empty string
-            trs = ''
 
         # Create a new Tract object and return it
-        TractObj = Tract(
+        new_tract = Tract(
             desc=desc, trs=trs, source=source, origDesc=origDesc,
-            origIndex=origIndex, descIsFlawed=descIsFlawed, config=configObj,
+            origIndex=origIndex, descIsFlawed=descIsFlawed, config=config,
             initParseQQ=initParseQQ)
-        TractObj.twp = twp
-        TractObj.rge = rge
-        TractObj.sec = sec
-        return TractObj
+        new_tract.twp = twp
+        new_tract.rge = rge
+        new_tract.sec = sec
+        return new_tract
 
     def set_config(self, config):
         """
@@ -2457,9 +2472,7 @@ class Config:
         elif configText is None:
             configText = ''
         elif not isinstance(configText, str):
-            raise TypeError(
-                'config must be specified as a string, None, or another '
-                f"Config object. Passed as type: {type(configText)}")
+            raise CONFIG_ERROR
         self.configText = configText
         self.configName = configName
 
