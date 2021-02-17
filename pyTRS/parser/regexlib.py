@@ -303,7 +303,7 @@ including_regex = re.compile(r'incl', re.IGNORECASE)
 less_except_regex = re.compile(r'(less|except|limit)', re.IGNORECASE)
 
 # Looking for 'insofar' language:
-isfa_except_regex = re.compile(r'(in\s?so\s?far)', re.IGNORECASE)
+isfa_regex = re.compile(r'(in\s?so\s?far)', re.IGNORECASE)
 
 
 ########################################################################
