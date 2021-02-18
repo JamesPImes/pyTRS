@@ -51,7 +51,7 @@ from pyTRS.parser import (
 # For outputting parsed data to csv files
 from pyTRS.parser import output_to_csv
 
-# A current list of implemented layouts
+# A tuple of currently implemented layouts
 from pyTRS.parser import __implementedLayouts__
 from pyTRS.parser import __implementedLayoutExamples__
 

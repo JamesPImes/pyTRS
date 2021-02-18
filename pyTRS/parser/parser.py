@@ -29,9 +29,9 @@ from .regexlib import (
 
 
 # A current list of implemented layouts:
-__implementedLayouts__ = [
+__implementedLayouts__ = (
     'TRS_desc', 'desc_STR', 'S_desc_TR', 'TR_desc_S', 'copy_all'
-]
+)
 
 __implementedLayoutExamples__ = (
     "'TRS_desc'\n"
@@ -2425,33 +2425,33 @@ class Config:
     """
 
     # Implemented settings that are settable via Config object:
-    __ConfigAttribs__ = [
+    __ConfigAttribs__ = (
         'defaultNS', 'defaultEW', 'initPreprocess', 'layout', 'initParse',
         'initParseQQ', 'cleanQQ', 'requireColon', 'includeLotDivs', 'ocrScrub',
         'segment', 'qq_depth', 'qq_depth_min', 'qq_depth_max',
         'break_halves'
-    ]
+    )
 
     # A list of attribute names whose values should be a bool:
-    __boolTypeAttribs__ = [
+    __boolTypeAttribs__ = (
         'initParse', 'initParseQQ', 'cleanQQ', 'includeLotDivs',
         'initPreprocess', 'requireColon', 'ocrScrub', 'segment',
         'break_halves'
-    ]
+    )
 
-    __intTypeAttribs__ = [
+    __intTypeAttribs__ = (
         'qq_depth_min', 'qq_depth_max', 'qq_depth'
-    ]
+    )
 
     # Those attributes relevant to PLSSDesc objects:
     __PLSSDescAttribs__ = __ConfigAttribs__
 
     # Those attributes relevant to Tract objects:
-    __TractAttribs__ = [
+    __TractAttribs__ = (
         'defaultNS', 'defaultEW', 'initPreprocess', 'initParseQQ', 'cleanQQ',
         'includeLotDivs', 'ocrScrub', 'qq_depth', 'qq_depth_min',
         'qq_depth_max', 'break_halves'
-    ]
+    )
 
     def __init__(self, configText='', configName=''):
         """

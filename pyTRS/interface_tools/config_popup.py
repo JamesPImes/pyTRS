@@ -142,7 +142,7 @@ class PromptConfig(tk.Frame):
         
         if isinstance(parameters, str):
             if parameters.lower() == 'all':
-                parameters = parser.Config.__ConfigAttribs__
+                parameters = list(parser.Config.__ConfigAttribs__)
             else:
                 parameters = parameters.replace(' ', '').split(',')
 
@@ -434,7 +434,7 @@ class PromptConfig(tk.Frame):
         # Prompt for layout
         self.layoutcombo = Combobox(combo_frame, width=25)
         self.layoutcombo['values'] = tuple(
-            ['Deduce (RECOMMENDED)'] + parser.__implementedLayouts__)
+            ['Deduce (RECOMMENDED)'] + list(parser.__implementedLayouts__))
         self.combos.append(self.layoutcombo)
     
         if 'layout' in parameters:
