@@ -45,7 +45,7 @@ from pyTRS.parser import PLSSDesc, Tract, TractList, Config
 
 # Misc. functions for examining / handling descriptions:
 from pyTRS.parser import (
-    find_tr, find_sec, decompile_twprge, find_multisec, break_trs
+    find_twprge, find_sec, decompile_twprge, find_multisec, break_trs
 )
 
 # For outputting parsed data to csv files

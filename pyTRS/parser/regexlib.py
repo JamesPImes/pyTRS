@@ -130,7 +130,7 @@ noNum_sec_regex = re.compile(
 # They're mostly the same as the normal twprge_regex, but with some
 # characters being allowed outside various groupings i.e. some don't
 # REQUIRE 'T', but will still match it if it's there). kwargs or config
-# for defaultNS=‘n’ and defaultEW=‘w’ will fill in the township and
+# for default_ns=‘n’ and default_ew=‘w’ will fill in the township and
 # range letters, as needed. Abbreviations and typos for 'Township' have
 # also been locked down somewhat, to avoid excessive false matches.
 ########################################################################
@@ -214,8 +214,8 @@ preproTR_noT_noWE_regex = re.compile(
 
 # With enough context, will capture T&R's with OCR artifacts (e.g.
 # "TIS4N-R97W" instead of intended "T154N-R97W").  Gets converted to
-# numerics in _preprocess_tr_mo().
-twprge_ocrScrub_regex = re.compile(
+# numerics in _preprocess_twprge_mo().
+twprge_ocr_scrub_regex = re.compile(
     r"""
     T(  # Move 'T' to outside the optional match, because 'T' is required
     w\.?|
@@ -341,7 +341,7 @@ ALL_regex = re.compile(r'\b(ALL)(.{1,6})?', re.IGNORECASE)
 # For culling context around "ALL":
 ALL_context_regex = re.compile(r'(in+|of+|th[eatiso]{0,3}|l[ying]{0,5})', re.IGNORECASE)
 
-# cleanQQ regexes, for parsing aliquots under cleanQQ=True conditions.
+# clean_qq regexes, for parsing aliquots under clean_qq=True conditions.
 # Will match much more broadly.
 cleanNE_regex = re.compile(
     r'()(NE|Nort[h]?\s*East)\s*((One)?\s*Q[uarter]{4,7}|1\/?4|\/?4|¼)?', re.IGNORECASE)
@@ -352,7 +352,7 @@ cleanNW_regex = re.compile(
 cleanSW_regex = re.compile(
     r'()(SW|Sout[h]?\s*West)\s*((One)?\s*Q[uarter]{4,7}|1\/?4|\/?4|¼)?', re.IGNORECASE)
 
-# N2, S2, E2, and W2 are the same under cleanQQ conditions, since there
+# N2, S2, E2, and W2 are the same under clean_qq conditions, since there
 # still must be SOME designator that it's a 'half'.
 
 # 'E2NE' should be enough context to interpret it as the E½NE¼. This

@@ -15,7 +15,7 @@ import re
 from .regexlib import (
     twprge_regex, twprge_broad_regex, sec_regex, multiSec_regex,
     comma_multiSec_regex, noNum_sec_regex, preproTR_noNSWE_regex,
-    preproTR_noR_noNS_regex, preproTR_noT_noWE_regex, twprge_ocrScrub_regex,
+    preproTR_noR_noNS_regex, preproTR_noT_noWE_regex, twprge_ocr_scrub_regex,
     lots_context_regex, TRS_unpacker_regex, well_regex, depth_regex,
     including_regex, less_except_regex, isfa_regex, NE_regex, SE_regex,
     NW_regex, SW_regex, N2_regex, S2_regex, E2_regex, W2_regex, ALL_regex,
@@ -26,7 +26,6 @@ from .regexlib import (
     aliquot_lot_intervener_scrubber_regex, pm_regex, twprge_pm_regex,
     sec_within_desc_regex
 )
-
 
 # A current list of implemented layouts:
 _IMPLEMENTED_LAYOUTS = (
@@ -89,11 +88,11 @@ CONFIG_ERROR = TypeError(
     "config must be a str, None, or another Config object.")
 
 DEFAULT_NS_ERROR = ValueError(
-    "defaultNS must be either 'n' or 's'."
+    "default_ns must be either 'n' or 's'."
 )
 
 DEFAULT_EW_ERROR = ValueError(
-    "defaultEW must be either 'e' or 'w'."
+    "default_ew must be either 'e' or 'w'."
 )
 
 
@@ -115,37 +114,37 @@ class PLSSDesc:
     Parse the PLSSDesc object into pyTRS.Tract objects with the
     `.parse()` method at some point after init. Alternatively, trigger
     the parse at init in one of several ways:
-    -- Use init parameter `initParse=True` (parses the PLSSDesc object
+    -- Use init parameter `init_parse=True` (parses the PLSSDesc object
         into Tract objects, which are NOT yet parsed into lots and
         QQ's).
-    -- Use init parameter `initParseQQ=True` (parses the PLSSDesc object
+    -- Use init parameter `init_parse_qq=True` (parses the PLSSDesc object
         into Tract objects, which ARE then immediately parsed into lots
         and QQ's)
-    -- Include string 'initParse' and/or 'initParseQQ' among the config
+    -- Include string 'init_parse' and/or 'init_parse_qq' among the config
         parameters that are passed in `config=` at init.
-    (NOTE: initParseQQ entails initParse, but not vice-versa.)
+    (NOTE: init_parse_qq entails init_parse, but not vice-versa.)
 
     ____ IMPORTANT INSTANCE VARIABLES AFTER PARSING ____
-    .origDesc -- The original text. (Gets set from the first positional
+    .orig_desc -- The original text. (Gets set from the first positional
         argument at init.)
-    .parsedTracts -- A pyTRS.TractList object (i.e. a list) containing
+    .parsed_tracts -- A pyTRS.TractList object (i.e. a list) containing
         all of the pyTRS.Tract objects that were generated from parsing
         this object.
-    .ppDesc -- The preprocessed description. (If the object has not yet
-        been preprocessed, it will be equivalent to .origDesc)
+    .pp_desc -- The preprocessed description. (If the object has not yet
+        been preprocessed, it will be equivalent to .orig_desc)
     .source -- (Optional) A string specifying where the description came
         from. Useful if parsing multiple descriptions and need to
         internally keep track where they came from. (Optionally specify
         at init with parameter `source=<str>`.)
-    .wFlagList -- a list of warning flags (strings) generated during
+    .w_flags -- a list of warning flags (strings) generated during
         preprocessing and/or parsing.
-    .wFlagLines -- a list of 2-tuples, each being a warning flag and the
+    .w_flag_lines -- a list of 2-tuples, each being a warning flag and the
         line or context from the description that caused the warning.
-    .eFlagList -- a list of error flags (strings) generated during
+    .e_flags -- a list of error flags (strings) generated during
         preprocessing and/or parsing.
-    .eFlagLines -- a list of 2-tuples, each being an error flag and the
+    .e_flag_lines -- a list of 2-tuples, each being an error flag and the
         line or context from the description that caused the error.
-    .descIsFlawed -- a bool, whether or not an apparently fatal flaw was
+    .desc_is_flawed -- a bool, whether or not an apparently fatal flaw was
         discovered during parsing.
     .layout -- The user-dictated or algorithm-deduced layout of the
         description (controls how the parsing algorithm interprets the
@@ -159,15 +158,15 @@ class PLSSDesc:
     .print_desc() -- Does the same thing, but prints to console.
     .tracts_to_dict() -- Compile the requested attributes for each Tract
         into a dict, and returns a list of those dicts (i.e. the list is
-        equal in length to `.parsedTracts` TractList).
+        equal in length to `.parsed_tracts` TractList).
     .tracts_to_list() -- Compile the requested attributes for each Tract
         into a list, and returns a nested list of those list (i.e. the
-        top-level list is equal in length to `.parsedTracts` TractList).
+        top-level list is equal in length to `.parsed_tracts` TractList).
     .tracts_to_str() -- Compile the requested attributes for each Tract
         into a string-based table, and return a single string of all
         tables.
     .list_trs() -- Return a list of all twp/rge/sec combinations in the
-        `.parsedTracts` TractList, optionally removing duplicates.
+        `.parsed_tracts` TractList, optionally removing duplicates.
     .print_data() -- Equivalent to `.tracts_to_dict()`, but the data
         is formatted as a table and printed to console.
 
@@ -187,14 +186,14 @@ class PLSSDesc:
     """
 
     def __init__(
-            self, origDesc: str, source='', layout=None, config=None,
-            initParse=None, initParseQQ=None):
+            self, orig_desc: str, source='', layout=None, config=None,
+            init_parse=None, init_parse_qq=None):
         """
         A 'raw' PLSS description of land. Will be parsed into one or
-        more Tract objects, which are stored in the `.parsedTracts`
+        more Tract objects, which are stored in the `.parsed_tracts`
         instance variable (a list).
 
-        :param origDesc: The text of the description to be parsed.
+        :param orig_desc: The text of the description to be parsed.
         :param source: (Optional) A string specifying where the
         description came from. (Useful if parsing multiple descriptions
         and need to internally keep track where they came from.)
@@ -206,27 +205,27 @@ class PLSSDesc:
         parameters to configure how the PLSSDesc object should be
         parsed. (See documentation on pyTRS.Config objects for optional
         config parameters.)
-        :param initParse: Whether to parse this PLSSDesc object when
+        :param init_parse: Whether to parse this PLSSDesc object when
         initialized.
-        NOTE: If `initParse` is specified as a kwarg at init, and also
-        specified in the `config` (i.e. config='initParse'), then the
-        kwarg `initParse=<bool>` will control.
-        :param initParseQQ: Whether to parse this PLSSDesc object and
+        NOTE: If `init_parse` is specified as a kwarg at init, and also
+        specified in the `config` (i.e. config='init_parse'), then the
+        kwarg `init_parse=<bool>` will control.
+        :param init_parse_qq: Whether to parse this PLSSDesc object and
         each resulting Tract object (into lots and QQs) when
         initialized.
-        NOTE: If `initParseQQ` is specified as a kwarg at init, and also
-        specified in the `config` (i.e. config='initParseQQ'), then the
-        kwarg `initParseQQ=<bool>` will control.
+        NOTE: If `init_parse_qq` is specified as a kwarg at init, and also
+        specified in the `config` (i.e. config='init_parse_qq'), then the
+        kwarg `init_parse_qq=<bool>` will control.
         """
 
         # The original input of the PLSS description:
-        self.origDesc = origDesc
+        self.orig_desc = orig_desc
 
         # If something other than a string is fed in, raise a TypeError
-        if not isinstance(origDesc, str):
+        if not isinstance(orig_desc, str):
             raise TypeError(
-                f"`origDesc` must be of type 'string'. "
-                f"Passed as type {type(origDesc)}.")
+                f"`orig_desc` must be of type 'string'. "
+                f"Passed as type {type(orig_desc)}.")
 
         # The source of this PLSS description:
         self.source = source
@@ -241,11 +240,11 @@ class PLSSDesc:
         self.layout_specified = False
 
         # If a T&R is identified without 'North/South' specified, or without
-        # 'East/West' specified, fall back on defaultNS and defaultEW,
+        # 'East/West' specified, fall back on default_ns and default_ew,
         # respectively. Each will be filled in with set_config (if applicable),
         # or defaulted to 'n' and 'w' soon.
-        self.defaultNS = None
-        self.defaultEW = None
+        self.default_ns = None
+        self.default_ew = None
 
         ###############################################################
         # NOTE: the following default bools will be changed in
@@ -253,33 +252,33 @@ class PLSSDesc:
         ###############################################################
 
         # Whether we should preprocess the text at initialization:
-        self.initPreprocess = True
+        self.init_preprocess = True
 
         # Whether we should parse the text at initialization:
-        self.initParse = False
+        self.init_parse = False
 
         # Whether we should parse lots and aliquots in each Tract when created.
-        # NOTE: In effect, `initParseQQ==True` also entails
-        # `self.initParse==True` -- but NOT vice-versa
-        self.initParseQQ = False
+        # NOTE: In effect, `init_parse_qq==True` also entails
+        # `self.init_parse==True` -- but NOT vice-versa
+        self.init_parse_qq = False
 
-        # Whether tract descriptions are expected to have `cleanQQ` (i.e.
+        # Whether tract descriptions are expected to have `clean_qq` (i.e.
         # nothing but clean aliquots and lots, with no typos, exceptions,
         # metes-and-bounds, or other hindrances to the parser.)
-        self.cleanQQ = False
+        self.clean_qq = False
 
         # Whether we should require a colon between Section ## and tract
         # description (for TRS_desc and S_desc_TR layouts):
-        self.requireColon = True
+        self.require_colon = True
 
         # Whether to include any divisions of lots
         # (i.e. 'N/2 of Lot 1' -> 'N2 of L1')
-        self.includeLotDivs = True
+        self.include_lot_divs = True
 
         # Whether to iron out common OCR artifacts.
         # NOTE: Currently only has effect of cleaning up T&R's during
         # `.preprocess()`.  May have more effect in a later version.
-        self.ocrScrub = False
+        self.ocr_scrub = False
 
         # Whether to segment the text during parsing (can /potentially/
         # capture descriptions with multiple layouts):
@@ -296,52 +295,52 @@ class PLSSDesc:
         # Apply settings from `config=`.
         self.set_config(config)
 
-        # If `defaultNS` has not yet been specified, default to 'n'
-        if self.defaultNS is None:
-            self.defaultNS = 'n'
+        # If `default_ns` has not yet been specified, default to 'n'
+        if self.default_ns is None:
+            self.default_ns = 'n'
 
-        # If `defaultEW` has not yet been specified, default to 'w'
-        if self.defaultEW is None:
-            self.defaultEW = 'w'
+        # If `default_ew` has not yet been specified, default to 'w'
+        if self.default_ew is None:
+            self.default_ew = 'w'
 
         # Track fatal flaws in the parsing of this PLSS description
-        self.descIsFlawed = False
+        self.desc_is_flawed = False
         # list of Tract objs, after parsing (TractList is a subclass of `list`)
-        self.parsedTracts = TractList()
+        self.parsed_tracts = TractList()
         # list of warning flags
-        self.wFlagList = []
+        self.w_flags = []
         # list of 2-tuples that caused warning flags (warning flag, text string)
-        self.wFlagLines = []
+        self.w_flag_lines = []
         # list of error flags
-        self.eFlagList = []
+        self.e_flags = []
         # list of 2-tuples that caused error flags (error flag, text string)
-        self.eFlagLines = []
+        self.e_flag_lines = []
         # Track whether the preprocess has been completed
-        self.preproComplete = False
+        self.preprocess_done = False
 
-        # If initParseQQ specified as init parameter, it will override
+        # If init_parse_qq specified as init parameter, it will override
         # `config` parameter.
-        #    ex:   config='n,w,initParseQQ', initParseQQ=False   ...
+        #    ex:   config='n,w,init_parse_qq', init_parse_qq=False   ...
         #       -> Will NOT parse lots/QQs at init.
-        if isinstance(initParseQQ, bool):
-            self.initParseQQ = initParseQQ
+        if isinstance(init_parse_qq, bool):
+            self.init_parse_qq = init_parse_qq
 
-        # If kwarg-specified initParse, that will override config input
-        #   (similar to initParseQQ)
-        if isinstance(initParse, bool):
-            self.initParse = initParse
+        # If kwarg-specified init_parse, that will override config input
+        #   (similar to init_parse_qq)
+        if isinstance(init_parse, bool):
+            self.init_parse = init_parse
 
-        ocrScrubNow = False
-        if self.ocrScrub:
-            ocrScrubNow = True
+        ocr_scrub_now = False
+        if self.ocr_scrub:
+            ocr_scrub_now = True
 
         # Optionally can preprocess the desc when the object is initiated
         # (on by default).
-        if self.initPreprocess or ocrScrubNow:
-            self.preprocess(commit=True, ocrScrub=ocrScrubNow)
+        if self.init_preprocess or ocr_scrub_now:
+            self.preprocess(commit=True, ocr_scrub=ocr_scrub_now)
         else:
-            # Preprocessed descrip set to .origDesc if preprocess is declined
-            self.ppDesc = self.origDesc
+            # Preprocessed descrip set to .orig_desc if preprocess is declined
+            self.pp_desc = self.orig_desc
 
         # If layout was specified as kwarg, use that:
         if layout is not None:
@@ -360,11 +359,11 @@ class PLSSDesc:
 
         # Optionally can run the parse when the object is initiated
         # (off by default).
-        if self.initParse or self.initParseQQ:
+        if self.init_parse or self.init_parse_qq:
             self.parse(commit=True)
 
     def __str__(self):
-        pt = len(self.parsedTracts)
+        pt = len(self.parsed_tracts)
         return (
             "PLSSDesc ({0})\n"
             "Source: {1}\n"
@@ -375,8 +374,8 @@ class PLSSDesc:
                 "Unparsed" if pt == 0 else "Parsed",
                 self.source,
                 "n/a" if pt == 0 else pt,
-                self.parsedTracts.snapshot_inside(),
-                self.origDesc)
+                self.parsed_tracts.snapshot_inside(),
+                self.orig_desc)
 
     def set_config(self, config):
         """
@@ -411,53 +410,53 @@ class PLSSDesc:
         if not isinstance(target_pb, ParseBag):
             raise TypeError("Can only `_unpack_pb()` a pyTRS.ParseBag object.")
 
-        if target_pb.descIsFlawed:
-            self.descIsFlawed = True
+        if target_pb.desc_is_flawed:
+            self.desc_is_flawed = True
 
-        if len(target_pb.wFlagList) > 0:
-            self.wFlagList.extend(target_pb.wFlagList)
+        if len(target_pb.w_flags) > 0:
+            self.w_flags.extend(target_pb.w_flags)
 
-        if len(target_pb.eFlagList) > 0:
-            self.eFlagList.extend(target_pb.eFlagList)
+        if len(target_pb.e_flags) > 0:
+            self.e_flags.extend(target_pb.e_flags)
 
-        if len(target_pb.wFlagLines) > 0:
-            self.wFlagLines.extend(target_pb.wFlagLines)
+        if len(target_pb.w_flag_lines) > 0:
+            self.w_flag_lines.extend(target_pb.w_flag_lines)
 
-        if len(target_pb.eFlagLines) > 0:
-            self.eFlagLines.extend(target_pb.eFlagLines)
+        if len(target_pb.e_flag_lines) > 0:
+            self.e_flag_lines.extend(target_pb.e_flag_lines)
 
-        if len(target_pb.parsedTracts) > 0:
-            self.parsedTracts.extend(target_pb.parsedTracts)
+        if len(target_pb.parsed_tracts) > 0:
+            self.parsed_tracts.extend(target_pb.parsed_tracts)
 
     def parse(
-            self, text=None, layout=None, cleanUp=None, initParseQQ=None,
-            cleanQQ=None, requireColon='default_colon', segment=None,
+            self, text=None, layout=None, clean_up=None, init_parse_qq=None,
+            clean_qq=None, require_colon='default_colon', segment=None,
             commit=True, qq_depth_min=None, qq_depth_max=None, qq_depth=None,
             break_halves=None):
         """
         Parse the description. If parameter `commit=True` (defaults to
         on), the results will be stored to the various instance
-        attributes (.parsedTracts, .wFlagList, .wFlagLines, .eFlagList,
-        and .eFlagLines). Returns only the TractList object containing
+        attributes (.parsed_tracts, .w_flags, .w_flag_lines, .e_flags,
+        and .e_flag_lines). Returns only the TractList object containing
         the parsed Tract objects (i.e. what would be stored to
-        `.parsedTracts`).
+        `.parsed_tracts`).
 
         :param text: The text to be parsed. If not specified, defaults
-        to the string currently stored in `self.ppDesc` (i.e. the
+        to the string currently stored in `self.pp_desc` (i.e. the
         pre-processed description).
         :param layout: The layout to be assumed. If not specified,
         defaults to whatever is in `self.layout`.
-        :param cleanUp: Whether to clean up common 'artefacts' from
+        :param clean_up: Whether to clean up common 'artefacts' from
         parsing. If not specified, defaults to False for parsing the
         'copy_all' layout, and `True` for all others.
-        :param initParseQQ: Whether to parse each resulting Tract object
+        :param init_parse_qq: Whether to parse each resulting Tract object
         into lots and QQs when initialized. If not specified, defaults
-        to whatever is specified in `self.initParseQQ`.
-        :param cleanQQ: Whether to expect only clean lots and QQ's (i.e.
+        to whatever is specified in `self.init_parse_qq`.
+        :param clean_qq: Whether to expect only clean lots and QQ's (i.e.
         no metes-and-bounds, exceptions, complicated descriptions,
-        etc.). Defaults to whatever is specified in `self.cleanQQ`
+        etc.). Defaults to whatever is specified in `self.clean_qq`
         (which is False, unless configured otherwise).
-        :param requireColon: Whether to require a colon between the
+        :param require_colon: Whether to require a colon between the
         section number and the following description (only has an effect
         on 'TRS_desc' or 'S_desc_TR' layouts).
         If not specified, it will default to a 'two-pass' method, where
@@ -465,8 +464,8 @@ class PLSSDesc:
         found, it will do a second pass where colons are not required.
         Setting as `True` or `False` here prevent the two-pass method.
             ex: 'Section 14 NE/4'
-                `requireColon=True` --> no match
-                `requireColon=False` --> match (but beware false
+                `require_colon=True` --> no match
+                `require_colon=False` --> match (but beware false
                     positives)
                 <not specified> --> no match on first pass; if no other
                             sections are identified, will be matched on
@@ -515,14 +514,14 @@ class PLSSDesc:
         # Lock down parameters for this parse.
 
         if commit:
-            # Wipe the existing parsedTracts, if any.
-            self.parsedTracts = TractList()
+            # Wipe the existing parsed_tracts, if any.
+            self.parsed_tracts = TractList()
 
         if text is None:
-            text = self.ppDesc
+            text = self.pp_desc
             # Unless specified otherwise, we get the flagLists and flagLines from the
             # ORIGINAL description, rather than from the preprocessed description
-            flagText = self.origDesc
+            flagText = self.orig_desc
         else:
             flagText = text
 
@@ -540,11 +539,11 @@ class PLSSDesc:
             if layout not in _IMPLEMENTED_LAYOUTS:
                 layout = self.deduce_layout(commit=False)
 
-        if initParseQQ is None:
-            initParseQQ = self.initParseQQ
+        if init_parse_qq is None:
+            init_parse_qq = self.init_parse_qq
 
-        if cleanQQ is None:
-            cleanQQ = self.cleanQQ
+        if clean_qq is None:
+            clean_qq = self.clean_qq
 
         # Config object for passing down to Tract objects.
         config = self.config
@@ -571,20 +570,20 @@ class PLSSDesc:
             qq_depth_max = self.qq_depth_max
 
         # ParseBag obj for storing the data generated throughout.
-        bigPB = ParseBag(parentType='PLSSDesc')
+        bigPB = ParseBag(parent_type='PLSSDesc')
 
         if len(text) == 0 or not isinstance(text, str):
-            bigPB.eFlagList.append('noText')
-            bigPB.eFlagLines.append(
+            bigPB.e_flags.append('noText')
+            bigPB.e_flag_lines.append(
                 ('noText', '<No text was fed into the program.>'))
             return bigPB
 
-        if not isinstance(cleanUp, bool):
+        if not isinstance(clean_up, bool):
             if layout in ['TRS_desc', 'desc_STR', 'S_desc_TR', 'TR_desc_S']:
-                # Default `cleanUp` to True only for these layouts
-                cleanUp = True
+                # Default `clean_up` to True only for these layouts
+                clean_up = True
             else:
-                cleanUp = False
+                clean_up = False
 
         # ----------------------------------------
         # If doing a segment parse, break it up into segments now
@@ -592,12 +591,12 @@ class PLSSDesc:
             # Segment text into blocks, based on T&Rs that match our
             # layout requirements
             trTextBlocks, discard_trTextBlocks = _segment_by_tr(
-                text, layout=layout, trFirst=None)
+                text, layout=layout, twprge_first=None)
 
-            # Append any discard text to the wFlagList
+            # Append any discard text to the w_flags
             for textBlock in discard_trTextBlocks:
-                bigPB.wFlagList.append(f"Unused_desc_<{textBlock}>")
-                bigPB.wFlagLines.append(
+                bigPB.w_flags.append(f"Unused_desc_<{textBlock}>")
+                bigPB.w_flag_lines.append(
                     (f"Unused_desc_<{textBlock}>", textBlock))
 
         else:
@@ -612,39 +611,39 @@ class PLSSDesc:
         for textBlock in trTextBlocks:
             use_layout = layout
             if segment and layout != "copy_all":
-                # Let the segment parser deduce layout for each textBlock.
+                # Let the segment parser deduce layout for each text_block.
                 use_layout = None
             midParseBag = _parse_segment(
-                textBlock[1], cleanUp=cleanUp, requireColon=requireColon,
-                layout=use_layout, handedDownConfig=config,
-                initParseQQ=initParseQQ, cleanQQ=cleanQQ,
+                textBlock[1], clean_up=clean_up, require_colon=require_colon,
+                layout=use_layout, handed_down_config=config,
+                init_parse_qq=init_parse_qq, clean_qq=clean_qq,
                 qq_depth_min=qq_depth_min, qq_depth_max=qq_depth_max,
                 qq_depth=qq_depth, break_halves=break_halves)
             bigPB.absorb(midParseBag)
 
         # If we've still not discovered any Tracts, run a final parse in
         # layout `copy_all`, and include appropriate errors.
-        if len(bigPB.parsedTracts) == 0:
+        if len(bigPB.parsed_tracts) == 0:
             bigPB.absorb(
                 _parse_segment(
-                    text, layout='copy_all', cleanUp=False, requireColon=False,
-                    handedDownConfig=config, initParseQQ=initParseQQ,
-                    cleanQQ=cleanQQ, qq_depth_min=qq_depth_min,
+                    text, layout='copy_all', clean_up=False, require_colon=False,
+                    handed_down_config=config, init_parse_qq=init_parse_qq,
+                    clean_qq=clean_qq, qq_depth_min=qq_depth_min,
                     qq_depth_max=qq_depth_max, qq_depth=qq_depth,
                     break_halves=break_halves))
-            bigPB.descIsFlawed = True
+            bigPB.desc_is_flawed = True
 
-        for TractObj in bigPB.parsedTracts:
+        for TractObj in bigPB.parsed_tracts:
             if TractObj.trs[:5] == 'TRerr':
-                bigPB.eFlagList.append('trError')
-                bigPB.eFlagLines.append(
+                bigPB.e_flags.append('trError')
+                bigPB.e_flag_lines.append(
                     ('trError', TractObj.trs + ':' + TractObj.desc))
-                bigPB.descIsFlawed = True
+                bigPB.desc_is_flawed = True
             if TractObj.trs[-2:] == 'or':
-                bigPB.eFlagList.append('secError')
-                bigPB.eFlagLines.append(
+                bigPB.e_flags.append('secError')
+                bigPB.e_flag_lines.append(
                     ('secError', TractObj.trs + ':' + TractObj.desc))
-                bigPB.descIsFlawed = True
+                bigPB.desc_is_flawed = True
 
         # Check for warning flags (and a couple error flags).
         # Note that .gen_flags() is being run on `flagText`, not `text`.
@@ -658,17 +657,17 @@ class PLSSDesc:
         # data, we apply flags from the whole PLSSDesc to each Tract.
         # It will only _unpack the flags and flaglines, because that's
         # all that is relevant to a Tract. Also apply TractNum (i.e.
-        # origIndex).
+        # orig_index).
         # Also, `tempPB` takes the wFlags and eFlags from the PLSSDesc
         # object that may have been generated prior to calling .parse(),
         # and they get passed down to each TractObj too.
         tempPB = ParseBag()
-        tempPB.wFlagList = self.wFlagList
-        tempPB.wFlagLines = self.wFlagLines
-        tempPB.eFlagList = self.eFlagList
-        tempPB.eFlagLines = self.eFlagLines
+        tempPB.w_flags = self.w_flags
+        tempPB.w_flag_lines = self.w_flag_lines
+        tempPB.e_flags = self.e_flags
+        tempPB.e_flag_lines = self.e_flag_lines
         TractNum = 0
-        for TractObj in bigPB.parsedTracts:
+        for TractObj in bigPB.parsed_tracts:
 
             # Unpack the flags from the PLSSDesc, held in `tempPB`.
             TractObj._unpack_pb(tempPB)
@@ -676,23 +675,23 @@ class PLSSDesc:
             # Unpack the flags, etc. from `bigPB`.
             TractObj._unpack_pb(bigPB)
 
-            # And hand down the PLSSDesc object's `.source` and `.origDesc`
+            # And hand down the PLSSDesc object's `.source` and `.orig_desc`
             # attributes to each of the Tract objects:
             TractObj.source = self.source
-            TractObj.origDesc = self.origDesc
+            TractObj.orig_desc = self.orig_desc
 
             # And apply the TractNum for each Tract object:
-            TractObj.origIndex = TractNum
+            TractObj.orig_index = TractNum
             TractNum += 1
 
         if commit:
             self._unpack_pb(bigPB)
 
         # Return the list of identified `Tract` objects (ie. a TractList object)
-        return bigPB.parsedTracts
+        return bigPB.parsed_tracts
 
     @staticmethod
-    def _deduce_segment_layout(text, candidates=None, deduceBy='TRS_order'):
+    def _deduce_segment_layout(text, candidates=None, deduce_by='TRS_order'):
         """
         INTERNAL USE:
         Deduce the layout of a *segment* of a description, without
@@ -701,13 +700,13 @@ class PLSSDesc:
         :param text: The text, whose layout is to be deduced.
         :param candidates: A list of which layouts are to be considered.
         If passed as `None` (the default), it will consider all
-        currently implmented meaningful layouts (i.e. 'TRS_desc',
+        currently implemented meaningful layouts (i.e. 'TRS_desc',
         'desc_STR', 'S_desc_TR', and 'TR_desc_S'), but will also
         consider 'copy_all' if an apparently flawed description is
         found. If specifying fewer than all candidates, ensure that at
         least one layout from _IMPLEMENTED_LAYOUTS is in the list.
         (Strings not in _IMPLEMENTED_LAYOUTS will have no effect.)
-        :param deduceBy: The preferred deduction algorithm. (Currently
+        :param deduce_by: The preferred deduction algorithm. (Currently
         only uses 'TRS_order' -- i.e. basically, the apparent order of
         the Twp, Rge, Sec, and description block.)
         :return: Returns the algorithm's best guess at the layout (i.e.
@@ -715,17 +714,17 @@ class PLSSDesc:
         """
 
         return PLSSDesc.deduce_layout(
-            self=None, text=text, candidates=candidates, deduceBy=deduceBy,
+            self=None, text=text, candidates=candidates, deduce_by=deduce_by,
             commit=False)
 
     def deduce_layout(
-            self, text=None, candidates=None, deduceBy='TRS_order',
+            self, text=None, candidates=None, deduce_by='TRS_order',
             commit=True):
         """
         Deduce the layout of the description.
 
         :param text: The text, whose layout is to be deduced.
-        If not specified, will use whatever is stored in `self.ppDesc`,
+        If not specified, will use whatever is stored in `self.pp_desc`,
         i.e. the preprocessed description.
         :param candidates: A list of which layouts are to be considered.
         If passed as `None` (the default), it will consider all
@@ -735,7 +734,7 @@ class PLSSDesc:
         found. If specifying fewer than all candidates, ensure that at
         least one layout from _IMPLEMENTED_LAYOUTS is in the list.
         (Strings not in _IMPLEMENTED_LAYOUTS will have no effect.)
-        :param deduceBy: The preferred deduction algorithm. (Currently
+        :param deduce_by: The preferred deduction algorithm. (Currently
         only uses 'TRS_order' -- i.e. basically, the apparent order of
         the Twp, Rge, Sec, and description block.)
         :param commit: Whether to store the guessed layout to
@@ -745,7 +744,7 @@ class PLSSDesc:
         """
 
         if text is None:
-            text = self.ppDesc
+            text = self.pp_desc
 
         if not isinstance(candidates, list):
             candidates = ['TRS_desc', 'desc_STR', 'S_desc_TR', 'TR_desc_S']
@@ -756,10 +755,10 @@ class PLSSDesc:
         try_TR_desc_S = 'TR_desc_S' in candidates
         try_subdivision = 'subdivision' in candidates
 
-        if deduceBy == 'demerits':
+        if deduce_by == 'demerits':
             # Not yet ready for deployment. Fall back to 'TRS_order'.
             return self.deduce_layout(
-                text=text, candidates=candidates, deduceBy='TRS_order',
+                text=text, candidates=candidates, deduce_by='TRS_order',
                 commit=commit)
 
         else:
@@ -826,65 +825,65 @@ class PLSSDesc:
         return layoutGuess
 
     @staticmethod
-    def static_preprocess(text, defaultNS='n', defaultEW='w', ocrScrub=False):
+    def static_preprocess(text, default_ns='n', default_ew='w', ocr_scrub=False):
         """
         Run the description preprocessor on text without storing any
         data / objects.
 
         :param text: The text (string) to be preprocessed.
-        :param defaultNS: How to interpret townships for which direction
+        :param default_ns: How to interpret townships for which direction
         was not specified -- i.e. either 'n' or 's'. (Defaults to 'n')
-        :param defaultEW: How to interpret ranges for which direction
+        :param default_ew: How to interpret ranges for which direction
         was not specified -- i.e. either 'e' or 'w'. (Defaults to 'w')
-        :param ocrScrub: Whether to try to iron out common OCR
+        :param ocr_scrub: Whether to try to iron out common OCR
         'artifacts'. May cause unintended changes. (Defaults to `False`)
         :return: The preprocessed string.
         """
 
         dummyObj = PLSSDesc(text, config='preprocess.False')
         return dummyObj.preprocess(
-            defaultNS=defaultNS, defaultEW=defaultEW, ocrScrub=ocrScrub,
+            default_ns=default_ns, default_ew=default_ew, ocr_scrub=ocr_scrub,
             commit=False)
 
     def preprocess(
-            self, text=None, defaultNS=None, defaultEW=None, commit=True,
-            ocrScrub=None) -> str:
+            self, text=None, default_ns=None, default_ew=None, commit=True,
+            ocr_scrub=None) -> str:
         """
         Preprocess the PLSS description to iron out common kinks in
-        the input data, and optionally store results to `self.ppDesc`.
+        the input data, and optionally store results to `self.pp_desc`.
 
         :param text: The text to be preprocessed. Defaults to what is
-        stored in `self.origDesc` (i.e. the original description).
-        :param defaultNS: How to interpret townships for which direction
+        stored in `self.orig_desc` (i.e. the original description).
+        :param default_ns: How to interpret townships for which direction
         was not specified -- i.e. either 'n' or 's'. (Defaults to
-        `self.defaultNS`, which is 'n' unless otherwise specified.)
-        :param defaultEW: How to interpret ranges for which direction
+        `self.default_ns`, which is 'n' unless otherwise specified.)
+        :param default_ew: How to interpret ranges for which direction
         was not specified -- i.e. either 'e' or 'w'. (Defaults to
-        `self.defaultEW`, which is 'w' unless otherwise specified.)
-        :param ocrScrub: Whether to try to iron out common OCR
+        `self.default_ew`, which is 'w' unless otherwise specified.)
+        :param ocr_scrub: Whether to try to iron out common OCR
         'artifacts'. May cause unintended changes. (Defaults to
-        `self.ocrScrub`, which is `False` unless otherwise specified.)
-        :param commit: Whether to store the resluts to `self.ppDesc`.
+        `self.ocr_scrub`, which is `False` unless otherwise specified.)
+        :param commit: Whether to store the resluts to `self.pp_desc`.
         (Defaults to `True`)
         :return: The preprocessed string.
         """
 
-        # Defaults to pulling the text from the origDesc of the object:
+        # Defaults to pulling the text from the orig_desc of the object:
         if text is None:
-            text = self.origDesc
+            text = self.orig_desc
 
-        if defaultNS is None:
-            defaultNS = self.defaultNS
+        if default_ns is None:
+            default_ns = self.default_ns
 
-        if defaultEW is None:
-            defaultEW = self.defaultEW
+        if default_ew is None:
+            default_ew = self.default_ew
 
-        if ocrScrub is None:
-            ocrScrub = self.ocrScrub
+        if ocr_scrub is None:
+            ocr_scrub = self.ocr_scrub
 
         # Look for T&R's in original text (for checking if we fix any
         # during preprocess, to raise a wFlag)
-        cleanTR_list = find_tr(text)
+        cleanTR_list = find_twprge(text)
 
         # Run each of the prepro regexes over the text, each working on
         # the last-prepro'd version of the text. Swaps in the cleaned up
@@ -893,24 +892,24 @@ class PLSSDesc:
             twprge_regex, preproTR_noNSWE_regex, preproTR_noR_noNS_regex,
             preproTR_noT_noWE_regex, twprge_pm_regex
         ]
-        if ocrScrub:
+        if ocr_scrub:
             # This invites potential mis-matches, so it is not included
-            # by default. Turn on with `ocrScrub=True` kwarg, or at init
-            # with `config='ocrScrub'`.
-            ppRegexes.insert(0, twprge_ocrScrub_regex)
+            # by default. Turn on with `ocr_scrub=True` kwarg, or at init
+            # with `config='ocr_scrub'`.
+            ppRegexes.insert(0, twprge_ocr_scrub_regex)
 
         for ppRegex in ppRegexes:
             i = 0
             # working preprocessed description (gets reconstructed every loop):
-            w_ppDesc = ''
+            w_pp_desc = ''
             while True:
                 searchTextBlock = text[i:]
                 ppTr_mo = ppRegex.search(searchTextBlock)
 
                 if ppTr_mo is None:
                     # If we've found no more T&R's, append the remaining
-                    # textBlock and end the loop
-                    w_ppDesc = w_ppDesc + searchTextBlock
+                    # text_block and end the loop
+                    w_pp_desc = w_pp_desc + searchTextBlock
                     break
 
                 # Need some additional context to rule out 'Lots 6, 7, East'
@@ -929,18 +928,18 @@ class PLSSDesc:
                     if lot_check_mo is not None:
                         # If we matched, then we're dealing with a false
                         # T&R match, and we need to move on.
-                        w_ppDesc = w_ppDesc + searchTextBlock[:ppTr_mo.end()]
+                        w_pp_desc = w_pp_desc + searchTextBlock[:ppTr_mo.end()]
                         i = i + ppTr_mo.end()
                         continue
 
-                cleanTR = _preprocess_tr_mo(
-                    ppTr_mo, defaultNS=defaultNS, defaultEW=defaultEW)
+                cleanTR = _preprocess_twprge_mo(
+                    ppTr_mo, default_ns=default_ns, default_ew=default_ew)
 
-                # Add to the w_ppDesc all of the searchTextBlock, up to the
+                # Add to the w_pp_desc all of the searchTextBlock, up to the
                 # identified ppTr_mo, and add the cleanTR, with some spaces
                 # around it, just to keep it cleanly delineated from
                 # surrounding text
-                w_ppDesc = w_ppDesc + searchTextBlock[:ppTr_mo.start()] + ' ' + cleanTR + ' '
+                w_pp_desc = w_pp_desc + searchTextBlock[:ppTr_mo.start()] + ' ' + cleanTR + ' '
 
                 # Move the search index to the end of the ppTr_mo. Note
                 # that ppTr_mo is indexed against the searchTextBlock,
@@ -948,7 +947,7 @@ class PLSSDesc:
                 # against the source text)
                 i = i + ppTr_mo.end()
 
-            text = w_ppDesc
+            text = w_pp_desc
 
         # Clean up white space:
         text = text.strip()
@@ -969,7 +968,7 @@ class PLSSDesc:
             text = text1
 
         # Look for T&R's in the preprocessed text
-        afterPrepro_TR_list = find_tr(text)
+        afterPrepro_TR_list = find_twprge(text)
 
         # Remove from the post-preprocess TR list each of the elements
         # in the list generated from the original text.
@@ -978,25 +977,25 @@ class PLSSDesc:
                 afterPrepro_TR_list.remove(tr)
 
         if commit:
-            self.ppDesc = text
+            self.pp_desc = text
             if len(afterPrepro_TR_list) > 0:
-                # If any T&R's still remain in the post-ppDesc-generated
+                # If any T&R's still remain in the post-pp_desc-generated
                 # T&R list...
-                self.wFlagList.append(
+                self.w_flags.append(
                     'T&R_fixed<%s>' % '//'.join(afterPrepro_TR_list))
-                # Append a tuple to the wFlagLines list:
-                self.wFlagLines.append(
+                # Append a tuple to the w_flag_lines list:
+                self.w_flag_lines.append(
                     (f"T&R_fixed<{'//'.join(afterPrepro_TR_list)}>",
                      '//'.join(afterPrepro_TR_list)))
-            self.preproComplete = True
+            self.preprocess_done = True
 
         return text
 
     def gen_flags(self, text=None, commit=False):
         """
-        Return a ParseBag object containing wFlagList, wFlagLines,
-        eFlagList, and eFlagLine, and maybe descIsFlawed. Each element
-        in wFlagLines or eFlagLines is a tuple, the first element being
+        Return a ParseBag object containing w_flags, w_flag_lines,
+        e_flags, and eFlagLine, and maybe desc_is_flawed. Each element
+        in w_flag_lines or e_flag_lines is a tuple, the first element being
         the warning or error flag, and the second element being the line
         that raised the flag.  If parameter `commit=True` is passed (off
         by default), it will commit them to the PLSSDesc object's
@@ -1005,9 +1004,9 @@ class PLSSDesc:
         """
 
         if text is None:
-            text = self.origDesc
+            text = self.orig_desc
 
-        flag_pb = ParseBag(parentType='PLSSDesc')
+        flag_pb = ParseBag(parent_type='PLSSDesc')
 
         lines = text.split('\n')
 
@@ -1017,18 +1016,18 @@ class PLSSDesc:
 
         # Preprocess the text, but only to make sure at least one T&R exists
         ppText = self.preprocess(text=text, commit=False)
-        if len(find_tr(ppText)) == 0:
-            flag_pb.eFlagList.append('noTR')
-            flag_pb.eFlagLines.append(
+        if len(find_twprge(ppText)) == 0:
+            flag_pb.e_flags.append('noTR')
+            flag_pb.e_flag_lines.append(
                 ('noTR', 'No T&R\'s identified!'))
-            flag_pb.descIsFlawed = True
+            flag_pb.desc_is_flawed = True
 
-        # For everything else, we check against the origDesc
+        # For everything else, we check against the orig_desc
         if len(find_sec(text)) == 0 and len(find_multisec(text)) == 0:
-            flag_pb.eFlagList.append('noSection')
-            flag_pb.eFlagLines.append(
+            flag_pb.e_flags.append('noSection')
+            flag_pb.e_flag_lines.append(
                 ('noSection', 'No Sections identified!'))
-            flag_pb.descIsFlawed = True
+            flag_pb.desc_is_flawed = True
 
         ################################################################
         # Warning flags
@@ -1045,9 +1044,9 @@ class PLSSDesc:
         def check_for_wflag(line, rgx, flag):
             if len(rgx.findall(line)) == 0:
                 return
-            if flag not in flag_pb.wFlagList:
-                flag_pb.wFlagList.append(flag)
-            flag_pb.wFlagLines.append((flag, line))
+            if flag not in flag_pb.w_flags:
+                flag_pb.w_flags.append(flag)
+            flag_pb.w_flag_lines.append((flag, line))
 
         for line in lines:
             for rgx, flag in wflag_regexes:
@@ -1060,10 +1059,10 @@ class PLSSDesc:
 
     def tracts_to_dict(self, *attributes) -> list:
         """
-        Compile the data for each Tract object in .parsedTracts into a
+        Compile the data for each Tract object in .parsed_tracts into a
         dict containing the requested attributes only, and return a list
         of those dicts (the returned list being equal in length to
-        .parsedTracts).
+        .parsed_tracts).
 
         :param attributes: The names (strings) of whichever attributes
         should be included (see documentation on `pyTRS.Tract` objects
@@ -1074,31 +1073,31 @@ class PLSSDesc:
         txt = '''154N-97W
         Sec 14: NE/4
         Sec 15: Northwest Quarter, North Half South West Quarter'''
-        d_obj = pyTRS.PLSSDesc(txt, initParseQQ=True)
-        d_obj.tracts_to_dict('trs', 'desc', 'QQList')
+        d_obj = pyTRS.PLSSDesc(txt, init_parse_qq=True)
+        d_obj.tracts_to_dict('trs', 'desc', 'qqs')
 
         Example returns a list of two dicts:
 
             [
             {'trs': '154n97w14',
             'desc': 'NE/4',
-            'QQList': ['NENE', 'NWNE', 'SENE', 'SWNE']},
+            'qqs': ['NENE', 'NWNE', 'SENE', 'SWNE']},
 
             {'trs': '154n97w15',
             'desc': 'Northwest Quarter, North Half South West Quarter',
-            'QQList': ['NENW', 'NWNW', 'SENW', 'SWNW', 'NESW', 'NWSW']}
+            'qqs': ['NENW', 'NWNW', 'SENW', 'SWNW', 'NESW', 'NWSW']}
             ]
         """
 
         # This functionality is handled by TractList method.
-        return self.parsedTracts.tracts_to_dict(attributes)
+        return self.parsed_tracts.tracts_to_dict(attributes)
 
     def tracts_to_list(self, *attributes) -> list:
         """
-        Compile the data for each Tract object in .parsedTracts into a
+        Compile the data for each Tract object in .parsed_tracts into a
         list containing the requested attributes only, and return a
         nested list of those lists (the returned list being equal in
-        length to .parsedTracts).
+        length to .parsed_tracts).
 
         :param attributes: The names (strings) of whichever attributes
         should be included (see documentation on `pyTRS.Tract` objects
@@ -1109,8 +1108,8 @@ class PLSSDesc:
         txt = '''154N-97W
         Sec 14: NE/4
         Sec 15: Northwest Quarter, North Half South West Quarter'''
-        d_obj = pyTRS.PLSSDesc(txt, initParseQQ=True)
-        d_obj.tracts_to_list('trs', 'desc', 'QQList')
+        d_obj = pyTRS.PLSSDesc(txt, init_parse_qq=True)
+        d_obj.tracts_to_list('trs', 'desc', 'qqs')
 
         Example returns a nested list:
             [
@@ -1125,11 +1124,11 @@ class PLSSDesc:
         """
 
         # This functionality is handled by TractList method.
-        return self.parsedTracts.tracts_to_list(attributes)
+        return self.parsed_tracts.tracts_to_list(attributes)
 
     def tracts_to_str(self, *attributes) -> str:
         """
-        Compile the data for all Tract objects in .parsedTracts,
+        Compile the data for all Tract objects in .parsed_tracts,
         containing the requested attributes only, and return a single
         string of the data.
 
@@ -1142,8 +1141,8 @@ class PLSSDesc:
         txt = '''154N-97W
         Sec 14: NE/4
         Sec 15: Northwest Quarter, North Half South West Quarter'''
-        d_obj = pyTRS.PLSSDesc(txt, initParseQQ=True)
-        d_obj.tracts_to_str('trs', 'desc', 'QQList')
+        d_obj = pyTRS.PLSSDesc(txt, init_parse_qq=True)
+        d_obj.tracts_to_str('trs', 'desc', 'qqs')
 
         Example returns a multi-line string that looks like this when
         printed:
@@ -1151,20 +1150,20 @@ class PLSSDesc:
             Tract #1
             trs    : 154n97w14
             desc   : NE/4
-            QQList : NENE, NWNE, SENE, SWNE
+            qqs : NENE, NWNE, SENE, SWNE
 
             Tract #2
             trs    : 154n97w15
             desc   : Northwest Quarter, North Half South West Quarter
-            QQList : NENW, NWNW, SENW, SWNW, NESW, NWSW
+            qqs : NENW, NWNW, SENW, SWNW, NESW, NWSW
         """
 
         # This functionality is handled by TractList method.
-        return self.parsedTracts.tracts_to_str(attributes)
+        return self.parsed_tracts.tracts_to_str(attributes)
 
     def quick_desc(self, delim=': ', newline='\n') -> str:
         """
-        Returns the entire .parsedTracts list as a single string.
+        Returns the entire .parsed_tracts list as a single string.
         :param delim: Specify what separates TRS from the desc.
         (defaults to ': ').
         :param newline: Specify what separates Tracts from one another.
@@ -1175,7 +1174,7 @@ class PLSSDesc:
         txt = '''154N-97W
         Sec 14: NE/4
         Sec 15: Northwest Quarter, North Half South West Quarter'''
-        d_obj = pyTRS.PLSSDesc(txt, initParseQQ=True)
+        d_obj = pyTRS.PLSSDesc(txt, init_parse_qq=True)
         d_obj.quick_desc()
 
         Example returns a multi-line string that looks like this when
@@ -1186,12 +1185,12 @@ class PLSSDesc:
         """
 
         # This functionality is handled by TractList method.
-        return self.parsedTracts.quick_desc(delim=delim, newline=newline)
+        return self.parsed_tracts.quick_desc(delim=delim, newline=newline)
 
     def quick_desc_short(self, delim=': ', newline='\n', max_len=30) -> str:
         """
         Returns the description (`.trs` + `.desc`) of all Tract objects
-        in `.parsedTracts` as a single string, but trims every line down
+        in `.parsed_tracts` as a single string, but trims every line down
         to `max_len`, if needed.
         :param delim: Specify what separates TRS from the desc.
         (defaults to ': ').
@@ -1201,7 +1200,7 @@ class PLSSDesc:
         (Defaults to 30.)
         :return: A string of the complete description.
         """
-        return self.parsedTracts.quick_desc_short(delim, newline, max_len)
+        return self.parsed_tracts.quick_desc_short(delim, newline, max_len)
 
     # def extractTractData():  # method removed in v0.4.11, 8/25/2020
     # (replaced with more specific .tracts_to_dict() and .tracts_to_list())
@@ -1211,12 +1210,12 @@ class PLSSDesc:
 
     def list_trs(self, remove_duplicates=False):
         """
-        Return a list all the TRS's in .parsedTracts list. Optionally
+        Return a list all the TRS's in .parsed_tracts list. Optionally
         remove duplicates with remove_duplicates=True.
         """
 
         # This functionality is handled by TractList method.
-        return self.parsedTracts.list_trs(remove_duplicates=remove_duplicates)
+        return self.parsed_tracts.list_trs(remove_duplicates=remove_duplicates)
 
     def print_desc(self, delim=': ', newline='\n') -> None:
         """
@@ -1229,23 +1228,17 @@ class PLSSDesc:
         """
 
         # This functionality is handled by TractList method.
-        self.parsedTracts.print_desc(delim=delim, newline=newline)
+        self.parsed_tracts.print_desc(delim=delim, newline=newline)
 
     # def genFlagList():  # method removed in v0.2.1, 5/31/2020
 
     def print_data(self, *attributes) -> None:
         """
         Simple printing of the arg-specified attributes for each Tract
-        in the .parsedTracts list.
+        in the .parsed_tracts list.
         """
         print(self.tracts_to_str(attributes))
         return
-
-    # def sumGrossAcres(self):  # method removed in v0.4.11, 8/25/2020
-
-    # Aliases to prevent breaking API on calls to method names with caps
-    # TODO: Deprecate these method names
-    list_TRS = list_trs
 
 
 class Tract:
@@ -1264,8 +1257,8 @@ class Tract:
     Parse the text into lots/QQs with the `.parse()` method at some
     point after init. Alternatively, trigger the parse at init in one of
     two ways:
-    -- Use init parameter `initParseQQ=True`
-    -- Include 'initParseQQ' in the config parameters that are passed in
+    -- Use init parameter `init_parse_qq=True`
+    -- Include 'init_parse_qq' in the config parameters that are passed in
         `config=` at init.
 
     ____ IMPORTANT INSTANCE VARIABLES AFTER PARSING ____
@@ -1283,40 +1276,40 @@ class Tract:
     .twprge -- The Twp/Rge portion of .trs, a string (ex: '154n97w')
     .sec -- The Sec portion of .trs, a string (ex: '01')
     .desc -- The description block within this TRS.
-    .QQList -- A list of identified QQ's (or smaller) formatted as 4
+    .qqs -- A list of identified QQ's (or smaller) formatted as 4
     characters (or more, if there are further divisions).
         Ex:     Northeast Quarter -> ['NENE', 'NWNE', 'NENW', 'NWNW']
         Ex:     N/2SE/4SE/4 -> ['N2SESE']
-    .lotList -- A list of identified lots.
+    .lots -- A list of identified lots.
         Ex:     Lot 1, North Half of Lot 2 -> ['L1', 'N2 of L2']
         NOTE: Divisions of lots can be suppressed with config parameter
-            'includeLotDivs.False' (i.e. ['L1', 'L2'] in this example).
-    .lotQQList -- A joined list of identified lots and QQ's.
+            'include_lot_divs.False' (i.e. ['L1', 'L2'] in this example).
+    .lots_qqs -- A joined list of identified lots and QQ's.
         Ex:     ['L1', 'N2 of L2', 'NENE', 'NWNE', 'NENW', 'NWNW']
-    .lotAcres -- A dict of lot names and their apparent gross acreages,
+    .lot_acres -- A dict of lot names and their apparent gross acreages,
     as stated in the original description.
         Ex:     Lots 1(38.29), 2(39.22), 3(39.78)
                     -> {'L1': '38.29', 'L2':'39.22', 'L3':'39.78'}
-    .ppDesc -- The preprocessed description. (If the object has not yet
+    .pp_desc -- The preprocessed description. (If the object has not yet
         been preprocessed, it will be equivalent to .desc)
     .source -- (Optional) A string specifying where the description came
         from. Useful if parsing multiple descriptions and need to
         internally keep track where they came from. (Optionally specify
         at init with parameter `source=<str>`.)
-    .origDesc -- The full, original text of the parent PLSSDesc object,
+    .orig_desc -- The full, original text of the parent PLSSDesc object,
         if any.
-    .origIndex -- An integer represeting the order in which this Tract
+    .orig_index -- An integer represeting the order in which this Tract
         object was created while parsing the parent PLSSDesc object, if
         any.
-    .wFlagList -- a list of warning flags (strings) generated during
+    .w_flags -- a list of warning flags (strings) generated during
         preprocessing and/or parsing.
-    .wFlagLines -- a list of 2-tuples, each being a warning flag and the
+    .w_flag_lines -- a list of 2-tuples, each being a warning flag and the
         line or context from the description that caused the warning.
-    .eFlagList -- a list of error flags (strings) generated during
+    .e_flags -- a list of error flags (strings) generated during
         preprocessing and/or parsing.
-    .eFlagLines -- a list of 2-tuples, each being an error flag and the
+    .e_flag_lines -- a list of 2-tuples, each being an error flag and the
         line or context from the description that caused the error.
-    .descIsFlawed -- a bool, whether or not an apparently fatal flaw was
+    .desc_is_flawed -- a bool, whether or not an apparently fatal flaw was
         discovered during parsing of the parent PLSSDesc object, if any.
         (Tract objects themselves are agnostic to fatal flaws.)
 
@@ -1327,8 +1320,9 @@ class Tract:
     .to_list() -- Compile the requested attributes into a list.
     """
 
-    def __init__(self, desc='', trs='', source='', origDesc='', origIndex=0,
-                 descIsFlawed=False, config=None, initParseQQ=None):
+    def __init__(
+            self, desc='', trs='', source='', orig_desc='', orig_index=0,
+            desc_is_flawed=False, config=None, init_parse_qq=None):
         """
         :param desc: The description block within this TRS. (What will
         be processed if this Tract object gets parsed into lots/QQs.)
@@ -1341,12 +1335,12 @@ class Tract:
         :param source: (Optional) A string specifying where the
         description came from. Useful if parsing multiple descriptions
         and need to internally keep track where they came from.
-        :param origDesc: The full, original text of the parent PLSSDesc
+        :param orig_desc: The full, original text of the parent PLSSDesc
         object, if any.
-        :param origIndex: An integer represeting the order in which this
+        :param orig_index: An integer represeting the order in which this
         Tract object was created while parsing the parent PLSSDesc
         object, if any
-        :param descIsFlawed: a bool, whether or not an apparently fatal
+        :param desc_is_flawed: a bool, whether or not an apparently fatal
         flaw was discovered during parsing of the parent PLSSDesc
         object, if any. (Tract objects themselves are agnostic to fatal
         flaws.)
@@ -1354,7 +1348,7 @@ class Tract:
         parameters to configure how the Tract object should be parsed.
         (See documentation on pyTRS.Config objects for optional config
         parameters.)
-        :param initParseQQ: Whether to parse the `desc` into lots/QQs at
+        :param init_parse_qq: Whether to parse the `desc` into lots/QQs at
         init. (Defaults to False)
         """
 
@@ -1370,14 +1364,14 @@ class Tract:
 
         # The order in which this TRS/Desc was identified when parsing
         # the original PLSSDesc object (if applicable)
-        self.origIndex = origIndex
+        self.orig_index = orig_index
 
         # The source of this Tract.
         self.source = source
 
         # Original description of the full PLSS description from which
         # this Tract comes
-        self.origDesc = origDesc
+        self.orig_desc = orig_desc
 
         # Whether we have parsed this Tract and committed the results
         self.parse_complete = False
@@ -1391,19 +1385,19 @@ class Tract:
 
         # Whether fatal flaws were identified during the parsing of the
         # parent PLSSDesc object, if any
-        self.descIsFlawed = descIsFlawed
+        self.desc_is_flawed = desc_is_flawed
         # list of warning flags
-        self.wFlagList = []
+        self.w_flags = []
         # list of 2-tuples that caused warning flags (warning flag, text string)
-        self.wFlagLines = []
+        self.w_flag_lines = []
         # list of error flags
-        self.eFlagList = []
+        self.e_flags = []
         # list of 2-tuples that caused error flags (error flag, text string)
-        self.eFlagLines = []
+        self.e_flag_lines = []
 
         # A list of QQ's (or smaller) with no quarter fractions
         # i.e. ['NENE', 'NENW', 'N2SENW', ... ]:
-        self.QQList = []
+        self.qqs = []
 
         # Attributes to control how deeply QQ's should be parsed.
         # If `.qq_depth` is set, it will override `.qq_depth_min` and
@@ -1414,16 +1408,16 @@ class Tract:
         self.break_halves = False
 
         # A list of standard lots, ['L1', 'L2', 'N2 of L5', ...]:
-        self.lotList = []
+        self.lots = []
 
         # A combined list of lots + QQs:
-        self.lotQQList = []
+        self.lots_qqs = []
 
         # A dict of lot acreages, keyed by 'L1', 'L2', etc.
-        self.lotAcres = {}
+        self.lot_acres = {}
 
         # A bool to track whether the preprocess has been completed
-        self.preproComplete = False
+        self.preprocess_done = False
 
         # --------------------------------------------------------------
         # Configure how the Tract should be parsed:
@@ -1432,63 +1426,63 @@ class Tract:
         # back on this. Will be filled in with set_config() (if
         # applicable) or defaulted to 'n' shortly.
         # NOTE: only applicable for using .from_twprgesec()
-        self.defaultNS = None
+        self.default_ns = None
 
         # If a T&R is identified without 'East/West' specified, fall
         # back on this. Will be filled in with set_config() (if
         # applicable) or defaulted to 'w' shortly.
         # NOTE: only applicable for using .from_twprgesec()
-        self.defaultEW = None
+        self.default_ew = None
 
-        # NOTE: `initPreproces`, `initParseQQ`, `cleanQQ`, &
-        # `includeLotDivs` will be changed in set_config(), if needed.
+        # NOTE: `initPreproces`, `init_parse_qq`, `clean_qq`, &
+        # `include_lot_divs` will be changed in set_config(), if needed.
 
         # Whether we should preprocess the text at initialization:
-        self.initPreprocess = True
+        self.init_preprocess = True
 
         # Whether we should parse lots and aliquots at init.
-        self.initParseQQ = False
+        self.init_parse_qq = False
 
-        # Whether the user expects tract descriptions to have `cleanQQ` (i.e.
+        # Whether the user expects tract descriptions to have `clean_qq` (i.e.
         # nothing but clean aliquots and lots, with no typos, exceptions,
         # metes-and-bounds, or other hindrances to the parser.)
-        self.cleanQQ = False
+        self.clean_qq = False
 
         # Whether to include any divisions of lots
         # (i.e. 'N/2 of Lot 1' to 'N2 of L1').
-        self.includeLotDivs = True
+        self.include_lot_divs = True
 
         # Whether to iron out common OCR artifacts. Defaults to `False`.
         # NOTE: Currently only has effect if Tract object is created via
         # `.from_twprgesec()`   ...  May have more effect in a later version.
-        self.ocrScrub = False
+        self.ocr_scrub = False
 
         # Apply settings from kwarg `config=`
         self.set_config(config)
 
-        # If `defaultNS` has not yet been specified, default to 'n' :
-        if self.defaultNS is None:
-            self.defaultNS = 'n'
+        # If `default_ns` has not yet been specified, default to 'n' :
+        if self.default_ns is None:
+            self.default_ns = 'n'
 
-        # If `defaultEW` has not yet been specified, default to 'w' :
-        if self.defaultEW is None:
-            self.defaultEW = 'w'
+        # If `default_ew` has not yet been specified, default to 'w' :
+        if self.default_ew is None:
+            self.default_ew = 'w'
 
-        # If kwarg-specified initParseQQ, that will override config input
-        if isinstance(initParseQQ, bool):
-            self.initParseQQ = initParseQQ
+        # If kwarg-specified init_parse_qq, that will override config input
+        if isinstance(init_parse_qq, bool):
+            self.init_parse_qq = init_parse_qq
 
         ################################################################
         # If config settings require calling preprocess() and parse() at
         # initialization, do it now:
         ################################################################
 
-        if self.initPreprocess or self.cleanQQ:
+        if self.init_preprocess or self.clean_qq:
             self.preprocess(commit=True)
         else:
-            self.ppDesc = self.desc
+            self.pp_desc = self.desc
 
-        if self.initParseQQ:
+        if self.init_parse_qq:
             self.parse(commit=True)
 
     def __str__(self):
@@ -1499,14 +1493,14 @@ class Tract:
             "Total Lots: {3}").format(
                 "Parsed" if self.parse_complete else "Unparsed",
                 self.quick_desc() if self.trs not in ("", None) else self.desc,
-                len(self.QQList) if self.parse_complete else "n/a",
-                len(self.lotList) if self.parse_complete else "n/a")
+                len(self.qqs) if self.parse_complete else "n/a",
+                len(self.lots) if self.parse_complete else "n/a")
 
     @staticmethod
     def from_twprgesec(
-            desc='', twp='0', rge='0', sec='0', source='', origDesc='',
-            defaultNS=None, defaultEW=None, origIndex=0, descIsFlawed=False,
-            config=None, initParseQQ=None):
+            desc='', twp='0', rge='0', sec='0', source='', orig_desc='',
+            default_ns=None, default_ew=None, orig_index=0, desc_is_flawed=False,
+            config=None, init_parse_qq=None):
         """
         Create a Tract object from separate Twp, Rge, and Sec components
         rather than joined TRS. All parameters are the same as
@@ -1530,44 +1524,44 @@ class Tract:
 
         # Compile the `config=` data into a Config object (or use the
         # provided object, if already provided as `Config` type), so we
-        # can extract `defaultNS` and `defaultEW`
+        # can extract `default_ns` and `default_ew`
         if isinstance(config, str) or config is None:
             config = Config(config)
         if not isinstance(config, Config):
             raise CONFIG_ERROR
 
-        # Get our defaultNS and defaultEW from kwargs or config
-        if defaultNS is None:
-            defaultNS = config.defaultNS
-        if defaultEW is None:
-            defaultEW = config.defaultEW
+        # Get our default_ns and default_ew from kwargs or config
+        if default_ns is None:
+            default_ns = config.default_ns
+        if default_ew is None:
+            default_ew = config.default_ew
         # If still not specified (i.e. neither set in kwarg, nor in config),
         # default to 'n' and 'w', respectively.
-        if defaultNS is None:
-            defaultNS = 'n'
-        if defaultEW is None:
-            defaultEW = 'w'
+        if default_ns is None:
+            default_ns = 'n'
+        if default_ew is None:
+            default_ew = 'w'
         # Ensure legal N/S and E/W values.
-        if defaultNS.lower() not in ['n', 'north', 's', 'south']:
+        if default_ns.lower() not in ['n', 'north', 's', 'south']:
             raise DEFAULT_NS_ERROR
-        if defaultEW.lower() not in ['w', 'west', 'e', 'east']:
+        if default_ew.lower() not in ['w', 'west', 'e', 'east']:
             raise DEFAULT_EW_ERROR
 
         # Whether to scrub twp, rge, and sec strings for OCR artifacts
-        ocrScrub = False
-        if config.ocrScrub is not None:
-            ocrScrub = config.ocrScrub
+        ocr_scrub = False
+        if config.ocr_scrub is not None:
+            ocr_scrub = config.ocr_scrub
 
         # Get twp in a standardized format, if we can
         if not isinstance(twp, (int, str)):
             twp = ''
         elif isinstance(twp, int):
-            twp = f'{str(twp)}{defaultNS}'
+            twp = f'{str(twp)}{default_ns}'
         elif isinstance(twp, str):
             if twp[-1].lower() not in ['n', 's']:
-                # If the final character is not 'n' or 's', apply our defaultNS
-                twp = twp + defaultNS
-            if ocrScrub:
+                # If the final character is not 'n' or 's', apply our default_ns
+                twp = twp + default_ns
+            if ocr_scrub:
                 # If configured so, OCR-scrub all but the final character
                 twp = _ocr_scrub_alpha_to_num(twp[:-1]) + twp[-1]
             twp = twp.lower()
@@ -1576,12 +1570,12 @@ class Tract:
         if not isinstance(rge, (int, str)):
             rge = ''
         elif isinstance(rge, int):
-            rge = f'{str(rge)}{defaultEW}'
+            rge = f'{str(rge)}{default_ew}'
         elif isinstance(rge, str):
             if rge[-1].lower() not in ['e', 'w']:
-                # If the final character is not 'e' or 'w', apply our defaultEW
-                rge = rge + defaultEW
-            if ocrScrub:
+                # If the final character is not 'e' or 'w', apply our default_ew
+                rge = rge + default_ew
+            if ocr_scrub:
                 # If configured so, OCR-scrub all but the final character
                 rge = _ocr_scrub_alpha_to_num(rge[:-1]) + rge[-1]
             rge = rge.lower()
@@ -1592,7 +1586,7 @@ class Tract:
         sec = str(sec)
         try:
             sec = str(int(sec)).rjust(2, '0')
-            if ocrScrub:
+            if ocr_scrub:
                 # If configured so, OCR-scrub all characters
                 sec = _ocr_scrub_alpha_to_num(sec)
         except ValueError:
@@ -1603,9 +1597,9 @@ class Tract:
 
         # Create a new Tract object and return it
         new_tract = Tract(
-            desc=desc, trs=trs, source=source, origDesc=origDesc,
-            origIndex=origIndex, descIsFlawed=descIsFlawed, config=config,
-            initParseQQ=initParseQQ)
+            desc=desc, trs=trs, source=source, orig_desc=orig_desc,
+            orig_index=orig_index, desc_is_flawed=desc_is_flawed, config=config,
+            init_parse_qq=init_parse_qq)
         new_tract.twp = twp
         new_tract.rge = rge
         new_tract.sec = sec
@@ -1642,82 +1636,82 @@ class Tract:
         if not isinstance(target_pb, ParseBag):
             raise TypeError("Can only `_unpack_pb()` a pyTRS.ParseBag object.")
 
-        if target_pb.descIsFlawed:
-            self.descIsFlawed = True
+        if target_pb.desc_is_flawed:
+            self.desc_is_flawed = True
 
-        if len(target_pb.wFlagList) > 0:
-            self.wFlagList.extend(target_pb.wFlagList)
+        if len(target_pb.w_flags) > 0:
+            self.w_flags.extend(target_pb.w_flags)
 
-        if len(target_pb.eFlagList) > 0:
-            self.eFlagList.extend(target_pb.eFlagList)
+        if len(target_pb.e_flags) > 0:
+            self.e_flags.extend(target_pb.e_flags)
 
-        if len(target_pb.wFlagLines) > 0:
-            self.wFlagLines.extend(target_pb.wFlagLines)
+        if len(target_pb.w_flag_lines) > 0:
+            self.w_flag_lines.extend(target_pb.w_flag_lines)
 
-        if len(target_pb.eFlagLines) > 0:
-            self.eFlagLines.extend(target_pb.eFlagLines)
+        if len(target_pb.e_flag_lines) > 0:
+            self.e_flag_lines.extend(target_pb.e_flag_lines)
 
-        if target_pb.parentType == 'Tract':
+        if target_pb.parent_type == 'Tract':
             # Only if unpacking a Tract-level ParseBag... Otherwise,
             # these attributes won't exist for that ParseBagObj.
 
-            if len(target_pb.QQList) > 0:
+            if len(target_pb.qqs) > 0:
                 # Only append fresh (non-duplicate) QQ's, and raise a
                 # flag if there are any duplicates
                 dupQQs = []
                 freshQQs = []
-                for QQ in target_pb.QQList:
-                    if QQ in self.QQList or QQ in freshQQs:
-                        dupQQs.append(QQ)
+                for qq in target_pb.qqs:
+                    if qq in self.qqs or qq in freshQQs:
+                        dupQQs.append(qq)
                     else:
-                        freshQQs.append(QQ)
-                self.QQList.extend(freshQQs)
+                        freshQQs.append(qq)
+                self.qqs.extend(freshQQs)
                 if len(dupQQs) > 0:
-                    self.wFlagList.append('dup_QQ')
-                    self.wFlagLines.append(
+                    self.w_flags.append('dup_QQ')
+                    self.w_flag_lines.append(
                         ('dup_QQ', f'<{self.trs}: {", ".join(dupQQs)}>'))
 
-            if len(target_pb.lotList) > 0:
+            if len(target_pb.lots) > 0:
                 # Only append fresh (non-duplicate) Lots, and raise a
                 # flag if there are any duplicates
                 dupLots = []
                 freshLots = []
-                for lot in target_pb.lotList:
-                    if lot in self.lotList or lot in freshLots:
+                for lot in target_pb.lots:
+                    if lot in self.lots or lot in freshLots:
                         dupLots.append(lot)
                     else:
                         freshLots.append(lot)
-                self.lotList.extend(freshLots)
+                self.lots.extend(freshLots)
                 if len(dupLots) > 0:
-                    self.wFlagList.append('dup_lot')
-                    self.wFlagLines.append(
+                    self.w_flags.append('dup_lot')
+                    self.w_flag_lines.append(
                         ('dup_lot', f'<{self.trs}: {", ".join(dupLots)}>'))
 
-            self.lotQQList = self.lotList + self.QQList
+            self.lots_qqs = self.lots + self.qqs
 
-            if len(target_pb.lotAcres) > 0:
-                self.lotAcres = target_pb.lotAcres
+            if len(target_pb.lot_acres) > 0:
+                self.lot_acres = target_pb.lot_acres
                 # TODO: Handle discrepancies, if there's already data in
-                #   lotAcres.
+                #   lot_acres.
 
     def parse(
-            self, text=None, commit=True, cleanQQ=None, includeLotDivs=None,
+            self, text=None, commit=True, clean_qq=None, include_lot_divs=None,
             preprocess=None, qq_depth_min=None, qq_depth_max=None,
             qq_depth=None, break_halves=None):
         """
         Parse the description block of this Tract into lots and QQ's.
 
         :param text: The text to be parsed into lots and QQ's. If not
-        specified, will pull from `self.ppDesc` (i.e. the preprocessed
+        specified, will pull from `self.pp_desc` (i.e. the preprocessed
         description).
         :param commit: Whether to commit the results to the appropriate
         instance attributes. Defaults to `True`.
-        :param cleanQQ: Whether to expect only clean lots and QQ's (i.e.
+        :param clean_qq: Whether to expect only clean lots and QQ's (i.e.
         no metes-and-bounds, exceptions, complicated descriptions,
-        etc.). Defaults to whatever is specified in `self.cleanQQ`
+        etc.). Defaults to whatever is specified in `self.clean_qq`
         (which is False, unless configured otherwise).
-        :param includeLotDivs: Whether to report divisions of lots.
-        Defaults to whatever is specified in `self.includeLotDivs`
+        :param include_lot_divs: Whether to report divisions of lots.
+        Defaults to whatever is specified in `self.include_lot_divs`
         (which is True, unless configured otherwise).
             ex:  North Half of Lot 1
                     `True` -> 'N2 of L1'
@@ -1747,36 +1741,36 @@ class Tract:
         even if we're beyond the qq_depth_min. (False by default, but can
         be configured at init.)
         :return: Returns the a single list of identified lots and QQ's
-        (equivalent to what would be stored in `.lotQQList`).
+        (equivalent to what would be stored in `.lots_qqs`).
         """
 
         # TODO: Generate a list (saved as an attribute) of slice_indexes
-        #   of the `ppDesc` for the text that was incorporated into
+        #   of the `pp_desc` for the text that was incorporated into
         #   lots and QQ's vs. not.
 
         if text is None:
-            text = self.ppDesc
+            text = self.pp_desc
 
-        if cleanQQ is None:
-            cleanQQ = self.cleanQQ
+        if clean_qq is None:
+            clean_qq = self.clean_qq
 
-        if includeLotDivs is None:
-            includeLotDivs = self.includeLotDivs
+        if include_lot_divs is None:
+            include_lot_divs = self.include_lot_divs
 
         # If preprocess has not already been complete, and param did not
         # dictate `preprocess=False`, then we will want to run
-        # preprocess(). Alternatively, if our kwarg-specified cleanQQ
-        # does not match self.cleanQQ, we want the kwarg-specified to
+        # preprocess(). Alternatively, if our kwarg-specified clean_qq
+        # does not match self.clean_qq, we want the kwarg-specified to
         # control, so we'll run preprocess() again, with the
-        # kwarg-specified `cleanQQ` value:
+        # kwarg-specified `clean_qq` value:
         do_prepro = False
-        if not self.preproComplete and preprocess in [None, True]:
+        if not self.preprocess_done and preprocess in [None, True]:
             do_prepro = True
-        if self.cleanQQ != cleanQQ:
+        if self.clean_qq != clean_qq:
             do_prepro = True
 
         if do_prepro:
-            text = self.preprocess(cleanQQ=cleanQQ, commit=False)
+            text = self.preprocess(clean_qq=clean_qq, commit=False)
 
         # TODO : DON'T pull the QQ in "less and except the Johnston #1
         #   well in the NE/4NE/4 of Section 4, T154N-R97W" (for example)
@@ -1791,19 +1785,19 @@ class Tract:
         #       Southwest Quarter, E/2, NE4' to 'NE¼SW¼, E½, NE¼')
         # 2) Extract lot_regex matches from the text (actually uses
         #       lot_with_aliquot_regex to capture lot divisions).
-        # 3) Unpack lot_regex matches into a lotList.
+        # 3) Unpack lot_regex matches into a lots.
         # 4) Extract aliquot_regex matches from the text.
-        # 5) Convert the aliquot_regex matches into a QQList.
+        # 5) Convert the aliquot_regex matches into a qqs.
         # 6) Pack it all into a ParseBag.
         # 6a) If committing the results, self._unpack_pb() the ParseBag.
-        # 7) Join the lotList and QQList from the ParseBag, and return it.
+        # 7) Join the lots and qqs from the ParseBag, and return it.
         ################################################################
 
         # For holding the data during parsing
-        plqqParseBag = ParseBag(parentType='Tract')
+        plqqParseBag = ParseBag(parent_type='Tract')
 
         # Swap out NE/NW/SE/SW and N2/S2/E2/W2 matches for cleaner versions
-        text = _scrub_aliquots(text, cleanQQ=cleanQQ)
+        text = _scrub_aliquots(text, clean_qq=clean_qq)
 
         # Extract the lots from the description (and leave the rest of
         # the description for aliquot parsing).  Replace any extracted
@@ -1817,7 +1811,7 @@ class Tract:
             # lot divisions), because otherwise the 'N½' will be read as
             # <the entire N/2> of the section.
             lot_aliq_mo = lot_with_aliquot_regex.search(remainingText)
-            if lot_aliq_mo == None:
+            if lot_aliq_mo is None:
                 break
             else:
                 lotTextBlocks.append(lot_aliq_mo.group())
@@ -1832,15 +1826,15 @@ class Tract:
         lotsAcresDict = {}
 
         for lotTextBlock in lotTextBlocks:
-            # Unpack the lots in this lotTextBlock (and get a ParseBag back)
-            lotspb = _unpack_lots(lotTextBlock, includeLotDivs=includeLotDivs)
+            # Unpack the lots in this lot_text_block (and get a ParseBag back)
+            lotspb = _unpack_lots(lotTextBlock, include_lot_divs=include_lot_divs)
 
             # Append these identified lots:
-            lots.extend(lotspb.lotList)
+            lots.extend(lotspb.lots)
 
-            # Add any identified lotAcres to the dict:
-            for lot in lotspb.lotAcres:
-                lotsAcresDict[lot] = lotspb.lotAcres[lot]
+            # Add any identified lot_acres to the dict:
+            for lot in lotspb.lot_acres:
+                lotsAcresDict[lot] = lotspb.lot_acres[lot]
 
             # And absorb any flags/flagLines:
             plqqParseBag.absorb(lotspb)
@@ -1851,7 +1845,7 @@ class Tract:
         while True:
             # Run this loop, pulling the next aliquot match until we run out.
             aliq_mo = aliquot_unpacker_regex.search(remainingText)
-            if aliq_mo == None:
+            if aliq_mo is None:
                 break
             else:
                 # TODO: Implement context awareness. Should not pull aliquots
@@ -1915,31 +1909,31 @@ class Tract:
                 break_halves)
             QQList.extend(wQQList)
 
-        plqqParseBag.QQList = QQList
-        plqqParseBag.lotList = lots
-        plqqParseBag.lotAcres = lotsAcresDict
+        plqqParseBag.qqs = QQList
+        plqqParseBag.lots = lots
+        plqqParseBag.lot_acres = lotsAcresDict
 
-        retLotQQList = plqqParseBag.lotList + plqqParseBag.QQList
+        ret_lots_qqs = plqqParseBag.lots + plqqParseBag.qqs
 
         # Store the results, if instructed to do so.
         if commit:
             self.parse_complete = True
             self._unpack_pb(plqqParseBag)
 
-        return retLotQQList
+        return ret_lots_qqs
 
-    def preprocess(self, text=None, commit=True, cleanQQ=None) -> str:
+    def preprocess(self, text=None, commit=True, clean_qq=None) -> str:
         """
         Preprocess the description text to iron out common kinks in the
-        input data, and optionally store results to `self.ppDesc`.
+        input data, and optionally store results to `self.pp_desc`.
 
         :param text: The text to be preprocessed. Defaults to what is
         stored in `self.desc` (i.e. the original description block).
-        :param commit: Whether to store the resluts to `self.ppDesc`.
+        :param commit: Whether to store the resluts to `self.pp_desc`.
         (Defaults to `True`)
-        :param cleanQQ: Whether to expect only clean lots and QQ's (i.e.
+        :param clean_qq: Whether to expect only clean lots and QQ's (i.e.
         no metes-and-bounds, exceptions, complicated descriptions,
-        etc.). Defaults to whatever is specified in `self.cleanQQ`
+        etc.). Defaults to whatever is specified in `self.clean_qq`
         (which is False, unless configured otherwise).
         :return: The preprocessed string.
         """
@@ -1947,14 +1941,14 @@ class Tract:
         if text is None:
             text = self.desc
 
-        if cleanQQ is None:
-            cleanQQ = self.cleanQQ
+        if clean_qq is None:
+            clean_qq = self.clean_qq
 
-        text = _scrub_aliquots(text, cleanQQ=cleanQQ)
+        text = _scrub_aliquots(text, clean_qq=clean_qq)
 
         if commit:
-            self.ppDesc = text
-            self.preproComplete = True
+            self.pp_desc = text
+            self.preprocess_done = True
 
         return text
 
@@ -2075,19 +2069,19 @@ class TractList(list):
         Sec 14: NE/4
         Sec 15: Northwest Quarter, North Half South West Quarter'''
         d_obj = PLSSDesc(txt)
-        tl_obj = d_obj.parse(initParseQQ=True, commit=False)
-        tl_obj.tracts_to_dict('trs', 'desc', 'QQList')
+        tl_obj = d_obj.parse(init_parse_qq=True, commit=False)
+        tl_obj.tracts_to_dict('trs', 'desc', 'qqs')
 
         Example returns a list of two dicts:
 
             [
             {'trs': '154n97w14',
             'desc': 'NE/4',
-            'QQList': ['NENE', 'NWNE', 'SENE', 'SWNE']},
+            'qqs': ['NENE', 'NWNE', 'SENE', 'SWNE']},
 
             {'trs': '154n97w15',
             'desc': 'Northwest Quarter, North Half South West Quarter',
-            'QQList': ['NENW', 'NWNW', 'SENW', 'SWNW', 'NESW', 'NWSW']}
+            'qqs': ['NENW', 'NWNW', 'SENW', 'SWNW', 'NESW', 'NWSW']}
             ]
         """
 
@@ -2115,8 +2109,8 @@ class TractList(list):
         Sec 14: NE/4
         Sec 15: Northwest Quarter, North Half South West Quarter'''
         d_obj = PLSSDesc(txt)
-        tl_obj = d_obj.parse(initParseQQ=True, commit=False)
-        tl_obj.tracts_to_list('trs', 'desc', 'QQList')
+        tl_obj = d_obj.parse(init_parse_qq=True, commit=False)
+        tl_obj.tracts_to_list('trs', 'desc', 'qqs')
 
         Example returns a nested list:
             [
@@ -2152,8 +2146,8 @@ class TractList(list):
         Sec 14: NE/4
         Sec 15: Northwest Quarter, North Half South West Quarter'''
         d_obj = PLSSDesc(txt)
-        tl_obj = d_obj.parse(initParseQQ=True, commit=False)
-        tl_obj.tracts_to_str('trs', 'desc', 'QQList')
+        tl_obj = d_obj.parse(init_parse_qq=True, commit=False)
+        tl_obj.tracts_to_str('trs', 'desc', 'qqs')
 
         Example returns a multi-line string that looks like this when
         printed:
@@ -2161,12 +2155,12 @@ class TractList(list):
             Tract #1
             trs    : 154n97w14
             desc   : NE/4
-            QQList : NENE, NWNE, SENE, SWNE
+            qqs : NENE, NWNE, SENE, SWNE
 
             Tract #2
             trs    : 154n97w15
             desc   : Northwest Quarter, North Half South West Quarter
-            QQList : NENW, NWNW, SENW, SWNW, NESW, NWSW
+            qqs : NENW, NWNW, SENW, SWNW, NESW, NWSW
         """
 
         # Ensure all elements are legal.
@@ -2208,7 +2202,7 @@ class TractList(list):
         Sec 14: NE/4
         Sec 15: Northwest Quarter, North Half South West Quarter'''
         d_obj = PLSSDesc(txt)
-        tl_obj = d_obj.parse(initParseQQ=True, commit=False)
+        tl_obj = d_obj.parse(init_parse_qq=True, commit=False)
         tl_obj.quick_desc()
 
         Example returns a multi-line string that looks like this when
@@ -2281,10 +2275,6 @@ class TractList(list):
             return unique_trs
         return all_trs
 
-    # Aliases to prevent breaking API on calls to method names with caps
-    # TODO: Deprecate these method names
-    list_TRS = list_trs
-
 
 class ParseBag:
     """
@@ -2305,8 +2295,8 @@ class ParseBag:
     # different components of the PLSS description, but almost all of
     # them can generate warning flags and error flags for the user's
     # attention. For UX reasons, we want those warning/error data stored
-    # in a single location (i.e. a in the `.wFlagList` or `.eFlagList`).
-    # Tract objects also contain `.wFlagList` and `.eFlagList`
+    # in a single location (i.e. a in the `.w_flags` or `.e_flags`).
+    # Tract objects also contain `.w_flags` and `.e_flags`
 
     # So these ParseBag objects will hold those warning/error data (and
     # the TractList, etc.) in one place until the intended endpoint is
@@ -2316,39 +2306,39 @@ class ParseBag:
     # appending (but not overwriting) its own data:
     #       `parent_pb.absorb(child_pb)`
     # This is done, for example, where `child_pb` stores Tract-level
-    # parsing data (e.g., QQList, lotList) -- but where warning flags
+    # parsing data (e.g., qqs, lots) -- but where warning flags
     # can also be generated that would be relevant to the higher-level
     # class PLSSDesc.
 
-    def __init__(self, parentType='PLSSDesc'):
+    def __init__(self, parent_type='PLSSDesc'):
 
-        # parentType will establish additional attributes, as necessary,
+        # parent_type will establish additional attributes, as necessary,
         # depending on the function or method that created the ParseBag
-        self.parentType = parentType
+        self.parent_type = parent_type
 
         # for all types of objects:
-        self.wFlagList = []
-        self.wFlagLines = []
-        self.eFlagList = []
-        self.eFlagLines = []
-        self.descIsFlawed = False
+        self.w_flags = []
+        self.w_flag_lines = []
+        self.e_flags = []
+        self.e_flag_lines = []
+        self.desc_is_flawed = False
 
-        if parentType == 'PLSSDesc':
-            self.parsedTracts = TractList()
+        if parent_type == 'PLSSDesc':
+            self.parsed_tracts = TractList()
 
-        elif parentType == 'Tract':
-            self.QQList = []
-            self.lotList = []
-            self.lotAcres = {}
+        elif parent_type == 'Tract':
+            self.qqs = []
+            self.lots = []
+            self.lot_acres = {}
 
-        elif parentType == 'multiSec':
+        elif parent_type == 'multisec':
             # for unpacking multiSec
-            self.secList = []
+            self.sec_list = []
 
-        elif parentType == 'lotText':
+        elif parent_type == 'lot_text':
             # for unpacking text from a lot_regex match into component lots
-            self.lotList = []
-            self.lotAcres = {}
+            self.lots = []
+            self.lot_acres = {}
 
     def absorb(self, target_pb):
         """
@@ -2359,26 +2349,26 @@ class ParseBag:
         if not isinstance(target_pb, ParseBag):
             raise TypeError("Can only `absorb()` a pyTRS.ParseBag object.")
 
-        # We do not absorb QQList, lotList, or lotAcres, since those are not
+        # We do not absorb qqs, lots, or lot_acres, since those are not
         # relevant to a PLSSDescObj (only TractObj).
 
-        if target_pb.descIsFlawed:
-            self.descIsFlawed = True
+        if target_pb.desc_is_flawed:
+            self.desc_is_flawed = True
 
-        if len(target_pb.wFlagList) > 0:
-            self.wFlagList.extend(target_pb.wFlagList)
+        if len(target_pb.w_flags) > 0:
+            self.w_flags.extend(target_pb.w_flags)
 
-        if len(target_pb.eFlagList) > 0:
-            self.eFlagList.extend(target_pb.eFlagList)
+        if len(target_pb.e_flags) > 0:
+            self.e_flags.extend(target_pb.e_flags)
 
-        if len(target_pb.wFlagLines) > 0:
-            self.wFlagLines.extend(target_pb.wFlagLines)
+        if len(target_pb.w_flag_lines) > 0:
+            self.w_flag_lines.extend(target_pb.w_flag_lines)
 
-        if len(target_pb.eFlagLines) > 0:
-            self.eFlagLines.extend(target_pb.eFlagLines)
+        if len(target_pb.e_flag_lines) > 0:
+            self.e_flag_lines.extend(target_pb.e_flag_lines)
 
-        if target_pb.parentType == 'PLSSDesc':
-            self.parsedTracts.extend(target_pb.parsedTracts)
+        if target_pb.parent_type == 'PLSSDesc':
+            self.parsed_tracts.extend(target_pb.parsed_tracts)
 
 
 class Config:
@@ -2404,15 +2394,15 @@ class Config:
     All possible parameters (call `pyTRS.utils.config_parameters()` for
     definitions) -- any unspecified parameters will fall back to
     default parsing behavior:
-        -- 'n'  <or>  'defaultNS.n'  vs.  's'  <or>  'defaultNS.s'
-        -- 'e'  <or>  'defaultEW.e'  vs.  'w'  <or>  'defaultEW.w'
-        -- 'initParse'  vs.  'initParse.False'
-        -- 'initParseQQ'  vs.  'initParseQQ.False'
-        -- 'initPreprocess'  vs.  'initPreprocess.False'
-        -- 'cleanQQ'  vs.  'cleanQQ.False'
-        -- 'requireColon'  vs.  'requireColon.False'
-        -- 'includeLotDivs'  vs.  'includeLotDivs.False'
-        -- 'ocrScrub'  vs.  'ocrScrub.False'
+        -- 'n'  <or>  'default_ns.n'  vs.  's'  <or>  'default_ns.s'
+        -- 'e'  <or>  'default_ew.e'  vs.  'w'  <or>  'default_ew.w'
+        -- 'init_parse'  vs.  'init_parse.False'
+        -- 'init_parse_qq'  vs.  'init_parse_qq.False'
+        -- 'init_preprocess'  vs.  'init_preprocess.False'
+        -- 'clean_qq'  vs.  'clean_qq.False'
+        -- 'require_colon'  vs.  'require_colon.False'
+        -- 'include_lot_divs'  vs.  'include_lot_divs.False'
+        -- 'ocr_scrub'  vs.  'ocr_scrub.False'
         -- 'segment'  vs.  'segment.False'
         -- 'qq_depth_min.<int>'  (defaults to 'qq_depth_min.2')
         -- 'qq_depth_max.<int>'  (defaults to 'qq_depth_max.None')
@@ -2429,21 +2419,40 @@ class Config:
 
     # Implemented settings that are settable via Config object:
     _CONFIG_ATTRIBUTES = (
-        'defaultNS', 'defaultEW', 'initPreprocess', 'layout', 'initParse',
-        'initParseQQ', 'cleanQQ', 'requireColon', 'includeLotDivs', 'ocrScrub',
-        'segment', 'qq_depth', 'qq_depth_min', 'qq_depth_max',
+        'default_ns',
+        'default_ew',
+        'init_preprocess',
+        'layout',
+        'init_parse',
+        'init_parse_qq',
+        'clean_qq',
+        'require_colon',
+        'include_lot_divs',
+        'ocr_scrub',
+        'segment',
+        'qq_depth',
+        'qq_depth_min',
+        'qq_depth_max',
         'break_halves'
     )
 
     # A list of attribute names whose values should be a bool:
     _BOOL_TYPE_ATTRIBUTES = (
-        'initParse', 'initParseQQ', 'cleanQQ', 'includeLotDivs',
-        'initPreprocess', 'requireColon', 'ocrScrub', 'segment',
+        'init_parse',
+        'init_parse_qq',
+        'clean_qq',
+        'include_lot_divs',
+        'init_preprocess',
+        'require_colon',
+        'ocr_scrub',
+        'segment',
         'break_halves'
     )
 
     _INT_TYPE_ATTRIBUTES = (
-        'qq_depth_min', 'qq_depth_max', 'qq_depth'
+        'qq_depth_min',
+        'qq_depth_max',
+        'qq_depth'
     )
 
     # Those attributes relevant to PLSSDesc objects:
@@ -2451,32 +2460,40 @@ class Config:
 
     # Those attributes relevant to Tract objects:
     _TRACT_ATTRIBUTES = (
-        'defaultNS', 'defaultEW', 'initPreprocess', 'initParseQQ', 'cleanQQ',
-        'includeLotDivs', 'ocrScrub', 'qq_depth', 'qq_depth_min',
-        'qq_depth_max', 'break_halves'
+        'default_ns',
+        'default_ew',
+        'init_preprocess',
+        'init_parse_qq',
+        'clean_qq',
+        'include_lot_divs',
+        'ocr_scrub',
+        'qq_depth',
+        'qq_depth_min',
+        'qq_depth_max',
+        'break_halves'
     )
 
-    def __init__(self, configText='', configName=''):
+    def __init__(self, config_text='', config_name=''):
         """
-        Compile a Config object from a string `configText=`, with
-        optional kwarg `configName=` that does not affect parsing.
+        Compile a Config object from a string `config_text=`, with
+        optional kwarg `config_name=` that does not affect parsing.
 
         Pass config parameters as a single string, with each parameter
         separated by comma. Spaces are optional and have no effect.
-            ex: 'n,s,cleanQQ,includeLotDivs.False'
+            ex: 'n,s,clean_qq,include_lot_divs.False'
 
         All possible parameters (call `pyTRS.utils.config_parameters()`
         for definitions) -- any unspecified parameters will fall back to
         default parsing behavior:
-        -- 'n'  <or>  'defaultNS.n'  vs.  's'  <or>  'defaultNS.s'
-        -- 'e'  <or>  'defaultEW.e'  vs.  'w'  <or>  'defaultEW.w'
-        -- 'initParse'  vs.  'initParse.False'
-        -- 'initParseQQ'  vs.  'initParseQQ.False'
-        -- 'initPreprocess'  vs.  'initPreprocess.False'
-        -- 'cleanQQ'  vs.  'cleanQQ.False'
-        -- 'requireColon'  vs.  'requireColon.False'
-        -- 'includeLotDivs'  vs.  'includeLotDivs.False'
-        -- 'ocrScrub'  vs.  'ocrScrub.False'
+        -- 'n'  <or>  'default_ns.n'  vs.  's'  <or>  'default_ns.s'
+        -- 'e'  <or>  'default_ew.e'  vs.  'w'  <or>  'default_ew.w'
+        -- 'init_parse'  vs.  'init_parse.False'
+        -- 'init_parse_qq'  vs.  'init_parse_qq.False'
+        -- 'init_preprocess'  vs.  'init_preprocess.False'
+        -- 'clean_qq'  vs.  'clean_qq.False'
+        -- 'require_colon'  vs.  'require_colon.False'
+        -- 'include_lot_divs'  vs.  'include_lot_divs.False'
+        -- 'ocr_scrub'  vs.  'ocr_scrub.False'
         -- 'segment'  vs.  'segment.False'
         -- 'qq_depth_min.<int>'  (defaults to 'qq_depth_min.2')
         -- 'qq_depth_max.<int>'  (defaults to 'qq_depth_max.None')
@@ -2491,32 +2508,32 @@ class Config:
         -- 'copy_all'  <or>  'layout.copy_all'
         """
 
-        # All attributes (except configName) are defaulted to `None`,
+        # All attributes (except config_name) are defaulted to `None`,
         # because PLSSDesc and Tract objects will use only those that
         # have been specified as other than `None`.
 
-        if isinstance(configText, Config):
+        if isinstance(config_text, Config):
             # If a Config object is passed as the first argument,
             # decompile its text and use that:
-            configText = configText.decompile_to_text()
-        elif configText is None:
-            configText = ''
-        elif not isinstance(configText, str):
+            config_text = config_text.decompile_to_text()
+        elif config_text is None:
+            config_text = ''
+        elif not isinstance(config_text, str):
             raise CONFIG_ERROR
-        self.configText = configText
-        self.configName = configName
+        self.config_text = config_text
+        self.config_name = config_name
 
         # Default all other attributes to `None`:
         for attrib in Config._CONFIG_ATTRIBUTES:
             setattr(self, attrib, None)
 
-        # Remove all spaces from configText:
-        configText = configText.replace(' ', '')
+        # Remove all spaces from config_text:
+        config_text = config_text.replace(' ', '')
 
         # Separate config parameters with ','  or  ';'
-        configLines = re.split(r'[;,]', configText)
+        config_lines = re.split(r'[;,]', config_text)
 
-        for line in configLines:
+        for line in config_lines:
             # Parse each 'attrib.val' pair, and commit to the configObj
 
             if line == '':
@@ -2526,15 +2543,15 @@ class Config:
                 # If string is the name of an attribute that will be stored
                 # as a bool, default to `True` (but will be overruled in
                 # _set_str_to_values() if specified otherwise):
-                self._set_str_to_values(line, defaultBool=True)
+                self._set_str_to_values(line, default_bool=True)
             elif line.lower() in ['n', 's', 'north', 'south']:
                 # Specifying N/S can be done with just a string (there's
                 # nothing else it can mean in config context.)
-                self.defaultNS = line[0].lower()
+                self.default_ns = line[0].lower()
             elif line.lower() in ['e', 'w', 'east', 'west']:
                 # Specifying E/W can be done with just a string (there's
                 # nothing else it can mean in config context.)
-                self.defaultEW = line[0].lower()
+                self.default_ew = line[0].lower()
             elif line in _IMPLEMENTED_LAYOUTS:
                 # Specifying layout can be done with just a string
                 # (there's nothing else it can mean in config context.)
@@ -2556,11 +2573,11 @@ class Config:
 
         file = open(filepath, 'w')
 
-        attsToWrite = ['configName'] + Config._CONFIG_ATTRIBUTES
+        attsToWrite = ['config_name'] + Config._CONFIG_ATTRIBUTES
 
         file.write(f"<Contains config data for parsing PLSSDesc "
                    f"and/or Tract objects with the pyTRS library.>\n")
-        file.write(f"<configText: '{self.decompile_to_text()}'>\n")
+        file.write(f"<config_text: '{self.decompile_to_text()}'>\n")
 
         def attrib_text(att):
             """
@@ -2587,49 +2604,49 @@ class Config:
             raise ValueError('Error: filename must be .txt file')
 
         with open(filepath, 'r') as file:
-            configLines = file.readlines()
+            config_lines = file.readlines()
 
-        configObj = Config()
+        config = Config()
 
-        for line in configLines:
+        for line in config_lines:
             # Ignore data stored in angle brackets
             if line[0] == '<':
                 continue
 
             # For each line, parse the 'attrib.val' pair, and commit to
-            # the configObj, using ._set_str_to_values()
-            configObj._set_str_to_values(line.strip('\n'))
-        return configObj
+            # the config, using ._set_str_to_values()
+            config._set_str_to_values(line.strip('\n'))
+        return config
 
     @staticmethod
-    def from_parent(parentObj, configName='', suppress_layout=False):
+    def from_parent(parent, config_name='', suppress_layout=False):
         """
         Compile and return a Config object from the settings in a
         PLSSDesc object or Tract object.
-        :param parentObj: A PLSSDesc or Tract object whose config
+        :param parent: A PLSSDesc or Tract object whose config
         parameters should be compiled into this Config object.
-        :param configName: An optional string, being the name of this
+        :param config_name: An optional string, being the name of this
         Config object.
         :param suppress_layout: A bool, whether or not to include the
         `.layout` attribute from the parent object.
         """
 
-        configObj = Config()
+        config = Config()
 
-        configObj.configName = configName
-        configObj.initPreprocess = parentObj.initPreprocess
-        if isinstance(parentObj, PLSSDesc) and not suppress_layout:
-            configObj.layout = parentObj.layout
+        config.config_name = config_name
+        config.init_preprocess = parent.init_preprocess
+        if isinstance(parent, PLSSDesc) and not suppress_layout:
+            config.layout = parent.layout
         else:
-            configObj.layout = None
-        configObj.initParse = parentObj.initParse
-        configObj.initParseQQ = parentObj.initParseQQ
-        configObj.cleanQQ = parentObj.cleanQQ
-        configObj.defaultNS = parentObj.defaultNS
-        configObj.defaultEW = parentObj.defaultEW
-        configObj.includeLotDivs = parentObj.includeLotDivs
+            config.layout = None
+        config.init_parse = parent.init_parse
+        config.init_parse_qq = parent.init_parse_qq
+        config.clean_qq = parent.clean_qq
+        config.default_ns = parent.default_ns
+        config.default_ew = parent.default_ew
+        config.include_lot_divs = parent.include_lot_divs
 
-        return configObj
+        return config
 
     def decompile_to_text(self) -> str:
         """
@@ -2638,21 +2655,20 @@ class Config:
 
         def write_val_as_text(att, val):
             if att in Config._BOOL_TYPE_ATTRIBUTES:
-                if val == True:
+                if val is None:
+                    return ""
+                if val:
                     # If true, Config needs to receive only the
                     # attribute name (defaults to True if specified).
                     return att
-                elif val == False:
-                    return f"{att}.{val}"
                 else:
-                    # i.e. `val is None`; in which case, we won't write
-                    # the attribute name
-                    return ""
-            elif att in ['defaultNS', 'defaultEW']:
+                    return f"{att}.{val}"
+
+            elif att in ['default_ns', 'default_ew']:
                 if val is not None:
-                    # Only need to specify 'n' or 's' to set defaultNS; and
-                    # 'e' or 'w' for defaultEW (i.e. not 'defaultNS.n' or
-                    # 'defaultEW.w'), so we return only `val`, and not `att`
+                    # Only need to specify 'n' or 's' to set default_ns; and
+                    # 'e' or 'w' for default_ew (i.e. not 'default_ns.n' or
+                    # 'default_ew.w'), so we return only `val`, and not `att`
                     return val
                 else:
                     return ''
@@ -2661,17 +2677,17 @@ class Config:
             else:
                 return f"{att}.{val}"
 
-        writeVals = []
+        write_vals = []
         for att in Config._CONFIG_ATTRIBUTES:
             w = write_val_as_text(att, getattr(self, att))
-            if w != '':
+            if w:
                 # Include only non-empty strings (i.e. config params
                 # that were actually set)
-                writeVals.append(w)
+                write_vals.append(w)
 
-        return ','.join(writeVals)
+        return ','.join(write_vals)
 
-    def _set_str_to_values(self, attrib_val, defaultBool=None):
+    def _set_str_to_values(self, attrib_val, default_bool=None):
         """
         Take in a string of an attribute/value pair (in the format
         'attribute.value' or 'attribute=value') and set the appropriate
@@ -2695,30 +2711,30 @@ class Config:
                     return text
 
         # split attribute/value pair by '.' or '='
-        #   ex: 'defaultNS.n' or 'defaultNS=n' -> ['defaultNS', 'n']
+        #   ex: 'default_ns.n' or 'default_ns=n' -> ['default_ns', 'n']
         comps = re.split(r'[\.=]', attrib_val)
 
-        # Track whether only one component was found in the text with `onlyOne`:
-        #   i.e. "initParse." --> `onlyOne=True`
-        #   but 'initParse.True' --> `onlyOne=False`
-        # (Both will set `self.initParse` to `True` in this example, since it's
+        # Track whether only one component was found in the text with `only_one`:
+        #   i.e. "init_parse." --> `only_one=True`
+        #   but 'init_parse.True' --> `only_one=False`
+        # (Both will set `self.init_parse` to `True` in this example, since it's
         # a bool-type config parameter)
-        onlyOne = False
+        only_one = False
         if len(comps) != 2:
-            onlyOne = True
+            only_one = True
 
         def decide_bool():
             """
-            If onlyOne, return the default bool; otherwise, return
+            If only_one, return the default bool; otherwise, return
             the user-specified value from attrib_val.
             """
-            if onlyOne:
-                return defaultBool
+            if only_one:
+                return default_bool
             else:
                 return str_to_value(comps[1])
 
-        if onlyOne and not isinstance(defaultBool, bool):
-            # If only one component, and defaultBool was not entered as
+        if only_one and not isinstance(default_bool, bool):
+            # If only one component, and default_bool was not entered as
             # a bool, return a failure value:
             return -1
 
@@ -2728,7 +2744,7 @@ class Config:
             # If this is a bool-type attribute, set the value with decide_bool()
             setattr(self, comps[0], decide_bool())
             return 0
-        elif comps[0] in ['defaultNS', 'defaultEW']:
+        elif comps[0] in ['default_ns', 'default_ew']:
             # Only writing the first letter of comps[1], in lowercase
             #   (i.e. 'North' --> 'n' or 'West' --> 'w'):
             setattr(self, comps[0], str_to_value(comps[1][0].lower()))
@@ -2737,14 +2753,6 @@ class Config:
             # Otherwise, set it however it's specified.
             setattr(self, comps[0], str_to_value(comps[1]))
             return 0
-
-
-    # def help():  # method moved to pyTRS.utils.config_help() in v0.4.11,
-    #   8/25/2020
-
-    # def parameters():
-    # method moved to pyTRS.utils.config_parameters() in v0.4.11,
-    #   8/25/2020
 
 
 ########################################################################
@@ -2764,7 +2772,7 @@ def _findall_matching_tr(text, layout=None) -> ParseBag:
     if layout not in _IMPLEMENTED_LAYOUTS:
         layout = PLSSDesc._deduce_segment_layout(text=text)
 
-    trParseBag = ParseBag(parentType='PLSSDesc')
+    trParseBag = ParseBag(parent_type='PLSSDesc')
 
     wTRList = []
     # A parsing index for text (marks where we're currently searching from):
@@ -2832,18 +2840,18 @@ def _findall_matching_tr(text, layout=None) -> ParseBag:
             i = i + len(tr_mo.group())
 
             # and append a warning flag that we've ignored this T&R:
-            ignoredTR = _compile_tr_mo(tr_mo)
+            ignoredTR = _compile_twprge_mo(tr_mo)
             flag = 'TR_not_pulled<%s>' % ignoredTR
             line = tr_mo.group()
-            trParseBag.wFlagList.append(flag)
-            trParseBag.wFlagLines.append((flag, line))
+            trParseBag.w_flags.append(flag)
+            trParseBag.w_flag_lines.append((flag, line))
             continue
 
         # Otherwise, if there is NO intervener, or the layout is something
         # other than TRS_desc or S_desc_TR, then this IS a match and we
         # want to store it.
         else:
-            wTRList.append((_compile_tr_mo(tr_mo), i, i + len(tr_mo.group())))
+            wTRList.append((_compile_twprge_mo(tr_mo), i, i + len(tr_mo.group())))
             # Move the parsing index to the end of the T&R that we just matched:
             i = i + len(tr_mo.group())
             continue
@@ -2854,7 +2862,7 @@ def _findall_matching_tr(text, layout=None) -> ParseBag:
     return trParseBag
 
 
-def _segment_by_tr(text, layout=None, trFirst=None):
+def _segment_by_tr(text, layout=None, twprge_first=None):
     """
     INTERNAL USE:
 
@@ -2864,29 +2872,30 @@ def _segment_by_tr(text, layout=None, trFirst=None):
     list of discarded textBlocks.
 
     :param layout: Which layout to use. If not specified, will deduce.
-    :param trFirst: Whether it's a layout where TR comes first (i.e.
-    'TRS_desc' or 'TR_desc_S').
+    :param twprge_first: Whether it's a layout where Twp/Rge comes first
+    (i.e. 'TRS_desc' or 'TR_desc_S').
     """
 
     if layout not in _IMPLEMENTED_LAYOUTS:
         layout = PLSSDesc._deduce_segment_layout(text=text)
 
-    if not isinstance(trFirst, bool):
+    if not isinstance(twprge_first, bool):
         if layout in ['TRS_desc', 'TR_desc_S']:
-            trFirst = True
+            twprge_first = True
         else:
-            trFirst = False
+            twprge_first = False
 
     # Search for all T&R's that match the layout requirements.
     trMatchPB = _findall_matching_tr(text, layout=layout)
 
-    # Pull ad-hoc `.trPosList` attribute from the ParseBag object. Do not absorb the rest.
+    # Pull ad-hoc `.trPosList` attribute from the ParseBag object. Do
+    # not absorb the rest.
     wTRList = trMatchPB.trPosList
 
     if wTRList == []:
-        # If no T&R's had been matched, return the text block as single element in a list
-        # (what would have been `trTextBlocks`), and another empty list (what would have
-        # been `discardTextBlocks`)
+        # If no T&R's had been matched, return the text block as single
+        # element in a list (what would have been `trTextBlocks`), and
+        # another empty list (what would have been `discardTextBlocks`)
         return [text], []
 
     trStartPoints = []
@@ -2899,13 +2908,13 @@ def _segment_by_tr(text, layout=None, trFirst=None):
         trStartPoints.append(TRtuple[1])
         trEndPoints.append(TRtuple[2])
 
-    if trFirst:
+    if twprge_first:
         for i in range(len(trStartPoints)):
             if i == 0 and trStartPoints[i] != 0:
                 # If the first element is not 0 (i.e. T&R right at the
                 # start), this is discard text.
                 discardTextBlocks.append(text[:trStartPoints[i]])
-            # Append each textBlock
+            # Append each text_block
             new_desc = text[trStartPoints[i]:]
             if i + 1 != len(trStartPoints):
                 new_desc = text[trStartPoints[i]:trStartPoints[i + 1]]
@@ -2917,7 +2926,7 @@ def _segment_by_tr(text, layout=None, trFirst=None):
                 # If the last element is not the final character in the
                 # string (i.e. T&R ends at text end), discard text
                 discardTextBlocks.append(text[trEndPoints[i]:])
-            # Append each textBlock
+            # Append each text_block
             new_desc = text[:trEndPoints[i]]
             if i != 0:
                 new_desc = text[trEndPoints[i - 1]:trEndPoints[i]]
@@ -2926,45 +2935,45 @@ def _segment_by_tr(text, layout=None, trFirst=None):
     return trTextBlocks, discardTextBlocks
 
 
-def _findall_matching_sec(text, layout=None, requireColon='default_colon'):
+def _findall_matching_sec(text, layout=None, require_colon='default_colon'):
     """
     INTERNAL USE:
 
     Pull from the text all sections and 'multi-sections' that are
     appropriate to the description layout. Returns a ParseBag object
-    with ad-hoc attributes `.secList` and `.multiSecList`.
-    :param requireColon: Same effect as in PLSSDesc.parse()`
+    with ad-hoc attributes `.sec_list` and `.multiSecList`.
+    :param require_colon: Same effect as in PLSSDesc.parse()`
     """
 
-    # requireColon=True will pass over sections that are NOT followed by
+    # require_colon=True will pass over sections that are NOT followed by
     # colons, in the TRS_desc and S_desc_TR layouts. For this version,
     # it is defaulted to True for those layouts. However, if no
     # satisfactory section or multiSec is found during the first pass,
-    # it will rerun self.parse() with requireColon='second_pass'.
-    # Feeding requireColon=True as a kwarg will override allowing the
+    # it will rerun self.parse() with require_colon='second_pass'.
+    # Feeding require_colon=True as a kwarg will override allowing the
     # second pass.
 
-    # Note: the kwarg requireColon= accepts either a string (for
+    # Note: the kwarg require_colon= accepts either a string (for
     # 'default_colon' and 'second_pass') or bool. If a bool is fed in
-    # (i.e. requireColon=True), a 'second_pass' will NOT be allowed.
-    # requireColonBool is the actual variable that controls the relevant
+    # (i.e. require_colon=True), a 'second_pass' will NOT be allowed.
+    # require_colonBool is the actual variable that controls the relevant
     # logic throughout.
     # Note also: Future versions COULD conceivably compare the
     # first_pass and second_pass results to see which has more secErr's
     # or other types of errors, and use the less-flawed of the two...
     # But I'm not sure that would actually be better...
 
-    # Lastly, note that `requireColonBool` has no effect on layouts
+    # Lastly, note that `require_colonBool` has no effect on layouts
     # other than TRS_desc and S_desc_TR, even if set to `True`
 
-    if isinstance(requireColon, bool):
-        requireColonBool = requireColon
-    elif requireColon == 'second_pass':
-        requireColonBool = False
+    if isinstance(require_colon, bool):
+        require_colonBool = require_colon
+    elif require_colon == 'second_pass':
+        require_colonBool = False
     else:
-        requireColonBool = True
+        require_colonBool = True
 
-    secPB = ParseBag(parentType='PLSSDesc')
+    secPB = ParseBag(parent_type='PLSSDesc')
 
     # Run through the description and find INDIVIDUAL sections or
     # LISTS of sections that match our layout.
@@ -2989,7 +2998,7 @@ def _findall_matching_sec(text, layout=None, requireColon='default_colon'):
 
     def adj_secmo_end(sec_mo):
         """
-        If a sec_mo or multiSec_mo ends in whitespace, give the
+        If a sec_mo or multisec_mo ends in whitespace, give the
         .end() minus 1; else return the .end()
         """
         # sec_regex and multiSec_regex can match unlimited whitespace at
@@ -3027,7 +3036,7 @@ def _findall_matching_sec(text, layout=None, requireColon='default_colon'):
         # Also for TRS_desc and S_desc_TR layouts, we ONLY want to match
         # sections and multi-Sections that are followed by a colon (if
         # requiredColonBool == True):
-        if (requireColonBool) and (layout in ['TRS_desc', 'S_desc_TR']) and \
+        if (require_colonBool) and (layout in ['TRS_desc', 'S_desc_TR']) and \
                 not (_sec_ends_with_colon(sec_mo)):
             ruledOut = True
 
@@ -3043,8 +3052,8 @@ def _findall_matching_sec(text, layout=None, requireColon='default_colon'):
                 flag = 'multiSec_not_pulled<%s>' % ', '.join(ignoredSec)
             else:
                 flag = 'sec_not_pulled<%s>' % ignoredSec
-            secPB.wFlagList.append(flag)
-            secPB.wFlagLines.append((flag, sec_mo.group()))
+            secPB.w_flags.append(flag)
+            secPB.w_flag_lines.append((flag, sec_mo.group()))
             continue
 
         # Move the parsing index forward to the start of this next matched Sec
@@ -3056,13 +3065,13 @@ def _findall_matching_sec(text, layout=None, requireColon='default_colon'):
         if _is_multisec(sec_mo):
             # If it's a multiSec, _unpack it, and append it to the wMultiSecList.
             multiSecParseBagObj = _unpack_sections(sec_mo.group())
-            # Pull out the secList.
-            unpackedMultiSec = multiSecParseBagObj.secList
+            # Pull out the sec_list.
+            unpackedMultiSec = multiSecParseBagObj.sec_list
 
             # First create a flag in the bigPB
             flag = 'multiSec_found<%s>' % ', '.join(unpackedMultiSec)
-            secPB.wFlagList.append(flag)
-            secPB.wFlagLines.append((flag, sec_mo.group()))
+            secPB.w_flags.append(flag)
+            secPB.w_flag_lines.append((flag, sec_mo.group()))
 
             # Then absorb the multiSecParseBagObj into the bigPB
             secPB.absorb(multiSecParseBagObj)
@@ -3079,7 +3088,7 @@ def _findall_matching_sec(text, layout=None, requireColon='default_colon'):
     # If we're in either 'TRS_desc' or 'S_desc_TR' layouts and discovered
     # neither a standalone section nor a multiSec, then rerun
     # _findall_matching_sec() under the same kwargs, except with
-    # requireColon='second_pass' (which sets requireColonBool=False),
+    # require_colon='second_pass' (which sets require_colonBool=False),
     # to see if we can capture a section after all.
     # Will return those results instead.
     do_second_pass = True
@@ -3087,24 +3096,24 @@ def _findall_matching_sec(text, layout=None, requireColon='default_colon'):
         do_second_pass = False
     if len(wSecList) > 0 or len(wMultiSecList) > 0:
         do_second_pass = False
-    if requireColon != 'default_colon':
+    if require_colon != 'default_colon':
         do_second_pass = False
     if do_second_pass:
         pass2_PB = _findall_matching_sec(
-            text, layout=layout, requireColon='second_pass')
-        if len(pass2_PB.secList) > 0 or len(pass2_PB.multiSecList) > 0:
-            pass2_PB.wFlagList.append('pulled_sec_without_colon')
+            text, layout=layout, require_colon='second_pass')
+        if len(pass2_PB.sec_list) > 0 or len(pass2_PB.multiSecList) > 0:
+            pass2_PB.w_flags.append('pulled_sec_without_colon')
         return pass2_PB
 
-    # Ad-hoc attributes for `secList` and `multiSecList`:
-    secPB.secList = wSecList
+    # Ad-hoc attributes for `sec_list` and `multiSecList`:
+    secPB.sec_list = wSecList
     secPB.multiSecList = wMultiSecList
     return secPB
 
 
 def _parse_segment(
-        textBlock, layout=None, cleanUp=None, requireColon='default_colon',
-        handedDownConfig=None, initParseQQ=False, cleanQQ=None,
+        text_block, layout=None, clean_up=None, require_colon='default_colon',
+        handed_down_config=None, init_parse_qq=False, clean_qq=None,
         qq_depth_min=None, qq_depth_max=None, qq_depth=None,
         break_halves=None):
     """
@@ -3113,18 +3122,18 @@ def _parse_segment(
     Parse a segment of text into pyTRS.Tract objects. Returns a
     pyTRS.ParseBag object.
 
-    :param textBlock: The text to be parsed.
+    :param text_block: The text to be parsed.
     :param layout: The layout to be assumed. If not specified,
     will be deduced.
-    :param cleanUp: Whether to clean up common 'artefacts' from
+    :param clean_up: Whether to clean up common 'artefacts' from
     parsing. If not specified, defaults to False for parsing the
     'copy_all' layout, and `True` for all others.
-    :param initParseQQ: Whether to parse each resulting Tract object
+    :param init_parse_qq: Whether to parse each resulting Tract object
     into lots and QQs when initialized. Defaults to False.
-    :param cleanQQ: Whether to expect only clean lots and QQ's (i.e.
+    :param clean_qq: Whether to expect only clean lots and QQ's (i.e.
     no metes-and-bounds, exceptions, complicated descriptions,
     etc.). Defaults to False.
-    :param requireColon: Whether to require a colon between the
+    :param require_colon: Whether to require a colon between the
     section number and the following description (only has an effect
     on 'TRS_desc' or 'S_desc_TR' layouts).
     If not specified, it will default to a 'two-pass' method, where
@@ -3132,13 +3141,13 @@ def _parse_segment(
     found, it will do a second pass where colons are not required.
     Setting as `True` or `False` here prevent the two-pass method.
         ex: 'Section 14 NE/4'
-            `requireColon=True` --> no match
-            `requireColon=False` --> match (but beware false
+            `require_colon=True` --> no match
+            `require_colon=False` --> match (but beware false
                 positives)
             <not specified> --> no match on first pass; if no other
                         sections are identified, will be matched on
                         second pass.
-    :param handedDownConfig: A Config object to be passed to any Tract
+    :param handed_down_config: A Config object to be passed to any Tract
     object that is created, so that they are configured identically to
     a parent PLSSDesc object (if any). Defaults to None.
     :param qq_depth_min: (Optional, and only relevant if parsing
@@ -3191,7 +3200,7 @@ def _parse_segment(
     #       the description block from BEFORE an identified section;
     #       whereas 'S_desc_TR' and 'TRS_desc' both pull description
     #       block /after/ the section).
-    # 6a) For 'copy_all' specifically, the entire textBlock will be
+    # 6a) For 'copy_all' specifically, the entire text_block will be
     #       copied as the `.desc` attribute of a Tract object.
     # 7) If no Tract was created by the end of the parse (e.g., no
     #       matching T&R found, or no section/multiSec found), then it
@@ -3202,46 +3211,46 @@ def _parse_segment(
     ####################################################################
 
     if layout not in _IMPLEMENTED_LAYOUTS:
-        layout = PLSSDesc._deduce_segment_layout(textBlock)
+        layout = PLSSDesc._deduce_segment_layout(text_block)
 
-    segParseBag = ParseBag(parentType='PLSSDesc')
+    segParseBag = ParseBag(parent_type='PLSSDesc')
 
-    # If `cleanQQ` was specified, convert it to a string, and set it to the
-    # `handedDownConfig`.
-    handedDownConfig = Config(handedDownConfig)
-    if isinstance(cleanQQ, bool):
-        handedDownConfig._set_str_to_values(f"cleanQQ.{cleanQQ}")
+    # If `clean_qq` was specified, convert it to a string, and set it to the
+    # `handed_down_config`.
+    handed_down_config = Config(handed_down_config)
+    if isinstance(clean_qq, bool):
+        handed_down_config._set_str_to_values(f"clean_qq.{clean_qq}")
     if break_halves is not None:
-        handedDownConfig._set_str_to_values(
+        handed_down_config._set_str_to_values(
             f"break_halves.{break_halves}")
     if qq_depth_min is not None:
-        handedDownConfig._set_str_to_values(f"qq_depth_min.{qq_depth_min}")
+        handed_down_config._set_str_to_values(f"qq_depth_min.{qq_depth_min}")
     if qq_depth_max is not None:
-        handedDownConfig._set_str_to_values(f"qq_depth_max.{qq_depth_max}")
+        handed_down_config._set_str_to_values(f"qq_depth_max.{qq_depth_max}")
     if qq_depth is not None:
-        handedDownConfig._set_str_to_values(f"qq_depth.{qq_depth}")
+        handed_down_config._set_str_to_values(f"qq_depth.{qq_depth}")
 
-    if not isinstance(cleanUp, bool):
-        # if cleanUp has not been specified as a bool, then use these defaults:
+    if not isinstance(clean_up, bool):
+        # if clean_up has not been specified as a bool, then use these defaults:
         if layout in ['TRS_desc', 'desc_STR', 'S_desc_TR', 'TR_desc_S']:
-            cleanUp = True
+            clean_up = True
         else:
-            cleanUp = False
+            clean_up = False
 
-    def clean_as_needed(candidateText):
+    def clean_as_needed(candidate_text):
         """
-        Will return either `candidateText` (a string for the .desc
+        Will return either `candidate_text` (a string for the .desc
         attribute of a `Tract` object that is about to be created) or the
-        cleaned-up version of it, depending on the bool `cleanUp`.
+        cleaned-up version of it, depending on the bool `clean_up`.
         """
-        if cleanUp:
-            return _cleanup_desc(candidateText)
+        if clean_up:
+            return _cleanup_desc(candidate_text)
         else:
-            return candidateText
+            return candidate_text
 
     # Find matching TR's that are appropriate to our layout (should only
     # be one, due to segmentation):
-    trPB = _findall_matching_tr(textBlock)
+    trPB = _findall_matching_tr(text_block)
     # Pull the ad-hoc `.trPosList` attribute from the ParseBag object,
     # and absorb the rest of the data into segParseBag:
     wTRList = trPB.trPosList
@@ -3249,10 +3258,10 @@ def _parse_segment(
 
     # Find matching Sections and MultiSections that are appropriate to
     # our layout (could be any number):
-    secPB = _findall_matching_sec(textBlock, requireColon=requireColon)
-    # Pull the ad-hoc `.secList` and `.multiSecList` attributes from the
+    secPB = _findall_matching_sec(text_block, require_colon=require_colon)
+    # Pull the ad-hoc `.sec_list` and `.multiSecList` attributes from the
     # ParseBag object, and absorb the rest of the data into segParseBag:
-    wSecList = secPB.secList
+    wSecList = secPB.sec_list
     wMultiSecList = secPB.multiSecList
     segParseBag.absorb(secPB)
 
@@ -3273,7 +3282,7 @@ def _parse_segment(
     # the first character
     markersDict[0] = 'text_start'
     # Add the end of the string to the markersDict (may also get overwritten)
-    markersDict[len(textBlock)] = 'text_end'
+    markersDict[len(text_block)] = 'text_end'
 
     for tuple in wTRList:
         working_tr_list.append(tuple[0])
@@ -3292,29 +3301,29 @@ def _parse_segment(
 
     # If we're in either 'TRS_desc' or 'S_desc_TR' layouts and discovered
     # neither a standalone section nor a multiSec, then rerun the parse
-    # under the same kwargs, except with requireColon='second_pass' (which
-    # sets requireColonBool=False), to see if we can capture a section after
+    # under the same kwargs, except with require_colon='second_pass' (which
+    # sets require_colonBool=False), to see if we can capture a section after
     # all. Will return those results instead:
     do_second_pass = True
     if layout not in ['TRS_desc', 'S_desc_TR']:
         do_second_pass = False
     if len(working_sec_list) > 0 or len(working_multiSec_list) > 0:
         do_second_pass = False
-    if requireColon != 'default_colon':
+    if require_colon != 'default_colon':
         do_second_pass = False
     if do_second_pass:
         replacementMidPB = _parse_segment(
-            textBlock=textBlock, layout=layout, requireColon='second_pass',
-            handedDownConfig=handedDownConfig, initParseQQ=initParseQQ)
-        TRS_found = replacementMidPB.parsedTracts[0].trs is not None
+            text_block=text_block, layout=layout, require_colon='second_pass',
+            handed_down_config=handed_down_config, init_parse_qq=init_parse_qq)
+        TRS_found = replacementMidPB.parsed_tracts[0].trs is not None
         if TRS_found:
             # If THIS time we successfully found a TRS, flag that we ran
             # it without requiring colon...
-            replacementMidPB.wFlagList.append('pulled_sec_without_colon')
-            for trObj in replacementMidPB.parsedTracts:
-                trObj.wFlagList.append('pulled_sec_without_colon')
+            replacementMidPB.w_flags.append('pulled_sec_without_colon')
+            for trObj in replacementMidPB.parsed_tracts:
+                trObj.w_flags.append('pulled_sec_without_colon')
             # TODO: Note, this may not get applied to all Tract objects
-            #   in the entire .parsedTracts TractList.
+            #   in the entire .parsed_tracts TractList.
         return replacementMidPB
 
     # Get a list of all of the keys, then sort them, so that we're pulling
@@ -3322,7 +3331,8 @@ def _parse_segment(
     mrkrsLst = list(markersDict.keys())
     mrkrsLst.sort()  # We sort the keys, so that we're pulling first-to-last.
 
-    def new_tract(textForNewDesc, sec='default_sec', tr='default_tr') -> Tract:
+    def new_tract(
+            text_for_new_desc, sec='default_sec', tr='default_tr') -> Tract:
         """
         Create and return a new Tract object, using the current
         working_sec and working_tr, unless otherwise specified (e.g., for
@@ -3334,15 +3344,16 @@ def _parse_segment(
         if tr == 'default_tr':
             tr = working_tr
         return Tract(
-            desc=textForNewDesc, trs=tr + sec, config=handedDownConfig,
-            initParseQQ=initParseQQ)
+            desc=text_for_new_desc, trs=tr + sec, config=handed_down_config,
+            init_parse_qq=init_parse_qq)
 
-    def flag_unused(unusedText, context):
+    def flag_unused(unused_text, context):
         """
         Create a warning flag and flagLine for unused text.
         """
-        segParseBag.wFlagList.append(f"Unused_desc_<{unusedText}>")
-        segParseBag.wFlagLines.append((f"Unused_desc_<{unusedText}>", context))
+        flag = f"Unused_desc_<{unused_text}>"
+        segParseBag.w_flags.append(flag)
+        segParseBag.w_flag_lines.append((flag, context))
 
     if layout in ['desc_STR', 'TR_desc_S']:
         # These two layouts are handled nearly identically, except that
@@ -3432,8 +3443,8 @@ def _parse_segment(
                 # text between this marker and the next.
                 TractObj = new_tract(
                     clean_as_needed(
-                        textBlock[mrkrsLst[i]:mrkrsLst[i + 1]].strip()))
-                segParseBag.parsedTracts.append(TractObj)
+                        text_block[mrkrsLst[i]:mrkrsLst[i + 1]].strip()))
+                segParseBag.parsed_tracts.append(TractObj)
                 if i + 2 <= len(mrkrsLst):
                     secErrorWriteBackToPos = mrkrsLst[i + 2]
                 else:
@@ -3451,9 +3462,9 @@ def _parse_segment(
                 for sec in working_multiSec:
                     TractObj = new_tract(
                         clean_as_needed(
-                            textBlock[mrkrsLst[i]:mrkrsLst[i + 1]].strip()),
+                            text_block[mrkrsLst[i]:mrkrsLst[i + 1]].strip()),
                         sec)
-                    segParseBag.parsedTracts.append(TractObj)
+                    segParseBag.parsed_tracts.append(TractObj)
                 if i + 2 <= len(mrkrsLst):
                     secErrorWriteBackToPos = mrkrsLst[i + 2]
                 else:
@@ -3469,9 +3480,9 @@ def _parse_segment(
                 # make a flawed TractObj with  that secError.
                 TractObj = new_tract(
                     clean_as_needed(
-                        textBlock[secErrorWriteBackToPos:mrkrsLst[i + 1]].strip()),
+                        text_block[secErrorWriteBackToPos:mrkrsLst[i + 1]].strip()),
                     'secError')
-                segParseBag.parsedTracts.append(TractObj)
+                segParseBag.parsed_tracts.append(TractObj)
 
             elif markerType == 'sec_start':
                 if len(working_sec_list) == 0:
@@ -3489,12 +3500,12 @@ def _parse_segment(
 
             elif markerType == 'sec_end':
                 if nextMarkerType not in ['sec_start', 'tr_start', 'multiSec_start'] \
-                        and markerPos != len(textBlock):
+                        and markerPos != len(text_block):
                     # Whenever we come across a Section end, the next thing must
                     # be either a sec_start, multiSec_start, or tr_start.
                     # Hence the warning flag, if that's not true:
-                    unusedText = textBlock[mrkrsLst[i]:mrkrsLst[i + 1]].strip()
-                    segParseBag.wFlagList.append('Unused_desc_<%s>' % unusedText)
+                    unusedText = text_block[mrkrsLst[i]:mrkrsLst[i + 1]].strip()
+                    segParseBag.w_flags.append('Unused_desc_<%s>' % unusedText)
 
             elif markerType == 'text_end':
                 break
@@ -3508,18 +3519,18 @@ def _parse_segment(
                 # multi-Section, the next thing must be either a sec_start,
                 # multiSec_start, or tr_start. Hence the warning flag, if that's
                 # not true:
-                unusedText = textBlock[mrkrsLst[i]:mrkrsLst[i + 1]].strip()
-                flag_unused(unusedText, textBlock[lastMarkerPos:nextMarkerPos])
+                unusedText = text_block[mrkrsLst[i]:mrkrsLst[i + 1]].strip()
+                flag_unused(unusedText, text_block[lastMarkerPos:nextMarkerPos])
 
             # Capture unused text at the end of a section/multiSec (if appropriate).
             if layout == 'desc_STR' \
                     and markerType in ['sec_end', 'multiSec_end'] \
                     and not finalRun \
                     and nextMarkerType not in ['sec_start', 'multiSec_start']:
-                unusedText = textBlock[markerPos:nextMarkerPos]
+                unusedText = text_block[markerPos:nextMarkerPos]
                 if len(_cleanup_desc(unusedText)) > 3:
                     flag_unused(
-                        unusedText, textBlock[lastMarkerPos:nextMarkerPos])
+                        unusedText, text_block[lastMarkerPos:nextMarkerPos])
 
     if layout == 'S_desc_TR':
         # TODO: Can probably cut out a lot of lines of code by combining
@@ -3598,8 +3609,8 @@ def _parse_segment(
                 # between this marker and the next.
                 TractObj = new_tract(
                     clean_as_needed(
-                        textBlock[mrkrsLst[i]:mrkrsLst[i + 1]].strip()))
-                segParseBag.parsedTracts.append(TractObj)
+                        text_block[mrkrsLst[i]:mrkrsLst[i + 1]].strip()))
+                segParseBag.parsed_tracts.append(TractObj)
 
             elif markerType == 'multiSec_end':
                 # We found start of a new desc block (betw multiSec end
@@ -3613,9 +3624,9 @@ def _parse_segment(
                 for sec in working_multiSec:
                     TractObj = new_tract(
                         clean_as_needed(
-                            textBlock[mrkrsLst[i]:mrkrsLst[i + 1]].strip()),
+                            text_block[mrkrsLst[i]:mrkrsLst[i + 1]].strip()),
                         sec)
-                    segParseBag.parsedTracts.append(TractObj)
+                    segParseBag.parsed_tracts.append(TractObj)
 
             elif markerType == 'tr_start':  # Pull the next T&R in our list
                 if len(working_tr_list) == 0:
@@ -3627,10 +3638,10 @@ def _parse_segment(
             elif markerType == 'tr_end':
                 # The only effect 'tr_end' has on this layout is checking
                 # for unused text.
-                unusedText = textBlock[markerPos:nextMarkerPos]
+                unusedText = text_block[markerPos:nextMarkerPos]
                 if len(unusedText.strip()) > 2:
                     flag_unused(
-                        unusedText, textBlock[lastMarkerPos:nextMarkerPos])
+                        unusedText, text_block[lastMarkerPos:nextMarkerPos])
 
     if layout == 'copy_all':
         # A minimally-processed layout option. Basically just copies the
@@ -3658,8 +3669,8 @@ def _parse_segment(
 
         # Append a dummy TractObj that contains the full text as its `.desc`
         # attribute. TRS is arbitrary, but will pull a TR + sec, if found.
-        TractObj = new_tract(textBlock)
-        segParseBag.parsedTracts.append(TractObj)
+        TractObj = new_tract(text_block)
+        segParseBag.parsed_tracts.append(TractObj)
 
     if layout == 'TRS_desc':
 
@@ -3711,16 +3722,16 @@ def _parse_segment(
             elif markerType == 'tr_start':
                 # Pull the next T&R in our list
                 if lastMarkerType == 'tr_end':
-                    segParseBag.eFlagList.append('Unused_TR<%s>' % working_tr)
+                    segParseBag.e_flags.append('Unused_TR<%s>' % working_tr)
                 working_tr = working_tr_list.pop(0)
 
             elif markerType == 'tr_end':
                 # The only effect 'tr_end' has on this layout is checking
                 # for unused text.
-                unusedText = textBlock[markerPos:nextMarkerPos]
+                unusedText = text_block[markerPos:nextMarkerPos]
                 if len(unusedText.strip()) > 2:
                     flag_unused(
-                        unusedText, textBlock[lastMarkerPos:nextMarkerPos])
+                        unusedText, text_block[lastMarkerPos:nextMarkerPos])
 
             elif markerType == 'sec_start':
                 if len(working_sec_list) == 0:
@@ -3743,8 +3754,8 @@ def _parse_segment(
                 # and working_sec into a TRS, with the desc being the text
                 # between this marker and the next.
                 TractObj = new_tract(
-                    clean_as_needed(textBlock[markerPos:nextMarkerPos].strip()))
-                segParseBag.parsedTracts.append(TractObj)
+                    clean_as_needed(text_block[markerPos:nextMarkerPos].strip()))
+                segParseBag.parsed_tracts.append(TractObj)
 
             elif markerType == 'multiSec_end':
                 # Create a series of new TractObjs, compiling our current
@@ -3753,19 +3764,19 @@ def _parse_segment(
                 # marker and the next.
                 for sec in working_multiSec:
                     TractObj = new_tract(
-                        clean_as_needed(textBlock[markerPos:nextMarkerPos].strip()), sec)
-                    segParseBag.parsedTracts.append(TractObj)
+                        clean_as_needed(text_block[markerPos:nextMarkerPos].strip()), sec)
+                    segParseBag.parsed_tracts.append(TractObj)
 
             elif markerType == 'text_end':
                 break
 
-    if len(segParseBag.parsedTracts) == 0:
+    if len(segParseBag.parsed_tracts) == 0:
         # If we identified no Tracts in this segment, re-parse using
         # 'copy_all' layout.
         replacementPB = _parse_segment(
-            textBlock, layout='copy_all', cleanUp=False, requireColon=False,
-            handedDownConfig=handedDownConfig, initParseQQ=initParseQQ,
-            cleanQQ=cleanQQ)
+            text_block, layout='copy_all', clean_up=False, require_colon=False,
+            handed_down_config=handed_down_config, init_parse_qq=init_parse_qq,
+            clean_qq=clean_qq)
         return replacementPB
 
     return segParseBag
@@ -3797,7 +3808,7 @@ def _cleanup_desc(text):
     return text
 
 
-def find_tr(text, defaultNS='n', defaultEW='w'):
+def find_twprge(text, default_ns='n', default_ew='w'):
     """
     Returns a list of all T&R's in the text (formatted as '000n000w',
     or with fewer digits as needed).
@@ -3809,7 +3820,7 @@ def find_tr(text, defaultNS='n', defaultEW='w'):
 
     # For each match, compile a clean T&R and append it.
     for twprge_mo in twprge_mo_iter:
-        tr_list.append(_compile_tr_mo(twprge_mo))
+        tr_list.append(_compile_twprge_mo(twprge_mo))
     return tr_list
 
 
@@ -3833,18 +3844,18 @@ def _ocr_scrub_alpha_to_num(text):
     return text
 
 
-def _preprocess_tr_mo(tr_mo, defaultNS='n', defaultEW='w') -> str:
+def _preprocess_twprge_mo(tr_mo, default_ns='n', default_ew='w') -> str:
     """
     INTERNAL USE:
     Take a T&R match object (tr_mo) and check for missing 'T', 'R', and
     and if N/S and E/W are filled in. Will fill in any missing elements
-    (using defaultNS and defaultEW as necessary) and outputs a string in
+    (using default_ns and default_ew as necessary) and outputs a string in
     the format T000N-R000W (or fewer digits for twp & rge), which is to
     be swapped into the source text where the tr_mo was originally
-    matched, in order to clean up the ppDesc.
+    matched, in order to clean up the pp_desc.
     """
 
-    clean_tr = _compile_tr_mo(tr_mo, defaultNS=defaultNS, defaultEW=defaultEW)
+    clean_tr = _compile_twprge_mo(tr_mo, default_ns=default_ns, default_ew=default_ew)
     twp, ns, rge, ew = decompile_twprge(clean_tr)
 
     # Maintain the first character, if it's a whitespace:
@@ -3866,7 +3877,7 @@ def _preprocess_tr_mo(tr_mo, defaultNS='n', defaultEW='w') -> str:
     return output_ppTR
 
 
-def decompile_twprge(tr_string) -> tuple:
+def decompile_twprge(twprge) -> tuple:
     """
     Take a compiled T&R (format '000n000w', or fewer digits) and break
     it into four elements, returned as a 4-tuple:
@@ -3875,7 +3886,7 @@ def decompile_twprge(tr_string) -> tuple:
             ('TRerr', None, 'TRerr', None).
         ex: '154n97w'   -> ('154', 'n', '97', 'w')
         ex: 'TRerr'     -> ('TRerr', None, 'TRerr', None)"""
-    twp, rge, _ = break_trs(tr_string)
+    twp, rge, _ = break_trs(twprge)
     twp_dir = None
     rge_dir = None
     if twp != 'TRerr':
@@ -3888,7 +3899,7 @@ def decompile_twprge(tr_string) -> tuple:
     return (twp, twp_dir, rge, rge_dir)
 
 
-def _compile_tr_mo(mo, defaultNS='n', defaultEW='w'):
+def _compile_twprge_mo(mo, default_ns='n', default_ew='w'):
     """
     INTERNAL USE:
     Take a match object (`mo`) of an identified T&R, and return a string
@@ -3898,7 +3909,7 @@ def _compile_tr_mo(mo, defaultNS='n', defaultEW='w'):
 
     twpNum = mo[2]
     # Clean up any leading '0's in twpNum.
-    # (Try/except is used to handle twprge_ocrScrub_regex mo's, which
+    # (Try/except is used to handle twprge_ocr_scrub_regex mo's, which
     # can contain alpha characters in `twpNum`.)
     try:
         twpNum = str(int(twpNum))
@@ -3907,7 +3918,7 @@ def _compile_tr_mo(mo, defaultNS='n', defaultEW='w'):
 
     # if mo[4] is None:
     if mo.group(3) == '':
-        ns = defaultNS
+        ns = default_ns
     else:
         ns = mo[3][0].lower()
 
@@ -3924,7 +3935,7 @@ def _compile_tr_mo(mo, defaultNS='n', defaultEW='w'):
         rgeNum = mo[6]
 
     ### Clean up any leading '0's in rgeNum.
-    # (Try/except is used to handle twprge_ocrScrub_regex mo's, which
+    # (Try/except is used to handle twprge_ocr_scrub_regex mo's, which
     # can contain alpha characters in `rgeNum`.)
     try:
         rgeNum = str(int(rgeNum))
@@ -3938,14 +3949,14 @@ def _compile_tr_mo(mo, defaultNS='n', defaultEW='w'):
         # So we handle those ones with extra if/else...
         if mo[13] is None:
             if mo[7] in ['', None]:
-                ew = defaultEW
+                ew = default_ew
             else:
                 ew = mo[7][0].lower()
         else:
             ew = mo[13][0].lower()
     else:
         if mo[7] in ['', None]:
-            ew = defaultEW
+            ew = default_ew
         else:
             ew = mo[7][0].lower()
 
@@ -3961,7 +3972,7 @@ def _compile_sec_mo(sec_mo):
     """
     if _is_multisec(sec_mo):
         multiSecParseBagObj = _unpack_sections(sec_mo.group())
-        return multiSecParseBagObj.secList  # Pull out the secList
+        return multiSecParseBagObj.sec_list  # Pull out the sec_list
     elif _is_singlesec(sec_mo):
         return _get_last_sec(sec_mo).rjust(2, '0')
     else:
@@ -4006,7 +4017,7 @@ def find_multisec(text, flat=True) -> list:
 
     for multiSec in packedMultiSec_list:
         multiSecParseBagObj = _unpack_sections(multiSec)
-        workingSecList = multiSecParseBagObj.secList
+        workingSecList = multiSecParseBagObj.sec_list
         if len(workingSecList) == 1:
             # skip any single-section matches
             continue
@@ -4018,23 +4029,23 @@ def find_multisec(text, flat=True) -> list:
     return unpackedMultiSec_list
 
 
-def _unpack_sections(secTextBlock):
+def _unpack_sections(sec_text_block):
     """
     INTERNAL USE:
     Feed in a string of a multiSec_regex match object, and return a
-    ParseBag object with a .secList attribute containing all of the
+    ParseBag object with a .sec_list attribute containing all of the
     sections (i.e. 'Sections 2, 3, 9 - 11' will return ParseBag whose
-    .secList contains ['02', '03', '09', '10', 11'].
+    .sec_list contains ['02', '03', '09', '10', 11'].
     """
 
     # TODO: Maybe just put together a simpler algorithm. Since there's
     #   so much less possible text in a list of Sections, can probably
     #   just add from left-to-right, unlike _unpack_lots.
 
-    multiSecParseBag = ParseBag(parentType='multiSec')
+    multiSecParseBag = ParseBag(parent_type='multisec')
 
     sectionsList = []  #
-    remainingSecText = secTextBlock
+    remainingSecText = sec_text_block
 
     # A working list of the sections. Note that this gets filled from
     # last-to-first on this working text block, but gets reversed at the end.
@@ -4075,8 +4086,8 @@ def _unpack_sections(secTextBlock):
                 correctOrder = True
                 if start_of_list >= end_of_list:
                     correctOrder = False
-                    multiSecParseBag.wFlagList.append('nonSequen_sec')
-                    multiSecParseBag.wFlagLines.append(
+                    multiSecParseBag.w_flags.append('nonSequen_sec')
+                    multiSecParseBag.w_flag_lines.append(
                         ('nonSequen_sec',
                          f'Sections {start_of_list} - {end_of_list}')
                     )
@@ -4108,8 +4119,8 @@ def _unpack_sections(secTextBlock):
                 for i in range(a, b, c):
                     addSec = str(i).rjust(2, '0')
                     if addSec in wSectionsList:
-                        multiSecParseBag.wFlagList.append(f'dup_sec<{addSec}>')
-                        multiSecParseBag.wFlagLines.append(
+                        multiSecParseBag.w_flags.append(f'dup_sec<{addSec}>')
+                        multiSecParseBag.w_flag_lines.append(
                             (f'dup_sec<{addSec}>', f'Section {addSec}'))
                     wSectionsList.append(addSec)
                 foundThrough = False  # Reset the foundThrough.
@@ -4120,8 +4131,8 @@ def _unpack_sections(secTextBlock):
                 # We check this new section to see if it's in EITHER
                 #   sectionsList OR wSectionsList:
                 if newSec in sectionsList or newSec in wSectionsList:
-                    multiSecParseBag.wFlagList.append('dup_sec')
-                    multiSecParseBag.wFlagLines.append(
+                    multiSecParseBag.w_flags.append('dup_sec')
+                    multiSecParseBag.w_flag_lines.append(
                         ('dup_sec', f'Section {newSec}'))
                 wSectionsList.append(newSec)
 
@@ -4136,7 +4147,7 @@ def _unpack_sections(secTextBlock):
                 else:
                     foundThrough = True
     wSectionsList.reverse()
-    multiSecParseBag.secList = wSectionsList
+    multiSecParseBag.sec_list = wSectionsList
 
     return multiSecParseBag
 
@@ -4145,37 +4156,37 @@ def _unpack_sections(secTextBlock):
 # Tools for interpreting multiSec_regex match objects:
 ########################################################################
 
-def _is_multisec(multiSec_mo) -> bool:
+def _is_multisec(multisec_mo) -> bool:
     """
     INTERNAL USE:
     Determine whether a multiSec_regex match object is a multiSec.
     """
-    return multiSec_mo.group(12) is not None
+    return multisec_mo.group(12) is not None
 
 
-def _is_singlesec(multiSec_mo) -> bool:
+def _is_singlesec(multisec_mo) -> bool:
     """
     INTERNAL USE:
     Determine whether a multiSec_regex match object is a single section.
     """
-    return (multiSec_mo.group(12) is None) and (multiSec_mo.group(5) is not None)
+    return (multisec_mo.group(12) is None) and (multisec_mo.group(5) is not None)
 
 
-def _get_last_sec(multiSec_mo) -> str:
+def _get_last_sec(multisec_mo) -> str:
     """
     INTERNAL USE:
     Extract the right-most section in a multiSec_regex match object.
     Returns None if no match.
     """
-    if _is_multisec(multiSec_mo):
-        return multiSec_mo.group(12)
-    elif _is_singlesec(multiSec_mo):
-        return multiSec_mo.group(5)
+    if _is_multisec(multisec_mo):
+        return multisec_mo.group(12)
+    elif _is_singlesec(multisec_mo):
+        return multisec_mo.group(5)
     else:
         return None
 
 
-def _is_plural_singlesec(multiSec_mo) -> bool:
+def _is_plural_singlesec(multisec_mo) -> bool:
     """
     INTERNAL USE:
     Determine if a multiSec_regex match object is a single section
@@ -4183,25 +4194,25 @@ def _is_plural_singlesec(multiSec_mo) -> bool:
     """
     # Only a single section in this match...
     # But there's a plural "Sections" anyway!
-    if _is_singlesec(multiSec_mo) and multiSec_mo.group(4) is not None:
-        return multiSec_mo.group(4).lower() == 's'
+    if _is_singlesec(multisec_mo) and multisec_mo.group(4) is not None:
+        return multisec_mo.group(4).lower() == 's'
     else:
         return False
 
 
-def _sec_ends_with_colon(multiSec_mo) -> bool:
+def _sec_ends_with_colon(multisec_mo) -> bool:
     """
     INTERNAL USE:
     Determine whether a multiSec_regex match object ends with a colon.
     """
-    return multiSec_mo.group(13) == ':'
+    return multisec_mo.group(13) == ':'
 
 
 ########################################################################
 # Tools for Tract.parse():
 ########################################################################
 
-def _scrub_aliquots(text, cleanQQ=False) -> str:
+def _scrub_aliquots(text, clean_qq=False) -> str:
     """
     INTERNAL USE:
     Scrub the raw text of a Tract's description, to convert aliquot
@@ -4222,7 +4233,7 @@ def _scrub_aliquots(text, cleanQQ=False) -> str:
         # necessary context to prevent over-matching. For example, the
         # `NE_regex` must match '(\b|¼|4|½|2)' at the beginning, so that
         # we don't capture "one hundred" as "oNE¼ hundred".
-        # (The cleanQQ regexes do not have this requirement.)
+        # (The clean_qq regexes do not have this requirement.)
 
         while True:
             mo = regex_run.search(remainingText)
@@ -4245,7 +4256,7 @@ def _scrub_aliquots(text, cleanQQ=False) -> str:
 
     # If the user has specified that the input data is clean (i.e. no
     # metes-and-bounds tracts, etc.), then broader regexes can also be applied.
-    if cleanQQ:
+    if clean_qq:
         scrubber_rgxs.extend(
             [cleanNE_regex, cleanNW_regex, cleanSE_regex, cleanSW_regex])
     # Now run each of the regexes over the text:
@@ -4438,12 +4449,12 @@ def _rebuild_aliquots(nested_aliquot_list: list):
     :return: A clean QQ list, in the format ['E2NWSE', 'E2SWSE'] (or
     smaller strings, if parsed to a less qq_depth_min).
     """
-    QQList = []
+    qq_list = []
     while len(nested_aliquot_list) > 0:
         deepest = nested_aliquot_list.pop(-1)
         if len(nested_aliquot_list) == 0:
             # deepest is our final QQ list
-            QQList = deepest
+            qq_list = deepest
             break
         second_deepest = nested_aliquot_list.pop(-1)
         rebuilt = []
@@ -4452,7 +4463,7 @@ def _rebuild_aliquots(nested_aliquot_list: list):
 
         nested_aliquot_list.append(rebuilt)
 
-    return QQList
+    return qq_list
 
 
 def _subdivide_aliquot(aliquot_component: str, depth: int):
@@ -4520,18 +4531,18 @@ def _subdivide_aliquot(aliquot_component: str, depth: int):
     return _rebuild_aliquots(divided)
 
 
-def _unpack_lots(lotTextBlock, includeLotDivs=True):
+def _unpack_lots(lot_text_block, include_lot_divs=True):
     """
     INTERNAL USE:
     Feed in a string of a lot_regex match object, and return a ParseBag
-    object with .lotList and .lotAcres attributes for all of the lots --
+    object with .lots and .lot_acres attributes for all of the lots --
 
     ex:  'Lot 1(39.80), 2(30.22)'
-        -> ParseBag_obj.lotList --> ['L1', 'L2']
-        -> ParseBag_obj.lotAcres --> {'L1' : '39.80', 'L2' : '30.22'}
+        -> ParseBag_obj.lots --> ['L1', 'L2']
+        -> ParseBag_obj.lot_acres --> {'L1' : '39.80', 'L2' : '30.22'}
     """
 
-    lotsParseBag = ParseBag(parentType='lotText')
+    lotsParseBag = ParseBag(parent_type='lot_text')
 
     # This will be the output list of Lot numbers [L1, L2, L5, ...]:
     lots = []
@@ -4549,7 +4560,7 @@ def _unpack_lots(lotTextBlock, includeLotDivs=True):
     # `foundThrough` will switch to True at the start of an elided list
     # (e.g., when we're at '3' in "Lots 3 - 9")
     foundThrough = False
-    remainingLotsText = lotTextBlock
+    remainingLotsText = lot_text_block
 
     while True:
         lots_mo = lot_regex.search(remainingLotsText)
@@ -4574,7 +4585,7 @@ def _unpack_lots(lotTextBlock, includeLotDivs=True):
             # Clean up any leading '0's in lotNum.
             lotNum = str(int(lotNum))
             if lotNum == '0':
-                lotsParseBag.wFlagList.append('Lot0')
+                lotsParseBag.w_flags.append('Lot0')
 
             newLot = 'L' + lotNum
 
@@ -4587,8 +4598,8 @@ def _unpack_lots(lotTextBlock, includeLotDivs=True):
                 end_of_list = int(prevLot[1:])
                 correctOrder = True
                 if start_of_list >= end_of_list:
-                    lotsParseBag.wFlagList.append('nonSequen_Lots')
-                    lotsParseBag.wFlagLines.append(
+                    lotsParseBag.w_flags.append('nonSequen_Lots')
+                    lotsParseBag.w_flag_lines.append(
                         ('nonSequen_Lots',
                          f"Lots {start_of_list} - {end_of_list}"))
                     correctOrder = False
@@ -4647,14 +4658,14 @@ def _unpack_lots(lotTextBlock, includeLotDivs=True):
     wLots.reverse()
     lots.extend(wLots)
 
-    if includeLotDivs:
-        # If we want includeLotDivs, add it to the front of each parsed lot.
+    if include_lot_divs:
+        # If we want include_lot_divs, add it to the front of each parsed lot.
         leadingAliq = _get_leading_aliquot(
-            lot_with_aliquot_regex.search(lotTextBlock))
+            lot_with_aliquot_regex.search(lot_text_block))
         leadingAliq = leadingAliq.replace('¼', '')
         leadingAliq = leadingAliq.replace('½', '2')
         if leadingAliq != '':
-            if _first_lot_is_plural(lot_regex.search(lotTextBlock)):
+            if _first_lot_is_plural(lot_regex.search(lot_text_block)):
                 # If the first lot is plural, we apply leadingAliq to
                 # all lots in the list
                 lots = [f'{leadingAliq} of {lot}' for lot in lots]
@@ -4667,8 +4678,8 @@ def _unpack_lots(lotTextBlock, includeLotDivs=True):
             #   permutations.  For example: 'N/2 of Lot 1 and 2' (meaning
             #   ['N2 of L1', 'N2 of L2']) is possible -- albeit poorly formatted
 
-    lotsParseBag.lotList = lots
-    lotsParseBag.lotAcres = lotsAcresDict
+    lotsParseBag.lots = lots
+    lotsParseBag.lot_acres = lotsAcresDict
 
     return lotsParseBag
 
@@ -4677,19 +4688,19 @@ def _unpack_lots(lotTextBlock, includeLotDivs=True):
 # Misc. tools
 ########################################################################
 
-def flatten(listOrTuple=None) -> list:
+def flatten(list_or_tuple=None) -> list:
     """
     Unpack the elements in a nested list or tuple into a flattened list.
     """
 
-    if listOrTuple is None:
+    if list_or_tuple is None:
         return []
 
-    if not isinstance(listOrTuple, (list, tuple)):
-        return [listOrTuple]
+    if not isinstance(list_or_tuple, (list, tuple)):
+        return [list_or_tuple]
     else:
         flattened = []
-        for element in listOrTuple:
+        for element in list_or_tuple:
             if not isinstance(element, (list, tuple)):
                 flattened.append(element)
             else:
@@ -4697,7 +4708,7 @@ def flatten(listOrTuple=None) -> list:
     return flattened
 
 
-def break_trs(trs : str) -> tuple:
+def break_trs(trs: str) -> tuple:
     """
     Break down a TRS that is already in the format '000n000w00' (or
     fewer digits for twp/rge) into its component parts.
@@ -4822,7 +4833,7 @@ def _start_of_last_lot(lots_mo) -> int:
 def _get_lot_acres(lots_mo) -> str:
     """
     INTERNAL USE:
-    Return the string of the lotAcres for the right-most lot, without
+    Return the string of the lot_acres for the right-most lot, without
     parentheses. If no match, then returns None.
     """
     try:
@@ -4941,18 +4952,18 @@ def _clean_attributes(*attributes) -> list:
 ########################################################################
 
 def output_to_csv(
-        filepath, TractDescList : list, attributes : list, includeSource=True,
-        resume=True, includeHeaders=True, unpackLists=False):
+        filepath, to_output: list, attributes: list, include_source=True,
+        resume=True, include_headers=True, unpack_lists=False):
     """
     Write the requested Tract data to a .csv file. Each Tract will be on
     its own row--with multiple rows per PLSSDesc object, as necessary.
 
     :param filepath: Path to the output .csv file.
-    :param TractDescList: A list of parsed PLSSDesc, Tract, and/or
-    TractList objects.
+    :param to_output: A list of parsed PLSSDesc, Tract, and/or TractList
+    objects.
     :param attributes: A list of the Tract attributes to extract and
-    write.  ex: ['trs', 'desc', 'wFlagList']
-    :param includeSource: Whether to include the `.source` attribute of
+    write.  ex: ['trs', 'desc', 'w_flags']
+    :param include_source: Whether to include the `.source` attribute of
     each written Tract object as the first column. (Defaults to True)
     :param resume: Whether to overwrite an existing file if found
     (i.e. `resume=False`) or to continue writing at the end of it
@@ -4962,8 +4973,8 @@ def output_to_csv(
     NOTE ALSO: If resuming a previous output, but with different
     attributes (or differently ordered) than before, the columns will be
     misaligned.
-    :param includeHeaders: Whether to write headers. Defaults to True.
-    :param unpackLists: Whether to try to flatten and join lists, or
+    :param include_headers: Whether to write headers. Defaults to True.
+    :param unpack_lists: Whether to try to flatten and join lists, or
     simply write them as they appear. (Defaults to `False`)
     :return: None.
     """
@@ -4980,7 +4991,7 @@ def output_to_csv(
     # If the file already exists and we're not writing a new file, turn
     # off headers
     if os.path.isfile(filepath) and resume:
-        includeHeaders = False
+        include_headers = False
 
     # Default to opening in `write` mode (create new file). However...
     openMode = 'w'
@@ -4991,28 +5002,28 @@ def output_to_csv(
     csvFile = open(filepath, openMode, newline='')
     outputWriter = csv.writer(csvFile)
 
-    if not isinstance(TractDescList, ACCEPTABLE_TYPES_PLUS):
+    if not isinstance(to_output, ACCEPTABLE_TYPES_PLUS):
         # If not the correct type, abort before writing any more.
         raise TypeError(
-            f"TractDescList must be passed as one of: {ACCEPTABLE_TYPES_PLUS}; "
-            f"passed as '{type(TractDescList)}'.")
-    TractDescList = flatten(TractDescList)
+            f"to_output must be passed as one of: {ACCEPTABLE_TYPES_PLUS}; "
+            f"passed as '{type(to_output)}'.")
+    to_output = flatten(to_output)
 
     attributes = flatten(attributes)
     # Ensure the type of each attribute is a str
     attributes = [
         att if isinstance(att, str) else 'Attribute TypeError' for att in attributes
     ]
-    if includeSource:
+    if include_source:
         # Mandate the inclusion of attribute 'source', unless overruled
-        # with `includeSource=False`
+        # with `include_source=False`
         attributes.insert(0, 'source')
 
-    if includeHeaders:
+    if include_headers:
         # Write the attribute names as headers:
         outputWriter.writerow(attributes)
 
-    for obj in TractDescList:
+    for obj in to_output:
         if not isinstance(obj, ACCEPTABLE_TYPES):
             raise TypeError(
                 f"Can only write types: {ACCEPTABLE_TYPES}; tried to write "
@@ -5030,7 +5041,7 @@ def output_to_csv(
         for TractData in allTractData:
             dataToWrite = []
             for data in TractData:
-                if isinstance(data, (list, tuple)) and unpackLists:
+                if isinstance(data, (list, tuple)) and unpack_lists:
                     # If this data is a list / tuple, flatten & join its
                     # elements with ',' and then append:
                     try:
@@ -5057,7 +5068,7 @@ __all__ = [
     IMPLEMENTED_LAYOUT_EXAMPLES,
     decompile_twprge,
     break_trs,
-    find_tr,
+    find_twprge,
     find_sec,
     find_multisec,
     output_to_csv

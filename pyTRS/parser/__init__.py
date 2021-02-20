@@ -15,7 +15,13 @@ The main parsing package. Primary classes:
 from .parser import PLSSDesc, Tract, TractList, Config
 
 # Misc. functions for examining / handling descriptions:
-from .parser import find_tr, find_sec, decompile_twprge, find_multisec, break_trs
+from .parser import (
+    find_twprge,
+    find_sec,
+    decompile_twprge,
+    find_multisec,
+    break_trs
+)
 
 # For outputting parsed data to csv files
 from .parser import output_to_csv
