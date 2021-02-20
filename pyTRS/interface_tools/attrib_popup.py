@@ -97,14 +97,14 @@ class PromptAttrib(tk.Frame):
         'rge': ['Range', 0],
         'sec': ['Section', 0],
         'desc': ['Description Block', 1],
-        'ppDesc': ['Preprocessed (cleaner) description block', 0],
-        'lotList': ['Lots', 0],
-        'QQList': ['Aliquot quarter-quarters (QQs)', 0],
-        'lotQQList': ['Lots and Aliquot quarter-quarters (QQs)', 1],
-        'wFlagList': ['Warning flags', 1],
-        'wFlagLines': ['Warning flag lines', 0],
-        'eFlagList': ['Error flags', 1],
-        'eFlagLines': ['Error flag lines', 0]
+        'pp_desc': ['Preprocessed (cleaner) description block', 0],
+        'lots': ['Lots', 0],
+        'qqs': ['Aliquot quarter-quarters (QQs)', 0],
+        'lots_qqs': ['Lots and Aliquot quarter-quarters (QQs)', 1],
+        'w_flags': ['Warning flags', 1],
+        'w_flag_lines': ['Warning flag lines', 0],
+        'e_flags': ['Error flags', 1],
+        'e_flag_lines': ['Error flag lines', 0]
     }
 
     def __init__(
@@ -189,10 +189,10 @@ class PromptAttrib(tk.Frame):
         # its value to the default value per STOCK_ATTRIBS, store it as
         # an instance variable, and also set it to the attrib_dict.
         # Finally, create a checkbutton for that attribute.
-        # So for attribute 'QQList':
+        # So for attribute 'qqs':
         #   -> self.QQListVar --> a tk.IntVar with initial value 0
-        #   -> self.attrib_dict['QQList'] --> self.QQListVar
-        #   -> <create a checkbutton for QQList>
+        #   -> self.attrib_dict['qqs'] --> self.QQListVar
+        #   -> <create a checkbutton for qqs>
         self.attrib_dict = dict()
         cur_row = 5
         for att in attribs:
