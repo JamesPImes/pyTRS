@@ -70,10 +70,10 @@ sec_regex = re.compile(
     """, re.IGNORECASE | re.VERBOSE)
 
 # This should find multiple sections, formatted up to 3 digits (e.g.,
-# "Sections 5, 6, 8 - 12"). Unpack with: unpack_sections()
+# "Sections 5, 6, 8 - 12"). Unpack with: _unpack_sections()
 # Note that this will also match a single section, so individual sections
 # must be ruled out (i.e. individual section matches will have
-# mo.group(12) != None). Can use funcs is_multisec() and is_singlesec()
+# mo.group(12) != None). Can use funcs _is_multisec() and _is_singlesec()
 # on the match objects.  This regex will also capture an optional colon
 # at the end.
 multiSec_regex = re.compile(
@@ -214,7 +214,7 @@ preproTR_noT_noWE_regex = re.compile(
 
 # With enough context, will capture T&R's with OCR artifacts (e.g.
 # "TIS4N-R97W" instead of intended "T154N-R97W").  Gets converted to
-# numerics in preprocess_tr_mo().
+# numerics in _preprocess_tr_mo().
 twprge_ocrScrub_regex = re.compile(
     r"""
     T(  # Move 'T' to outside the optional match, because 'T' is required
@@ -400,7 +400,7 @@ lot_regex = re.compile(
 #         -- or equivalent symbol / abbrev)
 #     group(14) ends with the stated acreage of the last lot ONLY when it occurs
 #         at the end of the matched string.  Get that stated acreage with
-#         lotAcres_unpacker_regex, which is baked into the get_lot_acres()
+#         lotAcres_unpacker_regex, which is baked into the _get_lot_acres()
 #         function.
 
 

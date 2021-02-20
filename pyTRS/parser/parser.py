@@ -69,7 +69,7 @@ QQ_SAME_AXIS = {
 }
 
 # Define what should replace matches of each regex that is used in the
-# scrub_aliquots() function.
+# _scrub_aliquots() function.
 QQ_SCRUBBER_DEFINITIONS = {
     NE_regex: 'NE¼',
     NW_regex: 'NW¼',
@@ -527,7 +527,7 @@ class PLSSDesc:
             flagText = text
 
         # When layout is specified at init, or when calling
-        # `.parse(layout=<string>)`, we prevent parse_segment() from deducing,
+        # `.parse(layout=<string>)`, we prevent _parse_segment() from deducing,
         # AS LONG AS the specified layout is among the implemented layouts.
         layout_specified = False
         if layout in _IMPLEMENTED_LAYOUTS:
@@ -591,7 +591,7 @@ class PLSSDesc:
         if segment:
             # Segment text into blocks, based on T&Rs that match our
             # layout requirements
-            trTextBlocks, discard_trTextBlocks = segment_by_tr(
+            trTextBlocks, discard_trTextBlocks = _segment_by_tr(
                 text, layout=layout, trFirst=None)
 
             # Append any discard text to the wFlagList
@@ -603,7 +603,7 @@ class PLSSDesc:
         else:
             # If not segmented parse, pack entire text into list, with
             # a leading empty str (to mirror the output of the
-            # segment_by_tr() function)
+            # _segment_by_tr() function)
             trTextBlocks = [('', text)]
 
         # ----------------------------------------
@@ -614,7 +614,7 @@ class PLSSDesc:
             if segment and layout != "copy_all":
                 # Let the segment parser deduce layout for each textBlock.
                 use_layout = None
-            midParseBag = parse_segment(
+            midParseBag = _parse_segment(
                 textBlock[1], cleanUp=cleanUp, requireColon=requireColon,
                 layout=use_layout, handedDownConfig=config,
                 initParseQQ=initParseQQ, cleanQQ=cleanQQ,
@@ -626,7 +626,7 @@ class PLSSDesc:
         # layout `copy_all`, and include appropriate errors.
         if len(bigPB.parsedTracts) == 0:
             bigPB.absorb(
-                parse_segment(
+                _parse_segment(
                     text, layout='copy_all', cleanUp=False, requireColon=False,
                     handedDownConfig=config, initParseQQ=initParseQQ,
                     cleanQQ=cleanQQ, qq_depth_min=qq_depth_min,
@@ -933,7 +933,7 @@ class PLSSDesc:
                         i = i + ppTr_mo.end()
                         continue
 
-                cleanTR = preprocess_tr_mo(
+                cleanTR = _preprocess_tr_mo(
                     ppTr_mo, defaultNS=defaultNS, defaultEW=defaultEW)
 
                 # Add to the w_ppDesc all of the searchTextBlock, up to the
@@ -1569,7 +1569,7 @@ class Tract:
                 twp = twp + defaultNS
             if ocrScrub:
                 # If configured so, OCR-scrub all but the final character
-                twp = ocr_scrub_alpha_to_num(twp[:-1]) + twp[-1]
+                twp = _ocr_scrub_alpha_to_num(twp[:-1]) + twp[-1]
             twp = twp.lower()
 
         # Get rge in a standardized format, if we can
@@ -1583,7 +1583,7 @@ class Tract:
                 rge = rge + defaultEW
             if ocrScrub:
                 # If configured so, OCR-scrub all but the final character
-                rge = ocr_scrub_alpha_to_num(rge[:-1]) + rge[-1]
+                rge = _ocr_scrub_alpha_to_num(rge[:-1]) + rge[-1]
             rge = rge.lower()
 
         # Get sec in a standardized format, if we can
@@ -1594,7 +1594,7 @@ class Tract:
             sec = str(int(sec)).rjust(2, '0')
             if ocrScrub:
                 # If configured so, OCR-scrub all characters
-                sec = ocr_scrub_alpha_to_num(sec)
+                sec = _ocr_scrub_alpha_to_num(sec)
         except ValueError:
             pass
 
@@ -1803,7 +1803,7 @@ class Tract:
         plqqParseBag = ParseBag(parentType='Tract')
 
         # Swap out NE/NW/SE/SW and N2/S2/E2/W2 matches for cleaner versions
-        text = scrub_aliquots(text, cleanQQ=cleanQQ)
+        text = _scrub_aliquots(text, cleanQQ=cleanQQ)
 
         # Extract the lots from the description (and leave the rest of
         # the description for aliquot parsing).  Replace any extracted
@@ -1833,7 +1833,7 @@ class Tract:
 
         for lotTextBlock in lotTextBlocks:
             # Unpack the lots in this lotTextBlock (and get a ParseBag back)
-            lotspb = unpack_lots(lotTextBlock, includeLotDivs=includeLotDivs)
+            lotspb = _unpack_lots(lotTextBlock, includeLotDivs=includeLotDivs)
 
             # Append these identified lots:
             lots.extend(lotspb.lotList)
@@ -1910,7 +1910,7 @@ class Tract:
             break_halves = self.break_halves
         QQList = []
         for aliqTextBlock in aliqTextBlocks:
-            wQQList = unpack_aliquots(
+            wQQList = _unpack_aliquots(
                 aliqTextBlock, qq_depth_min, qq_depth_max, qq_depth,
                 break_halves)
             QQList.extend(wQQList)
@@ -1950,7 +1950,7 @@ class Tract:
         if cleanQQ is None:
             cleanQQ = self.cleanQQ
 
-        text = scrub_aliquots(text, cleanQQ=cleanQQ)
+        text = _scrub_aliquots(text, cleanQQ=cleanQQ)
 
         if commit:
             self.ppDesc = text
@@ -1969,7 +1969,7 @@ class Tract:
 
         # Unpack any lists or tuples included among attributes, and
         # ensure elements are all strings:
-        attributes = clean_attributes(attributes)
+        attributes = _clean_attributes(attributes)
 
         return {att: getattr(self, att, f"{att}: n/a") for att in attributes}
 
@@ -1982,7 +1982,7 @@ class Tract:
         :return: A list of attribute values.
         """
 
-        attributes = clean_attributes(attributes)
+        attributes = _clean_attributes(attributes)
         return [getattr(self, att, f"{att}: n/a") for att in attributes]
 
     def quick_desc(self, delim=': ') -> str:
@@ -2094,7 +2094,7 @@ class TractList(list):
         # Ensure all elements are legal.
         self.check_illegal()
 
-        attributes = clean_attributes(attributes)
+        attributes = _clean_attributes(attributes)
 
         return [t.to_dict(attributes) for t in self]
 
@@ -2133,7 +2133,7 @@ class TractList(list):
         # Ensure all elements are legal.
         self.check_illegal()
 
-        attributes = clean_attributes(attributes)
+        attributes = _clean_attributes(attributes)
 
         return [t.to_list(attributes) for t in self]
 
@@ -2172,7 +2172,7 @@ class TractList(list):
         # Ensure all elements are legal.
         self.check_illegal()
 
-        attributes = clean_attributes(attributes)
+        attributes = _clean_attributes(attributes)
 
         # How far to justify the attribute names in the output str:
         longest = max([len(att) for att in attributes])
@@ -2751,7 +2751,7 @@ class Config:
 # Tools and functions for PLSSDesc.parse()
 ########################################################################
 
-def findall_matching_tr(text, layout=None) -> ParseBag:
+def _findall_matching_tr(text, layout=None) -> ParseBag:
     """
     INTERNAL USE:
 
@@ -2832,7 +2832,7 @@ def findall_matching_tr(text, layout=None) -> ParseBag:
             i = i + len(tr_mo.group())
 
             # and append a warning flag that we've ignored this T&R:
-            ignoredTR = compile_tr_mo(tr_mo)
+            ignoredTR = _compile_tr_mo(tr_mo)
             flag = 'TR_not_pulled<%s>' % ignoredTR
             line = tr_mo.group()
             trParseBag.wFlagList.append(flag)
@@ -2843,7 +2843,7 @@ def findall_matching_tr(text, layout=None) -> ParseBag:
         # other than TRS_desc or S_desc_TR, then this IS a match and we
         # want to store it.
         else:
-            wTRList.append((compile_tr_mo(tr_mo), i, i + len(tr_mo.group())))
+            wTRList.append((_compile_tr_mo(tr_mo), i, i + len(tr_mo.group())))
             # Move the parsing index to the end of the T&R that we just matched:
             i = i + len(tr_mo.group())
             continue
@@ -2854,13 +2854,13 @@ def findall_matching_tr(text, layout=None) -> ParseBag:
     return trParseBag
 
 
-def segment_by_tr(text, layout=None, trFirst=None):
+def _segment_by_tr(text, layout=None, trFirst=None):
     """
     INTERNAL USE:
 
     Break the description into segments, based on previously
     identified T&R's that match our description layout via the
-    findall_matching_tr() function. Returns a list of textBlocks AND a
+    _findall_matching_tr() function. Returns a list of textBlocks AND a
     list of discarded textBlocks.
 
     :param layout: Which layout to use. If not specified, will deduce.
@@ -2878,7 +2878,7 @@ def segment_by_tr(text, layout=None, trFirst=None):
             trFirst = False
 
     # Search for all T&R's that match the layout requirements.
-    trMatchPB = findall_matching_tr(text, layout=layout)
+    trMatchPB = _findall_matching_tr(text, layout=layout)
 
     # Pull ad-hoc `.trPosList` attribute from the ParseBag object. Do not absorb the rest.
     wTRList = trMatchPB.trPosList
@@ -2909,7 +2909,7 @@ def segment_by_tr(text, layout=None, trFirst=None):
             new_desc = text[trStartPoints[i]:]
             if i + 1 != len(trStartPoints):
                 new_desc = text[trStartPoints[i]:trStartPoints[i + 1]]
-            trTextBlocks.append((trList.pop(0), cleanup_desc(new_desc)))
+            trTextBlocks.append((trList.pop(0), _cleanup_desc(new_desc)))
 
     else:
         for i in range(len(trEndPoints)):
@@ -2921,12 +2921,12 @@ def segment_by_tr(text, layout=None, trFirst=None):
             new_desc = text[:trEndPoints[i]]
             if i != 0:
                 new_desc = text[trEndPoints[i - 1]:trEndPoints[i]]
-            trTextBlocks.append((trList.pop(0), cleanup_desc(new_desc)))
+            trTextBlocks.append((trList.pop(0), _cleanup_desc(new_desc)))
 
     return trTextBlocks, discardTextBlocks
 
 
-def findall_matching_sec(text, layout=None, requireColon='default_colon'):
+def _findall_matching_sec(text, layout=None, requireColon='default_colon'):
     """
     INTERNAL USE:
 
@@ -3028,7 +3028,7 @@ def findall_matching_sec(text, layout=None, requireColon='default_colon'):
         # sections and multi-Sections that are followed by a colon (if
         # requiredColonBool == True):
         if (requireColonBool) and (layout in ['TRS_desc', 'S_desc_TR']) and \
-                not (sec_ends_with_colon(sec_mo)):
+                not (_sec_ends_with_colon(sec_mo)):
             ruledOut = True
 
         if ruledOut:
@@ -3038,7 +3038,7 @@ def findall_matching_sec(text, layout=None, requireColon='default_colon'):
 
             # Create a warning flag, that we did not pull this section or
             # multiSec and move on to the next loop.
-            ignoredSec = compile_sec_mo(sec_mo)
+            ignoredSec = _compile_sec_mo(sec_mo)
             if isinstance(ignoredSec, list):
                 flag = 'multiSec_not_pulled<%s>' % ', '.join(ignoredSec)
             else:
@@ -3053,9 +3053,9 @@ def findall_matching_sec(text, layout=None, requireColon='default_colon'):
         # If we've gotten to here, then we've found a section or multiSec
         # that we want. Determine which it is, and append it to the respective
         # list:
-        if is_multisec(sec_mo):
+        if _is_multisec(sec_mo):
             # If it's a multiSec, _unpack it, and append it to the wMultiSecList.
-            multiSecParseBagObj = unpack_sections(sec_mo.group())
+            multiSecParseBagObj = _unpack_sections(sec_mo.group())
             # Pull out the secList.
             unpackedMultiSec = multiSecParseBagObj.secList
 
@@ -3071,14 +3071,14 @@ def findall_matching_sec(text, layout=None, requireColon='default_colon'):
             wMultiSecList.append((unpackedMultiSec, i, adj_secmo_end(sec_mo)))
         else:
             # Append the tuple for this individual section
-            wSecList.append((compile_sec_mo(sec_mo), i, adj_secmo_end(sec_mo)))
+            wSecList.append((_compile_sec_mo(sec_mo), i, adj_secmo_end(sec_mo)))
 
         # And move the parser index to the end of our current sec_mo
         i = sec_mo.end()
 
     # If we're in either 'TRS_desc' or 'S_desc_TR' layouts and discovered
     # neither a standalone section nor a multiSec, then rerun
-    # findall_matching_sec() under the same kwargs, except with
+    # _findall_matching_sec() under the same kwargs, except with
     # requireColon='second_pass' (which sets requireColonBool=False),
     # to see if we can capture a section after all.
     # Will return those results instead.
@@ -3090,7 +3090,7 @@ def findall_matching_sec(text, layout=None, requireColon='default_colon'):
     if requireColon != 'default_colon':
         do_second_pass = False
     if do_second_pass:
-        pass2_PB = findall_matching_sec(
+        pass2_PB = _findall_matching_sec(
             text, layout=layout, requireColon='second_pass')
         if len(pass2_PB.secList) > 0 or len(pass2_PB.multiSecList) > 0:
             pass2_PB.wFlagList.append('pulled_sec_without_colon')
@@ -3102,7 +3102,7 @@ def findall_matching_sec(text, layout=None, requireColon='default_colon'):
     return secPB
 
 
-def parse_segment(
+def _parse_segment(
         textBlock, layout=None, cleanUp=None, requireColon='default_colon',
         handedDownConfig=None, initParseQQ=False, cleanQQ=None,
         qq_depth_min=None, qq_depth_max=None, qq_depth=None,
@@ -3178,10 +3178,10 @@ def parse_segment(
     #       `PLSSDesc.deduceSegment()`
     # 3) Based on the layout, pull each of the T&R's that match our
     #       layout (for segmented parse, /should/ only be one), with
-    #       `findall_matching_tr()` function.
+    #       `_findall_matching_tr()` function.
     # 4) Based on the layout, pull each of the Sections and
     #       Multi-Sections that match our layout with
-    #       `findall_matching_sec()` function.
+    #       `_findall_matching_sec()` function.
     # 5) Combine all of the positions of starts/ends of T&R's, Sections,
     #       and Multisections into a single dict.
     # 6) Based on layout, apply the appropriate algorithm for breaking
@@ -3235,13 +3235,13 @@ def parse_segment(
         cleaned-up version of it, depending on the bool `cleanUp`.
         """
         if cleanUp:
-            return cleanup_desc(candidateText)
+            return _cleanup_desc(candidateText)
         else:
             return candidateText
 
     # Find matching TR's that are appropriate to our layout (should only
     # be one, due to segmentation):
-    trPB = findall_matching_tr(textBlock)
+    trPB = _findall_matching_tr(textBlock)
     # Pull the ad-hoc `.trPosList` attribute from the ParseBag object,
     # and absorb the rest of the data into segParseBag:
     wTRList = trPB.trPosList
@@ -3249,7 +3249,7 @@ def parse_segment(
 
     # Find matching Sections and MultiSections that are appropriate to
     # our layout (could be any number):
-    secPB = findall_matching_sec(textBlock, requireColon=requireColon)
+    secPB = _findall_matching_sec(textBlock, requireColon=requireColon)
     # Pull the ad-hoc `.secList` and `.multiSecList` attributes from the
     # ParseBag object, and absorb the rest of the data into segParseBag:
     wSecList = secPB.secList
@@ -3303,7 +3303,7 @@ def parse_segment(
     if requireColon != 'default_colon':
         do_second_pass = False
     if do_second_pass:
-        replacementMidPB = parse_segment(
+        replacementMidPB = _parse_segment(
             textBlock=textBlock, layout=layout, requireColon='second_pass',
             handedDownConfig=handedDownConfig, initParseQQ=initParseQQ)
         TRS_found = replacementMidPB.parsedTracts[0].trs is not None
@@ -3517,7 +3517,7 @@ def parse_segment(
                     and not finalRun \
                     and nextMarkerType not in ['sec_start', 'multiSec_start']:
                 unusedText = textBlock[markerPos:nextMarkerPos]
-                if len(cleanup_desc(unusedText)) > 3:
+                if len(_cleanup_desc(unusedText)) > 3:
                     flag_unused(
                         unusedText, textBlock[lastMarkerPos:nextMarkerPos])
 
@@ -3762,7 +3762,7 @@ def parse_segment(
     if len(segParseBag.parsedTracts) == 0:
         # If we identified no Tracts in this segment, re-parse using
         # 'copy_all' layout.
-        replacementPB = parse_segment(
+        replacementPB = _parse_segment(
             textBlock, layout='copy_all', cleanUp=False, requireColon=False,
             handedDownConfig=handedDownConfig, initParseQQ=initParseQQ,
             cleanQQ=cleanQQ)
@@ -3771,7 +3771,7 @@ def parse_segment(
     return segParseBag
 
 
-def cleanup_desc(text):
+def _cleanup_desc(text):
     """
     INTERNAL USE:
     Clean up common 'artifacts' from parsing--especially layouts other
@@ -3809,11 +3809,11 @@ def find_tr(text, defaultNS='n', defaultEW='w'):
 
     # For each match, compile a clean T&R and append it.
     for twprge_mo in twprge_mo_iter:
-        tr_list.append(compile_tr_mo(twprge_mo))
+        tr_list.append(_compile_tr_mo(twprge_mo))
     return tr_list
 
 
-def ocr_scrub_alpha_to_num(text):
+def _ocr_scrub_alpha_to_num(text):
     """
     INTERNAL USE:
     Convert non-numeric characters that are commonly mis-recognized
@@ -3833,7 +3833,7 @@ def ocr_scrub_alpha_to_num(text):
     return text
 
 
-def preprocess_tr_mo(tr_mo, defaultNS='n', defaultEW='w') -> str:
+def _preprocess_tr_mo(tr_mo, defaultNS='n', defaultEW='w') -> str:
     """
     INTERNAL USE:
     Take a T&R match object (tr_mo) and check for missing 'T', 'R', and
@@ -3844,7 +3844,7 @@ def preprocess_tr_mo(tr_mo, defaultNS='n', defaultEW='w') -> str:
     matched, in order to clean up the ppDesc.
     """
 
-    clean_tr = compile_tr_mo(tr_mo, defaultNS=defaultNS, defaultEW=defaultEW)
+    clean_tr = _compile_tr_mo(tr_mo, defaultNS=defaultNS, defaultEW=defaultEW)
     twp, ns, rge, ew = decompile_twprge(clean_tr)
 
     # Maintain the first character, if it's a whitespace:
@@ -3853,8 +3853,8 @@ def preprocess_tr_mo(tr_mo, defaultNS='n', defaultEW='w') -> str:
     else:
         first = ''
 
-    twp = ocr_scrub_alpha_to_num(twp)  # twp number
-    rge = ocr_scrub_alpha_to_num(rge)  # rge number
+    twp = _ocr_scrub_alpha_to_num(twp)  # twp number
+    rge = _ocr_scrub_alpha_to_num(rge)  # rge number
 
     # Maintain the last character, if it's a whitespace.
     if tr_mo.group().endswith(('\n', '\t', ' ')):
@@ -3888,7 +3888,7 @@ def decompile_twprge(tr_string) -> tuple:
     return (twp, twp_dir, rge, rge_dir)
 
 
-def compile_tr_mo(mo, defaultNS='n', defaultEW='w'):
+def _compile_tr_mo(mo, defaultNS='n', defaultEW='w'):
     """
     INTERNAL USE:
     Take a match object (`mo`) of an identified T&R, and return a string
@@ -3952,18 +3952,18 @@ def compile_tr_mo(mo, defaultNS='n', defaultEW='w'):
     return twpNum + ns + rgeNum + ew
 
 
-def compile_sec_mo(sec_mo):
+def _compile_sec_mo(sec_mo):
     """
     INTERNAL USE
     Takes a match object (mo) of an identified multiSection, and
     returns a string in the format of '00' for individual sections and a
     list ['01', '02', ...] for multiSections
     """
-    if is_multisec(sec_mo):
-        multiSecParseBagObj = unpack_sections(sec_mo.group())
+    if _is_multisec(sec_mo):
+        multiSecParseBagObj = _unpack_sections(sec_mo.group())
         return multiSecParseBagObj.secList  # Pull out the secList
-    elif is_singlesec(sec_mo):
-        return get_last_sec(sec_mo).rjust(2, '0')
+    elif _is_singlesec(sec_mo):
+        return _get_last_sec(sec_mo).rjust(2, '0')
     else:
         return
 
@@ -4005,7 +4005,7 @@ def find_multisec(text, flat=True) -> list:
         i = multiSec_mo.end()
 
     for multiSec in packedMultiSec_list:
-        multiSecParseBagObj = unpack_sections(multiSec)
+        multiSecParseBagObj = _unpack_sections(multiSec)
         workingSecList = multiSecParseBagObj.secList
         if len(workingSecList) == 1:
             # skip any single-section matches
@@ -4018,7 +4018,7 @@ def find_multisec(text, flat=True) -> list:
     return unpackedMultiSec_list
 
 
-def unpack_sections(secTextBlock):
+def _unpack_sections(secTextBlock):
     """
     INTERNAL USE:
     Feed in a string of a multiSec_regex match object, and return a
@@ -4029,7 +4029,7 @@ def unpack_sections(secTextBlock):
 
     # TODO: Maybe just put together a simpler algorithm. Since there's
     #   so much less possible text in a list of Sections, can probably
-    #   just add from left-to-right, unlike unpack_lots.
+    #   just add from left-to-right, unlike _unpack_lots.
 
     multiSecParseBag = ParseBag(parentType='multiSec')
 
@@ -4048,9 +4048,9 @@ def unpack_sections(secTextBlock):
 
         else:
             # Pull the right-most section number (still as a string):
-            secNum = get_last_sec(secs_mo)
+            secNum = _get_last_sec(secs_mo)
 
-            if is_singlesec(secs_mo):
+            if _is_singlesec(secs_mo):
                 # We can skip the next loop after we've found the last section.
                 remainingSecText = ''
 
@@ -4127,7 +4127,7 @@ def unpack_sections(secTextBlock):
 
             # If we identified at least two sections, we need to check
             # if the last one is the end of an elided list:
-            if is_multisec(secs_mo):
+            if _is_multisec(secs_mo):
                 thru_mo = through_regex.search(secs_mo.group(6))
                 # Check if we find 'through' (or equivalent symbol or
                 # abbreviation) before this final section:
@@ -4145,7 +4145,7 @@ def unpack_sections(secTextBlock):
 # Tools for interpreting multiSec_regex match objects:
 ########################################################################
 
-def is_multisec(multiSec_mo) -> bool:
+def _is_multisec(multiSec_mo) -> bool:
     """
     INTERNAL USE:
     Determine whether a multiSec_regex match object is a multiSec.
@@ -4153,7 +4153,7 @@ def is_multisec(multiSec_mo) -> bool:
     return multiSec_mo.group(12) is not None
 
 
-def is_singlesec(multiSec_mo) -> bool:
+def _is_singlesec(multiSec_mo) -> bool:
     """
     INTERNAL USE:
     Determine whether a multiSec_regex match object is a single section.
@@ -4161,21 +4161,21 @@ def is_singlesec(multiSec_mo) -> bool:
     return (multiSec_mo.group(12) is None) and (multiSec_mo.group(5) is not None)
 
 
-def get_last_sec(multiSec_mo) -> str:
+def _get_last_sec(multiSec_mo) -> str:
     """
     INTERNAL USE:
     Extract the right-most section in a multiSec_regex match object.
     Returns None if no match.
     """
-    if is_multisec(multiSec_mo):
+    if _is_multisec(multiSec_mo):
         return multiSec_mo.group(12)
-    elif is_singlesec(multiSec_mo):
+    elif _is_singlesec(multiSec_mo):
         return multiSec_mo.group(5)
     else:
         return None
 
 
-def is_plural_singlesec(multiSec_mo) -> bool:
+def _is_plural_singlesec(multiSec_mo) -> bool:
     """
     INTERNAL USE:
     Determine if a multiSec_regex match object is a single section
@@ -4183,13 +4183,13 @@ def is_plural_singlesec(multiSec_mo) -> bool:
     """
     # Only a single section in this match...
     # But there's a plural "Sections" anyway!
-    if is_singlesec(multiSec_mo) and multiSec_mo.group(4) is not None:
+    if _is_singlesec(multiSec_mo) and multiSec_mo.group(4) is not None:
         return multiSec_mo.group(4).lower() == 's'
     else:
         return False
 
 
-def sec_ends_with_colon(multiSec_mo) -> bool:
+def _sec_ends_with_colon(multiSec_mo) -> bool:
     """
     INTERNAL USE:
     Determine whether a multiSec_regex match object ends with a colon.
@@ -4201,7 +4201,7 @@ def sec_ends_with_colon(multiSec_mo) -> bool:
 # Tools for Tract.parse():
 ########################################################################
 
-def scrub_aliquots(text, cleanQQ=False) -> str:
+def _scrub_aliquots(text, cleanQQ=False) -> str:
     """
     INTERNAL USE:
     Scrub the raw text of a Tract's description, to convert aliquot
@@ -4284,7 +4284,7 @@ def scrub_aliquots(text, cleanQQ=False) -> str:
     return text
 
 
-def unpack_aliquots(
+def _unpack_aliquots(
         aliquot_text_block, qq_depth_min=2, qq_depth_max=None, qq_depth=None,
         break_halves=False) -> list:
     """
@@ -4410,7 +4410,7 @@ def unpack_aliquots(
             depth -= 1
 
         # Subdivide this aliquot component, as deep as needed
-        new_comp = subdivide_aliquot(comp, depth)
+        new_comp = _subdivide_aliquot(comp, depth)
 
         # Append it to our list of components (with subdivisions arranged
         # largest-to-smallest).
@@ -4421,10 +4421,10 @@ def unpack_aliquots(
     # ...for E/2W/2SE/4, parsed to a qq_depth_min of 2.
 
     # Convert the 1-depth nested list into the final QQ list and return.
-    return rebuild_aliquots(subdivided_component_list)
+    return _rebuild_aliquots(subdivided_component_list)
 
 
-def rebuild_aliquots(nested_aliquot_list: list):
+def _rebuild_aliquots(nested_aliquot_list: list):
     """
     INTERNAL USE:
 
@@ -4455,7 +4455,7 @@ def rebuild_aliquots(nested_aliquot_list: list):
     return QQList
 
 
-def subdivide_aliquot(aliquot_component: str, depth: int):
+def _subdivide_aliquot(aliquot_component: str, depth: int):
     """
     INTERNAL USE:
 
@@ -4463,16 +4463,16 @@ def subdivide_aliquot(aliquot_component: str, depth: int):
 
     Return examples:
 
-    subdivide_aliquot('N', 0)
+    _subdivide_aliquot('N', 0)
     ->  ['N2']
 
-    subdivide_aliquot('N', 1)
+    _subdivide_aliquot('N', 1)
     ->  ['NE', 'NW']
 
-    subdivide_aliquot('N', 2)
+    _subdivide_aliquot('N', 2)
     ->  ['NENE', 'NWNE', 'SENE', 'SWNE', 'NENW', 'NWNW', 'SENW', 'SWNW']
 
-    subdivide_aliquot('NE', 1)
+    _subdivide_aliquot('NE', 1)
     ->  ['NENE', 'NWNE', 'SENE', 'SWNE']
 
     :param aliquot_component: Any element that appears in the variable
@@ -4498,7 +4498,7 @@ def subdivide_aliquot(aliquot_component: str, depth: int):
             return [aliquot_component + "2"]
         return [aliquot_component]
 
-    # Construct a nested list, which rebuild_aliquots() requires,
+    # Construct a nested list, which _rebuild_aliquots() requires,
     # which will process it and spit out a flat list before this function
     # returns.
     divided = [[aliquot_component]]
@@ -4515,12 +4515,12 @@ def subdivide_aliquot(aliquot_component: str, depth: int):
     #       [['NE', 'NW'], ['NE', 'NW', 'SE', 'SW']]
     # ... which gets reconstructed to:
     #       ['NENE', 'NWNE', 'SENE', 'SWNE', 'NENW', 'NWNW', 'SENW', 'SWNW']
-    # ...by `rebuild_aliquots()`
+    # ...by `_rebuild_aliquots()`
 
-    return rebuild_aliquots(divided)
+    return _rebuild_aliquots(divided)
 
 
-def unpack_lots(lotTextBlock, includeLotDivs=True):
+def _unpack_lots(lotTextBlock, includeLotDivs=True):
     """
     INTERNAL USE:
     Feed in a string of a lot_regex match object, and return a ParseBag
@@ -4561,15 +4561,15 @@ def unpack_lots(lotTextBlock, includeLotDivs=True):
             # We still have at least one lot to _unpack.
 
             # Pull the right-most lot number (as a string):
-            lotNum = get_last_lot(lots_mo)
+            lotNum = _get_last_lot(lots_mo)
 
-            if is_single_lot(lots_mo):
+            if _is_single_lot(lots_mo):
                 # Skip the next loop after we've reached the left-most lot
                 remainingLotsText = ''
 
             else:
                 # If we've found at least two lots.
-                remainingLotsText = remainingLotsText[:start_of_last_lot(lots_mo)]
+                remainingLotsText = remainingLotsText[:_start_of_last_lot(lots_mo)]
 
             # Clean up any leading '0's in lotNum.
             lotNum = str(int(lotNum))
@@ -4632,15 +4632,15 @@ def unpack_lots(lotTextBlock, includeLotDivs=True):
 
             # If acreage was specified for this lot, clean it up and add
             # to dict, keyed by the newLot.
-            newAcres = get_lot_acres(lots_mo)
+            newAcres = _get_lot_acres(lots_mo)
             if newAcres is not None:
                 lotsAcresDict[newLot] = newAcres
 
             # If we identified at least two lots, we need to check if
             # the last one is the end of an elided list, by calling
-            # thru_lot() to check for us:
-            if is_multi_lot(lots_mo):
-                foundThrough = thru_lot(lots_mo)
+            # _thru_lot() to check for us:
+            if _is_multi_lot(lots_mo):
+                foundThrough = _thru_lot(lots_mo)
 
     # Reverse wLots, so that it's in the order it was in the original
     # description, and append it to our main list:
@@ -4649,12 +4649,12 @@ def unpack_lots(lotTextBlock, includeLotDivs=True):
 
     if includeLotDivs:
         # If we want includeLotDivs, add it to the front of each parsed lot.
-        leadingAliq = get_leading_aliq(
+        leadingAliq = _get_leading_aliquot(
             lot_with_aliquot_regex.search(lotTextBlock))
         leadingAliq = leadingAliq.replace('¼', '')
         leadingAliq = leadingAliq.replace('½', '2')
         if leadingAliq != '':
-            if first_lot_is_plural(lot_regex.search(lotTextBlock)):
+            if _first_lot_is_plural(lot_regex.search(lotTextBlock)):
                 # If the first lot is plural, we apply leadingAliq to
                 # all lots in the list
                 lots = [f'{leadingAliq} of {lot}' for lot in lots]
@@ -4737,7 +4737,7 @@ def break_trs(trs : str) -> tuple:
 # Tools for interpreting lot_regex and lot_with_aliquot_regex match objects:
 ########################################################################
 
-def is_multi_lot(lots_mo) -> bool:
+def _is_multi_lot(lots_mo) -> bool:
     """
     INTERNAL USE:
     Return a bool, whether a lot_regex match object is a multiLot.
@@ -4748,7 +4748,7 @@ def is_multi_lot(lots_mo) -> bool:
         return False
 
 
-def thru_lot(lots_mo) -> bool:
+def _thru_lot(lots_mo) -> bool:
     """
     INTERNAL USE:
     Return a bool, whether the word 'through' (or an abbreviation)
@@ -4756,7 +4756,7 @@ def thru_lot(lots_mo) -> bool:
     """
 
     try:
-        if is_multi_lot(lots_mo):
+        if _is_multi_lot(lots_mo):
             try:
                 thru_mo = through_regex.search(lots_mo.group(15))
             except:
@@ -4774,7 +4774,7 @@ def thru_lot(lots_mo) -> bool:
         return False
 
 
-def is_single_lot(lots_mo) -> bool:
+def _is_single_lot(lots_mo) -> bool:
     """
     INTERNAL USE:
     Return a bool, whether a lot_regex match object is a single lot.
@@ -4785,16 +4785,16 @@ def is_single_lot(lots_mo) -> bool:
         return False
 
 
-def get_last_lot(lots_mo):
+def _get_last_lot(lots_mo):
     """
     INTERNAL USE:
     Extract the right-most lot in a lot_regex match object. Returns a
     string if found; if none found, returns None.
     """
     try:
-        if is_multi_lot(lots_mo):
+        if _is_multi_lot(lots_mo):
             return lots_mo.group(19)
-        elif is_single_lot(lots_mo):
+        elif _is_single_lot(lots_mo):
             return lots_mo.group(11)
         else:
             return None
@@ -4802,16 +4802,16 @@ def get_last_lot(lots_mo):
         return None
 
 
-def start_of_last_lot(lots_mo) -> int:
+def _start_of_last_lot(lots_mo) -> int:
     """
     INTERNAL USE:
     Return an int of the starting position of the right-most lot in a
     lot_regex match object. Returns None if none found.
     """
     try:
-        if is_multi_lot(lots_mo):
+        if _is_multi_lot(lots_mo):
             return lots_mo.start(19)
-        elif is_single_lot(lots_mo):
+        elif _is_single_lot(lots_mo):
             return lots_mo.start(11)
         else:
             return None
@@ -4819,20 +4819,20 @@ def start_of_last_lot(lots_mo) -> int:
         return None
 
 
-def get_lot_acres(lots_mo) -> str:
+def _get_lot_acres(lots_mo) -> str:
     """
     INTERNAL USE:
     Return the string of the lotAcres for the right-most lot, without
     parentheses. If no match, then returns None.
     """
     try:
-        if is_multi_lot(lots_mo):
+        if _is_multi_lot(lots_mo):
             if lots_mo.group(14) is None:
                 return None
             else:
                 lotAcres_mo = lotAcres_unpacker_regex.search(lots_mo.group(14))
 
-        elif is_single_lot(lots_mo):
+        elif _is_single_lot(lots_mo):
             if lots_mo.group(12) is None:
                 return None
             else:
@@ -4853,7 +4853,7 @@ def get_lot_acres(lots_mo) -> str:
         return None
 
 
-def first_lot_is_plural(lots_mo) -> bool:
+def _first_lot_is_plural(lots_mo) -> bool:
     """
     INTERNAL USE:
     Return a bool, whether the first instance of the word 'lot' in a
@@ -4869,7 +4869,7 @@ def first_lot_is_plural(lots_mo) -> bool:
 # Tools for interpreting lot_with_aliquot_regex match objects:
 ########################################################################
 
-def has_leading_aliq(mo) -> bool:
+def _has_leading_aliquot(mo) -> bool:
     """
     INTERNAL USE:
     Return a bool, whether this lot_with_aliquot_regex match object
@@ -4881,7 +4881,7 @@ def has_leading_aliq(mo) -> bool:
         return None
 
 
-def get_leading_aliq(mo) -> str:
+def _get_leading_aliquot(mo) -> str:
     """
     INTERNAL USE:
     Return the string of the leading aliquot component from a
@@ -4896,7 +4896,7 @@ def get_leading_aliq(mo) -> str:
         return None
 
 
-def get_lot_component(mo):
+def _get_lot_component(mo):
     """
     INTERNAL USE:
     Return the string of the entire lots component from a
@@ -4913,7 +4913,7 @@ def get_lot_component(mo):
 
 ### Tools for extracting data from PLSSDesc and Tract objects
 
-def clean_attributes(*attributes) -> list:
+def _clean_attributes(*attributes) -> list:
     """
     INTERNAL USE:
     Ensure that each element has been entered as a string.
@@ -4934,6 +4934,7 @@ def clean_attributes(*attributes) -> list:
             cleanArgList.append(att)
 
     return cleanArgList
+
 
 ########################################################################
 # Output results to CSV file
