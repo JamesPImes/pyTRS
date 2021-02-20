@@ -13,17 +13,48 @@ The main parsing package. Primary classes:
 
 import re
 from .regexlib import (
-    twprge_regex, twprge_broad_regex, sec_regex, multiSec_regex,
-    comma_multiSec_regex, noNum_sec_regex, preproTR_noNSWE_regex,
-    preproTR_noR_noNS_regex, preproTR_noT_noWE_regex, twprge_ocr_scrub_regex,
-    lots_context_regex, TRS_unpacker_regex, well_regex, depth_regex,
-    including_regex, less_except_regex, isfa_regex, NE_regex, SE_regex,
-    NW_regex, SW_regex, N2_regex, S2_regex, E2_regex, W2_regex, ALL_regex,
-    ALL_context_regex, cleanNE_regex, cleanSE_regex, cleanNW_regex,
-    cleanSW_regex, halfPlusQ_regex, through_regex, lot_regex,
-    lot_with_aliquot_regex, lotAcres_unpacker_regex, aliquot_unpacker_regex,
-    single_aliquot_unpacker_regex, aliquot_intervener_remover_regex,
-    aliquot_lot_intervener_scrubber_regex, pm_regex, twprge_pm_regex,
+    twprge_regex,
+    twprge_broad_regex,
+    sec_regex,
+    multiSec_regex,
+    comma_multiSec_regex,
+    noNum_sec_regex,
+    preproTR_noNSWE_regex,
+    preproTR_noR_noNS_regex,
+    preproTR_noT_noWE_regex,
+    twprge_ocr_scrub_regex,
+    lots_context_regex,
+    TRS_unpacker_regex,
+    well_regex,
+    depth_regex,
+    including_regex,
+    less_except_regex,
+    isfa_regex,
+    NE_regex,
+    SE_regex,
+    NW_regex,
+    SW_regex,
+    N2_regex,
+    S2_regex,
+    E2_regex,
+    W2_regex,
+    ALL_regex,
+    ALL_context_regex,
+    cleanNE_regex,
+    cleanSE_regex,
+    cleanNW_regex,
+    cleanSW_regex,
+    halfPlusQ_regex,
+    through_regex,
+    lot_regex,
+    lot_with_aliquot_regex,
+    lotAcres_unpacker_regex,
+    aliquot_unpacker_regex,
+    single_aliquot_unpacker_regex,
+    aliquot_intervener_remover_regex,
+    aliquot_lot_intervener_scrubber_regex,
+    pm_regex,
+    twprge_pm_regex,
     sec_within_desc_regex
 )
 
@@ -3942,7 +3973,8 @@ def _compile_twprge_mo(mo, default_ns='n', default_ew='w'):
     else:
         rgeNum = mo[6]
 
-    ### Clean up any leading '0's in rgeNum.
+    # --------------------------------------
+    # Clean up any leading '0's in rgeNum.
     # (Try/except is used to handle twprge_ocr_scrub_regex mo's, which
     # can contain alpha characters in `rgeNum`.)
     try:
@@ -4930,7 +4962,7 @@ def _get_lot_component(mo):
         return None
 
 
-### Tools for extracting data from PLSSDesc and Tract objects
+# Tools for extracting data from PLSSDesc and Tract objects
 
 def _clean_attributes(*attributes) -> list:
     """
