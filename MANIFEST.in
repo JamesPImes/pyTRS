@@ -1,2 +1,2 @@
 include             LICENSE.txt
-recursive-include   pyTRS *.pyw
+recursive-include   pytrs *.pyw

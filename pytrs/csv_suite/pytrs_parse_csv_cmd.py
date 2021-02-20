@@ -9,15 +9,15 @@ PLSS descriptions or tracts in a .csv file.
 # and which column contains the PLSS descriptions to be parsed (indexed
 # from 1), and various optional args.
 # If the output filepath is not specified, it will default to
-# '<input filepath>_pyTRS_parsed_<timestamp>.csv'.
+# '<input filepath>_pytrs_parsed_<timestamp>.csv'.
 
-# Usage: py pyTRS_parse_csv_cmd.py -i 'read_from.csv' -o 'write_to.csv'
+# Usage: py pytrs_parse_csv_cmd.py -i 'read_from.csv' -o 'write_to.csv'
 #           --desc_column 5 --config n,w,segment
 
-# 'pyTRS_parse_csv_cmd.py --help' at command line for all possible args.
+# 'pytrs_parse_csv_cmd.py --help' at command line for all possible args.
 
 import argparse
-from pyTRS.csv_suite.pyTRS_parse_csv import parse_csv
+from pytrs.csv_suite.pytrs_parse_csv import parse_csv
 
 
 if __name__ == '__main__':
@@ -106,7 +106,7 @@ if __name__ == '__main__':
         timestamp = f"{t.year}{str(t.month).rjust(2, '0')}{str(t.day).rjust(2, '0')}_" \
                     f"{str(t.hour).rjust(2, '0')}{str(t.minute).rjust(2, '0')}" \
                     f"{str(t.second).rjust(2, '0')}"
-        out_filepath = f"{args['input_csv'][:-4]}_pyTRS_parsed_{timestamp}.csv"
+        out_filepath = f"{args['input_csv'][:-4]}_pytrs_parsed_{timestamp}.csv"
 
     success_check = parse_csv(
         in_file=args['input_csv'], desc_col=args['desc_column'], first_row=args['first_row'],

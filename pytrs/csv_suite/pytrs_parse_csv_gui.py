@@ -6,10 +6,10 @@ import tkinter as tk
 from tkinter import messagebox, filedialog
 from tkinter.ttk import Checkbutton
 
-from pyTRS.interface_tools import PromptConfig, PromptAttrib
-from pyTRS.csv_suite.pyTRS_parse_csv import parse_csv
-from pyTRS import version as pyTRS_version
-from pyTRS import _constants as pyTRS_constants
+from pytrs.interface_tools import PromptConfig, PromptAttrib
+from pytrs.csv_suite.pytrs_parse_csv import parse_csv
+from pytrs import version as pytrs_version
+from pytrs import _constants as pytrs_constants
 
 
 __version__ = '0.3.0'
@@ -26,7 +26,7 @@ class AppWindow(tk.Tk):
     
     SPLASH_INFO = (
         f"pyTRS CSV Parser {version()}\n"
-        f"Built on pyTRS {pyTRS_version()}.\n"
+        f"Built on pyTRS {pytrs_version()}.\n"
         "Copyright (c) 2020, James P. Imes, all rights reserved.\n\n"
         f"Contact: <{__email__}>\n\n"
         "A program for parsing PLSS land descriptions ('legal "
@@ -159,7 +159,7 @@ class AppWindow(tk.Tk):
 
         # Prompt for save-to filepath, with default filename modified
         # from in_file.
-        def_file_name = f"{in_file.split('/')[-1][:-4]}_pyTRS_parsed.csv"
+        def_file_name = f"{in_file.split('/')[-1][:-4]}_pytrs_parsed.csv"
         out_file = filedialog.asksaveasfilename(
             initialdir=in_file, initialfile=def_file_name,
             filetypes=[("CSV Files", "*.csv")], title='Save to...')
@@ -279,7 +279,7 @@ class AppWindow(tk.Tk):
             title='CSV to parse...'
         )
         self.in_file.set(in_file)
-        self.title(f"pyTRS CSV Parser - {in_file}")
+        self.title(f"pytrs CSV Parser - {in_file}")
         if in_file:
             self.deduce_desc_column(in_file)
 
@@ -309,7 +309,7 @@ class AppWindow(tk.Tk):
         self.header_row_entry.delete(0, 'end')
 
         import csv
-        from pyTRS.parser import find_sec, find_twprge
+        from pytrs.parser import find_sec, find_twprge
         try:
             csv_file = open(in_file, 'r')
         except:
@@ -354,7 +354,7 @@ class AppWindow(tk.Tk):
         confirm = messagebox.askquestion('pyTRS CSV Parser', self.SPLASH_INFO)
         if confirm == 'yes':
             messagebox.showinfo(
-                'pyTRS Disclaimer', pyTRS_constants.__disclaimer__)
+                'pyTRS Disclaimer', pytrs_constants.__disclaimer__)
 
 
 def launch_app():

@@ -16,7 +16,7 @@ def check_flag(target, flag, get_lines=False):
     NOTE: If `target` was passed as a type other than PLSSDesc or Tract,
     this will return None.
 
-    :param target: A pyTRS.Tract or pyTRS.PLSSDesc object.
+    :param target: A pytrs.Tract or pytrs.PLSSDesc object.
     :param flag: A string, specifying the error flag or warning flag
     that should be looked for.
     :param get_lines: A bool, specifying whether or not to also return a
@@ -26,13 +26,13 @@ def check_flag(target, flag, get_lines=False):
     and a list of the lines or context that raised the `flag`.
     """
 
-    from pyTRS.parser import PLSSDesc, Tract
+    from pytrs.parser import PLSSDesc, Tract
 
     # Feed in only a PLSSDesc object or Tract object.
     if not isinstance(target, (PLSSDesc, Tract)):
         raise TypeError(
-            "`target` must be either a pyTRS.PLSSDesc "
-            "or pyTRS.Tract object"
+            "`target` must be either a pytrs.PLSSDesc "
+            "or pytrs.Tract object"
         )
 
     # Get a bool, whether the flag is in either flag list

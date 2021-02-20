@@ -3,7 +3,7 @@
 """
 A GUI app for choosing Config parameters for pyTRS parsing;
 results can be saved to .txt file or returned as text parameters (a
-string) or as a compiled pyTRS.Config object.
+string) or as a compiled pytrs.Config object.
 A PromptConfig object can be used directly in a tkinter application; or
 the prompt_config() function can be used to hold up the program while
 the user makes their choices, and then continue when it returns.
@@ -20,7 +20,7 @@ the user makes their choices, and then continue when it returns.
 import tkinter as tk
 from tkinter import messagebox
 from tkinter.ttk import Combobox
-from pyTRS import parser
+from pytrs import parser
 
 
 def prompt_config(
@@ -64,7 +64,7 @@ def prompt_config(
 
 class PromptConfig(tk.Frame):
     """A tkinter frame for configuring pyTRS parsing parameters (i.e.
-    pyTRS.Config objects)."""
+    pytrs.Config objects)."""
 
     # Parameters that are set via radiobuttons:
     RB_PARAMS = [
@@ -746,7 +746,7 @@ class PromptConfig(tk.Frame):
         # The user will specify the output filename:
         from tkinter import filedialog
         output_file = filedialog.asksaveasfilename(
-            initialdir='/', initialfile='pyTRS_config_data.txt',
+            initialdir='/', initialfile='pytrs_config_data.txt',
             filetypes=(("Text File", "*.txt"), ("All Files", "*.*")),
             title="Save as...")
         if output_file in ['', None]:
@@ -766,7 +766,7 @@ class PromptConfig(tk.Frame):
         """
 
         try:
-            # Compile config_text into a pyTRS.Config object, and use
+            # Compile config_text into a pytrs.Config object, and use
             # Config.saveToFile()
             parser.Config(config_text).save_to_file(output_file)
             messagebox.showinfo(
@@ -783,6 +783,6 @@ class PromptConfig(tk.Frame):
 
 if __name__ == '__main__':
     # If run on its own, can serve as a utility to generate Config data
-    # .txt files, used with pyTRS.Config.fromFile()
+    # .txt files, used with pytrs.Config.fromFile()
     pc = PromptConfig(show_save=True, show_ok=False, show_cancel=False)
     pc.master.mainloop()

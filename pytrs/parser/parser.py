@@ -139,18 +139,18 @@ class PLSSDesc:
     """
     Each object of this class is a full PLSS description, taking the raw
     text of the original description as input, and parsing it into one
-    or more pyTRS.Tract objects (each Tract containing one Twp/Rge/Sec
+    or more pytrs.Tract objects (each Tract containing one Twp/Rge/Sec
     combo and the corresponding description of the land within that TRS,
     optionally with lots and quarter-quarters, or QQ's, broken out --
-    see pyTRS.Tract documentation for more details).
+    see pytrs.Tract documentation for more details).
 
     Configure the parsing algorithm with config parameters at init,
-    passed in `config=` (taking either a pyTRS.Config object or a string
+    passed in `config=` (taking either a pytrs.Config object or a string
     containing equivalent config parameters -- see documentation on
-    pyTRS.Config objects for possible parameters).
+    pytrs.Config objects for possible parameters).
 
     ____ PARSING ____
-    Parse the PLSSDesc object into pyTRS.Tract objects with the
+    Parse the PLSSDesc object into pytrs.Tract objects with the
     `.parse()` method at some point after init. Alternatively, trigger
     the parse at init in one of several ways:
     -- Use init parameter `init_parse=True` (parses the PLSSDesc object
@@ -166,8 +166,8 @@ class PLSSDesc:
     ____ IMPORTANT INSTANCE VARIABLES AFTER PARSING ____
     .orig_desc -- The original text. (Gets set from the first positional
         argument at init.)
-    .parsed_tracts -- A pyTRS.TractList object (i.e. a list) containing
-        all of the pyTRS.Tract objects that were generated from parsing
+    .parsed_tracts -- A pytrs.TractList object (i.e. a list) containing
+        all of the pytrs.Tract objects that were generated from parsing
         this object.
     .pp_desc -- The preprocessed description. (If the object has not yet
         been preprocessed, it will be equivalent to .orig_desc)
@@ -190,7 +190,7 @@ class PLSSDesc:
         text).
 
     ____ STREAMLINED OUTPUT OF THE PARSED DATA ____
-    See the notable instance variables listed in the pyTRS.Tract object
+    See the notable instance variables listed in the pytrs.Tract object
     documentation. Those variables can be compiled with these PLSSDesc
     methods:
     .quick_desc() -- Returns a string of the entire parsed description.
@@ -238,11 +238,11 @@ class PLSSDesc:
         and need to internally keep track where they came from.)
         :param layout: The pyTRS layout. If not specified, will be
         deduced when initialized, and/or when parsed. See available
-        options in `pyTRS.IMPLEMENTED_LAYOUTS` and examples in
-        `pyTRS.IMPLEMENTED_LAYOUT_EXAMPLES`.
-        :param config: Either a pyTRS.Config object, or a string of
+        options in `pytrs.IMPLEMENTED_LAYOUTS` and examples in
+        `pytrs.IMPLEMENTED_LAYOUT_EXAMPLES`.
+        :param config: Either a pytrs.Config object, or a string of
         parameters to configure how the PLSSDesc object should be
-        parsed. (See documentation on pyTRS.Config objects for optional
+        parsed. (See documentation on pytrs.Config objects for optional
         config parameters.)
         :param init_parse: Whether to parse this PLSSDesc object when
         initialized.
@@ -421,8 +421,8 @@ class PLSSDesc:
         Apply the relevant settings from a Config object to this object;
         takes either a string (i.e. config text) or a Config object.
 
-        :param config: Either a pyTRS.Config object, or equivalent
-        config parameters. (See pyTRS.Config documentation for optional
+        :param config: Either a pytrs.Config object, or equivalent
+        config parameters. (See pytrs.Config documentation for optional
         parameters.)
         """
         if isinstance(config, str) or config is None:
@@ -447,7 +447,7 @@ class PLSSDesc:
         """
 
         if not isinstance(target_pb, ParseBag):
-            raise TypeError("Can only `_unpack_pb()` a pyTRS.ParseBag object.")
+            raise TypeError("Can only `_unpack_pb()` a pytrs.ParseBag object.")
 
         if target_pb.desc_is_flawed:
             self.desc_is_flawed = True
@@ -545,8 +545,8 @@ class PLSSDesc:
         Tracts into lots and QQs.) Whether to break halves into
         quarters, even if we're beyond the qq_depth_min. (False by
         default, but can be configured at init.)
-        :return: Returns a pyTRS.TractList object (a subclass of 'list')
-        of all of the resulting pyTRS.Tract objects.
+        :return: Returns a pytrs.TractList object (a subclass of 'list')
+        of all of the resulting pytrs.Tract objects.
         """
 
         # ----------------------------------------
@@ -1104,7 +1104,7 @@ class PLSSDesc:
         .parsed_tracts).
 
         :param attributes: The names (strings) of whichever attributes
-        should be included (see documentation on `pyTRS.Tract` objects
+        should be included (see documentation on `pytrs.Tract` objects
         for the names of relevant attributes).
 
         :Example:
@@ -1112,7 +1112,7 @@ class PLSSDesc:
         txt = '''154N-97W
         Sec 14: NE/4
         Sec 15: Northwest Quarter, North Half South West Quarter'''
-        d_obj = pyTRS.PLSSDesc(txt, init_parse_qq=True)
+        d_obj = pytrs.PLSSDesc(txt, init_parse_qq=True)
         d_obj.tracts_to_dict('trs', 'desc', 'qqs')
 
         Example returns a list of two dicts:
@@ -1139,7 +1139,7 @@ class PLSSDesc:
         length to .parsed_tracts).
 
         :param attributes: The names (strings) of whichever attributes
-        should be included (see documentation on `pyTRS.Tract` objects
+        should be included (see documentation on `pytrs.Tract` objects
         for the names of relevant attributes).
 
         :Example:
@@ -1147,7 +1147,7 @@ class PLSSDesc:
         txt = '''154N-97W
         Sec 14: NE/4
         Sec 15: Northwest Quarter, North Half South West Quarter'''
-        d_obj = pyTRS.PLSSDesc(txt, init_parse_qq=True)
+        d_obj = pytrs.PLSSDesc(txt, init_parse_qq=True)
         d_obj.tracts_to_list('trs', 'desc', 'qqs')
 
         Example returns a nested list:
@@ -1172,7 +1172,7 @@ class PLSSDesc:
         string of the data.
 
         :param attributes: The names (strings) of whichever attributes
-        should be included (see documentation on `pyTRS.Tract` objects
+        should be included (see documentation on `pytrs.Tract` objects
         for the names of relevant attributes).
 
         :Example:
@@ -1180,7 +1180,7 @@ class PLSSDesc:
         txt = '''154N-97W
         Sec 14: NE/4
         Sec 15: Northwest Quarter, North Half South West Quarter'''
-        d_obj = pyTRS.PLSSDesc(txt, init_parse_qq=True)
+        d_obj = pytrs.PLSSDesc(txt, init_parse_qq=True)
         d_obj.tracts_to_str('trs', 'desc', 'qqs')
 
         Example returns a multi-line string that looks like this when
@@ -1213,7 +1213,7 @@ class PLSSDesc:
         txt = '''154N-97W
         Sec 14: NE/4
         Sec 15: Northwest Quarter, North Half South West Quarter'''
-        d_obj = pyTRS.PLSSDesc(txt, init_parse_qq=True)
+        d_obj = pytrs.PLSSDesc(txt, init_parse_qq=True)
         d_obj.quick_desc()
 
         Example returns a multi-line string that looks like this when
@@ -1288,7 +1288,7 @@ class Tract:
     can be parsed into aliquot quarter-quarters (called QQ's) and lots.
 
     Configure the parsing algorithm with config parameters at init,
-    passed in `config=` (taking either a pyTRS.Config object or a string
+    passed in `config=` (taking either a pytrs.Config object or a string
     containing equivalent config parameters -- see documentation on
     Config objects for possible parameters).
 
@@ -1383,9 +1383,9 @@ class Tract:
         flaw was discovered during parsing of the parent PLSSDesc
         object, if any. (Tract objects themselves are agnostic to fatal
         flaws.)
-        :param config: Either a pyTRS.Config object, or a string of
+        :param config: Either a pytrs.Config object, or a string of
         parameters to configure how the Tract object should be parsed.
-        (See documentation on pyTRS.Config objects for optional config
+        (See documentation on pytrs.Config objects for optional config
         parameters.)
         :param init_parse_qq: Whether to parse the `desc` into lots/QQs at
         init. (Defaults to False)
@@ -1649,8 +1649,8 @@ class Tract:
         Apply the relevant settings from a Config object to this object;
         takes either a string (i.e. config text) or a Config object.
 
-        :param config: Either a pyTRS.Config object, or equivalent
-        config parameters. (See pyTRS.Config documentation for optional
+        :param config: Either a pytrs.Config object, or equivalent
+        config parameters. (See pytrs.Config documentation for optional
         parameters.)
         """
         if isinstance(config, str) or config is None:
@@ -1673,7 +1673,7 @@ class Tract:
         """
 
         if not isinstance(target_pb, ParseBag):
-            raise TypeError("Can only `_unpack_pb()` a pyTRS.ParseBag object.")
+            raise TypeError("Can only `_unpack_pb()` a pytrs.ParseBag object.")
 
         if target_pb.desc_is_flawed:
             self.desc_is_flawed = True
@@ -2089,7 +2089,7 @@ class TractList(list):
         """
         if not all(isinstance(t, Tract) for t in self):
             raise TypeError(
-                'Only pyTRS.Tract objects should be appended to TractList')
+                'Only pytrs.Tract objects should be appended to TractList')
 
     def tracts_to_dict(self, *attributes) -> list:
         """
@@ -2099,7 +2099,7 @@ class TractList(list):
         object).
 
         :param attributes: The names (strings) of whichever attributes
-        should be included (see documentation on `pyTRS.Tract` objects
+        should be included (see documentation on `pytrs.Tract` objects
         for the names of relevant attributes).
 
         :Example:
@@ -2139,7 +2139,7 @@ class TractList(list):
         object).
 
         :param attributes: The names (strings) of whichever attributes
-        should be included (see documentation on `pyTRS.Tract` objects
+        should be included (see documentation on `pytrs.Tract` objects
         for the names of relevant attributes).
 
         :Example:
@@ -2176,7 +2176,7 @@ class TractList(list):
         attributes only, and return a single string of the data.
 
         :param attributes: The names (strings) of whichever attributes
-        should be included (see documentation on `pyTRS.Tract` objects
+        should be included (see documentation on `pytrs.Tract` objects
         for the names of relevant attributes).
 
         :Example:
@@ -2386,7 +2386,7 @@ class ParseBag:
         """
 
         if not isinstance(target_pb, ParseBag):
-            raise TypeError("Can only `absorb()` a pyTRS.ParseBag object.")
+            raise TypeError("Can only `absorb()` a pytrs.ParseBag object.")
 
         # We do not absorb qqs, lots, or lot_acres, since those are not
         # relevant to a PLSSDescObj (only TractObj).
@@ -2416,13 +2416,13 @@ class Config:
     parsed.
 
     For a list of all parameter options, printed to console:
-        `pyTRS.utils.config_parameters()`
+        `pytrs.utils.config_parameters()`
 
     Or launch the Config GUI application:
-        `pyTRS.utils.config_util()`
+        `pytrs.utils.config_util()`
 
     For a guide to using Config objects general, printed to console:
-        `pyTRS.utils.config_help()`
+        `pytrs.utils.config_help()`
 
     Save Config object's set parameters to .txt file:
         `Config.save_to_file()`
@@ -2430,7 +2430,7 @@ class Config:
     Import saved config parameters from .txt file:
         `Config.from_file()`
 
-    All possible parameters (call `pyTRS.utils.config_parameters()` for
+    All possible parameters (call `pytrs.utils.config_parameters()` for
     definitions) -- any unspecified parameters will fall back to
     default parsing behavior:
         -- 'n'  <or>  'default_ns.n'  vs.  's'  <or>  'default_ns.s'
@@ -2521,7 +2521,7 @@ class Config:
         separated by comma. Spaces are optional and have no effect.
             ex: 'n,s,clean_qq,include_lot_divs.False'
 
-        All possible parameters (call `pyTRS.utils.config_parameters()`
+        All possible parameters (call `pytrs.utils.config_parameters()`
         for definitions) -- any unspecified parameters will fall back to
         default parsing behavior:
         -- 'n'  <or>  'default_ns.n'  vs.  's'  <or>  'default_ns.s'
@@ -2615,7 +2615,7 @@ class Config:
         attsToWrite = ['config_name'] + list(Config._CONFIG_ATTRIBUTES)
 
         file.write(f"<Contains config data for parsing PLSSDesc "
-                   f"and/or Tract objects with the pyTRS library.>\n")
+                   f"and/or Tract objects with the pytrs library.>\n")
         file.write(f"<config_text: '{self.decompile_to_text()}'>\n")
 
         def attrib_text(att):
@@ -3158,8 +3158,8 @@ def _parse_segment(
     """
     INTERNAL USE:
 
-    Parse a segment of text into pyTRS.Tract objects. Returns a
-    pyTRS.ParseBag object.
+    Parse a segment of text into pytrs.Tract objects. Returns a
+    pytrs.ParseBag object.
 
     :param text_block: The text to be parsed.
     :param layout: The layout to be assumed. If not specified,
@@ -3216,7 +3216,7 @@ def _parse_segment(
     Tracts into lots and QQs.) Whether to break halves into
     quarters, even if we're beyond the qq_depth_min. (False by
     default, but can be configured at init.)
-    :return: a pyTRS.ParseBag object with the parsed data.
+    :return: a pytrs.ParseBag object with the parsed data.
     """
 
     ####################################################################

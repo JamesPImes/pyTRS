@@ -2,7 +2,8 @@
 
 """
 Quick functions for simple parsing operations, without storing
-PLSSDesc objects or Tract objects or accessing higher-level data.
+PLSSDesc objects or Tract objects or accessing higher-level data or
+functionality.
 """
 
 from .quick import (

@@ -14,7 +14,7 @@ __license__ = (
     "modified license generally allows 'non-commercial' use and modification, "
     "but DISALLOWS ANY COMMERCIAL OR FOR-PROFIT USE, MODIFICATION, AND "
     "DISTRIBUTION.\n\n"
-    "Read pyTRS\\LICENSE.txt for the full terms and conditions, also available "
+    "Read pytrs\\LICENSE.txt for the full terms and conditions, also available "
     f"in full at <{__website__}>.\n\n"
     f"Contact <{__email__}> with inquiries regarding commercial or for-profit "
     "use."

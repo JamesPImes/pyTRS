@@ -30,20 +30,20 @@ def parse_csv(
     rather than 0.)
     :param header_row: An integer specifying the row in the input file
     containing headers, if any. (Indexed from 1, rather than 0.)
-    :param attribs: Which pyTRS.Tract attributes (instance variables) to
+    :param attribs: Which pytrs.Tract attributes (instance variables) to
     write to the csv. Pass as a list of strings, or as a single string
     with attribute names separated by comma.
     For 'tract-level' parsing (i.e. only parsing tracts into Lots/QQ's)
     :param out_file: Filepath to the .csv to write to.
-    :param config_col: Column in the .csv file containing the pyTRS
+    :param config_col: Column in the .csv file containing the pytrs
     config parameters to use for parsing that row.
-    :param config: Standard pyTRS config parameters to be used for every
+    :param config: Standard pytrs config parameters to be used for every
     description, entered as a string with parameters separated by comma,
-    or as a pyTRS.Config object.
+    or as a pytrs.Config object.
     NOTE: In the event of conflict between parameters in config and in
     config_col, config_col will control.
     :param layout_col: (Optional) Column in the .csv file containing the
-    pyTRS layout name to use for that row. (If not specified, will use
+    pytrs layout name to use for that row. (If not specified, will use
     `config` parameters; and if not specified there, will deduce it when
     parsed.)
     :param resume: Whether to overwrite (i.e. `resume=False`) an
@@ -75,9 +75,9 @@ def parse_csv(
     :return: Returns 0 on success.
     """
 
-    from pyTRS.parser import PLSSDesc, Tract
+    from pytrs.parser import PLSSDesc, Tract
     import os, csv
-    from pyTRS.utils import flatten, alpha_to_num, num_to_alpha
+    from pytrs.utils import flatten, alpha_to_num, num_to_alpha
 
     if out_file is None:
         from datetime import datetime
@@ -87,7 +87,7 @@ def parse_csv(
             f"_{str(t.hour).rjust(2, '0')}{str(t.minute).rjust(2, '0')}"
             f"{str(t.second).rjust(2, '0')}"
         )
-        out_file = f"{in_file[:-4]}_pyTRS_parsed_{timestamp}.csv"
+        out_file = f"{in_file[:-4]}_pytrs_parsed_{timestamp}.csv"
 
     # Ensure input and output filepaths lead to .csv files.
     if not (in_file.lower().endswith('.csv') and out_file.lower().endswith('.csv')):

@@ -1,7 +1,7 @@
 # Copyright (c) 2020, James P. Imes, all rights reserved
 
 """
-A GUI app for choosing pyTRS Tract attributes.
+A GUI app for choosing pytrs.Tract attributes.
 A PromptAttrib object can be used directly in a tkinter application; or
 the prompt_attrib() function can be used to hold up the program while
 the user makes their choices, and then continue when it returns.
@@ -18,7 +18,7 @@ def prompt_attrib(
         prompt_after_ok=None):
     """
     Launch a PromptAttrib tkinter frame, for the user to choose from
-    pyTRS.Tract instance attributes. Will wait for the PromptAttrib
+    pytrs.Tract instance attributes. Will wait for the PromptAttrib
     window to close, and then will return the chosen attribute names
     as a list of strings.
 

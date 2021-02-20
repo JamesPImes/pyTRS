@@ -14,20 +14,20 @@ def quick_parse_list(
     containing the TRS and description block of each identified tract.
 
     :param text: Text of a PLSS land description to be parsed.
-    :param layout: The pyTRS layout. (See `__implementedLayouts` list
+    :param layout: The pyTRS layout. (See `pytrs.IMPLEMENTED_LAYOUTS`
     for options.) Will be deduced by the parser if not specified.
     :param default_ns: How to interpret townships for which direction
     was not specified -- i.e. either 'n' or 's'. (Defaults to 'n')
     :param default_ew: How to interpret ranges for which direction
     was not specified -- i.e. either 'e' or 'w'. (Defaults to 'w')
-    :param config: A pyTRS.Config object or a string containing
+    :param config: A pytrs.Config object or a string containing
     equivalent config parameters, configuring the parse. (See
-    documentation on pyTRS.Config objects for parameter options.)
+    documentation on pytrs.Config objects for parameter options.)
     :return: Returns a nested list, with each sub-list containing the
     TRS and description block for a separate identified Tract.
     """
 
-    from pyTRS.parser import PLSSDesc, Config
+    from pytrs.parser import PLSSDesc, Config
 
     if isinstance(config, Config):
         config = config.decompile_to_text()
@@ -62,7 +62,7 @@ def quick_flags(text) -> list:
     parsing the PLSS description, without storing a PLSSDesc object.
     Returns a list of flags.
     """
-    from pyTRS.parser import PLSSDesc
+    from pytrs.parser import PLSSDesc
 
     d = PLSSDesc(text, init_parse_qq=True)
 
@@ -75,7 +75,7 @@ def quick_flag_lines(text) -> list:
     flags by parsing the PLSS description, without storing a PLSSDesc
     object. Returns a list of 2-tuples: (flag, context).
     """
-    from pyTRS.parser import PLSSDesc
+    from pytrs.parser import PLSSDesc
 
     d = PLSSDesc(text, init_parse_qq=True)
 
@@ -91,6 +91,6 @@ def quick_lots_qqs(text, clean_qq=False) -> list:
     no metes-and-bounds, exceptions, complicated descriptions,
     etc.). Defaults to False.
     """
-    from pyTRS.parser import Tract
+    from pytrs.parser import Tract
     t = Tract(desc=text, config="clean_qq" * clean_qq, init_parse_qq=True)
     return t.lots_qqs
