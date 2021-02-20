@@ -68,8 +68,8 @@ class PromptConfig(tk.Frame):
 
     # Parameters that are set via radiobuttons:
     RB_PARAMS = [
-        'cleanQQ', 'includeLotDivs', 'requireColon', 'ocrScrub', 'segment',
-        'initPreprocess', 'initParse', 'initParseQQ', 'break_halves'
+        'clean_qq', 'include_lot_divs', 'require_colon', 'ocr_scrub', 'segment',
+        'init_preprocess', 'init_parse', 'init_parse_qq', 'break_halves'
     ]
 
     # Parameters that are set to a number and control how deeply to
@@ -97,7 +97,7 @@ class PromptConfig(tk.Frame):
         that should be available to the user. If `parameters='all'`,
         will display all possible parameters. If passed as a string,
         parameter names should be separate by a comma and no spaces.
-        Note: defaultNS and defaultEW are always on.
+        Note: default_ns and default_ew are always on.
         :param show_ok: Include the OK button.
         :param ok_button_text: A string, for custom text for the OK
         button.
@@ -164,14 +164,14 @@ class PromptConfig(tk.Frame):
         # A dict of the possible config variables, with nested dicts for
         # respective variable and help text (variables are set later)
         self.CONFIG_DEF = {
-            'defaultNS':
+            'default_ns':
                 {'help':
                      "If the dataset contains a Township whose N/S "
                      "direction was not specified, the program will assume "
                      "this specified direction."
                  },
 
-            'defaultEW':
+            'default_ew':
                 {'help':
                      "If the dataset contains a Range whose E/W direction "
                      "was not specified, the program will assume this "
@@ -190,7 +190,7 @@ class PromptConfig(tk.Frame):
                      f"{parser.IMPLEMENTED_LAYOUT_EXAMPLES}"
                  },
 
-            'cleanQQ':
+            'clean_qq':
                 {'help':
                      "Dataset contains only clean aliquots and lots; no "
                      "metes-and-bounds, exceptions, or limitations. "
@@ -205,7 +205,7 @@ class PromptConfig(tk.Frame):
                      "Default: off (`False`)"
                  },
 
-            'includeLotDivs':
+            'include_lot_divs':
                 {'help':
                      "If parsing lots, report any divisions of lots. For "
                      "example, if True, 'N/2 of Lot 1' would be reported "
@@ -214,13 +214,13 @@ class PromptConfig(tk.Frame):
                      "Default: on (`True`)"
                  },
 
-            'requireColon':
+            'require_colon':
                 {'help':
                      "Instruct a PLSSDesc object (whose layout is "
                      "`TRS_desc` or `S_desc_TR`) to require a colon "
                      "between the section number and the following "
                      "description -- i.e. 'Section 14 NE/4' would NOT be "
-                     "picked up if 'requireColon' is on (`True`).  If "
+                     "picked up if 'require_colon' is on (`True`).  If "
                      "turned off (`False`), then 'Section 14 NE/4' would "
                      "be captured. However, this may result in false "
                      "matches, depending on the dataset.\n\n"
@@ -237,7 +237,7 @@ class PromptConfig(tk.Frame):
                      "beware false matches.)"
                  },
 
-            'ocrScrub':
+            'ocr_scrub':
                 {'help':
                      "Attempt to iron out common OCR artifacts in a "
                      "PLSSDesc object or Tract object (e.g., 'TIS4N-R97W' "
@@ -256,27 +256,27 @@ class PromptConfig(tk.Frame):
                      "Default: off (`False`)"
                  },
 
-            'initPreprocess':
+            'init_preprocess':
                 {'help':
                      "Preprocess PLSS descriptions and Tracts upon "
                      "initialization.\n\n"
                      "Default: on (`True`)"
                  },
 
-            'initParse':
+            'init_parse':
                 {'help':
                      "Parse PLSS descriptions upon initialization (roughly "
                      "equivalent to initializing a PLSSDesc object with "
-                     "`initParse=True`).\n\n"
+                     "`init_parse=True`).\n\n"
                      "Default: off (`False`)"
                  },
 
-            'initParseQQ':
+            'init_parse_qq':
                 {'help':
                      "Parse PLSS descriptions AND Tracts (i.e. lots and "
                      "QQ's) upon initialization (roughly equivalent to "
                      "initializing an PLSSDesc or Tract object with "
-                     "`initParseQQ=True`).\n\n"
+                     "`init_parse_qq=True`).\n\n"
                      "Default: off (`False`)"
                  },
 
@@ -408,7 +408,7 @@ class PromptConfig(tk.Frame):
             text="Default unspecified Townships to [North] or [South]?")
         defaultNShbtn = tk.Button(
             combo_frame, text='?', padx=5,
-            command=lambda: self.cf_help_clicked('defaultNS'))
+            command=lambda: self.cf_help_clicked('default_ns'))
         self.defaultNScombo = Combobox(combo_frame, width=8)
         self.defaultNScombo['values'] = ('North', 'South')
         defaultNSPrompt.grid(column=1, row=combo_frame_row, sticky='e')
@@ -423,7 +423,7 @@ class PromptConfig(tk.Frame):
         defaultEWPrompt.grid(column=1, row=combo_frame_row, sticky='e')
         defaultEWhbtn = tk.Button(
             combo_frame, text='?', padx=5,
-            command=lambda: self.cf_help_clicked('defaultEW'))
+            command=lambda: self.cf_help_clicked('default_ew'))
         defaultEWhbtn.grid(column=2, row=combo_frame_row)
         self.defaultEWcombo = Combobox(combo_frame, width=8)
         self.defaultEWcombo['values'] = ('West', 'East')
@@ -458,8 +458,8 @@ class PromptConfig(tk.Frame):
         cur_row += 1
 
         # Set a new tk.IntVar for each variable name --
-        #   i.e. var_name 'cleanQQ' -> `self.cleanQQVar`, storing a tk.IntVar;
-        #   and set this tk.IntVar to the `self.CONFIG_DEF` dict for 'cleanQQ'
+        #   i.e. var_name 'clean_qq' -> `self.clean_qq_var`, storing a tk.IntVar;
+        #   and set this tk.IntVar to the `self.CONFIG_DEF` dict for 'clean_qq'
         #   (etc.)
         for var_name in self.RB_PARAMS:
             new_var = tk.IntVar()
