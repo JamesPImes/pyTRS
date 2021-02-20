@@ -142,7 +142,7 @@ class PromptConfig(tk.Frame):
         
         if isinstance(parameters, str):
             if parameters.lower() == 'all':
-                parameters = list(parser.Config.__ConfigAttribs__)
+                parameters = list(parser.Config._CONFIG_ATTRIBUTES)
             else:
                 parameters = parameters.replace(' ', '').split(',')
 
@@ -187,7 +187,7 @@ class PromptConfig(tk.Frame):
                      "layouts, it is probably wise to let the program "
                      "deduce the layout for each.\n\n"
                      "Below are examples of the possible layouts:\n\n"
-                     f"{parser.__implementedLayoutExamples__}"
+                     f"{parser.IMPLEMENTED_LAYOUT_EXAMPLES}"
                  },
 
             'cleanQQ':
@@ -434,7 +434,7 @@ class PromptConfig(tk.Frame):
         # Prompt for layout
         self.layoutcombo = Combobox(combo_frame, width=25)
         self.layoutcombo['values'] = tuple(
-            ['Deduce (RECOMMENDED)'] + list(parser.__implementedLayouts__))
+            ['Deduce (RECOMMENDED)'] + list(parser.IMPLEMENTED_LAYOUTS))
         self.combos.append(self.layoutcombo)
     
         if 'layout' in parameters:
@@ -666,7 +666,7 @@ class PromptConfig(tk.Frame):
 
         if 'layout' in self.parameters:
             val = self.layoutcombo.get()
-            if val in parser.__implementedLayouts__:
+            if val in parser.IMPLEMENTED_LAYOUTS:
                 param_vals.append(val)
 
         # Check each of the requested variables. If not default (i.e. -1),

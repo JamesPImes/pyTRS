@@ -52,8 +52,8 @@ from pyTRS.parser import (
 from pyTRS.parser import output_to_csv
 
 # A tuple of currently implemented layouts
-from pyTRS.parser import __implementedLayouts__
-from pyTRS.parser import __implementedLayoutExamples__
+from pyTRS.parser import IMPLEMENTED_LAYOUTS
+from pyTRS.parser import IMPLEMENTED_LAYOUT_EXAMPLES
 
 # Other modules
 from pyTRS import check, quick, utils, interface_tools, csv_suite

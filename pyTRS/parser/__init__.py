@@ -21,5 +21,5 @@ from .parser import find_tr, find_sec, decompile_twprge, find_multisec, break_tr
 from .parser import output_to_csv
 
 # A current list of implemented layouts
-from .parser import __implementedLayouts__
-from .parser import __implementedLayoutExamples__
+from .parser import IMPLEMENTED_LAYOUTS
+from .parser import IMPLEMENTED_LAYOUT_EXAMPLES

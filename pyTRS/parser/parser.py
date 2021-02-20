@@ -29,11 +29,13 @@ from .regexlib import (
 
 
 # A current list of implemented layouts:
-__implementedLayouts__ = (
+_IMPLEMENTED_LAYOUTS = (
     'TRS_desc', 'desc_STR', 'S_desc_TR', 'TR_desc_S', 'copy_all'
 )
 
-__implementedLayoutExamples__ = (
+IMPLEMENTED_LAYOUTS = _IMPLEMENTED_LAYOUTS
+
+IMPLEMENTED_LAYOUT_EXAMPLES = (
     "'TRS_desc'\n"
     "T154N-R97W\nSection 14: NE/4\n\n"
     "'desc_STR'\n"
@@ -198,8 +200,8 @@ class PLSSDesc:
         and need to internally keep track where they came from.)
         :param layout: The pyTRS layout. If not specified, will be
         deduced when initialized, and/or when parsed. See available
-        options in `pyTRS.__implementedLayouts__` and examples in
-        `pyTRS.__implementedLayoutExamples__`.
+        options in `pyTRS.IMPLEMENTED_LAYOUTS` and examples in
+        `pyTRS.IMPLEMENTED_LAYOUT_EXAMPLES`.
         :param config: Either a pyTRS.Config object, or a string of
         parameters to configure how the PLSSDesc object should be
         parsed. (See documentation on pyTRS.Config objects for optional
@@ -230,7 +232,7 @@ class PLSSDesc:
         self.source = source
 
         # The layout of this PLSS description -- Initially None, but will be
-        # set to one of the values in the __implementedLayouts__ list before
+        # set to one of the values in the _IMPLEMENTED_LAYOUTS list before
         # __init__() returns -- either by kwarg `layout=`, or by
         # `set_config()`:
         self.layout = None
@@ -348,7 +350,7 @@ class PLSSDesc:
 
         # If layout has not yet been /validly/ set by the user or
         # set_config(), deduce it:
-        if self.layout not in __implementedLayouts__:
+        if self.layout not in _IMPLEMENTED_LAYOUTS:
             self.layout = self.deduce_layout(commit=True)
             self.layout_specified = False
 
@@ -390,7 +392,7 @@ class PLSSDesc:
         if not isinstance(config, Config):
             raise CONFIG_ERROR
 
-        for attrib in Config.__PLSSDescAttribs__:
+        for attrib in Config._PLSSDESC_ATTRIBUTES:
             value = getattr(config, attrib)
             if value is not None:
                 setattr(self, attrib, value)
@@ -528,14 +530,14 @@ class PLSSDesc:
         # `.parse(layout=<string>)`, we prevent parse_segment() from deducing,
         # AS LONG AS the specified layout is among the implemented layouts.
         layout_specified = False
-        if layout in __implementedLayouts__:
+        if layout in _IMPLEMENTED_LAYOUTS:
             layout_specified = True
         else:
             # If not otherwise specified, pull from self attribute.
             layout = self.layout
             layout_specified = self.layout_specified
             # As a stopgap, if it's still not an acceptable layout, deduce it.
-            if layout not in __implementedLayouts__:
+            if layout not in _IMPLEMENTED_LAYOUTS:
                 layout = self.deduce_layout(commit=False)
 
         if initParseQQ is None:
@@ -703,8 +705,8 @@ class PLSSDesc:
         'desc_STR', 'S_desc_TR', and 'TR_desc_S'), but will also
         consider 'copy_all' if an apparently flawed description is
         found. If specifying fewer than all candidates, ensure that at
-        least one layout from __implementedLayouts__ is in the list.
-        (Strings not in __implementedLayouts__ will have no effect.)
+        least one layout from _IMPLEMENTED_LAYOUTS is in the list.
+        (Strings not in _IMPLEMENTED_LAYOUTS will have no effect.)
         :param deduceBy: The preferred deduction algorithm. (Currently
         only uses 'TRS_order' -- i.e. basically, the apparent order of
         the Twp, Rge, Sec, and description block.)
@@ -731,8 +733,8 @@ class PLSSDesc:
         'desc_STR', 'S_desc_TR', and 'TR_desc_S'), but will also
         consider 'copy_all' if an apparently flawed description is
         found. If specifying fewer than all candidates, ensure that at
-        least one layout from __implementedLayouts__ is in the list.
-        (Strings not in __implementedLayouts__ will have no effect.)
+        least one layout from _IMPLEMENTED_LAYOUTS is in the list.
+        (Strings not in _IMPLEMENTED_LAYOUTS will have no effect.)
         :param deduceBy: The preferred deduction algorithm. (Currently
         only uses 'TRS_order' -- i.e. basically, the apparent order of
         the Twp, Rge, Sec, and description block.)
@@ -1623,7 +1625,7 @@ class Tract:
         if not isinstance(config, Config):
             raise CONFIG_ERROR
 
-        for attrib in Config.__TractAttribs__:
+        for attrib in Config._TRACT_ATTRIBUTES:
             value = getattr(config, attrib)
             if value is not None:
                 setattr(self, attrib, value)
@@ -2426,7 +2428,7 @@ class Config:
     """
 
     # Implemented settings that are settable via Config object:
-    __ConfigAttribs__ = (
+    _CONFIG_ATTRIBUTES = (
         'defaultNS', 'defaultEW', 'initPreprocess', 'layout', 'initParse',
         'initParseQQ', 'cleanQQ', 'requireColon', 'includeLotDivs', 'ocrScrub',
         'segment', 'qq_depth', 'qq_depth_min', 'qq_depth_max',
@@ -2434,21 +2436,21 @@ class Config:
     )
 
     # A list of attribute names whose values should be a bool:
-    __boolTypeAttribs__ = (
+    _BOOL_TYPE_ATTRIBUTES = (
         'initParse', 'initParseQQ', 'cleanQQ', 'includeLotDivs',
         'initPreprocess', 'requireColon', 'ocrScrub', 'segment',
         'break_halves'
     )
 
-    __intTypeAttribs__ = (
+    _INT_TYPE_ATTRIBUTES = (
         'qq_depth_min', 'qq_depth_max', 'qq_depth'
     )
 
     # Those attributes relevant to PLSSDesc objects:
-    __PLSSDescAttribs__ = __ConfigAttribs__
+    _PLSSDESC_ATTRIBUTES = _CONFIG_ATTRIBUTES
 
     # Those attributes relevant to Tract objects:
-    __TractAttribs__ = (
+    _TRACT_ATTRIBUTES = (
         'defaultNS', 'defaultEW', 'initPreprocess', 'initParseQQ', 'cleanQQ',
         'includeLotDivs', 'ocrScrub', 'qq_depth', 'qq_depth_min',
         'qq_depth_max', 'break_halves'
@@ -2505,7 +2507,7 @@ class Config:
         self.configName = configName
 
         # Default all other attributes to `None`:
-        for attrib in Config.__ConfigAttribs__:
+        for attrib in Config._CONFIG_ATTRIBUTES:
             setattr(self, attrib, None)
 
         # Remove all spaces from configText:
@@ -2520,7 +2522,7 @@ class Config:
             if line == '':
                 continue
 
-            if re.split(r'[\.=]', line)[0] in Config.__boolTypeAttribs__:
+            if re.split(r'[\.=]', line)[0] in Config._BOOL_TYPE_ATTRIBUTES:
                 # If string is the name of an attribute that will be stored
                 # as a bool, default to `True` (but will be overruled in
                 # set_str_to_values() if specified otherwise):
@@ -2533,7 +2535,7 @@ class Config:
                 # Specifying E/W can be done with just a string (there's
                 # nothing else it can mean in config context.)
                 self.defaultEW = line[0].lower()
-            elif line in __implementedLayouts__:
+            elif line in _IMPLEMENTED_LAYOUTS:
                 # Specifying layout can be done with just a string
                 # (there's nothing else it can mean in config context.)
                 self.layout = line
@@ -2554,7 +2556,7 @@ class Config:
 
         file = open(filepath, 'w')
 
-        attsToWrite = ['configName'] + Config.__ConfigAttribs__
+        attsToWrite = ['configName'] + Config._CONFIG_ATTRIBUTES
 
         file.write(f"<Contains config data for parsing PLSSDesc "
                    f"and/or Tract objects with the pyTRS library.>\n")
@@ -2635,7 +2637,7 @@ class Config:
         """
 
         def write_val_as_text(att, val):
-            if att in Config.__boolTypeAttribs__:
+            if att in Config._BOOL_TYPE_ATTRIBUTES:
                 if val == True:
                     # If true, Config needs to receive only the
                     # attribute name (defaults to True if specified).
@@ -2660,7 +2662,7 @@ class Config:
                 return f"{att}.{val}"
 
         writeVals = []
-        for att in Config.__ConfigAttribs__:
+        for att in Config._CONFIG_ATTRIBUTES:
             w = write_val_as_text(att, getattr(self, att))
             if w != '':
                 # Include only non-empty strings (i.e. config params
@@ -2722,7 +2724,7 @@ class Config:
 
         # Write values to the respective attributes. boolTypeAttribs
         # will specifically become bools:
-        if comps[0] in Config.__boolTypeAttribs__:
+        if comps[0] in Config._BOOL_TYPE_ATTRIBUTES:
             # If this is a bool-type attribute, set the value with decide_bool()
             setattr(self, comps[0], decide_bool())
             return 0
@@ -2759,7 +2761,7 @@ def findall_matching_tr(text, layout=None) -> ParseBag:
     and its start and end position in the string.
     """
 
-    if layout not in __implementedLayouts__:
+    if layout not in _IMPLEMENTED_LAYOUTS:
         layout = PLSSDesc.deduce_segment_layout(text=text)
 
     trParseBag = ParseBag(parentType='PLSSDesc')
@@ -2866,7 +2868,7 @@ def segment_by_tr(text, layout=None, trFirst=None):
     'TRS_desc' or 'TR_desc_S').
     """
 
-    if layout not in __implementedLayouts__:
+    if layout not in _IMPLEMENTED_LAYOUTS:
         layout = PLSSDesc.deduce_segment_layout(text=text)
 
     if not isinstance(trFirst, bool):
@@ -2982,7 +2984,7 @@ def findall_matching_sec(text, layout=None, requireColon='default_colon'):
     # position in the text.
     wMultiSecList = []
 
-    if layout not in __implementedLayouts__:
+    if layout not in _IMPLEMENTED_LAYOUTS:
         layout = PLSSDesc.deduce_segment_layout(text=text)
 
     def adj_secmo_end(sec_mo):
@@ -3199,7 +3201,7 @@ def parse_segment(
     #       handle an apparent edge case, or the input is flawed.
     ####################################################################
 
-    if layout not in __implementedLayouts__:
+    if layout not in _IMPLEMENTED_LAYOUTS:
         layout = PLSSDesc.deduce_segment_layout(textBlock)
 
     segParseBag = ParseBag(parentType='PLSSDesc')
@@ -5050,8 +5052,8 @@ __all__ = [
     Tract,
     TractList,
     Config,
-    __implementedLayouts__,
-    __implementedLayoutExamples__,
+    IMPLEMENTED_LAYOUTS,
+    IMPLEMENTED_LAYOUT_EXAMPLES,
     decompile_twprge,
     break_trs,
     find_tr,
