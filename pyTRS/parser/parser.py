@@ -2525,8 +2525,8 @@ class Config:
             if re.split(r'[\.=]', line)[0] in Config._BOOL_TYPE_ATTRIBUTES:
                 # If string is the name of an attribute that will be stored
                 # as a bool, default to `True` (but will be overruled in
-                # set_str_to_values() if specified otherwise):
-                self.set_str_to_values(line, defaultBool=True)
+                # _set_str_to_values() if specified otherwise):
+                self._set_str_to_values(line, defaultBool=True)
             elif line.lower() in ['n', 's', 'north', 'south']:
                 # Specifying N/S can be done with just a string (there's
                 # nothing else it can mean in config context.)
@@ -2540,8 +2540,8 @@ class Config:
                 # (there's nothing else it can mean in config context.)
                 self.layout = line
             else:
-                # For anything else, set it with `.set_str_to_values()`.
-                self.set_str_to_values(line)
+                # For anything else, set it with `._set_str_to_values()`.
+                self._set_str_to_values(line)
 
     def __str__(self):
         return self.decompile_to_text()
@@ -2597,8 +2597,8 @@ class Config:
                 continue
 
             # For each line, parse the 'attrib.val' pair, and commit to
-            # the configObj, using .set_str_to_values()
-            configObj.set_str_to_values(line.strip('\n'))
+            # the configObj, using ._set_str_to_values()
+            configObj._set_str_to_values(line.strip('\n'))
         return configObj
 
     @staticmethod
@@ -2671,7 +2671,7 @@ class Config:
 
         return ','.join(writeVals)
 
-    def set_str_to_values(self, attrib_val, defaultBool=None):
+    def _set_str_to_values(self, attrib_val, defaultBool=None):
         """
         Take in a string of an attribute/value pair (in the format
         'attribute.value' or 'attribute=value') and set the appropriate
@@ -3210,16 +3210,16 @@ def parse_segment(
     # `handedDownConfig`.
     handedDownConfig = Config(handedDownConfig)
     if isinstance(cleanQQ, bool):
-        handedDownConfig.set_str_to_values(f"cleanQQ.{cleanQQ}")
+        handedDownConfig._set_str_to_values(f"cleanQQ.{cleanQQ}")
     if break_halves is not None:
-        handedDownConfig.set_str_to_values(
+        handedDownConfig._set_str_to_values(
             f"break_halves.{break_halves}")
     if qq_depth_min is not None:
-        handedDownConfig.set_str_to_values(f"qq_depth_min.{qq_depth_min}")
+        handedDownConfig._set_str_to_values(f"qq_depth_min.{qq_depth_min}")
     if qq_depth_max is not None:
-        handedDownConfig.set_str_to_values(f"qq_depth_max.{qq_depth_max}")
+        handedDownConfig._set_str_to_values(f"qq_depth_max.{qq_depth_max}")
     if qq_depth is not None:
-        handedDownConfig.set_str_to_values(f"qq_depth.{qq_depth}")
+        handedDownConfig._set_str_to_values(f"qq_depth.{qq_depth}")
 
     if not isinstance(cleanUp, bool):
         # if cleanUp has not been specified as a bool, then use these defaults:
