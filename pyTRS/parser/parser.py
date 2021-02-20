@@ -176,7 +176,7 @@ class PLSSDesc:
     called automatically:
     .deduce_layout() -- Deduces the layout of the description, if it was
         not dictated at init, or otherwise.
-    .deduce_segment_layout() -- (Static method)  Deduces the layout of a
+    ._deduce_segment_layout() -- (Static method)  Deduces the layout of a
         segment of the description.
     .preprocess() -- Attempt to scrub the original description of common
         flaws, typos, etc. into a format more consistently understood by
@@ -692,7 +692,7 @@ class PLSSDesc:
         return bigPB.parsedTracts
 
     @staticmethod
-    def deduce_segment_layout(text, candidates=None, deduceBy='TRS_order'):
+    def _deduce_segment_layout(text, candidates=None, deduceBy='TRS_order'):
         """
         INTERNAL USE:
         Deduce the layout of a *segment* of a description, without
@@ -2762,7 +2762,7 @@ def findall_matching_tr(text, layout=None) -> ParseBag:
     """
 
     if layout not in _IMPLEMENTED_LAYOUTS:
-        layout = PLSSDesc.deduce_segment_layout(text=text)
+        layout = PLSSDesc._deduce_segment_layout(text=text)
 
     trParseBag = ParseBag(parentType='PLSSDesc')
 
@@ -2869,7 +2869,7 @@ def segment_by_tr(text, layout=None, trFirst=None):
     """
 
     if layout not in _IMPLEMENTED_LAYOUTS:
-        layout = PLSSDesc.deduce_segment_layout(text=text)
+        layout = PLSSDesc._deduce_segment_layout(text=text)
 
     if not isinstance(trFirst, bool):
         if layout in ['TRS_desc', 'TR_desc_S']:
@@ -2985,7 +2985,7 @@ def findall_matching_sec(text, layout=None, requireColon='default_colon'):
     wMultiSecList = []
 
     if layout not in _IMPLEMENTED_LAYOUTS:
-        layout = PLSSDesc.deduce_segment_layout(text=text)
+        layout = PLSSDesc._deduce_segment_layout(text=text)
 
     def adj_secmo_end(sec_mo):
         """
@@ -3202,7 +3202,7 @@ def parse_segment(
     ####################################################################
 
     if layout not in _IMPLEMENTED_LAYOUTS:
-        layout = PLSSDesc.deduce_segment_layout(textBlock)
+        layout = PLSSDesc._deduce_segment_layout(textBlock)
 
     segParseBag = ParseBag(parentType='PLSSDesc')
 
