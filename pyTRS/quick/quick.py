@@ -2,11 +2,13 @@
 
 """
 Quick functions for simple parsing operations, without storing
-PLSSDesc objects or Tract objects or accessing higher-level data.
+PLSSDesc objects or Tract objects or accessing higher-level data
+or functionality.
 """
 
+
 def quick_parse_list(
-        text, layout=None, defaultNS='n', defaultEW='w', config='') -> list:
+        text, layout=None, default_ns='n', default_ew='w', config='') -> list:
     """
     Parse text of a PLSS land description directly into a nested list
     containing the TRS and description block of each identified tract.
@@ -14,9 +16,9 @@ def quick_parse_list(
     :param text: Text of a PLSS land description to be parsed.
     :param layout: The pyTRS layout. (See `__implementedLayouts` list
     for options.) Will be deduced by the parser if not specified.
-    :param defaultNS: How to interpret townships for which direction
+    :param default_ns: How to interpret townships for which direction
     was not specified -- i.e. either 'n' or 's'. (Defaults to 'n')
-    :param defaultEW: How to interpret ranges for which direction
+    :param default_ew: How to interpret ranges for which direction
     was not specified -- i.e. either 'e' or 'w'. (Defaults to 'w')
     :param config: A pyTRS.Config object or a string containing
     equivalent config parameters, configuring the parse. (See
@@ -31,14 +33,14 @@ def quick_parse_list(
         config = config.decompile_to_text()
 
     # Compile the config string:
-    config = ','.join([f'{layout},{defaultNS},{defaultEW}',config])
+    config = ','.join([f'{layout},{default_ns},{default_ew}', config])
 
-    d = PLSSDesc(text, layout=layout, config=config, initParse=True)
+    d = PLSSDesc(text, layout=layout, config=config, init_parse=True)
     return d.tracts_to_list('trs', 'desc')
 
 
 def quick_parse_str(
-        text, layout=None, defaultNS='n', defaultEW='w', config='') -> str:
+        text, layout=None, default_ns='n', default_ew='w', config='') -> str:
     """
     Parse text of a PLSS land description directly into a string
     containing the TRS and description block of each identified tract,
@@ -47,7 +49,7 @@ def quick_parse_str(
     All parameters are identical to `quick_parse_list()`.
     """
 
-    qpl = quick_parse_list(text, layout, defaultNS, defaultEW, config)
+    qpl = quick_parse_list(text, layout, default_ns, default_ew, config)
     qpl2 = []
     for tract in qpl:
         qpl2.append(': '.join(tract))
@@ -62,9 +64,9 @@ def quick_flags(text) -> list:
     """
     from pyTRS.parser import PLSSDesc
 
-    PLSSDescObj = PLSSDesc(text, initParseQQ=True)
+    d = PLSSDesc(text, init_parse_qq=True)
 
-    return PLSSDescObj.eFlagList + PLSSDescObj.wFlagList
+    return d.e_flags + d.w_flags
 
 
 def quick_flag_lines(text) -> list:
@@ -75,20 +77,20 @@ def quick_flag_lines(text) -> list:
     """
     from pyTRS.parser import PLSSDesc
 
-    PLSSDescObj = PLSSDesc(text, initParseQQ=True)
+    d = PLSSDesc(text, init_parse_qq=True)
 
-    return PLSSDescObj.eFlagLines + PLSSDescObj.wFlagLines
+    return d.e_flag_lines + d.w_flag_lines
 
 
-def quick_lotsQQ(text, cleanQQ=False) -> list:
+def quick_lots_qqs(text, clean_qq=False) -> list:
     """
     Parses the text as though it were a Tract, and returns a single list
     of resulting lots and QQ's, without storing a `Tract` object.
 
-    :param cleanQQ: Whether to expect only clean lots and QQ's (i.e.
+    :param clean_qq: Whether to expect only clean lots and QQ's (i.e.
     no metes-and-bounds, exceptions, complicated descriptions,
     etc.). Defaults to False.
     """
     from pyTRS.parser import Tract
-    return Tract(desc=text, config=f'{"cleanQQ"*cleanQQ},initParseQQ').lotQQList
-
+    t = Tract(desc=text, config="clean_qq" * clean_qq, init_parse_qq=True)
+    return t.lots_qqs
