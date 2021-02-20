@@ -2581,7 +2581,7 @@ class Config:
 
         file = open(filepath, 'w')
 
-        attsToWrite = ['config_name'] + Config._CONFIG_ATTRIBUTES
+        attsToWrite = ['config_name'] + list(Config._CONFIG_ATTRIBUTES)
 
         file.write(f"<Contains config data for parsing PLSSDesc "
                    f"and/or Tract objects with the pyTRS library.>\n")
