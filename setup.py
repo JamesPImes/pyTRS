@@ -1,6 +1,6 @@
 from setuptools import setup
 
-from pyTRS import _constants
+from pytrs import _constants
 
 
 descrip = (
