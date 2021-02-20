@@ -4922,7 +4922,7 @@ def _clean_attributes(*attributes) -> list:
     attributes = flatten(attributes)
 
     if len(attributes) == 0:
-        raise Exception('Specify at least one attribute as argument.')
+        return []
 
     cleanArgList = []
     for att in attributes:
