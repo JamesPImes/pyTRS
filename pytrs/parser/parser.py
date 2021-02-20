@@ -416,6 +416,9 @@ class PLSSDesc:
                 self.parsed_tracts.snapshot_inside(),
                 self.orig_desc)
 
+    def __getitem__(self, item):
+        return self.parsed_tracts.__getitem__(item)
+
     def set_config(self, config):
         """
         Apply the relevant settings from a Config object to this object;
