@@ -399,7 +399,7 @@ class PLSSDesc:
                 if attrib == 'layout':
                     self.layout_specified = True
 
-    def unpack(self, target_pb):
+    def _unpack_pb(self, target_pb):
         """
         Unpack (append or set) the relevant attributes of the
         `target_pb` into self's attributes.
@@ -409,7 +409,7 @@ class PLSSDesc:
         """
 
         if not isinstance(target_pb, ParseBag):
-            raise TypeError("Can only `unpack()` a pyTRS.ParseBag object.")
+            raise TypeError("Can only `_unpack_pb()` a pyTRS.ParseBag object.")
 
         if target_pb.descIsFlawed:
             self.descIsFlawed = True
@@ -656,7 +656,7 @@ class PLSSDesc:
         # etc. apply to which Tracts. (This is an ambiguity that often
         # exists in the data, even when humans read it.) So for robust
         # data, we apply flags from the whole PLSSDesc to each Tract.
-        # It will only unpack the flags and flaglines, because that's
+        # It will only _unpack the flags and flaglines, because that's
         # all that is relevant to a Tract. Also apply TractNum (i.e.
         # origIndex).
         # Also, `tempPB` takes the wFlags and eFlags from the PLSSDesc
@@ -671,10 +671,10 @@ class PLSSDesc:
         for TractObj in bigPB.parsedTracts:
 
             # Unpack the flags from the PLSSDesc, held in `tempPB`.
-            TractObj.unpack(tempPB)
+            TractObj._unpack_pb(tempPB)
 
             # Unpack the flags, etc. from `bigPB`.
-            TractObj.unpack(bigPB)
+            TractObj._unpack_pb(bigPB)
 
             # And hand down the PLSSDesc object's `.source` and `.origDesc`
             # attributes to each of the Tract objects:
@@ -686,7 +686,7 @@ class PLSSDesc:
             TractNum += 1
 
         if commit:
-            self.unpack(bigPB)
+            self._unpack_pb(bigPB)
 
         # Return the list of identified `Tract` objects (ie. a TractList object)
         return bigPB.parsedTracts
@@ -1054,7 +1054,7 @@ class PLSSDesc:
                 check_for_wflag(line, rgx, flag)
 
         if commit:
-            self.unpack(flag_pb)
+            self._unpack_pb(flag_pb)
 
         return flag_pb
 
@@ -1383,7 +1383,7 @@ class Tract:
         self.parse_complete = False
 
         # If the TRS has been specified (i.e. is in the '000n000w00'
-        # format), unpack it into the component parts
+        # format), _unpack it into the component parts
         self.twp, self.rge, self.sec = break_trs(trs)
         if self.sec is None:
             self.sec = 'secError'
@@ -1630,7 +1630,7 @@ class Tract:
             if value is not None:
                 setattr(self, attrib, value)
 
-    def unpack(self, target_pb):
+    def _unpack_pb(self, target_pb):
         """
         Unpack (append or set) the relevant attributes of the
         `target_pb` into self's attributes.
@@ -1640,7 +1640,7 @@ class Tract:
         """
 
         if not isinstance(target_pb, ParseBag):
-            raise TypeError("Can only `unpack()` a pyTRS.ParseBag object.")
+            raise TypeError("Can only `_unpack_pb()` a pyTRS.ParseBag object.")
 
         if target_pb.descIsFlawed:
             self.descIsFlawed = True
@@ -1795,7 +1795,7 @@ class Tract:
         # 4) Extract aliquot_regex matches from the text.
         # 5) Convert the aliquot_regex matches into a QQList.
         # 6) Pack it all into a ParseBag.
-        # 6a) If committing the results, self.unpack() the ParseBag.
+        # 6a) If committing the results, self._unpack_pb() the ParseBag.
         # 7) Join the lotList and QQList from the ParseBag, and return it.
         ################################################################
 
@@ -1924,7 +1924,7 @@ class Tract:
         # Store the results, if instructed to do so.
         if commit:
             self.parse_complete = True
-            self.unpack(plqqParseBag)
+            self._unpack_pb(plqqParseBag)
 
         return retLotQQList
 
@@ -2298,8 +2298,8 @@ class ParseBag:
     # functions / methods that are called during parsing. Output data of
     # varying kinds are temporarily packed into a ParseBag. When it gets
     # back to the PLSSDesc and/or Tract object, that object will
-    # .unpack() the contents of the ParseBag into its own attributes
-    # -- i.e. `plssdesc_object.unpack(parsebag_object)`.
+    # ._unpack_pb() the contents of the ParseBag into its own attributes
+    # -- i.e. `plssdesc_object._unpack_pb(parsebag_object)`.
 
     # It was designed this way because different functions process
     # different components of the PLSS description, but almost all of
@@ -3054,7 +3054,7 @@ def findall_matching_sec(text, layout=None, requireColon='default_colon'):
         # that we want. Determine which it is, and append it to the respective
         # list:
         if is_multisec(sec_mo):
-            # If it's a multiSec, unpack it, and append it to the wMultiSecList.
+            # If it's a multiSec, _unpack it, and append it to the wMultiSecList.
             multiSecParseBagObj = unpack_sections(sec_mo.group())
             # Pull out the secList.
             unpackedMultiSec = multiSecParseBagObj.secList
@@ -4087,7 +4087,7 @@ def unpack_sections(secTextBlock):
                 # The 'sections' list is being filled in reverse by this
                 # algorithm, starting at the end of the search string
                 # and running backwards. Thus, this particular loop,
-                # which is attempting to unpack "Sections 3 - 9", will
+                # which is attempting to _unpack "Sections 3 - 9", will
                 # be fed into the sections list as [08, 07, 06, 05, 04,
                 # 03]. (09 should already be in the list from the
                 # previous loop.)  'start_of_list' refers to the
@@ -4350,7 +4350,7 @@ def unpack_aliquots(
     component_list.reverse()
 
     # ------------------------------------------------------------------
-    # If no components found, there are no QQ's to unpack.
+    # If no components found, there are no QQ's to _unpack.
     if len(component_list) == 0:
         return component_list
 
@@ -4558,7 +4558,7 @@ def unpack_lots(lotTextBlock, includeLotDivs=True):
             break
 
         else:
-            # We still have at least one lot to unpack.
+            # We still have at least one lot to _unpack.
 
             # Pull the right-most lot number (as a string):
             lotNum = get_last_lot(lots_mo)
@@ -4599,7 +4599,7 @@ def unpack_lots(lotTextBlock, includeLotDivs=True):
                 # The 'lots' list is being filled in reverse by this
                 # algorithm, starting at the end of the search string
                 # and running backwards. Thus, this particular loop,
-                # which is attempting to unpack "Lots 3 - 9", will be
+                # which is attempting to _unpack "Lots 3 - 9", will be
                 # fed into the lots list as [L8, L7, L6, L5, L4, L3].
                 # (L9 should already be in the list from the previous
                 # loop.)
