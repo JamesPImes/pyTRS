@@ -471,51 +471,56 @@ class PromptConfig(tk.Frame):
             setattr(self, var_name + 'Var', new_var)
             self.CONFIG_DEF[var_name]['var'] = new_var
 
+
         # Prompt for qq_depth_min
         qq_depth_minPrompt = tk.Label(
             combo_frame, text="MINIMUM depth to parse QQs")
-        qq_depth_minPrompt.grid(column=1, row=combo_frame_row, sticky='e')
         qq_depth_minhbtn = tk.Button(
             combo_frame, text='?', padx=5,
             command=lambda: self.cf_help_clicked('qq_depth_min'))
-        qq_depth_minhbtn.grid(column=2, row=combo_frame_row)
         self.qq_depth_mincombo = Combobox(combo_frame, width=25)
         self.qq_depth_mincombo['values'] = self.CONFIG_DEF["qq_depth_min"]["options"]
-        self.qq_depth_mincombo.grid(column=3, row=combo_frame_row, sticky='w')
         self.combos.append(self.qq_depth_mincombo)
         self.CONFIG_DEF["qq_depth_min"]["combo"] = self.qq_depth_mincombo
-        combo_frame_row += 1
+        if "qq_depth_min" in self.parameters:
+            qq_depth_minPrompt.grid(column=1, row=combo_frame_row, sticky='e')
+            qq_depth_minhbtn.grid(column=2, row=combo_frame_row)
+            self.qq_depth_mincombo.grid(column=3, row=combo_frame_row, sticky='w')
+            combo_frame_row += 1
+
 
         # Prompt for qq_depth_max
         qq_depth_maxPrompt = tk.Label(
             combo_frame, text="MAXIMUM depth to parse QQs")
-        qq_depth_maxPrompt.grid(column=1, row=combo_frame_row, sticky='e')
         qq_depth_maxhbtn = tk.Button(
             combo_frame, text='?', padx=5,
             command=lambda: self.cf_help_clicked('qq_depth_max'))
-        qq_depth_maxhbtn.grid(column=2, row=combo_frame_row)
         self.qq_depth_maxcombo = Combobox(combo_frame, width=25)
         self.qq_depth_maxcombo['values'] = self.CONFIG_DEF["qq_depth_max"]["options"]
-        self.qq_depth_maxcombo.grid(column=3, row=combo_frame_row, sticky='w')
         self.combos.append(self.qq_depth_maxcombo)
         self.CONFIG_DEF["qq_depth_max"]["combo"] = self.qq_depth_maxcombo
-        combo_frame_row += 1
+        if "qq_depth_max" in self.parameters:
+            qq_depth_maxPrompt.grid(column=1, row=combo_frame_row, sticky='e')
+            qq_depth_maxhbtn.grid(column=2, row=combo_frame_row)
+            self.qq_depth_maxcombo.grid(column=3, row=combo_frame_row, sticky='w')
+            combo_frame_row += 1
 
         # Prompt for qq_depth
         qq_depthPrompt = tk.Label(
             combo_frame,
             text="EXACT depth to parse QQs (override min and max)")
-        qq_depthPrompt.grid(column=1, row=combo_frame_row, sticky='e')
         qq_depthhbtn = tk.Button(
             combo_frame, text='?', padx=5,
             command=lambda: self.cf_help_clicked('qq_depth'))
-        qq_depthhbtn.grid(column=2, row=combo_frame_row)
         self.qq_depthcombo = Combobox(combo_frame, width=25)
         self.qq_depthcombo['values'] = self.CONFIG_DEF["qq_depth"]["options"]
-        self.qq_depthcombo.grid(column=3, row=combo_frame_row, sticky='w')
         self.combos.append(self.qq_depthcombo)
         self.CONFIG_DEF["qq_depth"]["combo"] = self.qq_depthcombo
-        combo_frame_row += 1
+        if "qq_depth" in self.parameters:
+            qq_depthPrompt.grid(column=1, row=combo_frame_row, sticky='e')
+            qq_depthhbtn.grid(column=2, row=combo_frame_row)
+            self.qq_depthcombo.grid(column=3, row=combo_frame_row, sticky='w')
+            combo_frame_row += 1
 
         # Generate radiobuttons for the remaining parameters
         pr = self.RadioSetter(self, writing_header=True)
