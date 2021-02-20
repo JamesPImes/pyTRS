@@ -27,11 +27,19 @@ from .regexlib import (
     sec_within_desc_regex
 )
 
-# A current list of implemented layouts:
+# All current layouts
+TRS_DESC = "TRS_desc"
+DESC_STR = "desc_STR"
+S_DESC_TR = "S_desc_TR"
+TR_DESC_S = "TR_desc_S"
+COPY_ALL = "copy_all"
+
+# A tuple of all currently implemented layouts:
 _IMPLEMENTED_LAYOUTS = (
-    'TRS_desc', 'desc_STR', 'S_desc_TR', 'TR_desc_S', 'copy_all'
+    TRS_DESC, DESC_STR, S_DESC_TR, TR_DESC_S, COPY_ALL
 )
 
+# The same tuple as a public-facing var
 IMPLEMENTED_LAYOUTS = _IMPLEMENTED_LAYOUTS
 
 IMPLEMENTED_LAYOUT_EXAMPLES = (
@@ -268,7 +276,7 @@ class PLSSDesc:
         self.clean_qq = False
 
         # Whether we should require a colon between Section ## and tract
-        # description (for TRS_desc and S_desc_TR layouts):
+        # description (for TRS_DESC and S_DESC_TR layouts):
         self.require_colon = True
 
         # Whether to include any divisions of lots
@@ -551,12 +559,12 @@ class PLSSDesc:
         if not isinstance(segment, bool):
             segment = self.segment
 
-        if layout == 'copy_all':
+        if layout == COPY_ALL:
             # If a *segment* (which will be divided up shortly) finds itself in
-            # the 'copy_all' layout, that should still parse fine. But
+            # the COPY_ALL layout, that should still parse fine. But
             # segmenting the whole description would defy the point of
-            # 'copy_all' layout. So prevent `segment` when the OVERALL layout
-            # is 'copy_all'
+            # COPY_ALL layout. So prevent `segment` when the OVERALL layout
+            # is COPY_ALL
             segment = False
 
         # For QQ parsing (if applicable)
@@ -579,7 +587,7 @@ class PLSSDesc:
             return bigPB
 
         if not isinstance(clean_up, bool):
-            if layout in ['TRS_desc', 'desc_STR', 'S_desc_TR', 'TR_desc_S']:
+            if layout in [TRS_DESC, DESC_STR, S_DESC_TR, TR_DESC_S]:
                 # Default `clean_up` to True only for these layouts
                 clean_up = True
             else:
@@ -610,7 +618,7 @@ class PLSSDesc:
         # that PB into the big PB each time:
         for textBlock in trTextBlocks:
             use_layout = layout
-            if segment and layout != "copy_all":
+            if segment and layout != COPY_ALL:
                 # Let the segment parser deduce layout for each text_block.
                 use_layout = None
             midParseBag = _parse_segment(
@@ -622,11 +630,11 @@ class PLSSDesc:
             bigPB.absorb(midParseBag)
 
         # If we've still not discovered any Tracts, run a final parse in
-        # layout `copy_all`, and include appropriate errors.
+        # layout COPY_ALL, and include appropriate errors.
         if len(bigPB.parsed_tracts) == 0:
             bigPB.absorb(
                 _parse_segment(
-                    text, layout='copy_all', clean_up=False, require_colon=False,
+                    text, layout=COPY_ALL, clean_up=False, require_colon=False,
                     handed_down_config=config, init_parse_qq=init_parse_qq,
                     clean_qq=clean_qq, qq_depth_min=qq_depth_min,
                     qq_depth_max=qq_depth_max, qq_depth=qq_depth,
@@ -728,7 +736,7 @@ class PLSSDesc:
         i.e. the preprocessed description.
         :param candidates: A list of which layouts are to be considered.
         If passed as `None` (the default), it will consider all
-        currently implmented meaningful layouts (i.e. 'TRS_desc',
+        currently implemented meaningful layouts (i.e. 'TRS_desc',
         'desc_STR', 'S_desc_TR', and 'TR_desc_S'), but will also
         consider 'copy_all' if an apparently flawed description is
         found. If specifying fewer than all candidates, ensure that at
@@ -747,12 +755,12 @@ class PLSSDesc:
             text = self.pp_desc
 
         if not isinstance(candidates, list):
-            candidates = ['TRS_desc', 'desc_STR', 'S_desc_TR', 'TR_desc_S']
+            candidates = [TRS_DESC, DESC_STR, S_DESC_TR, TR_DESC_S]
 
-        try_TRS_desc = 'TRS_desc' in candidates
-        try_desc_STR = 'desc_STR' in candidates
-        try_S_desc_TR = 'S_desc_TR' in candidates
-        try_TR_desc_S = 'TR_desc_S' in candidates
+        try_TRS_desc = TRS_DESC in candidates
+        try_desc_STR = DESC_STR in candidates
+        try_S_desc_TR = S_DESC_TR in candidates
+        try_TR_desc_S = TR_DESC_S in candidates
         try_subdivision = 'subdivision' in candidates
 
         if deduce_by == 'demerits':
@@ -764,7 +772,7 @@ class PLSSDesc:
         else:
             # Default to 'TRS_order' (i.e. check whether a Section comes
             # before a T&R, or vice versa). Strip out whitespace for this
-            # (mainly to avoid false misses in S_desc_TR).
+            # (mainly to avoid false misses in S_DESC_TR).
 
             # we use the noNum version of the sec_regex here
             sec_mo = noNum_sec_regex.search(text.strip())
@@ -779,23 +787,23 @@ class PLSSDesc:
                         self.layout = layoutGuess
                     return layoutGuess
                 else:
-                    # If subdivision isn't option, default to copy_all,
+                    # If subdivision isn't option, default to COPY_ALL,
                     # as no identifiable section is an insurmountable flaw
-                    layoutGuess = 'copy_all'
+                    layoutGuess = COPY_ALL
                     if commit:
                         self.layout = layoutGuess
                     return layoutGuess
 
             if tr_mo is None:
-                # If found no T&R's, default to copy_all because desc is
+                # If found no T&R's, default to COPY_ALL because desc is
                 # likely flawed.
-                layoutGuess = 'copy_all'
+                layoutGuess = COPY_ALL
                 if commit:
                     self.layout = layoutGuess
                 return layoutGuess
 
             # If the first identified section comes before the first
-            # identified T&R, then it's probably desc_STR or S_desc_TR:
+            # identified T&R, then it's probably DESC_STR or S_DESC_TR:
             if sec_mo.start() < tr_mo.start():
                 if try_S_desc_TR:
                     # This is such an unlikely layout, we give it very
@@ -803,21 +811,21 @@ class PLSSDesc:
                     # in the description, we should expect it VERY early
                     # in the text:
                     if sec_mo.start() <= 1:
-                        layoutGuess = 'S_desc_TR'
+                        layoutGuess = S_DESC_TR
                     else:
-                        layoutGuess = 'desc_STR'
+                        layoutGuess = DESC_STR
                 else:
-                    layoutGuess = 'desc_STR'
+                    layoutGuess = DESC_STR
             else:
-                # If T&R comes before Section, it's most likely TRS_desc,
-                # but could also be TR_desc_S. Check how many characters
+                # If T&R comes before Section, it's most likely TRS_DESC,
+                # but could also be TR_DESC_S. Check how many characters
                 # appear between T&R and Sec, and decide whether it's
-                # TR_desc_S or TRS_desc, based on that.
+                # TR_DESC_S or TRS_DESC, based on that.
                 stringBetween = text.strip()[tr_mo.end():sec_mo.start()].strip()
                 if len(stringBetween) >= 4 and try_TR_desc_S:
-                    layoutGuess = 'TR_desc_S'
+                    layoutGuess = TR_DESC_S
                 else:
-                    layoutGuess = 'TRS_desc'
+                    layoutGuess = TRS_DESC
 
         if commit:
             self.layout = layoutGuess
@@ -2822,15 +2830,15 @@ def _findall_matching_tr(text, layout=None) -> ParseBag:
                 secFound = True
 
         # If we've found a section before our current T&R, then we need
-        # to check what's in between. For TRS_desc and S_desc_TR layouts,
+        # to check what's in between. For TRS_DESC and S_DESC_TR layouts,
         # we want to rule out misc. interveners:
         #       ','  'in'  'of'  'all of'  'all in'  (etc.).
         # If we have such an intervening string, then this appears to be
         # desc_STR layout -- ex. 'Section 1 of T154N-R97W'
         interveners = ['in', 'of', ',', 'all of', 'all in', 'within', 'all within']
         if secFound and text[j:i].strip() in interveners \
-                and layout in ['TRS_desc', 'S_desc_TR']:
-            # In TRS_Desc and S_desc_TR layouts specifically, this is
+                and layout in [TRS_DESC, S_DESC_TR]:
+            # In TRS_Desc and S_DESC_TR layouts specifically, this is
             # NOT a T&R match for a new Tract.
 
             # Move our parsing index to the end of the currently identified T&R.
@@ -2848,7 +2856,7 @@ def _findall_matching_tr(text, layout=None) -> ParseBag:
             continue
 
         # Otherwise, if there is NO intervener, or the layout is something
-        # other than TRS_desc or S_desc_TR, then this IS a match and we
+        # other than TRS_DESC or S_DESC_TR, then this IS a match and we
         # want to store it.
         else:
             wTRList.append((_compile_twprge_mo(tr_mo), i, i + len(tr_mo.group())))
@@ -2880,7 +2888,7 @@ def _segment_by_tr(text, layout=None, twprge_first=None):
         layout = PLSSDesc._deduce_segment_layout(text=text)
 
     if not isinstance(twprge_first, bool):
-        if layout in ['TRS_desc', 'TR_desc_S']:
+        if layout in [TRS_DESC, TR_DESC_S]:
             twprge_first = True
         else:
             twprge_first = False
@@ -2946,7 +2954,7 @@ def _findall_matching_sec(text, layout=None, require_colon='default_colon'):
     """
 
     # require_colon=True will pass over sections that are NOT followed by
-    # colons, in the TRS_desc and S_desc_TR layouts. For this version,
+    # colons, in the TRS_DESC and S_DESC_TR layouts. For this version,
     # it is defaulted to True for those layouts. However, if no
     # satisfactory section or multiSec is found during the first pass,
     # it will rerun self.parse() with require_colon='second_pass'.
@@ -2964,7 +2972,7 @@ def _findall_matching_sec(text, layout=None, require_colon='default_colon'):
     # But I'm not sure that would actually be better...
 
     # Lastly, note that `require_colonBool` has no effect on layouts
-    # other than TRS_desc and S_desc_TR, even if set to `True`
+    # other than TRS_DESC and S_DESC_TR, even if set to `True`
 
     if isinstance(require_colon, bool):
         require_colonBool = require_colon
@@ -3024,19 +3032,19 @@ def _findall_matching_sec(text, layout=None, require_colon='default_colon'):
         # out sections the same way. So for now, a bool:
         ruledOut = False
 
-        # For TRS_desc and S_desc_TR layouts specifically, we do NOT want
+        # For TRS_DESC and S_DESC_TR layouts specifically, we do NOT want
         # to match sections following "of", "said", or "in" (e.g.
         # 'the NE/4 of Section 4'), because it very likely means its a
         # continuation of the same description.
         enders = (' of', ' said', ' in', ' within')
-        if (layout in ['TRS_desc', 'S_desc_TR']) and \
+        if (layout in [TRS_DESC, S_DESC_TR]) and \
                 text[:sec_mo.start()].rstrip().endswith(enders):
             ruledOut = True
 
-        # Also for TRS_desc and S_desc_TR layouts, we ONLY want to match
+        # Also for TRS_DESC and S_DESC_TR layouts, we ONLY want to match
         # sections and multi-Sections that are followed by a colon (if
         # requiredColonBool == True):
-        if (require_colonBool) and (layout in ['TRS_desc', 'S_desc_TR']) and \
+        if (require_colonBool) and (layout in [TRS_DESC, S_DESC_TR]) and \
                 not (_sec_ends_with_colon(sec_mo)):
             ruledOut = True
 
@@ -3085,14 +3093,14 @@ def _findall_matching_sec(text, layout=None, require_colon='default_colon'):
         # And move the parser index to the end of our current sec_mo
         i = sec_mo.end()
 
-    # If we're in either 'TRS_desc' or 'S_desc_TR' layouts and discovered
+    # If we're in either TRS_DESC or S_DESC_TR layouts and discovered
     # neither a standalone section nor a multiSec, then rerun
     # _findall_matching_sec() under the same kwargs, except with
     # require_colon='second_pass' (which sets require_colonBool=False),
     # to see if we can capture a section after all.
     # Will return those results instead.
     do_second_pass = True
-    if layout not in ['TRS_desc', 'S_desc_TR']:
+    if layout not in [TRS_DESC, S_DESC_TR]:
         do_second_pass = False
     if len(wSecList) > 0 or len(wMultiSecList) > 0:
         do_second_pass = False
@@ -3196,15 +3204,15 @@ def _parse_segment(
     # 6) Based on layout, apply the appropriate algorithm for breaking
     #       down the text. Each algorithm decides where to break the
     #       text apart based on section location, T&R location, etc.
-    #       (e.g., by definition, 'TR_desc_S' and 'desc_STR' both pull
+    #       (e.g., by definition, TR_DESC_S and DESC_STR both pull
     #       the description block from BEFORE an identified section;
-    #       whereas 'S_desc_TR' and 'TRS_desc' both pull description
+    #       whereas S_DESC_TR and TRS_DESC both pull description
     #       block /after/ the section).
-    # 6a) For 'copy_all' specifically, the entire text_block will be
+    # 6a) For COPY_ALL specifically, the entire text_block will be
     #       copied as the `.desc` attribute of a Tract object.
     # 7) If no Tract was created by the end of the parse (e.g., no
     #       matching T&R found, or no section/multiSec found), then it
-    #       will rerun this function using 'copy_all' layout, which will
+    #       will rerun this function using COPY_ALL layout, which will
     #       result in an error flag, but will capture the text as a
     #       Tract. In that case, either the parsing algorithm can't
     #       handle an apparent edge case, or the input is flawed.
@@ -3232,7 +3240,7 @@ def _parse_segment(
 
     if not isinstance(clean_up, bool):
         # if clean_up has not been specified as a bool, then use these defaults:
-        if layout in ['TRS_desc', 'desc_STR', 'S_desc_TR', 'TR_desc_S']:
+        if layout in [TRS_DESC, DESC_STR, S_DESC_TR, TR_DESC_S]:
             clean_up = True
         else:
             clean_up = False
@@ -3299,13 +3307,13 @@ def _parse_segment(
         markersDict[tuple[1]] = 'multiSec_start'
         markersDict[tuple[2]] = 'multiSec_end'
 
-    # If we're in either 'TRS_desc' or 'S_desc_TR' layouts and discovered
+    # If we're in either TRS_DESC or S_DESC_TR layouts and discovered
     # neither a standalone section nor a multiSec, then rerun the parse
     # under the same kwargs, except with require_colon='second_pass' (which
     # sets require_colonBool=False), to see if we can capture a section after
     # all. Will return those results instead:
     do_second_pass = True
-    if layout not in ['TRS_desc', 'S_desc_TR']:
+    if layout not in [TRS_DESC, S_DESC_TR]:
         do_second_pass = False
     if len(working_sec_list) > 0 or len(working_multiSec_list) > 0:
         do_second_pass = False
@@ -3355,19 +3363,19 @@ def _parse_segment(
         segParseBag.w_flags.append(flag)
         segParseBag.w_flag_lines.append((flag, context))
 
-    if layout in ['desc_STR', 'TR_desc_S']:
+    if layout in [DESC_STR, TR_DESC_S]:
         # These two layouts are handled nearly identically, except that
-        # in 'desc_STR' the TR is popped before it's encountered, and in
-        # 'TR_desc_S' it's popped only when encountered. So setting
+        # in DESC_STR the TR is popped before it's encountered, and in
+        # TR_DESC_S it's popped only when encountered. So setting
         # initial TR is the only difference.
 
         # Defaults to a T&R error.
         working_tr = 'TRerr_'
 
-        # For TR_desc_S, will pop the working_tr when we encounter the
+        # For TR_DESC_S, will pop the working_tr when we encounter the
         # first TR. However, for desc_STR, need to pre-set our working_tr
         # (if one is available):
-        if layout == 'desc_STR' and len(working_tr_list) > 0:
+        if layout == DESC_STR and len(working_tr_list) > 0:
             working_tr = working_tr_list.pop(0)
 
         # Description block comes before section in this layout, so we
@@ -3511,11 +3519,11 @@ def _parse_segment(
                 break
 
             # Capture unused text at the end of the string.
-            if layout == 'TR_desc_S' \
+            if layout == TR_DESC_S \
                     and markerType in ['sec_end', 'multiSec_end'] \
                     and not finalRun \
                     and nextMarkerType not in ['sec_start', 'tr_start', 'multiSec_start']:
-                # For TR_desc_S, whenever we come across the end of a Section or
+                # For TR_DESC_S, whenever we come across the end of a Section or
                 # multi-Section, the next thing must be either a sec_start,
                 # multiSec_start, or tr_start. Hence the warning flag, if that's
                 # not true:
@@ -3523,7 +3531,7 @@ def _parse_segment(
                 flag_unused(unusedText, text_block[lastMarkerPos:nextMarkerPos])
 
             # Capture unused text at the end of a section/multiSec (if appropriate).
-            if layout == 'desc_STR' \
+            if layout == DESC_STR \
                     and markerType in ['sec_end', 'multiSec_end'] \
                     and not finalRun \
                     and nextMarkerType not in ['sec_start', 'multiSec_start']:
@@ -3532,9 +3540,9 @@ def _parse_segment(
                     flag_unused(
                         unusedText, text_block[lastMarkerPos:nextMarkerPos])
 
-    if layout == 'S_desc_TR':
+    if layout == S_DESC_TR:
         # TODO: Can probably cut out a lot of lines of code by combining
-        #   'S_desc_TR' and 'TRS_desc' parsing, and just handling how
+        #   S_DESC_TR and TRS_DESC parsing, and just handling how
         #   the first T&R is popped.
 
         # Defaults to a T&R error if no T&R's were identified, but
@@ -3643,7 +3651,7 @@ def _parse_segment(
                     flag_unused(
                         unusedText, text_block[lastMarkerPos:nextMarkerPos])
 
-    if layout == 'copy_all':
+    if layout == COPY_ALL:
         # A minimally-processed layout option. Basically just copies the
         # entire text as a `.desc` attribute. Can serve as a fallback if
         # deduce_layout() can't figure out what the real layout is (or
@@ -3672,7 +3680,7 @@ def _parse_segment(
         TractObj = new_tract(text_block)
         segParseBag.parsed_tracts.append(TractObj)
 
-    if layout == 'TRS_desc':
+    if layout == TRS_DESC:
 
         # Defaults to a T&R error and Sec errors for this layout.
         working_tr = 'TRerr_'
@@ -3716,7 +3724,7 @@ def _parse_segment(
 
             if markerType == 'text_start':
                 # 'text_start' does not have implications for parsing
-                # TRS_desc layout. Move on to next.
+                # TRS_DESC layout. Move on to next.
                 pass
 
             elif markerType == 'tr_start':
@@ -3772,9 +3780,9 @@ def _parse_segment(
 
     if len(segParseBag.parsed_tracts) == 0:
         # If we identified no Tracts in this segment, re-parse using
-        # 'copy_all' layout.
+        # COPY_ALL layout.
         replacementPB = _parse_segment(
-            text_block, layout='copy_all', clean_up=False, require_colon=False,
+            text_block, layout=COPY_ALL, clean_up=False, require_colon=False,
             handed_down_config=handed_down_config, init_parse_qq=init_parse_qq,
             clean_qq=clean_qq)
         return replacementPB
@@ -3786,7 +3794,7 @@ def _cleanup_desc(text):
     """
     INTERNAL USE:
     Clean up common 'artifacts' from parsing--especially layouts other
-    than 'TRS_desc'. (Intended to be run only on post-parsing .desc
+    than TRS_DESC. (Intended to be run only on post-parsing .desc
     attributes of Tract objects.)
     """
 
