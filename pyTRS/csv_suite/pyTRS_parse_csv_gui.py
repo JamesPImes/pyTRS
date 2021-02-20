@@ -17,6 +17,7 @@ __versionDate__ = '9/24/2020'
 __author__ = 'James P. Imes'
 __email__ = 'jamesimes@gmail.com'
 
+
 def version():
     return f"v{__version__} - {__versionDate__}"
 
@@ -238,21 +239,29 @@ class AppWindow(tk.Tk):
 
         # Run the parser
         success_check = 1  # Set to 0 on success.
-        try:
-            success_check = parse_csv(
-                in_file=in_file, desc_col=desc_col, attribs=attribs,
-                out_file=out_file, first_row=first_row, last_row=last_row,
-                header_row=header_row, config=config_text,
-                write_headers=write_headers, unpack=unpack,
-                copy_data=copy_data, tract_level=tract_level,
-                include_uid=include_uid, num_tracts=False,
-                include_unparsed=include_unparsed)
-        except:
-            messagebox.showerror(
-                'Error!',
-                f"Unknown error. Possibly could not open file at '{in_file}' "
-                f"or could not save to '{out_file}'. Ensure you have "
-                f"read/write access to the directory and try again.")
+        success_check = parse_csv(
+            in_file=in_file, desc_col=desc_col, attribs=attribs,
+            out_file=out_file, first_row=first_row, last_row=last_row,
+            header_row=header_row, config=config_text,
+            write_headers=write_headers, unpack=unpack,
+            copy_data=copy_data, tract_level=tract_level,
+            include_uid=include_uid, num_tracts=False,
+            include_unparsed=include_unparsed)
+        # try:
+        #     success_check = parse_csv(
+        #         in_file=in_file, desc_col=desc_col, attribs=attribs,
+        #         out_file=out_file, first_row=first_row, last_row=last_row,
+        #         header_row=header_row, config=config_text,
+        #         write_headers=write_headers, unpack=unpack,
+        #         copy_data=copy_data, tract_level=tract_level,
+        #         include_uid=include_uid, num_tracts=False,
+        #         include_unparsed=include_unparsed)
+        # except:
+        #     messagebox.showerror(
+        #         'Error!',
+        #         f"Unknown error. Possibly could not open file at '{in_file}' "
+        #         f"or could not save to '{out_file}'. Ensure you have "
+        #         f"read/write access to the directory and try again.")
 
         if success_check == 0:
             if messagebox.askyesno(
@@ -289,11 +298,10 @@ class AppWindow(tk.Tk):
         self.config_popup_tk.title('Set pyTRS Config Parameters')
         pc = PromptConfig(
             master=self.config_popup_tk, target_config_var=self.config_text,
-            parameters=['cleanQQ', 'includeLotDivs', 'requireColon', 'ocrScrub',
+            parameters=['clean_qq', 'include_lot_divs', 'require_colon', 'ocr_scrub',
                         'segment', 'layout'],
             show_save=False, show_cancel=False, exit_after_ok=True)
         pc.pack(padx=20, pady=10)
-
 
     def deduce_desc_column(self, in_file):
         self.desc_col_entry.delete(0, 'end')
@@ -301,7 +309,7 @@ class AppWindow(tk.Tk):
         self.header_row_entry.delete(0, 'end')
 
         import csv
-        from pyTRS.parser import find_sec, find_tr
+        from pyTRS.parser import find_sec, find_twprge
         try:
             csv_file = open(in_file, 'r')
         except:
@@ -322,7 +330,7 @@ class AppWindow(tk.Tk):
                 if text is None:
                     continue
 
-                elif len(find_sec(text)) > 0 and len(find_tr(text)) > 0:
+                elif len(find_sec(text)) > 0 and len(find_twprge(text)) > 0:
                     # If the cell contains > 0 sections and > 0 T&R, assume it's
                     # our first match. Add 1 to convert row/column nums from
                     # 0-indexed to 1-indexed:

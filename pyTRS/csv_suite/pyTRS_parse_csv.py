@@ -7,8 +7,9 @@ that there is one Tract per row; saves to a new .csv file.
 Built on the pyTRS library.
 """
 
+
 def parse_csv(
-        in_file : str, desc_col : int, first_row=1, last_row=-1, header_row=-1,
+        in_file: str, desc_col: int, first_row=1, last_row=-1, header_row=-1,
         attribs=None, out_file=None, config_col=None, config=None,
         layout_col=None, resume=False, write_headers=True, unpack=False,
         copy_data=False, tract_level=False, include_uid=False,
@@ -106,10 +107,9 @@ def parse_csv(
     if attribs in [None, '']:
         # If not specified, set default attribs, which are different for
         # `tract_level` than otherwise.
+        attribs = 'trs,desc'
         if tract_level:
-            attribs = 'ppDesc,lotList,QQList'
-        else:
-            attribs = 'trs,desc'
+            attribs = 'pp_desc,lots,qqs'
 
     if isinstance(attribs, str):
         # Split attribute string into list of Tract attribute names:
@@ -205,7 +205,7 @@ def parse_csv(
         # Get text of description from row.
         try:
             desc_text = row[desc_col-1]
-        except:
+        except IndexError:
             print(
                 f"Warning: Could not access PLSS description at row {cur_row}, "
                 f"column {desc_col}.")
@@ -215,12 +215,12 @@ def parse_csv(
         if tract_level:
             # If we're parsing lots/QQ's in an already-parsed Tract (or
             # equivalent), do it, and pack the attributes into a nested list:
-            t = Tract(desc=desc_text, trs='', config=config, initParseQQ=True)
+            t = Tract(desc=desc_text, trs='', config=config, init_parse_qq=True)
             all_Tract_data = [t.to_list(attribs)]
         else:
             # Otherwise, parsing a full PLSS description, and the
             # `.tracts_to_list()` method outputs an already-nested list:
-            d = PLSSDesc(desc_text, config=config, initParseQQ=True)
+            d = PLSSDesc(desc_text, config=config, init_parse_qq=True)
             all_Tract_data = d.tracts_to_list(attribs)
 
         # We will write a row for each Tract object, but if none were found,
