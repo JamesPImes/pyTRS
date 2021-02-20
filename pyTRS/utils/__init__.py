@@ -30,19 +30,19 @@ def alpha_to_num(alpha):
     return val
 
 
-def flatten(listOrTuple=None) -> list:
+def flatten(list_or_tuple=None) -> list:
     """
     Unpack the elements in a nested list or tuple into a flattened list.
     """
 
-    if listOrTuple is None:
+    if list_or_tuple is None:
         return []
 
-    if not isinstance(listOrTuple, (list, tuple)):
-        return [listOrTuple]
+    if not isinstance(list_or_tuple, (list, tuple)):
+        return [list_or_tuple]
     else:
         flattened = []
-        for element in listOrTuple:
+        for element in list_or_tuple:
             if not isinstance(element, (list, tuple)):
                 flattened.append(element)
             else:
@@ -72,9 +72,9 @@ def config_help():
         "at initialization with kwarg "
         "`config=`, as follows:\n"
         ">>> desc1 = pyTRS.PLSSDesc('T154N-R97W Sec 14: NE/4', config='n; w; "
-        "initParse; initParseQQ')\n"
-        ">>> tr1 = pyTRS.Tract('NE/4', '154n97w14', config='n, w, initParse, "
-        "initParseQQ')\n\n"
+        "init_parse; init_parse_qq')\n"
+        ">>> tr1 = pyTRS.Tract('NE/4', '154n97w14', config='n, w, init_parse, "
+        "init_parse_qq')\n\n"
         "Parameters are entered together as a single string, separated by comma "
         "or semicolon. (Spaces are optional and have no effect.)"
     )
@@ -83,7 +83,7 @@ def config_help():
         "Parameters can be entered as text into the `config=` kwarg of PLSSDesc "
         "and Tract objects, OR by initializing a Config object (which can take "
         "all of the same parameters), as follows:\n"
-        ">>> nd_config = pyTRS.Config('n, w, initParse, initParseQQ')\n\n"
+        ">>> nd_config = pyTRS.Config('n, w, init_parse, init_parse_qq')\n\n"
         "...and then feeding this Config object into the `config=` kwarg, as follows:\n"
         ">>> desc1 = pyTRS.PLSSDesc('T154N-R97W Sec 14: NE/4', config=nd_config)\n"
         ">>> tr1 = pyTRS.Tract('NE/4', '154n97w14', config=nd_config)\n\n"
@@ -94,7 +94,7 @@ def config_help():
         "Config data can be saved to a .txt file by first creating a Config object, "
         "then calling the `.save_to_file()` method while specifying the filepath, "
         "as follows:\n\n"
-        ">>> nd_config = pyTRS.Config('n, w, initParse, initParseQQ')\n"
+        ">>> nd_config = pyTRS.Config('n, w, init_parse, init_parse_qq')\n"
         ">>> nd_config.save_to_file(r'C:\Land Data\Parsing\PLSS_preconfig001.txt')\n\n"
         "(Note that the specified filepath must end in the .txt extension.)\n\n"
         "!!!   WARNING: This will overwrite any existing .txt file at the specified "
@@ -153,7 +153,7 @@ def config_parameters():
     Print out all config parameter options and a brief explanation.
     """
 
-    from pyTRS import __implementedLayouts__
+    from pyTRS import IMPLEMENTED_LAYOUTS
 
     # How many spaces to justify parameters before explanation:
     just = 24
@@ -174,32 +174,32 @@ def config_parameters():
     # The parameters and their explanations. The bool at the end refers to whether
     # this is a default setting.
     params = [
-        (("'n'", "'defaultNS.n'"), "Assume any missing N/S in a Twp should be 'n'", True),
-        (("'s'", "'defaultNS.s'"), "Assume any missing N/S in a Twp should be 's'", False),
-        (("'w'", "'defaultEW.w'"), "Assume any missing E/W in a Rge should be 'w'", True),
-        (("'e'", "'defaultEW.e'"), "Assume any missing E/W in a Rge should be 'e'", False),
-        (("'initParse'",), "PLSSDesc object should parse at initialization", False),
-        (("'initParseQQ'",),
+        (("'n'", "'default_ns.n'"), "Assume any missing N/S in a Twp should be 'n'", True),
+        (("'s'", "'default_ns.s'"), "Assume any missing N/S in a Twp should be 's'", False),
+        (("'w'", "'default_ew.w'"), "Assume any missing E/W in a Rge should be 'w'", True),
+        (("'e'", "'default_ew.e'"), "Assume any missing E/W in a Rge should be 'e'", False),
+        (("'init_parse'",), "PLSSDesc object should parse at initialization", False),
+        (("'init_parse_qq'",),
             "Tract object (or PLSSDesc object's subordinate Tract objects) should parse "
             "lots/aliquots at initialization", False),
-        (("'initPreprocess'", "'initPreprocess.True'"),
+        (("'init_preprocess'", "'init_preprocess.True'"),
             "Will preprocess description at initialization", True),
-        (("'initPreprocess.False'",),
+        (("'init_preprocess.False'",),
             "Will NOT preprocess description at initialization", False),
-        (("'cleanQQ'",), "Expect ONLY clean aliquots/lots", False),
-        (("'requireColon'", "'requireColon.True'"),
+        (("'clean_qq'",), "Expect ONLY clean aliquots/lots", False),
+        (("'require_colon'", "'require_colon.True'"),
             "Require a colon between Section number and its following description block "
             "(on a 'first-pass' attempt at a parse only)",
             True),
-        (("'requireColon.False'",), "Do not require a colon in that position", False),
-        (("'includeLotDivs'", "'includeLotDivs.True'"),
+        (("'require_colon.False'",), "Do not require a colon in that position", False),
+        (("'include_lot_divs'", "'include_lot_divs.True'"),
             "Report lot divisions (i.e., 'N2 of L1' for 'N/2 of Lot 1')", True),
-        (("'includeLotDivs.False'",),
+        (("'include_lot_divs.False'",),
             "Do NOT report lot divisions (i.e. just 'L1', even if divided further)",
             False),
-        (("'ocrScrub'", "'ocrScrub.True'"),
+        (("'ocr_scrub'", "'ocr_scrub.True'"),
             "Scrub common OCR artifacts from the text (currently limited effect)", False),
-        (("'ocrScrub.False",), "Do NOT scrub OCR artifacts from the text.", True),
+        (("'ocr_scrub.False",), "Do NOT scrub OCR artifacts from the text.", True),
         (("'segment'", "'segment.True'"),
             "Segment description before parsing into Tracts (MIGHT capture descriptions "
             "with multiple layouts).",
@@ -228,7 +228,7 @@ def config_parameters():
     ]
 
     # Append each of the implemented layouts to the `params` list:
-    for layoutOpt in __implementedLayouts__:
+    for layoutOpt in IMPLEMENTED_LAYOUTS:
         params.append(
             ((f"'{layoutOpt}'", f"'layout.{layoutOpt}'",),
              f"do not deduce layout; instead, force '{layoutOpt}' (NOT RECOMMENDED)",
@@ -241,7 +241,7 @@ def config_parameters():
         print(f"{lbStr * ((just + len(ind)) // len(lbStr)) * 3}")
 
         if len(param[0]) == 1:
-            # If only 1 parameter (e.g., 'cleanQQ') we print it on a single line:
+            # If only 1 parameter (e.g., 'clean_qq') we print it on a single line:
             print(f"{ind}{param[0][0].ljust(just, ' ')})--> {param[1]}{defStr * param[2]}")
             continue
         # If 2 parameters, print them on separate lines, separated by or:
@@ -263,7 +263,7 @@ def config_parameters():
         "USAGE:\n"
         "Combine desired parameters into a single string, separated by comma or "
         "semicolon, like so:\n"
-        "   'defaultNS.n, defaultEW.w, cleanQQ, includeLotDivs.False, qq_depth.2'\n"
+        "   'default_ns.n, default_ew.w, clean_qq, include_lot_divs.False, qq_depth.2'\n"
         "(Spaces are optional and have no effect.)\n\n"
         "The string should be the first positional argument of a Config object, or the "
         "init parameter `config=` when creating PLSSDesc and/or Tract objects.")
