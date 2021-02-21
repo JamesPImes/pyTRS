@@ -215,45 +215,51 @@ class PromptConfig(tk.Frame):
                  },
 
             'require_colon':
-                {'help':
-                     "Instruct a PLSSDesc object (whose layout is "
-                     "`TRS_desc` or `S_desc_TR`) to require a colon "
-                     "between the section number and the following "
-                     "description -- i.e. 'Section 14 NE/4' would NOT be "
-                     "picked up if 'require_colon' is on (`True`).  If "
-                     "turned off (`False`), then 'Section 14 NE/4' would "
-                     "be captured. However, this may result in false "
-                     "matches, depending on the dataset.\n\n"
-                     "(Note that the default parsing method is to first "
-                     "pass over instances that do not have a colon. If no "
-                     "sections are matched, it will make a second pass, "
-                     "this time allowing section numbers that are NOT "
-                     "followed by colon. If not set here, the potentially "
-                     "two-pass method will be used by default.)\n\n"
-                     "If set to on (`True`) here, that second-pass method "
-                     "will be prevented. If set to off (`False`) here, it "
-                     "will broadly capture all such instances, and the "
-                     "second-pass method will not be needed. (Again, "
-                     "beware false matches.)"
+                {
+                    'help': (
+                        "Instruct a PLSSDesc object (whose layout is "
+                        "`TRS_desc` or `S_desc_TR`) to require a colon "
+                        "between the section number and the following "
+                        "description -- i.e. 'Section 14 NE/4' would NOT be "
+                        "picked up if 'require_colon' is on (`True`).  If "
+                        "turned off (`False`), then 'Section 14 NE/4' would "
+                        "be captured. However, this may result in false "
+                        "matches, depending on the dataset.\n\n"
+                        "(Note that the default parsing method is to first "
+                        "pass over instances that do not have a colon. If no "
+                        "sections are matched, it will make a second pass, "
+                        "this time allowing section numbers that are NOT "
+                        "followed by colon. If not set here, the potentially "
+                        "two-pass method will be used by default.)\n\n"
+                        "If set to on (`True`) here, that second-pass method "
+                        "will be prevented. If set to off (`False`) here, it "
+                        "will broadly capture all such instances, and the "
+                        "second-pass method will not be needed. (Again, "
+                        "beware false matches.)"
+                )
                  },
 
             'ocr_scrub':
-                {'help':
-                     "Attempt to iron out common OCR artifacts in a "
-                     "PLSSDesc object or Tract object (e.g., 'TIS4N-R97W' "
-                     "that should have been 'T154N-R97W'. (WARNING: may "
-                     "cause other issues.)\n\n"
-                     "Default: off (`False`)."
+                {
+                    'help': (
+                        "Attempt to iron out common OCR artifacts in a "
+                        "PLSSDesc object or Tract object (e.g., 'TIS4N-R97W' "
+                        "that should have been 'T154N-R97W'). (WARNING: may "
+                        "cause other issues.)\n\n"
+                        "Default: off (`False`)."
+                    )
                  },
 
             'segment':
-                {'help':
-                     "While parsing, segment each description by T&R "
-                     "before identifying tracts, which MIGHT capture SOME "
-                     "descriptions whose layout changes partway through. "
-                     "(However, this cannot capture ALL changes in "
-                     "layouts.)\n\n"
-                     "Default: off (`False`)"
+                {
+                    'help': (
+                        "While parsing, segment each description by T&R "
+                        "before identifying tracts, which MIGHT capture SOME "
+                        "descriptions whose layout changes partway through. "
+                        "(However, this cannot capture ALL changes in "
+                        "layouts.)\n\n"
+                        "Default: off (`False`)"
+                    )
                  },
 
             'init_preprocess':
@@ -384,7 +390,7 @@ class PromptConfig(tk.Frame):
                     "Whether to break aliquot halves into quarters, EVEN IF "
                     "we are beyond the `qq_depth_min`.\n\n"
                     "For example, if qq_depth_min is set to 2, intending "
-                    "to generate QQ's, but out dataset includes the "
+                    "to generate QQ's, but our dataset includes the "
                     "E/2W/2NE/4...\n\n"
                     "...without `break_halves`, this would parse into "
                     "['E2NWNE', 'E2SWNE'].\n\n"
