@@ -1,0 +1,321 @@
+
+Changelog for `general_cleanup` git branch vs. master branch (v0.7.0)
+(Only logging the changes to API, and *added* functionality has not
+been documented here.)
+
+
+Most of the changes here are intended to bring the API in line with
+PEP-8 guidelines. There are some additional changes behind the scenes
+that have not been documented; and there will be more to come. However,
+no major backward-incompatible changes to the API are expected at this
+point.
+
+There is still quite a bit of clean-up do to within functions / methods
+that I will get to as I have time. Until I can find that time, I haven't
+wanted to touch the major functions/methods that comprise the core
+fuctionality of the library. They've been around since shortly after I
+started learning Python, and so there are a ton of artifacts of beginner
+code (which work, but are ineffecient and/or ugly).  All of those
+changes (whenever they happen) should stay behind-the-scenes, though.
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+now imports with all-lowercase name
+
+import pyTRS        -> import pytrs
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Modified import behavior:
+
+Only the pytrs.parser module and its classes and functions are loaded
+with `import pytrs`. Other packages are no longer automatically loaded.
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+These list-type dunder variables were changed to tuples.
+(NOTE: All these were also renamed, as discussed in the next section.)
+
+In the pytrs.parser module:
+
+~~~ top-level ~~~
+
+__implementedLayouts__
+
+
+~~~ Config class ~~~
+
+__ConfigAttribs__
+__boolTypeAttribs__
+__intTypeAttribs__
+__PLSSDescAttribs__
+__TractAttribs__
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Dunder var names, renamed to ALL_CAPS:
+
+In the pytrs.parser module:
+
+~~~ top-level ~~~
+__implementedLayouts__          -> IMPLEMENTED_LAYOUTS
+__implementedLayoutExamples__   -> IMPLEMENTED_LAYOUT_EXAMPLES
+
+~~~ Config class ~~~
+__ConfigAttribs__               -> _CONFIG_ATTRIBUTES
+__boolTypeAttribs__             -> _BOOL_TYPE_ATTRIBUTES
+__intTypeAttribs__              -> _INT_TYPE_ATTRIBUTES
+__PLSSDescAttribs__             -> _PLSSDESC_ATTRIBUTES
+__TractAttribs__                -> _TRACT_ATTRIBUTES
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+parser module functions renamed:
+
+find_tr()                       -> find_twprge()           **
+
+These were always internal-only, but were also renamed:
+
+findall_matching_tr()           -> _findall_matching_tr()
+segment_by_tr()                 -> _segment_by_tr
+findall_matching_sec()          -> _findall_matching_sec()
+parse_segment()                 -> _parse_segment()
+cleanup_desc()                  -> _cleanup_desc()
+ocr_scrub_alpha_to_num()        -> _ocr_scrub_alpha_to_num()
+preprocess_tr_mo()              -> _preprocess_twprge_mo()  **
+compile_tr_mo()                 -> _compile_twprge_mo()     **
+compile_sec_mo()                -> _compile_sec_mo()
+unpack_sections()               -> _unpack_sections()
+is_multisec()                   -> _is_multisec()
+is_singlesec()                  -> _is_singlesec()
+get_last_sec()                  -> _get_last_sec()
+is_plural_singlesec()           -> _is_plural_singlesec()
+sec_ends_with_colon()           -> _sec_ends_with_colon()
+scrub_aliquots()                -> _scrub_aliquots()
+unpack_aliquots()               -> _unpack_aliquots()
+rebuild_aliquots()              -> _rebuild_aliquots()
+subdivide_aliquot()             -> _subdivide_aliquot()
+unpack_lots()                   -> _unpack_lots()
+is_multi_lot()                  -> _is_multi_lot()
+thru_lot()                      -> _thru_lot()
+is_single_lot()                 -> _is_single_lot()
+get_last_lot()                  -> _get_last_lot()
+start_of_last_lot()             -> _start_of_last_lot()
+get_lot_acres()                 -> _get_lot_acres()
+first_lot_is_plural()           -> _first_lot_is_plural()
+has_leading_aliq()              -> _has_leading_aliquot()  **
+get_leading_aliq()              -> _get_leading_aliquot()  **
+get_lot_component()             -> _get_lot_component()
+clean_attributes()              -> _clean_attributes()
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+PLSSDesc methods renamed:
+
+(Internal-only)
+
+PLSSDesc.unpack()                   -> PLSSDesc._unpack_pb()
+PLSSDesc.deduce_segment_layout()    -> PLSSDesc._deduce_segment_layout()
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Tract methods renamed:
+
+(Internal-only)
+
+Tract.unpack()               -> Tract._unpack_pb()
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+TractList methods renamed:
+
+None
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ParseBag methods renamed:
+
+None
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Config methods renamed:
+
+(Internal-only)
+
+Config.set_str_to_values()      -> Config._set_str_to_values()
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+PLSSDesc attributes / kwargs / config params renamed:
+
+NOTE: Wherever a kwarg mirrors one of these variable names, the kwarg
+was also changed. (Those kwargs have not all been logged individually.)
+
+PLSSDesc.origDesc           -> .orig_desc
+PLSSDesc.initParseQQ        -> .init_parse_qq
+PLSSDesc.initParse          -> .init_parse
+PLSSDesc.defaultNS          -> .default_ns
+PLSSDesc.defaultEW          -> .default_ew
+PLSSDesc.initPreprocess     -> .init_preprocess
+PLSSDesc.cleanQQ            -> .clean_qq
+PLSSDesc.requireColon       -> .require_colon
+PLSSDesc.includeLotDivs     -> .include_lot_divs
+PLSSDesc.ocrScrub           -> .ocr_scrub
+PLSSDesc.ppDesc             -> .pp_desc
+PLSSDesc.parsedTracts       -> .parsed_tracts
+
+PLSSDesc.descIsFlawed       -> .desc_is_flawed
+PLSSDesc.wFlagList          -> .w_flags         **
+PLSSDesc.wFlagLines         -> .w_flag_lines
+PLSSDesc.eFlagList          -> .e_flags         **
+PLSSDesc.eFlagLines         -> .e_flag_lines
+PLSSDesc.preproComplete     -> .preprocess_done **
+
+[** denotes that the variable name changed more than just lowerUpper case to snake_case]
+
+
+Other kwargs that changed.
+
+PLSSDesc.parse(
+    cleanUp=                -> clean_up=
+)
+
+PLSSDesc.deduce_layout(
+    deduceBy=               -> deduce_by=
+)
+
+
+PLSSDesc._deduce_segment_layout(
+    deduceBy=               -> deduce_by=
+)
+
+
+PLSSDesc.list_TRS           -> <THIS ALIAS DELETED>  -- use `.list_trs()`
+
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Tract variable names, kwargs, etc.
+
+[** denotes that the variable name changed more than just lowerUpper case to snake_case]
+
+Tract.initParseQQ           -> .init_parse_qq
+
+Tract.initPreprocess        -> .init_preprocess
+Tract.cleanQQ               -> .clean_qq
+Tract.origIndex             -> .orig_index
+
+Tract.lotList               -> .lots            **
+Tract.QQList                -> .qqs             **
+Tract.lotQQList             -> .lots_qqs        **
+Tract.lotAcres              -> .lot_acres
+
+Tract.descIsFlawed          -> .desc_is_flawed
+Tract.wFlagList             -> .w_flags         **
+Tract.wFlagLines            -> .w_flag_lines
+Tract.eFlagList             -> .e_flags         **
+Tract.eFlagLines            -> .e_flag_lines
+Tract.preproComplete        -> .preprocess_done **
+Tract.ppDesc                -> .pp_desc
+Tract.includeLotDivs        -> .include_lot_divs
+
+Other kwargs that changed.
+
+Tract.from_twprgesec(
+    defaultNS=              -> default_ns
+    defaultEW=              -> default_ew
+)
+
+
+Tract.from_TwpRgeSec()      -> <THIS ALIAS DELETED>  -- use `.from_twprgesec()`
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Config
+
+[All parameters that correspond to a Tract or PLSSDesc attribute / kwarg
+now mirror the new version as shown above for Tract and/or PLSSDesc.
+They have not been duplicated here.]
+
+
+Config.configText           -> .config_text
+Config.configName           -> .config_name
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+TractList
+
+TractList.list_TRS          -> <THIS ALIAS DELETED>  -- use `.list_trs()`
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Function args / kwargs in pyTRS.parser module
+
+_parse_segment(
+    textBlock               -> textBlock
+    cleanUp=                -> clean_up=
+    handedDownConfig=       -> handed_down_config=
+)
+
+_segment_by_tr(
+    trFirst=                -> twprge_first=        **
+)
+
+decompile_twprge(
+    tr_string               -> twprge               **
+)
+
+
+_unpack_sections(
+    secTextBlock            -> sec_text_block
+)
+
+
+_unpack_lots(
+    lotTextBlock            -> lot_text_block
+)
+
+
+flatten(
+    listOrTuple             -> list_or_tuple
+)
+
+
+output_to_csv(
+    TractDescList=          -> to_output            **
+    includeSource=          -> include_source
+    includeHeaders=         -> include_headers
+    unpackLists=            -> unpack_lists
+)
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+pyTRS.check.check_flag(
+    getLines=               -> get_lines=
+)
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+pyTRS.quick...
+
+kwargs:
+    defaultNS=              -> default_ns
+    defaultEW=              -> default_ew
+
+function renamed:
+quick_lotsQQ()              -> quick_lots_qqs()
+... and kwargs:
+quick_lotsQQ(
+    cleanQQ=                -> clean_qq=
+)
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+renamed packages / apps
+
+pyTRS.csv_suite.pyTRS_parse_csv -> pytrs.csv_suite.pytrs_parse_csv
+pyTRS.csv_suite.pyTRS_parse_cmd -> pytrs.csv_suite.pytrs_parse_cmd
+pyTRS.csv_suite.pyTRS_parse_gui -> pytrs.csv_suite.pytrs_parse_gui
+
+pyTRS_csv_gui.pyw               -> pytrs_csv_gui.pyw
