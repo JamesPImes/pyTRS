@@ -1,9 +1,8 @@
+
 from setuptools import setup
 
-import _constants
 
-
-descrip = (
+description = (
     'A library for parsing Public Land Survey System (PLSS) '
     'land descriptions into their component parts'
 )
@@ -22,9 +21,19 @@ long_description = (
 )
 
 
+def get_version():
+    version_var_setter = "__version__ = "
+    with open(r".\pytrs\_constants.py", "r") as file:
+        for line in file:
+            if line.startswith(version_var_setter):
+                version = line[len(version_var_setter):].strip('\'\n \"')
+                return version
+        raise RuntimeError("Could not get __version__ info.")
+
+
 setup(
     name='pyTRS',
-    version=_constants.__version__,
+    version=get_version(),
     packages=[
         'pytrs',
         'pytrs.parser',
@@ -34,11 +43,11 @@ setup(
         'pytrs.csv_suite',
         'pytrs.interface_tools'
     ],
-    url=_constants.__website__,
+    url='https://github.com/JamesPImes/pyTRS',
     license='Modified Academic Public License',
-    author=_constants.__author__,
-    author_email=_constants.__email__,
-    description=descrip,
+    author='James P. Imes',
+    author_email='jamesimes@gmail.com',
+    description=description,
     long_description=long_description,
     long_description_content_type="text/markdown",
     include_package_data=True
