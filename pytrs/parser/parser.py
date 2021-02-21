@@ -1266,12 +1266,6 @@ class PLSSDesc:
         """
         return self.parsed_tracts.quick_desc_short(delim, newline, max_len)
 
-    # def extractTractData():  # method removed in v0.4.11, 8/25/2020
-    # (replaced with more specific .tracts_to_dict() and .tracts_to_list())
-
-    # def strDesc():  # method removed in v0.4.11, 8/25/2020
-    # (replaced with .tracts_to_str())
-
     def list_trs(self, remove_duplicates=False):
         """
         Return a list all the TRS's in .parsed_tracts list. Optionally
@@ -1293,8 +1287,6 @@ class PLSSDesc:
 
         # This functionality is handled by TractList method.
         self.parsed_tracts.print_desc(delim=delim, newline=newline)
-
-    # def genFlagList():  # method removed in v0.2.1, 5/31/2020
 
     def print_data(self, *attributes) -> None:
         """
@@ -2068,16 +2060,6 @@ class Tract:
         if len(qd) > max_len:
             qd = qd[:max_len - 3] + "..."
         return qd
-
-    # def extractData():  # method removed in v0.4.11, 8/25/2020
-    # (replaced with more specific .to_dict() and .to_list())
-
-    # def outputTRSdesc():  # method removed in v0.4.11, 8/25/2020
-    # (replaced with .quick_desc())
-
-    # Aliases to prevent breaking API on calls to method names with caps
-    # TODO: Deprecate these method names
-    from_TwpRgeSec = from_twprgesec
 
 
 class TractList(list):
