@@ -23,50 +23,28 @@ def prompt_attrib(
     as a list of strings.
 
     All parameters have the same effect as they do in __init__() for a
-    PromptConfig object, although not all parameters are available in
+    PromptAttrib object, although not all parameters are available in
     this function.
-    :param attribs:
-    :param header:
-    :param show_ok:
-    :param show_cancel:
-    :param ok_button_text:
-    :param cancel_button_text:
-    :param confirm_cancel_prompt:
-    :param prompt_after_ok:
+
+    :param attribs: Which attributes to allow the user to select
+    from; may be passed as a list, or as a string with attributes
+    separated by commas (defaults to 'all')
+    :param header: Text to be placed above the attribute options.
+    :param show_ok: Include the OK button.
+    :param ok_button_text: A string, for custom text for the OK
+    button.
+    :param prompt_after_ok: A string to display in a messagebox
+    after the OK button has been clicked. Defaults to None.
+    :param cancel_button_text: A string, for custom text for the
+    Cancel button.
+    :param show_cancel: Include the Cancel button.
+    IMPORTANT: If the Cancel button is clicked, it will set the
+    `target_attrib_var` to the string 'CANCEL' and close the window.
+    :param confirm_cancel_prompt: A string to display in a
+    yes/no messagebox when the Cancel button is clicked. Defaults
+    to None.
     :return: Returns a list of the attribute names that were chosen
     (i.e. a list of strings).
-    """
-    """
-    Prompt the user for which attributes they would like for PLSSDesc
-    and/or Tract objects.
-
-    :param attribs: Which attributes to allow the user to select from;
-        may be entered as a list, or as a string with attributes
-        separated by commas (defaults to 'all')
-    :param at_window: Optional; used when embedded in another tkinter
-        app. This specifies the frame or window it should appear in. If
-        None, will launch as a new window.
-    :param main_window: If embedded in another tkinter app, this
-        specifies the window whose variable it should be saved in.
-        Access the compiled attribute text with
-        <main_window>.getvar(name='attrib_list'). If None, will default
-        to be same as `at_window`.
-    :param row: Starting at which row in `at_window` should the
-        checkbuttons be placed.
-    :param column: In which column in `at_window` should the checkbuttons
-        be placed.
-    :param header: Text to be placed above the attribute options.
-    :param show_ok: Show the OK button.
-    :param show_cancel: Show the Cancel button.
-    :param ok_button_text: Specify the text in the OK button.
-    :param cancel_button_text: Specify the text in the Cancel button.
-    :param exit_after_ok: Close the `at_window` after 'OK' is run.
-    :param after_prompt: Text to prompt the user with after 'OK' is run.
-    :param as_list: Return the attributes in a list of attribute names
-        (only allowed if running as its own window.)
-    :return: The compiled list of user-requested attributes, as a single
-        string, separated by comma and no spaces. (May return as a list
-        with `as_list=True`)
     """
 
     attrib_holder = {'attrib_list': ''}
