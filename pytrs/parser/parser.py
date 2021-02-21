@@ -430,14 +430,15 @@ class PLSSDesc:
         `some_plssdesc.parsed_tracts[:2]`
 
         ...and we can iterate over all its Tract objects:
-        `for tract in some_plssdesc:` is the same as
-        `for tract in some_plssdesc.parsed_tracts`
+        `for tract in some_plssdesc: <...>` is the same as
+        `for tract in some_plssdesc.parsed_tracts: <...>`
 
         But you CANNOT assign, pop, or insert with a `PLSSDesc`
         directly. If any of that functionality is required, work
         directly with the `.parsed_tracts` attribute. Or, get a new
         `plss.TractList` to work with, thus:
         `new_tractlist = some_plssdesc.parse(commit=False)`
+        (`TractList` is a subclass of the built-in `list`.)
         """
         return self.parsed_tracts.__getitem__(item)
 
