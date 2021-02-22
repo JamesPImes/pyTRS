@@ -421,7 +421,7 @@ Be sure to read the full disclaimer in `LICENSE.txt`. However, some non-obvious 
 
 * Finally, note that all of the example PLSS descriptions used in the comments in the code and documentation are dummy data and were invented or arbitrarily chosen. (Some are even nonsense.)
 
-*(This list should not be construed as limiting the full warranty, available in `LICENSE.txt`.)*
+*(This list should not be construed as limiting the full disclaimer, available in `LICENSE.txt`.)*
 
 
 ## Upcoming / TODO
