@@ -49,10 +49,10 @@ d_obj = pytrs.PLSSDesc(txt, config='n,w,segment')
 d_obj.parse(init_parse_qq=True)
 ```
 
-The `pytrs.PLSSDesc` object has now been parsed into `Tract` objects, which in turn have also been parsed into lots and QQs.
+The `pytrs.PLSSDesc` object has now been parsed into `pytrs.Tract` objects, which in turn have also been parsed into lots and QQs.
 
 #### Access/compile the parsed data
-The `Tract` objects resulting from the parsed `PLSSDesc` object are stored in a list in `d_obj.parsedTracts`.
+The `Tract` objects resulting from the parsed `PLSSDesc` object are stored in a list in its `.parsed_tracts` attribute (which is technically a `pytrs.TractList` object).
 
 Each `Tract` object has various instance attributes for the respective parsed data. They are spelled out in more detail in the documentation, but for these examples, we'll pull these attributes:
 
@@ -66,9 +66,9 @@ Each `Tract` object has various instance attributes for the respective parsed da
 
 * `.desc` -- The description block within this TRS.
 
-* `.QQList` -- A list of identified QQ's (or smaller)
+* `.qqs` -- A list of identified QQ's (or smaller)
 
-* `.lotList` -- A list of identified lots.
+* `.lots` -- A list of identified lots.
 
 In the following methods, specify which parsed data we want to extract from a parsed `Tract` by listing the attribute names (i.e. strings, without the leading period).
 
@@ -76,46 +76,46 @@ In the following methods, specify which parsed data we want to extract from a pa
 
 ##### Print the parsed data to console
 ```
-d_obj.print_data('twp', 'rge', 'sec', 'trs', 'desc', 'QQList', 'lotList')
+d_obj.print_data('twp', 'rge', 'sec', 'trs', 'desc', 'qqs', 'lots')
 ```
 
 ... resulting in this printed to console:
 ```
 Tract #1
-twp     : 154n
-rge     : 97w
-sec     : 01
-trs     : 154n97w01
-desc    : Lots 1 - 3 and the Southeast Quarter of the Northeast Quarter
-QQList  : SENE
-lotList : L1, L2, L3
+twp  : 154n
+rge  : 97w
+sec  : 01
+trs  : 154n97w01
+desc : Lots 1 - 3 and the Southeast Quarter of the Northeast Quarter
+qqs  : SENE
+lots : L1, L2, L3
 
 Tract #2
-twp     : 154n
-rge     : 97w
-sec     : 14
-trs     : 154n97w14
-desc    : NE/4
-QQList  : NENE, NWNE, SENE, SWNE
-lotList : 
+twp  : 154n
+rge  : 97w
+sec  : 14
+trs  : 154n97w14
+desc : NE/4
+qqs  : NENE, NWNE, SENE, SWNE
+lots : 
 
 Tract #3
-twp     : 154n
-rge     : 97w
-sec     : 15
-trs     : 154n97w15
-desc    : That portion of the W/2 lying south of the highway right-of-way
-QQList  : NENW, NWNW, SENW, SWNW, NESW, NWSW, SESW, SWSW
-lotList : 
+twp  : 154n
+rge  : 97w
+sec  : 15
+trs  : 154n97w15
+desc : That portion of the W/2 lying south of the highway right-of-way
+qqs  : NENW, NWNW, SENW, SWNW, NESW, NWSW, SESW, SWSW
+lots : 
 
 Tract #4
-twp     : 155n
-rge     : 97w
-sec     : 22
-trs     : 155n97w22
-desc    : ALL
-QQList  : NENE, NWNE, SENE, SWNE, NENW, NWNW, SENW, SWNW, NESE, NWSE, SESE, SWSE, NESW, NWSW, SESW, SWSW
-lotList : 
+twp  : 155n
+rge  : 97w
+sec  : 22
+trs  : 155n97w22
+desc : ALL
+qqs  : NENE, NWNE, SENE, SWNE, NENW, NWNW, SENW, SWNW, NESE, NWSE, SESE, SWSE, NESW, NWSW, SESW, SWSW
+lots : 
 ```
 
 
@@ -125,7 +125,7 @@ lotList :
 (i.e. a list of dicts, with one dict per parsed `Tract`)
 
 ```
-stored_data = d_obj.tracts_to_dict('twp', 'rge', 'sec', 'trs', 'desc', 'QQList', 'lotList')
+stored_data = some_plssdesc.tracts_to_dict('twp', 'rge', 'sec', 'trs', 'desc', 'qqs', 'lots')
 ```
 
 Which looks like this (formatted with linebreaks here, just for better visual representation):
@@ -136,32 +136,32 @@ Which looks like this (formatted with linebreaks here, just for better visual re
 'sec': '01',
 'trs': '154n97w01',
 'desc': 'Lots 1 - 3 and the Southeast Quarter of the Northeast Quarter',
-'QQList': ['SENE'],
-'lotList': ['L1', 'L2', 'L3']},
+'qqs': ['SENE'],
+'lots': ['L1', 'L2', 'L3']},
 
 {'twp': '154n',
 'rge': '97w',
 'sec': '14',
 'trs': '154n97w14',
 'desc': 'NE/4',
-'QQList': ['NENE', 'NWNE', 'SENE', 'SWNE'],
-'lotList': []},
+'qqs': ['NENE', 'NWNE', 'SENE', 'SWNE'],
+'lots': []},
 
 {'twp': '154n',
 'rge': '97w',
 'sec': '15',
 'trs': '154n97w15',
 'desc': 'That portion of the W/2 lying south of the highway right-of-way',
-'QQList': ['NENW', 'NWNW', 'SENW', 'SWNW', 'NESW', 'NWSW', 'SESW', 'SWSW'],
-'lotList': []},
+'qqs': ['NENW', 'NWNW', 'SENW', 'SWNW', 'NESW', 'NWSW', 'SESW', 'SWSW'],
+'lots': []},
 
 {'twp': '155n',
 'rge': '97w',
 'sec': '22',
 'trs': '155n97w22',
 'desc': 'ALL',
-'QQList': ['NENE', 'NWNE', 'SENE', 'SWNE', 'NENW', 'NWNW', 'SENW', 'SWNW', 'NESE', 'NWSE', 'SESE', 'SWSE', 'NESW', 'NWSW', 'SESW', 'SWSW'],
-'lotList': []}
+'qqs': ['NENE', 'NWNE', 'SENE', 'SWNE', 'NENW', 'NWNW', 'SENW', 'SWNW', 'NESE', 'NWSE', 'SESE', 'SWSE', 'NESW', 'NWSW', 'SESW', 'SWSW'],
+'lots': []}
 ]
 ```
 
@@ -170,7 +170,7 @@ Which looks like this (formatted with linebreaks here, just for better visual re
 
 ```
 # as a nested list
-stored_data =  d_obj.tracts_to_list('twp', 'rge', 'sec', 'trs', 'desc', 'QQList', 'lotList')
+stored_data =  some_plssdesc.tracts_to_list('twp', 'rge', 'sec', 'trs', 'desc', 'qqs', 'lots')
 ```
 Which looks like this (again formatted with linebreaks for better visual representation):
 ```
@@ -181,7 +181,7 @@ Which looks like this (again formatted with linebreaks for better visual represe
 
 ['154n', '97w', '15', '154n97w15', 'That portion of the W/2 lying south of the highway right-of-way', ['NENW', 'NWNW', 'SENW', 'SWNW', 'NESW', 'NWSW', 'SESW', 'SWSW'], []],
 
-['155n', '97w', '22', '155n97w22', 'ALL', ['NENE', 'NWNE', 'SENE', 'SWNE', 'NENW', 'NWNW', 'SENW', 'SWNW', 'NESE', 'NWSE', 'SESE', 'SWSE', 'NESW', 'NWSW', 'SESW', 'SWSW'], []
+['155n', '97w', '22', '155n97w22', 'ALL', ['NENE', 'NWNE', 'SENE', 'SWNE', 'NENW', 'NWNW', 'SENW', 'SWNW', 'NESE', 'NWSE', 'SESE', 'SWSE', 'NESW', 'NWSW', 'SESW', 'SWSW'], []]
 ]
 ```
 
@@ -346,7 +346,7 @@ For example, pyTRS can parse this:
 * `154n97w15` : `['NWSW', 'SWSW']`
 * `155n97w01` : `['SESE']`
 
-pyTRS is capable of recognizing all of the following as the 'Northeast Quarter', any of which may be enountered in the wild:
+pyTRS is capable of recognizing all of the following as the 'Northeast Quarter', any of which may be encountered in the wild:
 * NE/4
 * NE4
 * NE¼
@@ -358,7 +358,7 @@ pyTRS is capable of recognizing all of the following as the 'Northeast Quarter',
 
 (Note: Neither lots nor aliquots are *required* for a valid land description, but they are the standard divisions of a section of land, and are therefore commonly encountered.)
 
-\*\**NB: See [`cleanQQ`](https://github.com/JamesPImes/pyTRS/blob/master/documentation/documentation.md#using-the-cleanqq-config-setting-and-kwarg) regarding aliquot quarters and quarter-quarters that are abbreviated without a fraction symbol or '4' (e.g., 'NENE', 'NE', 'SW', 'NWSE', etc.).*
+\*\**NB: See [`clean_qq`](https://github.com/JamesPImes/pyTRS/blob/master/documentation/documentation.md#using-the-clean_qq-config-setting-and-kwarg) regarding aliquot quarters and quarter-quarters that are abbreviated without a fraction symbol or '4' (e.g., 'NENE', 'NE', 'SW', 'NWSE', etc.).*
 
 Similarly, pyTRS can robustly interpret halves. Each of these would be recognized as the 'East Half':
 * E/2
@@ -425,7 +425,7 @@ Be sure to read the full disclaimer in `LICENSE.txt`. However, some non-obvious 
 
 
 ## Upcoming / TODO
-pyTRS is nearly ready for a `v1.0.0 ` release. I'm hoping to have one out before the end of 2020. At this point, I'm mostly cleaning up a few comments and working on a clean output of the documentation (although docstrings currently contain nearly complete documentation on their own -- so you can access all of it with Python's `pydoc` module).
+pyTRS is nearly ready for a `v1.0.0 ` release. At this point, I'm mostly cleaning up a few comments and working on a clean output of the documentation (although docstrings currently contain nearly complete documentation on their own -- so you can access all of it with Python's `pydoc` module).
 
 
 ## Requirements
