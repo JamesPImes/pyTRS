@@ -1,11 +1,11 @@
 # pyTRS
 
-pyTRS is a pure Python library for parsing Public Land Survey System (PLSS) land descriptions (or "legal descriptions") into their component parts, in a format that is more useful for data analysis, GIS mapping, spreadsheets, and databases generally. It accounts for common variations in layout, abbreviations, typos, etc. and can therefore process a range of real-world data.
+pyTRS (imported as `pytrs`) is a pure Python library for parsing Public Land Survey System (PLSS) land descriptions (or "legal descriptions") into their component parts, in a format that is more useful for data analysis, GIS mapping, spreadsheets, and databases generally. It accounts for common variations in layout, abbreviations, typos, etc. and can therefore process a range of real-world data.
 
 
 
 ## License
-Copyright (c) 2020, James P. Imes, all rights reserved.
+Copyright (c) 2020-2021, James P. Imes, all rights reserved.
 
 pyTRS, together with all accompanying programs and modules, is licensed under a 'Modified Academic Public License', modified from the OMNeT++ license, which was written by Andras Varga (license text is in public domain), as obtained at <https://omnetpp.org/intro/license>. __This modified license generally allows 'non-commercial' use and modification, but DISALLOWS ANY COMMERCIAL OR FOR-PROFIT USE, MODIFICATION, AND DISTRIBUTION.__  Read `LICENSE.txt` for the full terms and conditions. (Especially be aware that no results may be used in a legal document of any kind.)
 
@@ -33,7 +33,7 @@ Section 22: ALL
 Example parsing below. (`config='n,w,segment'` is optional here and doesn't cause any different results for this particular example. It's included only to show that `config` parameters can be used in that place.)
 
 ```
-import pyTRS
+import pytrs
 
 txt = '''Township 154 North, Range 97 West
 Section 1: Lots 1 - 3 and the Southeast Quarter of the Northeast Quarter
@@ -43,13 +43,13 @@ Township 155 North, Range 97 West
 Section 22: ALL'''
 
 # create a `PLSSDesc` object with this text (`config=` is optional).
-d_obj = pyTRS.PLSSDesc(txt, config='n,w,segment')
+d_obj = pytrs.PLSSDesc(txt, config='n,w,segment')
 
-# Parse the description (`initParseQQ=True` causes any resulting tracts to be further parsed into lots/QQs)
-d_obj.parse(initParseQQ=True)
+# Parse the description (`init_parse_qq=True` causes any resulting tracts to be further parsed into lots/QQs)
+d_obj.parse(init_parse_qq=True)
 ```
 
-The `pyTRS.PLSSDesc` object has now been parsed into `Tract` objects, which in turn have also been parsed into lots and QQs.
+The `pytrs.PLSSDesc` object has now been parsed into `Tract` objects, which in turn have also been parsed into lots and QQs.
 
 #### Access/compile the parsed data
 The `Tract` objects resulting from the parsed `PLSSDesc` object are stored in a list in `d_obj.parsedTracts`.
@@ -223,9 +223,9 @@ __[D] description block__ (for lack of a better term) -- This is the text that c
 ## Quick Start Guide and Documentation
 A quick start guide can be found [here](https://github.com/JamesPImes/pyTRS/blob/master/documentation/quickstart.md), which will point new users to the broad-strokes features.
 
-For an implementation for parsing PLSS descriptions in .csv files, [look into the `pyTRS.csv_suite` package](https://github.com/JamesPImes/pyTRS/blob/master/documentation/csv_suite%20documentation/csv_readme.md), which also includes a GUI implementation (launch from console with `pyTRS.csv_suite.launch_gui()` or run `pyTRS\csv_suite\pyTRS_parse_csv_gui.pyw` directly).
+For an implementation for parsing PLSS descriptions in .csv files, [look into the `pytrs.csv_suite` package](https://github.com/JamesPImes/pyTRS/blob/master/documentation/csv_suite%20documentation/csv_readme.md), which also includes a GUI implementation (launch from console with `pytrs.csv_suite.launch_gui()` or run `pytrs\pytrs_csv_gui.pyw` directly).
 
-The rest of the documentation is forthcoming. (It's one of few big tasks before a `v1.0.0` release of `pyTRS`). Nearly complete documentation can be found in docstrings, so Python's native `pydoc` module might be a decent option in the meantime.
+The rest of the documentation is forthcoming. (It's one of few big tasks before a `v1.0.0` release of `pytrs`). Nearly complete documentation can be found in docstrings, so Python's native `pydoc` module might be a decent option in the meantime.
 
 
 
@@ -245,7 +245,7 @@ pyTRS is intended for use by land professionals (right-of-way agents, petroleum 
 * **lots:** `['L1', 'L2', 'L3', 'L4']`
 
 #### Example Use #1 - Generating Plats:
-As an example of how this library can be used, the [`pyTRSplat` module](https://github.com/JamesPImes/pyTRSplat) builds on `pyTRS` parsing to generate plats. For example, parsing this text with `pyTRS` and platting it with `pyTRSplat`...
+As an example of how this library can be used, the [`pyTRSplat` module](https://github.com/JamesPImes/pyTRSplat) builds on `pytrs` parsing to generate plats. For example, parsing this text with `pytrs` and platting it with `pyTRSplat`...
 
 ```
 Township 154 North, Range 97 West
@@ -263,7 +263,7 @@ Presumably, pyTRS could also be used with professional GIS software to generate 
 
 
 #### Example Use #2 - Breaking down large spreadsheets
-As another practical example, an implementation of `pyTRS` in a Microsoft Excel macro breaks down PLSS descriptions in a spreadsheet (which is exceedingly common in large land/energy acquisitions) into their component parts, inserting rows and columns as necessary, without breaking the Excel functions, tables, etc. *(I do consulting work in this field, so I don't make this macro publicly available on my GitHub, but [contact me](mailto:jamesimes@gmail.com) if you'd like an educational license or to inquire about a commercial license.)*
+As another practical example, an implementation of pyTRS in a Microsoft Excel macro breaks down PLSS descriptions in a spreadsheet (which is exceedingly common in large land/energy acquisitions) into their component parts, inserting rows and columns as necessary, without breaking the Excel functions, tables, etc. *(I do consulting work in this field, so I don't make this macro publicly available on my GitHub, but [contact me](mailto:jamesimes@gmail.com) if you'd like an educational license or to inquire about a commercial license.)*
 
 For example, these descriptions:
 
@@ -318,7 +318,7 @@ T154N-R97W
 NE/4 of Section 14
 ```
 
-Moreover, `pyTRS` can automatically deduce the layout of the input. (This deduction can be overridden by the user, if needed.)
+Moreover, pyTRS can automatically deduce the layout of the input. (This deduction can be overridden by the user, if needed.)
 
 pyTRS also has a stopgap layout (`'copy_all'`) which can be used to ensure that the text is maintained in the event that the layout cannot be successfully deduced (perhaps due to an omission or unrecognizable misspelling of section, township, or range).
 
@@ -425,7 +425,7 @@ Be sure to read the full disclaimer in `LICENSE.txt`. However, some non-obvious 
 
 
 ## Upcoming / TODO
-`pyTRS` is nearly ready for a `v1.0.0 ` release. I'm hoping to have one out before the end of 2020. At this point, I'm mostly cleaning up a few comments and working on a clean output of the documentation (although docstrings currently contain nearly complete documentation on their own -- so you can access all of it with Python's `pydoc` module).
+pyTRS is nearly ready for a `v1.0.0 ` release. I'm hoping to have one out before the end of 2020. At this point, I'm mostly cleaning up a few comments and working on a clean output of the documentation (although docstrings currently contain nearly complete documentation on their own -- so you can access all of it with Python's `pydoc` module).
 
 
 ## Requirements
@@ -433,4 +433,4 @@ The pyTRS library itself is pure Python:
 
 * Python 3.6+
 
-*(NOTE: `pyTRS` was written and tested in Python version 3.8.2, but is expected to work with all versions of Python more recent than 3.6. It's been tested in a Windows 10 environment; and has not been tested on macOS or Linux. I doubt any of the primary parsing functionality will struggle with other operating systems, but possibly some of the saving/loading/csv functionality might require some tweaking. I'd be interested in hearing any issues you run into.)*
+*(NOTE: pyTRS was written and tested in Python version 3.8.2, but is expected to work with all versions of Python more recent than 3.6. It's been tested in a Windows 10 environment; and has not been tested on macOS or Linux. I doubt any of the primary parsing functionality will struggle with other operating systems, but possibly some of the saving/loading/csv functionality might require some tweaking. I'd be interested in hearing any issues you run into.)*
