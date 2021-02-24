@@ -9,43 +9,41 @@ Contact <jamesimes@gmail.com>
 
 the CSV Suite is driven by a single function, which runs through rows of data in a .csv file, parsing all PLSS descriptions in a specific column, and outputting the parsed data, alongside the original data, in a new .csv file; inserting rows/columns as necessary.
 
-The [function itself](https://github.com/JamesPImes/pyTRS/blob/master/Documentation/csv_suite%20documentation/csv_readme.md#the-function-pytrscsv_suiteparse_csv) can obviously be imported into your script:
+Import [the `parse_csv()` function](https://github.com/JamesPImes/pyTRS/blob/master/Documentation/csv_suite%20documentation/csv_readme.md#the-function-pytrscsv_suiteparse_csv) from the `pytrs.csv_suite` module:
 
 ```
->>> from pyTRS.csv_suite import parse_csv
+>>> from pytrs.csv_suite import parse_csv
 >>> parse_csv(blah blah blah...)
 ```
 
-Or there is a [command-line](https://github.com/JamesPImes/pyTRS/blob/master/Documentation/csv_suite%20documentation/csv_readme.md#command-line-implementation---pytrs_parse_csv_cmdpy) implementation.
+Or there is a [command-line](https://github.com/JamesPImes/pyTRS/blob/master/documentation/csv_suite%20documentation/csv_readme.md#command-line-implementation---pytrs_parse_csv_cmdpy) implementation.
 
-Most simply, there is a [GUI application](https://github.com/JamesPImes/pyTRS/blob/master/Documentation/csv_suite%20documentation/csv_readme.md#gui-implementation---pytrs_parse_csv_guipyw) with the same functionality. To use the GUI app, either run `pyTRS\csv_suite\pyTRS_parse_csv_gui.pyw` directly, or `import pyTRS` in  a Python console and call `pyTRS.csv_suite.launch_gui()`.
+Most simply, there is a GUI application with the same functionality. To use the GUI app, either run `pytrs\pytrs_csv_gui.pyw` directly, or `import pytrs.csv_suite` in  a Python console and call `pytrs.csv_suite.launch_gui()`.
 
 ![csv_gui_screen01.png](csv_gui_screen01.png)
 
 
 
 
-### The function `pyTRS.csv_suite.parse_csv()`
+### The function `pytrs.csv_suite.parse_csv()`
 
 To use the function directly:
 
 ```
-from pyTRS.csv_suite import parse_csv
+from pytrs.csv_suite import parse_csv
 
-# In this sample input file, the fifth column contains descriptions to be parsed; 
-# the second row contains headers; 
-# and the first description to be parsed appears in the third row.
+# In this sample input file, the fifth column contains descriptions to
+# be parsed; the second row contains headers; and the first description 
+# to be parsed appears in the third row.
 
 # If `out_file=` were not specified in kwarg, it will be created.
-output_file = 
-
-parse_csv(in_file = r'C:\Land Data\Project R\sample_data.csv',
-	out_file = r'C:\Land Data\Project R\sample_data_output.csv', 
+parse_csv(
+    in_file = r'C:\Land Data\Project R\sample_data.csv',
+    out_file = r'C:\Land Data\Project R\sample_data_output.csv', 
     desc_col=5, first_row=3, header_row=2, 
-    attribs='trs,desc,lotQQList,wFlagList,eFlagList',
+    attribs='trs,desc,lots_qqs,w_flags,e_flags',
     write_headers=True, unpack=True, copy_data=True, include_uid=True,
-    include_unparsed=True, config='n,w,segment'
-    )
+    include_unparsed=True, config='n,w,segment')
 ```
 
 If we only want to parse *some* of the rows, we can stop early by specifying `last_row=<int>`.
@@ -55,24 +53,24 @@ If we only want to parse *some* of the rows, we can stop early by specifying `la
 ##### Required arguments:
 * `in_file=<str>` -- Filepath to input .csv file
 * `desc_col=<int>` __\*\*__ -- The column containing descriptions to be parsed.
-* `attribs=<str or list>` -- The parsed tract data to be written (i.e. Tract object attributes). Can be either a single string (attributes separated by commas, with no spaces) or as a list of attribute names. (Technically, if not specified, will use a few default attributes.)
+* `attribs=<str or list>` -- The parsed tract data to be written (i.e. `Tract` object attributes). Can be either a single string (attributes separated by commas, with no spaces) or as a list of attribute names. (If not specified, will use a few default attributes.)
 
 
 
 ##### Optional arguments:
-* `out_file=<str>` -- Filepath to output .csv file
-* `first_row=<int>` __\*\*__ -- The first row containign descriptions to be parsed. (If not specified, will start with first row.)
+* `out_file=<str>` -- Filepath where to save the resulting .csv file
+* `first_row=<int>` __\*\*__ -- The first row containing descriptions to be parsed. (If not specified, will start with first row.)
 * `last_row=<int>` __\*\*__ -- The last row to be parsed. (If not specified, will parse all rows in the file.)
 * `header_row=<int>` __\*\*__ -- The row in the input file that contains headers.
 * `layout_col=<int>` __\*\*__ -- The column containing the pyTRS layout to be used for the description in that row. (Requires preprocessing your data.)
 * `config_col=<int>` __\*\*__ -- The column containing the pyTRS layout to be used for the description in that row. (Requires preprocessing your data.)
 * `write_headers=<bool>` -- Write headers to the output file.
-* `include_uid=<bool>` -- Create a Parse Unique Identifier Number ("UID") for each row that gets parsed, in the format `0000.a-k`.
+* `include_uid=<bool>` -- Create a unique identified number ("UID") for each row that gets parsed, in the format `0000.a-k` (where the numbers designate the number of original rows, and the letters right of the period indicate how many rows were generated by the parse (`.a-a` means this is the first of one; `.a-b` is the first of two; `.b-b` is the second of two; etc.).
 * `unpack=<bool>` -- Convert lists of data into flattened strings (e.g., `['L1', 'L2', 'NENW', NWNW']` should be unpacked and written as `L1, L2, NENW, NWNW`).
 * `copy_data=<bool>` -- If rows are inserted, copy the original data for each row.
 * `tract_level=<bool>` -- Working with a dataset whose Twp/Rge/Sec have already been separated out, and now we just need to parse tracts (i.e. lots/QQ's).
 * `include_unparsed=<bool>` -- If any rows are not parsed (e.g., before headers, or after user-specified `last_row`), such rows should also get copied to the output file.
-* `num_tracts=<bool>` -- Also generate a *second* output .csv file, whose values correspond to the number of rows written for each original description. For example, if the first description was parsed into five Tract objects and therefore written into five rows in the output .csv, then the value for the first row would be 5. If the second description only contained one tract, the next row would be 1. Etc. (Potentially useful for comparing numbers of rows in the input vs. output .csv, if you need to match up results.)
+* `num_tracts=<bool>` -- Also generate a *second* output .csv file, whose values correspond to the number of rows written for each original description. For example, if the first description was parsed into five `Tract` objects and therefore written into five rows in the output .csv, then the value for the first row would be `5`. If the second description only contained one tract, the next row would be 1. Etc. (Potentially useful for comparing numbers of rows in the input vs. output .csv, if you need to match up results.)
 
 
 __\*\*__ *__Note: All columns and rows are indexed from 1.__*
@@ -80,13 +78,14 @@ __\*\*__ *__Note: All columns and rows are indexed from 1.__*
 
 
 
-### Command-line implementation - `pyTRS_parse_csv_cmd.py`
+### Command-line implementation - `pytrs_parse_csv_cmd.py`
 
-To use it as a command-line program: run `pyTRS\csv_suite\pyTRS_parse_csv_cmd.py` with appropriate command-line arguments.
+To use it as a command-line program: run `pytrs\csv_suite\pytrs_parse_csv_cmd.py` with appropriate command-line arguments.
 
 Sample use:
 ```
-C:\...pyTRS\csv_suite\py pyTRS_parse_csv_cmd.py -i "C:\Land Data\Project R\sample_data.csv" -o "C:\Land Data\Project R\sample_data_output.csv" -dc 5 -hr 2 -fr 3 -a trs,desc,lotQQList,wFlagList,eFlagList
+> cd <pyTRS installation folder>
+> py pytrs\csv_suite\pytrs_parse_csv_cmd.py -i "C:\Land Data\Project R\sample_data.csv" -o "C:\Land Data\Project R\sample_data_output.csv" -dc 5 -hr 2 -fr 3 -a trs,desc,lots_qqs,w_flags,e_flags
 ```
 
 Only brief explanations are given for these arguments, since nearly all of them mirror `parse_csv()` kwargs.

@@ -221,7 +221,7 @@ __[D] description block__ (for lack of a better term) -- This is the text that c
 
 
 ## Quick Start Guide and Documentation
-A quick start guide can be found [here](https://github.com/JamesPImes/pyTRS/blob/master/documentation/quickstart.md), which will point new users to the broad-strokes features.
+A quick-start guide can be found [here](https://github.com/JamesPImes/pyTRS/blob/master/documentation/quickstart.md), which will point new users to the broad-strokes features.
 
 For an implementation for parsing PLSS descriptions in .csv files, [look into the `pytrs.csv_suite` package](https://github.com/JamesPImes/pyTRS/blob/master/documentation/csv_suite%20documentation/csv_readme.md), which also includes a GUI implementation (launch from console with `pytrs.csv_suite.launch_gui()` or run `pytrs\pytrs_csv_gui.pyw` directly).
 
@@ -289,7 +289,7 @@ At that point, it would be trivial to find whichever documents are relevant to S
 ## Functionality and Highlights
 
 
-See [the documentation](https://github.com/JamesPImes/pyTRS/blob/master/documentation/documentation.md) for full functionality. However, below is a broad-strokes explanation of what pyTRS can do.
+See [the quick-start guide](https://github.com/JamesPImes/pyTRS/blob/master/documentation/quickstart.md) for a more full accounting of the functionality. However, below is a broad-strokes explanation of what pyTRS can do.
 
 
 
@@ -358,7 +358,7 @@ pyTRS is capable of recognizing all of the following as the 'Northeast Quarter',
 
 (Note: Neither lots nor aliquots are *required* for a valid land description, but they are the standard divisions of a section of land, and are therefore commonly encountered.)
 
-\*\**NB: See [`clean_qq`](https://github.com/JamesPImes/pyTRS/blob/master/documentation/documentation.md#using-the-clean_qq-config-setting-and-kwarg) regarding aliquot quarters and quarter-quarters that are abbreviated without a fraction symbol or '4' (e.g., 'NENE', 'NE', 'SW', 'NWSE', etc.).*
+\*\**NB: See [`clean_qq`](https://github.com/JamesPImes/pyTRS/blob/master/documentation/quickstart.md#using-the-clean_qq-config-setting-and-kwarg) regarding aliquot quarters and quarter-quarters that are abbreviated without a fraction symbol or '4' (e.g., 'NENE', 'NE', 'SW', 'NWSE', etc.).*
 
 Similarly, pyTRS can robustly interpret halves. Each of these would be recognized as the 'East Half':
 * E/2

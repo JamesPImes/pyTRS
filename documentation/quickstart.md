@@ -644,6 +644,63 @@ t_obj.parse()
 t_obj.parse(clean_qq=False)
 ```
 
+#### Using the `clean_qq` config setting and kwarg
+Note that if you know you have a very clean dataset, with nothing but simple aliquots and lots (i.e. no metes-and-bounds descriptions, exceptions, etc.) then we can feed kwarg `clean_qq=True` to the `Tract.parse()` method (or `config='clean_qq'` when initializing a `PLSSDesc` object or a `Tract` object):
+```
+>>> desc3 = pytrs.PLSSDesc('T154N-R97W Sec 14: NE', init_parse_qq=True, config='clean_qq')  # as a `config` string
+>>> desc3.parsed_tracts[0].qqs
+	['NENE', 'NWNE', 'SENE', 'SWNE']
+>>> # or...
+>>> desc4 = pytrs.PLSSDesc('T154N-R97W Sec 14: NE')
+>>> desc4.parse(init_parse_qq=True, clean_qq=True)  # as a kwarg
+>>> desc4.parsed_tracts[0].qqs
+	['NENE', 'NWNE', 'SENE', 'SWNE']
+>>> # or...
+>>> tract3 = pytrs.Tract(desc='NE', trs='154n97w14', init_parse_qq=True, config='clean_qq')  # as a `config` string
+>>> tract3.qqs
+	['NENE', 'NWNE', 'SENE', 'SWNE']
+>>> # or...
+>>> tract4 = pytrs.Tract(desc='NE', trs='154n97w14')
+>>> tract4.parse(clean_qq=True)  # as a kwarg
+	['NENE', 'NWNE', 'SENE', 'SWNE']
+```
+`'NE'` as it appears in the text of `desc3`, `desc4`, `tract3`, or `tract4` will be matched as equivalent to "the Northeast Quarter" and correspondingly generate a `.qqs` containing `['NENE', 'NWNE', 'SENE', 'SWNE']`.
+
+However, without `clean_qq` being configured, the `qqs` will be empty *for this particular `Tract`*, because `'NE'` is not enough context to match as "the Northeast Quarter" (without causing a lot of unwanted false matches generally):
+```
+>>> tract5 = pytrs.Tract(desc='NE', trs='154n97w14')
+>>> tract5.parse()  # `clean_qq=False` is the default
+	[]
+>>> tract5.qqs
+	[]
+```
+
+On the other hand, `'NE/4'` or `NE4'` *would* properly match under either `clean_qq=True` or the default `clean_qq=False`, because `'.../4'` and `'...4'` offer enough context to deduce this abbreviation. And `'northeast quarter'` will always match, for obvious reasons.
+```
+>>> tract6 = pytrs.Tract(desc='NE\4', trs='154n97w14')
+>>> tract6.parse()
+	['NENE', 'NWNE', 'SENE', 'SWNE']
+>>> tract7 = pytrs.Tract(desc='Northeast Quarter', trs='154n97w14')
+>>> tract7.parse()
+	['NENE', 'NWNE', 'SENE', 'SWNE']
+```
+
+(Aliquot recognition of short but common abbreviations under `clean_qq=False` situations is an area for improvement in future versions.)
+
+Lastly, note that the *kwarg* `clean_qq=<bool>` (if used) in `Tract.parse()` and `PLSSDesc.parse()` takes precedence over the *config* parameter (`config='clean_qq'`) at init:
+
+```
+desc1 = pytrs.PLSSDesc('T154N-R97W Sec 14: NE', config='clean_qq')
+tract1 = pytrs.Tract(desc='NE', trs='154n97w14', config='clean_qq')
+
+# `clean_qq=False` in `.parse()` overrides `config=clean_qq` from init.
+desc1.parse(init_parse_qq=True, clean_qq=False)
+tract1.parse(clean_qq=False)
+
+# No QQ's were successfully parsed in either object, because clean_qq
+# did not apply.
+```
+
 
 ## Warning and Error Flags (`.w_flags` and `.e_flags` attributes)
 
