@@ -54,7 +54,7 @@ def config_util():
     """
     Launch the Config GUI, for saving Config data to .txt files.
     """
-    from pyTRS.interface_tools.config_popup import prompt_config
+    from pytrs.interface_tools.config_popup import prompt_config
     prompt_config(
         show_save=True, show_ok=False, show_cancel=False)
 
@@ -71,9 +71,9 @@ def config_help():
         "How PLSSDesc objects and/or Tract objects are parsed can be configured "
         "at initialization with kwarg "
         "`config=`, as follows:\n"
-        ">>> desc1 = pyTRS.PLSSDesc('T154N-R97W Sec 14: NE/4', config='n; w; "
+        ">>> desc1 = pytrs.PLSSDesc('T154N-R97W Sec 14: NE/4', config='n; w; "
         "init_parse; init_parse_qq')\n"
-        ">>> tr1 = pyTRS.Tract('NE/4', '154n97w14', config='n, w, init_parse, "
+        ">>> tr1 = pytrs.Tract('NE/4', '154n97w14', config='n, w, init_parse, "
         "init_parse_qq')\n\n"
         "Parameters are entered together as a single string, separated by comma "
         "or semicolon. (Spaces are optional and have no effect.)"
@@ -83,10 +83,10 @@ def config_help():
         "Parameters can be entered as text into the `config=` kwarg of PLSSDesc "
         "and Tract objects, OR by initializing a Config object (which can take "
         "all of the same parameters), as follows:\n"
-        ">>> nd_config = pyTRS.Config('n, w, init_parse, init_parse_qq')\n\n"
+        ">>> nd_config = pytrs.Config('n, w, init_parse, init_parse_qq')\n\n"
         "...and then feeding this Config object into the `config=` kwarg, as follows:\n"
-        ">>> desc1 = pyTRS.PLSSDesc('T154N-R97W Sec 14: NE/4', config=nd_config)\n"
-        ">>> tr1 = pyTRS.Tract('NE/4', '154n97w14', config=nd_config)\n\n"
+        ">>> desc1 = pytrs.PLSSDesc('T154N-R97W Sec 14: NE/4', config=nd_config)\n"
+        ">>> tr1 = pytrs.Tract('NE/4', '154n97w14', config=nd_config)\n\n"
     )
 
     t2a = (
@@ -94,7 +94,7 @@ def config_help():
         "Config data can be saved to a .txt file by first creating a Config object, "
         "then calling the `.save_to_file()` method while specifying the filepath, "
         "as follows:\n\n"
-        ">>> nd_config = pyTRS.Config('n, w, init_parse, init_parse_qq')\n"
+        ">>> nd_config = pytrs.Config('n, w, init_parse, init_parse_qq')\n"
         ">>> nd_config.save_to_file(r'C:\Land Data\Parsing\PLSS_preconfig001.txt')\n\n"
         "(Note that the specified filepath must end in the .txt extension.)\n\n"
         "!!!   WARNING: This will overwrite any existing .txt file at the specified "
@@ -105,18 +105,18 @@ def config_help():
         "~~~SAVING AND ACCESSING CONFIG DATA IN .TXT FILES, continued~~~\n\n"
         "To access previously saved config data from a .txt file, set a variable with "
         "the `Config.from_file()` method while specifying the filepath, as follows:\n"
-        ">>> nd_config = pyTRS.Config.from_file(r'C:\Land Data\Parsing\PLSS_preconfig001.txt')\n\n"
+        ">>> nd_config = pytrs.Config.from_file(r'C:\Land Data\Parsing\PLSS_preconfig001.txt')\n\n"
         "Once the config data has been read from file, the variable can be fed into the"
         "`config=` kwarg like any Config object:\n"
-        ">>> desc1 = pyTRS.PLSSDesc('T154N-R97W Sec 14: NE/4', config=nd_config)\n"
-        ">>> tr1 = pyTRS.Tract('NE/4', '154n97w14', config=nd_config)\n\n"
+        ">>> desc1 = pytrs.PLSSDesc('T154N-R97W Sec 14: NE/4', config=nd_config)\n"
+        ">>> tr1 = pytrs.Tract('NE/4', '154n97w14', config=nd_config)\n\n"
     )
 
     t3 = (
         "~~~CONFIG UTIL~~~\n\n"
         "While inputting config parameters as text is faster (which are explained "
         "in the next section), a GUI for creating config data .txt files is included "
-        "with pyTRS. To use, call `pyTRS.utils.config_util()` in the console, and it "
+        "with pyTRS. To use, call `pytrs.utils.config_util()` in the console, and it "
         "will launch the window, where the parameters can be chosen and saved to file. "
         "After that, the .txt file can be accessed with Config.from_file(), as "
         "previously discussed."
@@ -127,7 +127,7 @@ def config_help():
         "A list of parameters is no longer maintained as part of this function. "
         "However, a current, maintained list of all config parameters with brief "
         "explanation can be printed to console by calling "
-        "`pyTRS.utils.config_parameters()`. It will be called now..."
+        "`pytrs.utils.config_parameters()`. It will be called now..."
     )
 
     bail = False
@@ -153,7 +153,7 @@ def config_parameters():
     Print out all config parameter options and a brief explanation.
     """
 
-    from pyTRS import IMPLEMENTED_LAYOUTS
+    from pytrs import IMPLEMENTED_LAYOUTS
 
     # How many spaces to justify parameters before explanation:
     just = 24
