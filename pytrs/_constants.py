@@ -1,6 +1,6 @@
 
-__version__ = '0.7.0'
-__versionDate__ = '2/14/2021'
+__version__ = '0.8.0'
+__versionDate__ = '2/23/2021'
 __author__ = 'James P. Imes'
 __email__ = 'jamesimes@gmail.com'
 __website__ = 'https://github.com/JamesPImes/pyTRS'
@@ -14,7 +14,7 @@ __license__ = (
     "modified license generally allows 'non-commercial' use and modification, "
     "but DISALLOWS ANY COMMERCIAL OR FOR-PROFIT USE, MODIFICATION, AND "
     "DISTRIBUTION.\n\n"
-    "Read pyTRS\\LICENSE.txt for the full terms and conditions, also available "
+    "Read pytrs\\LICENSE.txt for the full terms and conditions, also available "
     f"in full at <{__website__}>.\n\n"
     f"Contact <{__email__}> with inquiries regarding commercial or for-profit "
     "use."

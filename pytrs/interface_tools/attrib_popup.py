@@ -1,7 +1,7 @@
 # Copyright (c) 2020, James P. Imes, all rights reserved
 
 """
-A GUI app for choosing pyTRS Tract attributes.
+A GUI app for choosing pytrs.Tract attributes.
 A PromptAttrib object can be used directly in a tkinter application; or
 the prompt_attrib() function can be used to hold up the program while
 the user makes their choices, and then continue when it returns.
@@ -18,55 +18,33 @@ def prompt_attrib(
         prompt_after_ok=None):
     """
     Launch a PromptAttrib tkinter frame, for the user to choose from
-    pyTRS.Tract instance attributes. Will wait for the PromptAttrib
+    pytrs.Tract instance attributes. Will wait for the PromptAttrib
     window to close, and then will return the chosen attribute names
     as a list of strings.
 
     All parameters have the same effect as they do in __init__() for a
-    PromptConfig object, although not all parameters are available in
+    PromptAttrib object, although not all parameters are available in
     this function.
-    :param attribs:
-    :param header:
-    :param show_ok:
-    :param show_cancel:
-    :param ok_button_text:
-    :param cancel_button_text:
-    :param confirm_cancel_prompt:
-    :param prompt_after_ok:
+
+    :param attribs: Which attributes to allow the user to select
+    from; may be passed as a list, or as a string with attributes
+    separated by commas (defaults to 'all')
+    :param header: Text to be placed above the attribute options.
+    :param show_ok: Include the OK button.
+    :param ok_button_text: A string, for custom text for the OK
+    button.
+    :param prompt_after_ok: A string to display in a messagebox
+    after the OK button has been clicked. Defaults to None.
+    :param cancel_button_text: A string, for custom text for the
+    Cancel button.
+    :param show_cancel: Include the Cancel button.
+    IMPORTANT: If the Cancel button is clicked, it will set the
+    `target_attrib_var` to the string 'CANCEL' and close the window.
+    :param confirm_cancel_prompt: A string to display in a
+    yes/no messagebox when the Cancel button is clicked. Defaults
+    to None.
     :return: Returns a list of the attribute names that were chosen
     (i.e. a list of strings).
-    """
-    """
-    Prompt the user for which attributes they would like for PLSSDesc
-    and/or Tract objects.
-
-    :param attribs: Which attributes to allow the user to select from;
-        may be entered as a list, or as a string with attributes
-        separated by commas (defaults to 'all')
-    :param at_window: Optional; used when embedded in another tkinter
-        app. This specifies the frame or window it should appear in. If
-        None, will launch as a new window.
-    :param main_window: If embedded in another tkinter app, this
-        specifies the window whose variable it should be saved in.
-        Access the compiled attribute text with
-        <main_window>.getvar(name='attrib_list'). If None, will default
-        to be same as `at_window`.
-    :param row: Starting at which row in `at_window` should the
-        checkbuttons be placed.
-    :param column: In which column in `at_window` should the checkbuttons
-        be placed.
-    :param header: Text to be placed above the attribute options.
-    :param show_ok: Show the OK button.
-    :param show_cancel: Show the Cancel button.
-    :param ok_button_text: Specify the text in the OK button.
-    :param cancel_button_text: Specify the text in the Cancel button.
-    :param exit_after_ok: Close the `at_window` after 'OK' is run.
-    :param after_prompt: Text to prompt the user with after 'OK' is run.
-    :param as_list: Return the attributes in a list of attribute names
-        (only allowed if running as its own window.)
-    :return: The compiled list of user-requested attributes, as a single
-        string, separated by comma and no spaces. (May return as a list
-        with `as_list=True`)
     """
 
     attrib_holder = {'attrib_list': ''}
@@ -97,14 +75,14 @@ class PromptAttrib(tk.Frame):
         'rge': ['Range', 0],
         'sec': ['Section', 0],
         'desc': ['Description Block', 1],
-        'ppDesc': ['Preprocessed (cleaner) description block', 0],
-        'lotList': ['Lots', 0],
-        'QQList': ['Aliquot quarter-quarters (QQs)', 0],
-        'lotQQList': ['Lots and Aliquot quarter-quarters (QQs)', 1],
-        'wFlagList': ['Warning flags', 1],
-        'wFlagLines': ['Warning flag lines', 0],
-        'eFlagList': ['Error flags', 1],
-        'eFlagLines': ['Error flag lines', 0]
+        'pp_desc': ['Preprocessed (cleaner) description block', 0],
+        'lots': ['Lots', 0],
+        'qqs': ['Aliquot quarter-quarters (QQs)', 0],
+        'lots_qqs': ['Lots and Aliquot quarter-quarters (QQs)', 1],
+        'w_flags': ['Warning flags', 1],
+        'w_flag_lines': ['Warning flag lines', 0],
+        'e_flags': ['Error flags', 1],
+        'e_flag_lines': ['Error flag lines', 0]
     }
 
     def __init__(
@@ -189,10 +167,10 @@ class PromptAttrib(tk.Frame):
         # its value to the default value per STOCK_ATTRIBS, store it as
         # an instance variable, and also set it to the attrib_dict.
         # Finally, create a checkbutton for that attribute.
-        # So for attribute 'QQList':
+        # So for attribute 'qqs':
         #   -> self.QQListVar --> a tk.IntVar with initial value 0
-        #   -> self.attrib_dict['QQList'] --> self.QQListVar
-        #   -> <create a checkbutton for QQList>
+        #   -> self.attrib_dict['qqs'] --> self.QQListVar
+        #   -> <create a checkbutton for qqs>
         self.attrib_dict = dict()
         cur_row = 5
         for att in attribs:

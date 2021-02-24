@@ -6,16 +6,17 @@ import tkinter as tk
 from tkinter import messagebox, filedialog
 from tkinter.ttk import Checkbutton
 
-from pyTRS.interface_tools import PromptConfig, PromptAttrib
-from pyTRS.csv_suite.pyTRS_parse_csv import parse_csv
-from pyTRS import version as pyTRS_version
-from pyTRS import _constants as pyTRS_constants
+from pytrs.interface_tools import PromptConfig, PromptAttrib
+from pytrs.csv_suite.pytrs_parse_csv import parse_csv
+from pytrs import version as pytrs_version
+from pytrs import _constants as pytrs_constants
 
 
 __version__ = '0.3.0'
 __versionDate__ = '9/24/2020'
 __author__ = 'James P. Imes'
 __email__ = 'jamesimes@gmail.com'
+
 
 def version():
     return f"v{__version__} - {__versionDate__}"
@@ -25,7 +26,7 @@ class AppWindow(tk.Tk):
     
     SPLASH_INFO = (
         f"pyTRS CSV Parser {version()}\n"
-        f"Built on pyTRS {pyTRS_version()}.\n"
+        f"Built on pyTRS {pytrs_version()}.\n"
         "Copyright (c) 2020, James P. Imes, all rights reserved.\n\n"
         f"Contact: <{__email__}>\n\n"
         "A program for parsing PLSS land descriptions ('legal "
@@ -158,7 +159,7 @@ class AppWindow(tk.Tk):
 
         # Prompt for save-to filepath, with default filename modified
         # from in_file.
-        def_file_name = f"{in_file.split('/')[-1][:-4]}_pyTRS_parsed.csv"
+        def_file_name = f"{in_file.split('/')[-1][:-4]}_pytrs_parsed.csv"
         out_file = filedialog.asksaveasfilename(
             initialdir=in_file, initialfile=def_file_name,
             filetypes=[("CSV Files", "*.csv")], title='Save to...')
@@ -238,21 +239,29 @@ class AppWindow(tk.Tk):
 
         # Run the parser
         success_check = 1  # Set to 0 on success.
-        try:
-            success_check = parse_csv(
-                in_file=in_file, desc_col=desc_col, attribs=attribs,
-                out_file=out_file, first_row=first_row, last_row=last_row,
-                header_row=header_row, config=config_text,
-                write_headers=write_headers, unpack=unpack,
-                copy_data=copy_data, tract_level=tract_level,
-                include_uid=include_uid, num_tracts=False,
-                include_unparsed=include_unparsed)
-        except:
-            messagebox.showerror(
-                'Error!',
-                f"Unknown error. Possibly could not open file at '{in_file}' "
-                f"or could not save to '{out_file}'. Ensure you have "
-                f"read/write access to the directory and try again.")
+        success_check = parse_csv(
+            in_file=in_file, desc_col=desc_col, attribs=attribs,
+            out_file=out_file, first_row=first_row, last_row=last_row,
+            header_row=header_row, config=config_text,
+            write_headers=write_headers, unpack=unpack,
+            copy_data=copy_data, tract_level=tract_level,
+            include_uid=include_uid, num_tracts=False,
+            include_unparsed=include_unparsed)
+        # try:
+        #     success_check = parse_csv(
+        #         in_file=in_file, desc_col=desc_col, attribs=attribs,
+        #         out_file=out_file, first_row=first_row, last_row=last_row,
+        #         header_row=header_row, config=config_text,
+        #         write_headers=write_headers, unpack=unpack,
+        #         copy_data=copy_data, tract_level=tract_level,
+        #         include_uid=include_uid, num_tracts=False,
+        #         include_unparsed=include_unparsed)
+        # except:
+        #     messagebox.showerror(
+        #         'Error!',
+        #         f"Unknown error. Possibly could not open file at '{in_file}' "
+        #         f"or could not save to '{out_file}'. Ensure you have "
+        #         f"read/write access to the directory and try again.")
 
         if success_check == 0:
             if messagebox.askyesno(
@@ -270,7 +279,7 @@ class AppWindow(tk.Tk):
             title='CSV to parse...'
         )
         self.in_file.set(in_file)
-        self.title(f"pyTRS CSV Parser - {in_file}")
+        self.title(f"pytrs CSV Parser - {in_file}")
         if in_file:
             self.deduce_desc_column(in_file)
 
@@ -289,11 +298,10 @@ class AppWindow(tk.Tk):
         self.config_popup_tk.title('Set pyTRS Config Parameters')
         pc = PromptConfig(
             master=self.config_popup_tk, target_config_var=self.config_text,
-            parameters=['cleanQQ', 'includeLotDivs', 'requireColon', 'ocrScrub',
+            parameters=['clean_qq', 'include_lot_divs', 'require_colon', 'ocr_scrub',
                         'segment', 'layout'],
             show_save=False, show_cancel=False, exit_after_ok=True)
         pc.pack(padx=20, pady=10)
-
 
     def deduce_desc_column(self, in_file):
         self.desc_col_entry.delete(0, 'end')
@@ -301,7 +309,7 @@ class AppWindow(tk.Tk):
         self.header_row_entry.delete(0, 'end')
 
         import csv
-        from pyTRS.parser import find_sec, find_tr
+        from pytrs.parser import find_sec, find_twprge
         try:
             csv_file = open(in_file, 'r')
         except:
@@ -322,7 +330,7 @@ class AppWindow(tk.Tk):
                 if text is None:
                     continue
 
-                elif len(find_sec(text)) > 0 and len(find_tr(text)) > 0:
+                elif len(find_sec(text)) > 0 and len(find_twprge(text)) > 0:
                     # If the cell contains > 0 sections and > 0 T&R, assume it's
                     # our first match. Add 1 to convert row/column nums from
                     # 0-indexed to 1-indexed:
@@ -346,7 +354,7 @@ class AppWindow(tk.Tk):
         confirm = messagebox.askquestion('pyTRS CSV Parser', self.SPLASH_INFO)
         if confirm == 'yes':
             messagebox.showinfo(
-                'pyTRS Disclaimer', pyTRS_constants.__disclaimer__)
+                'pyTRS Disclaimer', pytrs_constants.__disclaimer__)
 
 
 def launch_app():

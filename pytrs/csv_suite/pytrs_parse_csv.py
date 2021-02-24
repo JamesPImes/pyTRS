@@ -7,8 +7,9 @@ that there is one Tract per row; saves to a new .csv file.
 Built on the pyTRS library.
 """
 
+
 def parse_csv(
-        in_file : str, desc_col : int, first_row=1, last_row=-1, header_row=-1,
+        in_file: str, desc_col: int, first_row=1, last_row=-1, header_row=-1,
         attribs=None, out_file=None, config_col=None, config=None,
         layout_col=None, resume=False, write_headers=True, unpack=False,
         copy_data=False, tract_level=False, include_uid=False,
@@ -29,20 +30,20 @@ def parse_csv(
     rather than 0.)
     :param header_row: An integer specifying the row in the input file
     containing headers, if any. (Indexed from 1, rather than 0.)
-    :param attribs: Which pyTRS.Tract attributes (instance variables) to
+    :param attribs: Which pytrs.Tract attributes (instance variables) to
     write to the csv. Pass as a list of strings, or as a single string
     with attribute names separated by comma.
     For 'tract-level' parsing (i.e. only parsing tracts into Lots/QQ's)
     :param out_file: Filepath to the .csv to write to.
-    :param config_col: Column in the .csv file containing the pyTRS
+    :param config_col: Column in the .csv file containing the pytrs
     config parameters to use for parsing that row.
-    :param config: Standard pyTRS config parameters to be used for every
+    :param config: Standard pytrs config parameters to be used for every
     description, entered as a string with parameters separated by comma,
-    or as a pyTRS.Config object.
+    or as a pytrs.Config object.
     NOTE: In the event of conflict between parameters in config and in
     config_col, config_col will control.
     :param layout_col: (Optional) Column in the .csv file containing the
-    pyTRS layout name to use for that row. (If not specified, will use
+    pytrs layout name to use for that row. (If not specified, will use
     `config` parameters; and if not specified there, will deduce it when
     parsed.)
     :param resume: Whether to overwrite (i.e. `resume=False`) an
@@ -74,9 +75,9 @@ def parse_csv(
     :return: Returns 0 on success.
     """
 
-    from pyTRS.parser import PLSSDesc, Tract
+    from pytrs.parser import PLSSDesc, Tract
     import os, csv
-    from pyTRS.utils import flatten, alpha_to_num, num_to_alpha
+    from pytrs.utils import flatten, alpha_to_num, num_to_alpha
 
     if out_file is None:
         from datetime import datetime
@@ -86,7 +87,7 @@ def parse_csv(
             f"_{str(t.hour).rjust(2, '0')}{str(t.minute).rjust(2, '0')}"
             f"{str(t.second).rjust(2, '0')}"
         )
-        out_file = f"{in_file[:-4]}_pyTRS_parsed_{timestamp}.csv"
+        out_file = f"{in_file[:-4]}_pytrs_parsed_{timestamp}.csv"
 
     # Ensure input and output filepaths lead to .csv files.
     if not (in_file.lower().endswith('.csv') and out_file.lower().endswith('.csv')):
@@ -106,10 +107,9 @@ def parse_csv(
     if attribs in [None, '']:
         # If not specified, set default attribs, which are different for
         # `tract_level` than otherwise.
+        attribs = 'trs,desc'
         if tract_level:
-            attribs = 'ppDesc,lotList,QQList'
-        else:
-            attribs = 'trs,desc'
+            attribs = 'pp_desc,lots,qqs'
 
     if isinstance(attribs, str):
         # Split attribute string into list of Tract attribute names:
@@ -205,7 +205,7 @@ def parse_csv(
         # Get text of description from row.
         try:
             desc_text = row[desc_col-1]
-        except:
+        except IndexError:
             print(
                 f"Warning: Could not access PLSS description at row {cur_row}, "
                 f"column {desc_col}.")
@@ -215,12 +215,12 @@ def parse_csv(
         if tract_level:
             # If we're parsing lots/QQ's in an already-parsed Tract (or
             # equivalent), do it, and pack the attributes into a nested list:
-            t = Tract(desc=desc_text, trs='', config=config, initParseQQ=True)
+            t = Tract(desc=desc_text, trs='', config=config, init_parse_qq=True)
             all_Tract_data = [t.to_list(attribs)]
         else:
             # Otherwise, parsing a full PLSS description, and the
             # `.tracts_to_list()` method outputs an already-nested list:
-            d = PLSSDesc(desc_text, config=config, initParseQQ=True)
+            d = PLSSDesc(desc_text, config=config, init_parse_qq=True)
             all_Tract_data = d.tracts_to_list(attribs)
 
         # We will write a row for each Tract object, but if none were found,

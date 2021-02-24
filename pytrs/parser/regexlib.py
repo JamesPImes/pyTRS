@@ -70,10 +70,10 @@ sec_regex = re.compile(
     """, re.IGNORECASE | re.VERBOSE)
 
 # This should find multiple sections, formatted up to 3 digits (e.g.,
-# "Sections 5, 6, 8 - 12"). Unpack with: unpack_sections()
+# "Sections 5, 6, 8 - 12"). Unpack with: _unpack_sections()
 # Note that this will also match a single section, so individual sections
 # must be ruled out (i.e. individual section matches will have
-# mo.group(12) != None). Can use funcs is_multisec() and is_singlesec()
+# mo.group(12) != None). Can use funcs _is_multisec() and _is_singlesec()
 # on the match objects.  This regex will also capture an optional colon
 # at the end.
 multiSec_regex = re.compile(
@@ -130,7 +130,7 @@ noNum_sec_regex = re.compile(
 # They're mostly the same as the normal twprge_regex, but with some
 # characters being allowed outside various groupings i.e. some don't
 # REQUIRE 'T', but will still match it if it's there). kwargs or config
-# for defaultNS=‘n’ and defaultEW=‘w’ will fill in the township and
+# for default_ns=‘n’ and default_ew=‘w’ will fill in the township and
 # range letters, as needed. Abbreviations and typos for 'Township' have
 # also been locked down somewhat, to avoid excessive false matches.
 ########################################################################
@@ -214,8 +214,8 @@ preproTR_noT_noWE_regex = re.compile(
 
 # With enough context, will capture T&R's with OCR artifacts (e.g.
 # "TIS4N-R97W" instead of intended "T154N-R97W").  Gets converted to
-# numerics in preprocess_tr_mo().
-twprge_ocrScrub_regex = re.compile(
+# numerics in _preprocess_twprge_mo().
+twprge_ocr_scrub_regex = re.compile(
     r"""
     T(  # Move 'T' to outside the optional match, because 'T' is required
     w\.?|
@@ -303,7 +303,7 @@ including_regex = re.compile(r'incl', re.IGNORECASE)
 less_except_regex = re.compile(r'(less|except|limit)', re.IGNORECASE)
 
 # Looking for 'insofar' language:
-isfa_except_regex = re.compile(r'(in\s?so\s?far)', re.IGNORECASE)
+isfa_regex = re.compile(r'(in\s?so\s?far)', re.IGNORECASE)
 
 
 ########################################################################
@@ -341,7 +341,7 @@ ALL_regex = re.compile(r'\b(ALL)(.{1,6})?', re.IGNORECASE)
 # For culling context around "ALL":
 ALL_context_regex = re.compile(r'(in+|of+|th[eatiso]{0,3}|l[ying]{0,5})', re.IGNORECASE)
 
-# cleanQQ regexes, for parsing aliquots under cleanQQ=True conditions.
+# clean_qq regexes, for parsing aliquots under clean_qq=True conditions.
 # Will match much more broadly.
 cleanNE_regex = re.compile(
     r'()(NE|Nort[h]?\s*East)\s*((One)?\s*Q[uarter]{4,7}|1\/?4|\/?4|¼)?', re.IGNORECASE)
@@ -352,7 +352,7 @@ cleanNW_regex = re.compile(
 cleanSW_regex = re.compile(
     r'()(SW|Sout[h]?\s*West)\s*((One)?\s*Q[uarter]{4,7}|1\/?4|\/?4|¼)?', re.IGNORECASE)
 
-# N2, S2, E2, and W2 are the same under cleanQQ conditions, since there
+# N2, S2, E2, and W2 are the same under clean_qq conditions, since there
 # still must be SOME designator that it's a 'half'.
 
 # 'E2NE' should be enough context to interpret it as the E½NE¼. This
@@ -400,7 +400,7 @@ lot_regex = re.compile(
 #         -- or equivalent symbol / abbrev)
 #     group(14) ends with the stated acreage of the last lot ONLY when it occurs
 #         at the end of the matched string.  Get that stated acreage with
-#         lotAcres_unpacker_regex, which is baked into the get_lot_acres()
+#         lotAcres_unpacker_regex, which is baked into the _get_lot_acres()
 #         function.
 
 

@@ -18,7 +18,7 @@ prior to using for any purpose.
 !!! USE AT YOUR OWN RISK !!!
 """
 
-import pyTRS._constants as _constants
+import pytrs._constants as _constants
 
 __version__ = _constants.__version__
 __versionDate__ = _constants.__versionDate__
@@ -27,6 +27,33 @@ __email__ = _constants.__email__
 __license__ = _constants.__license__
 __disclaimer__ = _constants.__disclaimer__
 __website__ = _constants.__website__
+
+
+# Import the main parsing functionality as top-level classes, vars, etc.
+from pytrs.parser import (
+    # Primary parsing classes and their helper classes
+    PLSSDesc,
+    Tract,
+    TractList,
+    Config,
+
+    # Misc. functions for examining / handling descriptions
+    find_twprge,
+    find_sec,
+    decompile_twprge,
+    find_multisec,
+    break_trs,
+
+    # For outputting parsed data to csv files
+    output_to_csv,
+
+    # A tuple of currently implemented layouts
+    IMPLEMENTED_LAYOUTS,
+
+    # Examples of the currently implemented layouts
+    IMPLEMENTED_LAYOUT_EXAMPLES
+)
+
 
 # Misc. utils:
 
@@ -38,22 +65,3 @@ def version():
 def disclaimer():
     """Print the disclaimer to console."""
     print(__disclaimer__)
-
-
-# Primary parsing classes
-from pyTRS.parser import PLSSDesc, Tract, TractList, Config
-
-# Misc. functions for examining / handling descriptions:
-from pyTRS.parser import (
-    find_tr, find_sec, decompile_twprge, find_multisec, break_trs
-)
-
-# For outputting parsed data to csv files
-from pyTRS.parser import output_to_csv
-
-# A current list of implemented layouts
-from pyTRS.parser import __implementedLayouts__
-from pyTRS.parser import __implementedLayoutExamples__
-
-# Other modules
-from pyTRS import check, quick, utils, interface_tools, csv_suite

@@ -3,7 +3,7 @@
 """
 A GUI app for choosing Config parameters for pyTRS parsing;
 results can be saved to .txt file or returned as text parameters (a
-string) or as a compiled pyTRS.Config object.
+string) or as a compiled pytrs.Config object.
 A PromptConfig object can be used directly in a tkinter application; or
 the prompt_config() function can be used to hold up the program while
 the user makes their choices, and then continue when it returns.
@@ -20,7 +20,7 @@ the user makes their choices, and then continue when it returns.
 import tkinter as tk
 from tkinter import messagebox
 from tkinter.ttk import Combobox
-from pyTRS import parser
+from pytrs import parser
 
 
 def prompt_config(
@@ -64,12 +64,12 @@ def prompt_config(
 
 class PromptConfig(tk.Frame):
     """A tkinter frame for configuring pyTRS parsing parameters (i.e.
-    pyTRS.Config objects)."""
+    pytrs.Config objects)."""
 
     # Parameters that are set via radiobuttons:
     RB_PARAMS = [
-        'cleanQQ', 'includeLotDivs', 'requireColon', 'ocrScrub', 'segment',
-        'initPreprocess', 'initParse', 'initParseQQ', 'break_halves'
+        'clean_qq', 'include_lot_divs', 'require_colon', 'ocr_scrub', 'segment',
+        'init_preprocess', 'init_parse', 'init_parse_qq', 'break_halves'
     ]
 
     # Parameters that are set to a number and control how deeply to
@@ -97,7 +97,7 @@ class PromptConfig(tk.Frame):
         that should be available to the user. If `parameters='all'`,
         will display all possible parameters. If passed as a string,
         parameter names should be separate by a comma and no spaces.
-        Note: defaultNS and defaultEW are always on.
+        Note: default_ns and default_ew are always on.
         :param show_ok: Include the OK button.
         :param ok_button_text: A string, for custom text for the OK
         button.
@@ -142,7 +142,7 @@ class PromptConfig(tk.Frame):
         
         if isinstance(parameters, str):
             if parameters.lower() == 'all':
-                parameters = parser.Config.__ConfigAttribs__
+                parameters = list(parser.Config._CONFIG_ATTRIBUTES)
             else:
                 parameters = parameters.replace(' ', '').split(',')
 
@@ -164,14 +164,14 @@ class PromptConfig(tk.Frame):
         # A dict of the possible config variables, with nested dicts for
         # respective variable and help text (variables are set later)
         self.CONFIG_DEF = {
-            'defaultNS':
+            'default_ns':
                 {'help':
                      "If the dataset contains a Township whose N/S "
                      "direction was not specified, the program will assume "
                      "this specified direction."
                  },
 
-            'defaultEW':
+            'default_ew':
                 {'help':
                      "If the dataset contains a Range whose E/W direction "
                      "was not specified, the program will assume this "
@@ -187,10 +187,10 @@ class PromptConfig(tk.Frame):
                      "layouts, it is probably wise to let the program "
                      "deduce the layout for each.\n\n"
                      "Below are examples of the possible layouts:\n\n"
-                     f"{parser.__implementedLayoutExamples__}"
+                     f"{parser.IMPLEMENTED_LAYOUT_EXAMPLES}"
                  },
 
-            'cleanQQ':
+            'clean_qq':
                 {'help':
                      "Dataset contains only clean aliquots and lots; no "
                      "metes-and-bounds, exceptions, or limitations. "
@@ -205,7 +205,7 @@ class PromptConfig(tk.Frame):
                      "Default: off (`False`)"
                  },
 
-            'includeLotDivs':
+            'include_lot_divs':
                 {'help':
                      "If parsing lots, report any divisions of lots. For "
                      "example, if True, 'N/2 of Lot 1' would be reported "
@@ -214,69 +214,75 @@ class PromptConfig(tk.Frame):
                      "Default: on (`True`)"
                  },
 
-            'requireColon':
-                {'help':
-                     "Instruct a PLSSDesc object (whose layout is "
-                     "`TRS_desc` or `S_desc_TR`) to require a colon "
-                     "between the section number and the following "
-                     "description -- i.e. 'Section 14 NE/4' would NOT be "
-                     "picked up if 'requireColon' is on (`True`).  If "
-                     "turned off (`False`), then 'Section 14 NE/4' would "
-                     "be captured. However, this may result in false "
-                     "matches, depending on the dataset.\n\n"
-                     "(Note that the default parsing method is to first "
-                     "pass over instances that do not have a colon. If no "
-                     "sections are matched, it will make a second pass, "
-                     "this time allowing section numbers that are NOT "
-                     "followed by colon. If not set here, the potentially "
-                     "two-pass method will be used by default.)\n\n"
-                     "If set to on (`True`) here, that second-pass method "
-                     "will be prevented. If set to off (`False`) here, it "
-                     "will broadly capture all such instances, and the "
-                     "second-pass method will not be needed. (Again, "
-                     "beware false matches.)"
+            'require_colon':
+                {
+                    'help': (
+                        "Instruct a PLSSDesc object (whose layout is "
+                        "`TRS_desc` or `S_desc_TR`) to require a colon "
+                        "between the section number and the following "
+                        "description -- i.e. 'Section 14 NE/4' would NOT be "
+                        "picked up if 'require_colon' is on (`True`).  If "
+                        "turned off (`False`), then 'Section 14 NE/4' would "
+                        "be captured. However, this may result in false "
+                        "matches, depending on the dataset.\n\n"
+                        "(Note that the default parsing method is to first "
+                        "pass over instances that do not have a colon. If no "
+                        "sections are matched, it will make a second pass, "
+                        "this time allowing section numbers that are NOT "
+                        "followed by colon. If not set here, the potentially "
+                        "two-pass method will be used by default.)\n\n"
+                        "If set to on (`True`) here, that second-pass method "
+                        "will be prevented. If set to off (`False`) here, it "
+                        "will broadly capture all such instances, and the "
+                        "second-pass method will not be needed. (Again, "
+                        "beware false matches.)"
+                )
                  },
 
-            'ocrScrub':
-                {'help':
-                     "Attempt to iron out common OCR artifacts in a "
-                     "PLSSDesc object or Tract object (e.g., 'TIS4N-R97W' "
-                     "that should have been 'T154N-R97W'. (WARNING: may "
-                     "cause other issues.)\n\n"
-                     "Default: off (`False`)."
+            'ocr_scrub':
+                {
+                    'help': (
+                        "Attempt to iron out common OCR artifacts in a "
+                        "PLSSDesc object or Tract object (e.g., 'TIS4N-R97W' "
+                        "that should have been 'T154N-R97W'). (WARNING: may "
+                        "cause other issues.)\n\n"
+                        "Default: off (`False`)."
+                    )
                  },
 
             'segment':
-                {'help':
-                     "While parsing, segment each description by T&R "
-                     "before identifying tracts, which MIGHT capture SOME "
-                     "descriptions whose layout changes partway through. "
-                     "(However, this cannot capture ALL changes in "
-                     "layouts.)\n\n"
-                     "Default: off (`False`)"
+                {
+                    'help': (
+                        "While parsing, segment each description by T&R "
+                        "before identifying tracts, which MIGHT capture SOME "
+                        "descriptions whose layout changes partway through. "
+                        "(However, this cannot capture ALL changes in "
+                        "layouts.)\n\n"
+                        "Default: off (`False`)"
+                    )
                  },
 
-            'initPreprocess':
+            'init_preprocess':
                 {'help':
                      "Preprocess PLSS descriptions and Tracts upon "
                      "initialization.\n\n"
                      "Default: on (`True`)"
                  },
 
-            'initParse':
+            'init_parse':
                 {'help':
                      "Parse PLSS descriptions upon initialization (roughly "
                      "equivalent to initializing a PLSSDesc object with "
-                     "`initParse=True`).\n\n"
+                     "`init_parse=True`).\n\n"
                      "Default: off (`False`)"
                  },
 
-            'initParseQQ':
+            'init_parse_qq':
                 {'help':
                      "Parse PLSS descriptions AND Tracts (i.e. lots and "
                      "QQ's) upon initialization (roughly equivalent to "
                      "initializing an PLSSDesc or Tract object with "
-                     "`initParseQQ=True`).\n\n"
+                     "`init_parse_qq=True`).\n\n"
                      "Default: off (`False`)"
                  },
 
@@ -384,7 +390,7 @@ class PromptConfig(tk.Frame):
                     "Whether to break aliquot halves into quarters, EVEN IF "
                     "we are beyond the `qq_depth_min`.\n\n"
                     "For example, if qq_depth_min is set to 2, intending "
-                    "to generate QQ's, but out dataset includes the "
+                    "to generate QQ's, but our dataset includes the "
                     "E/2W/2NE/4...\n\n"
                     "...without `break_halves`, this would parse into "
                     "['E2NWNE', 'E2SWNE'].\n\n"
@@ -408,7 +414,7 @@ class PromptConfig(tk.Frame):
             text="Default unspecified Townships to [North] or [South]?")
         defaultNShbtn = tk.Button(
             combo_frame, text='?', padx=5,
-            command=lambda: self.cf_help_clicked('defaultNS'))
+            command=lambda: self.cf_help_clicked('default_ns'))
         self.defaultNScombo = Combobox(combo_frame, width=8)
         self.defaultNScombo['values'] = ('North', 'South')
         defaultNSPrompt.grid(column=1, row=combo_frame_row, sticky='e')
@@ -423,7 +429,7 @@ class PromptConfig(tk.Frame):
         defaultEWPrompt.grid(column=1, row=combo_frame_row, sticky='e')
         defaultEWhbtn = tk.Button(
             combo_frame, text='?', padx=5,
-            command=lambda: self.cf_help_clicked('defaultEW'))
+            command=lambda: self.cf_help_clicked('default_ew'))
         defaultEWhbtn.grid(column=2, row=combo_frame_row)
         self.defaultEWcombo = Combobox(combo_frame, width=8)
         self.defaultEWcombo['values'] = ('West', 'East')
@@ -434,7 +440,7 @@ class PromptConfig(tk.Frame):
         # Prompt for layout
         self.layoutcombo = Combobox(combo_frame, width=25)
         self.layoutcombo['values'] = tuple(
-            ['Deduce (RECOMMENDED)'] + parser.__implementedLayouts__)
+            ['Deduce (RECOMMENDED)'] + list(parser.IMPLEMENTED_LAYOUTS))
         self.combos.append(self.layoutcombo)
     
         if 'layout' in parameters:
@@ -458,8 +464,8 @@ class PromptConfig(tk.Frame):
         cur_row += 1
 
         # Set a new tk.IntVar for each variable name --
-        #   i.e. var_name 'cleanQQ' -> `self.cleanQQVar`, storing a tk.IntVar;
-        #   and set this tk.IntVar to the `self.CONFIG_DEF` dict for 'cleanQQ'
+        #   i.e. var_name 'clean_qq' -> `self.clean_qq_var`, storing a tk.IntVar;
+        #   and set this tk.IntVar to the `self.CONFIG_DEF` dict for 'clean_qq'
         #   (etc.)
         for var_name in self.RB_PARAMS:
             new_var = tk.IntVar()
@@ -471,51 +477,56 @@ class PromptConfig(tk.Frame):
             setattr(self, var_name + 'Var', new_var)
             self.CONFIG_DEF[var_name]['var'] = new_var
 
+
         # Prompt for qq_depth_min
         qq_depth_minPrompt = tk.Label(
             combo_frame, text="MINIMUM depth to parse QQs")
-        qq_depth_minPrompt.grid(column=1, row=combo_frame_row, sticky='e')
         qq_depth_minhbtn = tk.Button(
             combo_frame, text='?', padx=5,
             command=lambda: self.cf_help_clicked('qq_depth_min'))
-        qq_depth_minhbtn.grid(column=2, row=combo_frame_row)
         self.qq_depth_mincombo = Combobox(combo_frame, width=25)
         self.qq_depth_mincombo['values'] = self.CONFIG_DEF["qq_depth_min"]["options"]
-        self.qq_depth_mincombo.grid(column=3, row=combo_frame_row, sticky='w')
         self.combos.append(self.qq_depth_mincombo)
         self.CONFIG_DEF["qq_depth_min"]["combo"] = self.qq_depth_mincombo
-        combo_frame_row += 1
+        if "qq_depth_min" in self.parameters:
+            qq_depth_minPrompt.grid(column=1, row=combo_frame_row, sticky='e')
+            qq_depth_minhbtn.grid(column=2, row=combo_frame_row)
+            self.qq_depth_mincombo.grid(column=3, row=combo_frame_row, sticky='w')
+            combo_frame_row += 1
+
 
         # Prompt for qq_depth_max
         qq_depth_maxPrompt = tk.Label(
             combo_frame, text="MAXIMUM depth to parse QQs")
-        qq_depth_maxPrompt.grid(column=1, row=combo_frame_row, sticky='e')
         qq_depth_maxhbtn = tk.Button(
             combo_frame, text='?', padx=5,
             command=lambda: self.cf_help_clicked('qq_depth_max'))
-        qq_depth_maxhbtn.grid(column=2, row=combo_frame_row)
         self.qq_depth_maxcombo = Combobox(combo_frame, width=25)
         self.qq_depth_maxcombo['values'] = self.CONFIG_DEF["qq_depth_max"]["options"]
-        self.qq_depth_maxcombo.grid(column=3, row=combo_frame_row, sticky='w')
         self.combos.append(self.qq_depth_maxcombo)
         self.CONFIG_DEF["qq_depth_max"]["combo"] = self.qq_depth_maxcombo
-        combo_frame_row += 1
+        if "qq_depth_max" in self.parameters:
+            qq_depth_maxPrompt.grid(column=1, row=combo_frame_row, sticky='e')
+            qq_depth_maxhbtn.grid(column=2, row=combo_frame_row)
+            self.qq_depth_maxcombo.grid(column=3, row=combo_frame_row, sticky='w')
+            combo_frame_row += 1
 
         # Prompt for qq_depth
         qq_depthPrompt = tk.Label(
             combo_frame,
             text="EXACT depth to parse QQs (override min and max)")
-        qq_depthPrompt.grid(column=1, row=combo_frame_row, sticky='e')
         qq_depthhbtn = tk.Button(
             combo_frame, text='?', padx=5,
             command=lambda: self.cf_help_clicked('qq_depth'))
-        qq_depthhbtn.grid(column=2, row=combo_frame_row)
         self.qq_depthcombo = Combobox(combo_frame, width=25)
         self.qq_depthcombo['values'] = self.CONFIG_DEF["qq_depth"]["options"]
-        self.qq_depthcombo.grid(column=3, row=combo_frame_row, sticky='w')
         self.combos.append(self.qq_depthcombo)
         self.CONFIG_DEF["qq_depth"]["combo"] = self.qq_depthcombo
-        combo_frame_row += 1
+        if "qq_depth" in self.parameters:
+            qq_depthPrompt.grid(column=1, row=combo_frame_row, sticky='e')
+            qq_depthhbtn.grid(column=2, row=combo_frame_row)
+            self.qq_depthcombo.grid(column=3, row=combo_frame_row, sticky='w')
+            combo_frame_row += 1
 
         # Generate radiobuttons for the remaining parameters
         pr = self.RadioSetter(self, writing_header=True)
@@ -666,7 +677,7 @@ class PromptConfig(tk.Frame):
 
         if 'layout' in self.parameters:
             val = self.layoutcombo.get()
-            if val in parser.__implementedLayouts__:
+            if val in parser.IMPLEMENTED_LAYOUTS:
                 param_vals.append(val)
 
         # Check each of the requested variables. If not default (i.e. -1),
@@ -746,7 +757,7 @@ class PromptConfig(tk.Frame):
         # The user will specify the output filename:
         from tkinter import filedialog
         output_file = filedialog.asksaveasfilename(
-            initialdir='/', initialfile='pyTRS_config_data.txt',
+            initialdir='/', initialfile='pytrs_config_data.txt',
             filetypes=(("Text File", "*.txt"), ("All Files", "*.*")),
             title="Save as...")
         if output_file in ['', None]:
@@ -766,7 +777,7 @@ class PromptConfig(tk.Frame):
         """
 
         try:
-            # Compile config_text into a pyTRS.Config object, and use
+            # Compile config_text into a pytrs.Config object, and use
             # Config.saveToFile()
             parser.Config(config_text).save_to_file(output_file)
             messagebox.showinfo(
@@ -783,6 +794,6 @@ class PromptConfig(tk.Frame):
 
 if __name__ == '__main__':
     # If run on its own, can serve as a utility to generate Config data
-    # .txt files, used with pyTRS.Config.fromFile()
+    # .txt files, used with pytrs.Config.fromFile()
     pc = PromptConfig(show_save=True, show_ok=False, show_cancel=False)
     pc.master.mainloop()
