@@ -2200,14 +2200,14 @@ class TractList(list):
         printed:
 
             Tract #1
-            trs    : 154n97w14
-            desc   : NE/4
-            qqs : NENE, NWNE, SENE, SWNE
+            trs  : 154n97w14
+            desc : NE/4
+            qqs  : NENE, NWNE, SENE, SWNE
 
             Tract #2
-            trs    : 154n97w15
-            desc   : Northwest Quarter, North Half South West Quarter
-            qqs : NENW, NWNW, SENW, SWNW, NESW, NWSW
+            trs  : 154n97w15
+            desc : Northwest Quarter, North Half South West Quarter
+            qqs  : NENW, NWNW, SENW, SWNW, NESW, NWSW
         """
 
         # Ensure all elements are legal.
