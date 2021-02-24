@@ -436,7 +436,7 @@ class PLSSDesc:
         But you CANNOT assign, pop, or insert with a `PLSSDesc`
         directly. If any of that functionality is required, work
         directly with the `.parsed_tracts` attribute. Or, get a new
-        `plss.TractList` to work with, thus:
+        `pytrs.TractList` to work with, thus:
         `new_tractlist = some_plssdesc.parse(commit=False)`
         (`TractList` is a subclass of the built-in `list`.)
         """
