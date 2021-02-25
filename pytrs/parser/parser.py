@@ -88,39 +88,59 @@ IMPLEMENTED_LAYOUT_EXAMPLES = (
 )
 
 # For aliquot parsing.
-QQ_HALVES = ('N', 'S', 'E', 'W')
-QQ_QUARTERS = ('NE', 'NW', 'SE', 'SW')
+N = 'N'
+S = 'S'
+E = 'E'
+W = 'W'
+NE = 'NE'
+NW = 'NW'
+SE = 'SE'
+SW = 'SW'
+ALL = 'ALL'
+
+QQ_HALVES = (N, S, E, W)
+QQ_QUARTERS = (NE, NW, SE, SW)
 QQ_SUBDIVIDE_DEFINITIONS = {
-    'ALL': QQ_QUARTERS,
-    'N': ('NE', 'NW'),
-    'S': ('SE', 'SW'),
-    'E': ('NE', 'SE'),
-    'W': ('NW', 'SW'),
+    ALL: QQ_QUARTERS,
+    N: (NE, NW),
+    S: (SE, SW),
+    E: (NE, SE),
+    W: (NW, SW),
 }
-QQ_NS = ("N", "S")
-QQ_EW = ("E", "W")
+QQ_NS = (N, S)
+QQ_EW = (E, W)
 QQ_SAME_AXIS = {
-    "N": QQ_NS,
-    "S": QQ_NS,
-    "E": QQ_EW,
-    "W": QQ_EW
+    N: QQ_NS,
+    S: QQ_NS,
+    E: QQ_EW,
+    W: QQ_EW
 }
+
+# Clean aliquot abbreviations with fraction, for aliquot preprocessing.
+NE_FRAC = 'NE¼'
+NW_FRAC = 'NW¼'
+SE_FRAC = 'SE¼'
+SW_FRAC = 'SW¼'
+N2_FRAC = 'N½'
+S2_FRAC = 'S½'
+E2_FRAC = 'E½'
+W2_FRAC = 'W½'
 
 # Define what should replace matches of each regex that is used in the
 # _scrub_aliquots() function.
 QQ_SCRUBBER_DEFINITIONS = {
-    NE_regex: 'NE¼',
-    NW_regex: 'NW¼',
-    SE_regex: 'SE¼',
-    SW_regex: 'SW¼',
-    N2_regex: 'N½',
-    S2_regex: 'S½',
-    E2_regex: 'E½',
-    W2_regex: 'W½',
-    cleanNE_regex: 'NE¼',
-    cleanNW_regex: 'NW¼',
-    cleanSE_regex: 'SE¼',
-    cleanSW_regex: 'SW¼'
+    NE_regex: NE_FRAC,
+    NW_regex: NW_FRAC,
+    SE_regex: SE_FRAC,
+    SW_regex: SW_FRAC,
+    N2_regex: N2_FRAC,
+    S2_regex: S2_FRAC,
+    E2_regex: E2_FRAC,
+    W2_regex: W2_FRAC,
+    cleanNE_regex: NE_FRAC,
+    cleanNW_regex: NW_FRAC,
+    cleanSE_regex: SE_FRAC,
+    cleanSW_regex: SW_FRAC
 }
 
 CONFIG_ERROR = TypeError(
