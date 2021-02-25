@@ -1299,7 +1299,8 @@ class PLSSDesc:
         Simple printing of the arg-specified attributes for each Tract
         in the .parsed_tracts list.
         """
-        print(self.tracts_to_str(attributes))
+        # This functionality is handled by TractList method.
+        self.parsed_tracts.print_data(attributes)
         return
 
 
@@ -2317,6 +2318,14 @@ class TractList(list):
         """
 
         print(self.quick_desc(delim=delim, newline=newline))
+
+    def print_data(self, *attributes) -> None:
+        """
+        Simple printing of the arg-specified attributes for each Tract
+        in this TractList.
+        """
+        print(self.tracts_to_str(attributes))
+        return
 
     def list_trs(self, remove_duplicates=False):
         """
