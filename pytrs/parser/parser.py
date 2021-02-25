@@ -1806,6 +1806,12 @@ class Tract:
         (equivalent to what would be stored in `.lots_qqs`).
         """
 
+        if commit:
+            # Wipe any prior parsed results.
+            self.lots = []
+            self.qqs = []
+            self.lots_qqs = []
+
         # TODO: Generate a list (saved as an attribute) of slice_indexes
         #   of the `pp_desc` for the text that was incorporated into
         #   lots and QQ's vs. not.
