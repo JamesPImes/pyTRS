@@ -308,7 +308,7 @@ class PLSSDesc:
 
         # Whether we should require a colon between Section ## and tract
         # description (for TRS_DESC and S_DESC_TR layouts):
-        self.require_colon = True
+        self.require_colon = "default_colon"
 
         # Whether to include any divisions of lots
         # (i.e. 'N/2 of Lot 1' -> 'N2 of L1')
@@ -495,7 +495,7 @@ class PLSSDesc:
 
     def parse(
             self, text=None, layout=None, clean_up=None, init_parse_qq=None,
-            clean_qq=None, require_colon='default_colon', segment=None,
+            clean_qq=None, require_colon=None, segment=None,
             commit=True, qq_depth_min=None, qq_depth_max=None, qq_depth=None,
             break_halves=None):
         """
@@ -524,10 +524,12 @@ class PLSSDesc:
         :param require_colon: Whether to require a colon between the
         section number and the following description (only has an effect
         on 'TRS_desc' or 'S_desc_TR' layouts).
-        If not specified, it will default to a 'two-pass' method, where
-        first it will require the colon; and if no matching sections are
-        found, it will do a second pass where colons are not required.
-        Setting as `True` or `False` here prevent the two-pass method.
+        If not specified, it will default to whatever was set at init;
+        and unless otherwise specified there, will default to a 'two-
+        pass' method, where first it will require the colon; and if no
+        matching sections are found, it will do a second pass where
+        colons are not required. Setting as `True` or `False` here
+        prevent the two-pass method.
             ex: 'Section 14 NE/4'
                 `require_colon=True` --> no match
                 `require_colon=False` --> match (but beware false
@@ -589,6 +591,9 @@ class PLSSDesc:
             flagText = self.orig_desc
         else:
             flagText = text
+
+        if require_colon is None:
+            require_colon = self.require_colon
 
         # When layout is specified at init, or when calling
         # `.parse(layout=<string>)`, we prevent _parse_segment() from deducing,
@@ -3159,7 +3164,7 @@ def _findall_matching_sec(text, layout=None, require_colon='default_colon'):
 
 
 def _parse_segment(
-        text_block, layout=None, clean_up=None, require_colon='default_colon',
+        text_block, layout=None, clean_up=None, require_colon=None,
         handed_down_config=None, init_parse_qq=False, clean_qq=None,
         qq_depth_min=None, qq_depth_max=None, qq_depth=None,
         break_halves=None):
@@ -3259,6 +3264,9 @@ def _parse_segment(
 
     if layout not in _IMPLEMENTED_LAYOUTS:
         layout = PLSSDesc._deduce_segment_layout(text_block)
+
+    if require_colon is None:
+        require_colon = 'default_colon'
 
     segParseBag = ParseBag(parent_type='PLSSDesc')
 
