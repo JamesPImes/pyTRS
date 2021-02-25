@@ -88,32 +88,32 @@ IMPLEMENTED_LAYOUT_EXAMPLES = (
 )
 
 # For aliquot parsing.
-N = 'N'
-S = 'S'
-E = 'E'
-W = 'W'
-NE = 'NE'
-NW = 'NW'
-SE = 'SE'
-SW = 'SW'
-ALL = 'ALL'
+_N = 'N'
+_S = 'S'
+_E = 'E'
+_W = 'W'
+_NE = 'NE'
+_NW = 'NW'
+_SE = 'SE'
+_SW = 'SW'
+_ALL = 'ALL'
 
-QQ_HALVES = (N, S, E, W)
-QQ_QUARTERS = (NE, NW, SE, SW)
+QQ_HALVES = (_N, _S, _E, _W)
+QQ_QUARTERS = (_NE, _NW, _SE, _SW)
 QQ_SUBDIVIDE_DEFINITIONS = {
-    ALL: QQ_QUARTERS,
-    N: (NE, NW),
-    S: (SE, SW),
-    E: (NE, SE),
-    W: (NW, SW),
+    _ALL: QQ_QUARTERS,
+    _N: (_NE, _NW),
+    _S: (_SE, _SW),
+    _E: (_NE, _SE),
+    _W: (_NW, _SW),
 }
-QQ_NS = (N, S)
-QQ_EW = (E, W)
+QQ_NS = (_N, _S)
+QQ_EW = (_E, _W)
 QQ_SAME_AXIS = {
-    N: QQ_NS,
-    S: QQ_NS,
-    E: QQ_EW,
-    W: QQ_EW
+    _N: QQ_NS,
+    _S: QQ_NS,
+    _E: QQ_EW,
+    _W: QQ_EW
 }
 
 # Clean aliquot abbreviations with fraction, for aliquot preprocessing.
