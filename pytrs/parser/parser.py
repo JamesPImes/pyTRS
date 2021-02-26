@@ -155,6 +155,13 @@ DEFAULT_EW_ERROR = ValueError(
 )
 
 
+_ERR_SEC = 'secError'
+_ERR_TWPRGE = 'TRerr'
+
+_E_FLAG_SECERR = 'secError'
+_E_FLAG_TWPRGE_ERR = 'TRerr'
+
+
 class PLSSDesc:
     """
     Each object of this class is a full PLSS description, taking the raw
@@ -730,9 +737,9 @@ class PLSSDesc:
                     ('trError', TractObj.trs + ':' + TractObj.desc))
                 bigPB.desc_is_flawed = True
             if TractObj.trs[-2:] == 'or':
-                bigPB.e_flags.append('secError')
+                bigPB.e_flags.append(_E_FLAG_SECERR)
                 bigPB.e_flag_lines.append(
-                    ('secError', TractObj.trs + ':' + TractObj.desc))
+                    (_E_FLAG_SECERR, TractObj.trs + ':' + TractObj.desc))
                 bigPB.desc_is_flawed = True
 
         # Check for warning flags (and a couple error flags).
@@ -1352,7 +1359,7 @@ class Tract:
             Ex: Sec 1, T154N-R97W -> '154n97w01'
                 Sec 14, T1S-R9E -> '1s9e14'
     NOTE: If there was a flawed parse where Twp/Rge and/or Sec could not
-        be successfully identified, .trs may contain 'TRerr_' and/or
+        be successfully identified, .trs may contain 'TRerr' and/or
         'secError'.
     .twp -- The Twp portion of .trs, a string (ex: '154n')
     .rge -- The Rge portion of .trs, a string (ex: '97w')
@@ -1463,7 +1470,7 @@ class Tract:
         # format), _unpack it into the component parts
         self.twp, self.rge, self.sec = break_trs(trs)
         if self.sec is None:
-            self.sec = 'secError'
+            self.sec = _ERR_SEC
         self.twprge = self.twp + self.rge
 
         # Whether fatal flaws were identified during the parsing of the
@@ -3452,7 +3459,7 @@ def _parse_segment(
         # initial TR is the only difference.
 
         # Defaults to a T&R error.
-        working_tr = 'TRerr_'
+        working_tr = _ERR_TWPRGE
 
         # For TR_DESC_S, will pop the working_tr when we encounter the
         # first TR. However, for desc_STR, need to pre-set our working_tr
@@ -3462,11 +3469,11 @@ def _parse_segment(
 
         # Description block comes before section in this layout, so we
         # pre-set the working_sec and working_multiSec (if any are available):
-        working_sec = 'secError'
+        working_sec = _ERR_SEC
         if len(working_sec_list) > 0:
             working_sec = working_sec_list.pop(0)
 
-        working_multiSec = ['secError']
+        working_multiSec = [_ERR_SEC]
         if len(working_multiSec_list) > 0:
             working_multiSec = working_multiSec_list.pop(0)
 
@@ -3519,7 +3526,7 @@ def _parse_segment(
             if markerType == 'tr_start':  # Pull the next T&R in our list
                 if len(working_tr_list) == 0:
                     # Will cause a TR error if another TRS+Desc is created:
-                    working_tr = 'TRerr_'
+                    working_tr = _ERR_TWPRGE
                 else:
                     working_tr = working_tr_list.pop(0)
                 continue
@@ -3571,20 +3578,20 @@ def _parse_segment(
                 TractObj = new_tract(
                     clean_as_needed(
                         text_block[secErrorWriteBackToPos:mrkrsLst[i + 1]].strip()),
-                    'secError')
+                        _ERR_SEC)
                 segParseBag.parsed_tracts.append(TractObj)
 
             elif markerType == 'sec_start':
                 if len(working_sec_list) == 0:
                     # Will cause a section error if another TRS+Desc is created
-                    working_sec = 'secError'
+                    working_sec = _ERR_SEC
                 else:
                     working_sec = working_sec_list.pop(0)
 
             elif markerType == 'multiSec_start':
                 if len(working_multiSec_list) == 0:
                     # Will cause a section error if another TRS+Desc is created
-                    working_multiSec = ['secError']
+                    working_multiSec = [_ERR_SEC]
                 else:
                     working_multiSec = working_multiSec_list.pop(0)
 
@@ -3629,14 +3636,14 @@ def _parse_segment(
 
         # Defaults to a T&R error if no T&R's were identified, but
         # pre-set our T&R (if one is available):
-        working_tr = 'TRerr_'
+        working_tr = _ERR_TWPRGE
         if len(working_tr_list) > 0:
             working_tr = working_tr_list.pop(0)
 
-        # Default to a 'secError' for this layout. Will change when we
+        # Default to a _ERR_SEC for this layout. Will change when we
         # meet the first sec and multiSec respectively.
-        working_sec = 'secError'
-        working_multiSec = ['secError']
+        working_sec = _ERR_SEC
+        working_multiSec = [_ERR_SEC]
 
         finalRun = False
 
@@ -3678,7 +3685,7 @@ def _parse_segment(
             if markerType == 'sec_start':
                 if len(working_sec_list) == 0:
                     # Will cause a section error if another TRS+Desc is created
-                    working_sec = 'secError'
+                    working_sec = _ERR_SEC
                 else:
                     working_sec = working_sec_list.pop(0)
                 #continue
@@ -3686,7 +3693,7 @@ def _parse_segment(
             elif markerType == 'multiSec_start':
                 if len(working_multiSec_list) == 0:
                     # Will cause a section error if another TRS+Desc is created
-                    working_multiSec = ['secError']
+                    working_multiSec = [_ERR_SEC]
                 else:
                     working_multiSec = working_multiSec_list.pop(0)
 
@@ -3721,7 +3728,7 @@ def _parse_segment(
             elif markerType == 'tr_start':  # Pull the next T&R in our list
                 if len(working_tr_list) == 0:
                     # Will cause a TR error if another TRS+Desc is created:
-                    working_tr = 'TRerr_'
+                    working_tr = _ERR_TWPRGE
                 else:
                     working_tr = working_tr_list.pop(0)
 
@@ -3743,17 +3750,17 @@ def _parse_segment(
 
         if len(wTRList) == 0:
             # Defaults to a T&R error if no T&R's were identified
-            working_tr = 'TRerr_'
+            working_tr = _ERR_TWPRGE
         else:
             working_tr = wTRList[0][0]
 
         if len(wSecList) == 0:
-            working_sec = 'secError'
+            working_sec = _ERR_SEC
         else:
             working_sec = wSecList[0][0]
 
         # If no solo section was found, check for a multiSec we can pull from
-        if len(wMultiSecList) != 0 and working_sec == 'secError':
+        if len(wMultiSecList) != 0 and working_sec == _ERR_SEC:
             # Just pull the first section in the first multiSec.
             working_sec = wMultiSecList[0][0][0]
 
@@ -3765,9 +3772,9 @@ def _parse_segment(
     if layout == TRS_DESC:
 
         # Defaults to a T&R error and Sec errors for this layout.
-        working_tr = 'TRerr_'
-        working_sec = 'secError'
-        working_multiSec = ['secError']
+        working_tr = _ERR_TWPRGE
+        working_sec = _ERR_SEC
+        working_multiSec = [_ERR_SEC]
 
         finalRun = False
 
@@ -3827,7 +3834,7 @@ def _parse_segment(
                 if len(working_sec_list) == 0:
                     # If another TRS+Desc pair is created after this point,
                     # it will result in a Section error:
-                    working_sec = 'secError'
+                    working_sec = _ERR_SEC
                 else:
                     working_sec = working_sec_list.pop(0)
 
@@ -3835,7 +3842,7 @@ def _parse_segment(
                 if len(working_multiSec_list) == 0:
                     # If another GROUP of TRS+Desc pairs is created
                     # after this point, it will result in a Section error.
-                    working_multiSec = ['secError']
+                    working_multiSec = [_ERR_SEC]
                 else:
                     working_multiSec = working_multiSec_list.pop(0)
 
@@ -4811,10 +4818,10 @@ def break_trs(trs: str) -> tuple:
         ex:  '154n97w14' -> ('154n', '97w', '14')
         ex:  '154n97w' -> ('154n', '97w', None)
         ex:  '154n97wsecError' -> ('154n', '97w', 'secError')
-        ex:  'TRerr_14' -> ('TRerr', 'TRerr', '14')
+        ex:  'TRerr14' -> ('TRerr', 'TRerr', '14')
         ex:  'asdf' -> ('TRerr', 'TRerr', 'secError')"""
 
-    DEFAULT_ERRORS = ('TRerr', 'TRerr', 'secError',)
+    DEFAULT_ERRORS = (_ERR_TWPRGE, _ERR_TWPRGE, _ERR_SEC)
 
     mo = TRS_unpacker_regex.search(trs)
     if mo is None:
