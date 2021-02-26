@@ -251,6 +251,9 @@ class PLSSDesc:
     .gen_flags() -- Scour the text for potential flag-raising issues.
     """
 
+    _DEFAULT_COLON = 'default_colon'
+    _SECOND_PASS = 'second_pass'
+
     def __init__(
             self, orig_desc: str, source='', layout=None, config=None,
             init_parse=None, init_parse_qq=None):
@@ -335,7 +338,7 @@ class PLSSDesc:
 
         # Whether we should require a colon between Section ## and tract
         # description (for TRS_DESC and S_DESC_TR layouts):
-        self.require_colon = "default_colon"
+        self.require_colon = PLSSDesc._DEFAULT_COLON
 
         # Whether to include any divisions of lots
         # (i.e. 'N/2 of Lot 1' -> 'N2 of L1')
@@ -3031,7 +3034,8 @@ def _segment_by_tr(text, layout=None, twprge_first=None):
     return trTextBlocks, discardTextBlocks
 
 
-def _findall_matching_sec(text, layout=None, require_colon='default_colon'):
+def _findall_matching_sec(
+        text, layout=None, require_colon=PLSSDesc._DEFAULT_COLON):
     """
     INTERNAL USE:
 
@@ -3064,7 +3068,7 @@ def _findall_matching_sec(text, layout=None, require_colon='default_colon'):
 
     if isinstance(require_colon, bool):
         require_colonBool = require_colon
-    elif require_colon == 'second_pass':
+    elif require_colon == PLSSDesc._SECOND_PASS:
         require_colonBool = False
     else:
         require_colonBool = True
@@ -3189,19 +3193,19 @@ def _findall_matching_sec(text, layout=None, require_colon='default_colon'):
     # If we're in either TRS_DESC or S_DESC_TR layouts and discovered
     # neither a standalone section nor a multiSec, then rerun
     # _findall_matching_sec() under the same kwargs, except with
-    # require_colon='second_pass' (which sets require_colonBool=False),
-    # to see if we can capture a section after all.
-    # Will return those results instead.
+    # require_colon=PLSSDesc._SECOND_PASS (which sets
+    # require_colonBool=False), to see if we can capture a section after
+    # all.  Will return those results instead.
     do_second_pass = True
     if layout not in [TRS_DESC, S_DESC_TR]:
         do_second_pass = False
     if len(wSecList) > 0 or len(wMultiSecList) > 0:
         do_second_pass = False
-    if require_colon != 'default_colon':
+    if require_colon != PLSSDesc._DEFAULT_COLON:
         do_second_pass = False
     if do_second_pass:
         pass2_PB = _findall_matching_sec(
-            text, layout=layout, require_colon='second_pass')
+            text, layout=layout, require_colon=PLSSDesc._SECOND_PASS)
         if len(pass2_PB.sec_list) > 0 or len(pass2_PB.multiSecList) > 0:
             pass2_PB.w_flags.append('pulled_sec_without_colon')
         return pass2_PB
@@ -3315,7 +3319,7 @@ def _parse_segment(
         layout = PLSSDesc._deduce_segment_layout(text_block)
 
     if require_colon is None:
-        require_colon = 'default_colon'
+        require_colon = PLSSDesc._DEFAULT_COLON
 
     segParseBag = ParseBag(parent_type='PLSSDesc')
 
@@ -3415,20 +3419,23 @@ def _parse_segment(
 
     # If we're in either TRS_DESC or S_DESC_TR layouts and discovered
     # neither a standalone section nor a multiSec, then rerun the parse
-    # under the same kwargs, except with require_colon='second_pass' (which
-    # sets require_colonBool=False), to see if we can capture a section after
-    # all. Will return those results instead:
+    # under the same kwargs, except with `require_colon=PLSSDesc._SECOND_PASS`
+    # (which sets require_colonBool=False), to see if we can capture a
+    # section after all. Will return those results instead:
     do_second_pass = True
     if layout not in [TRS_DESC, S_DESC_TR]:
         do_second_pass = False
     if len(working_sec_list) > 0 or len(working_multiSec_list) > 0:
         do_second_pass = False
-    if require_colon != 'default_colon':
+    if require_colon != PLSSDesc._DEFAULT_COLON:
         do_second_pass = False
     if do_second_pass:
         replacementMidPB = _parse_segment(
-            text_block=text_block, layout=layout, require_colon='second_pass',
-            handed_down_config=handed_down_config, init_parse_qq=init_parse_qq)
+            text_block=text_block,
+            layout=layout,
+            require_colon=PLSSDesc._SECOND_PASS,
+            handed_down_config=handed_down_config,
+            init_parse_qq=init_parse_qq)
         TRS_found = replacementMidPB.parsed_tracts[0].trs is not None
         if TRS_found:
             # If THIS time we successfully found a TRS, flag that we ran
