@@ -1960,7 +1960,7 @@ class Tract:
         if all_mo is not None:
             if all_mo.group(2) is None:
                 # If we ONLY found "ALL", then we're good.
-                aliqTextBlocks.append('ALL')
+                aliqTextBlocks.append(_ALL)
             # TODO: Make this more robust. As of now will only capture
             #  'ALL' in "Section 14: ALL", but there might be some
             #  disregardable context around "ALL" (e.g., punctuation)
@@ -2922,8 +2922,10 @@ def _findall_matching_tr(text, layout=None) -> ParseBag:
         # If we have such an intervening string, then this appears to be
         # desc_STR layout -- ex. 'Section 1 of T154N-R97W'
         interveners = ['in', 'of', ',', 'all of', 'all in', 'within', 'all within']
-        if secFound and text[j:i].strip() in interveners \
-                and layout in [TRS_DESC, S_DESC_TR]:
+        if (
+            secFound and text[j:i].strip() in interveners
+            and layout in [TRS_DESC, S_DESC_TR]
+        ):
             # In TRS_Desc and S_DESC_TR layouts specifically, this is
             # NOT a T&R match for a new Tract.
 
@@ -3097,7 +3099,7 @@ def _findall_matching_sec(text, layout=None, require_colon='default_colon'):
         """
         # sec_regex and multiSec_regex can match unlimited whitespace at
         # the end, so if we don't back up 1 char, we can end up with a
-        # situation where sec_end is at the same position as tr_start,
+        # situation where SEC_END is at the same position as TR_START,
         # which can mess up the parser.
         if sec_mo.group().endswith((' ', '\n', '\t', '\r')):
             return sec_mo.end() - 1
@@ -3123,15 +3125,20 @@ def _findall_matching_sec(text, layout=None, require_colon='default_colon'):
         # 'the NE/4 of Section 4'), because it very likely means its a
         # continuation of the same description.
         enders = (' of', ' said', ' in', ' within')
-        if (layout in [TRS_DESC, S_DESC_TR]) and \
-                text[:sec_mo.start()].rstrip().endswith(enders):
+        if (
+            layout in [TRS_DESC, S_DESC_TR]
+            and text[:sec_mo.start()].rstrip().endswith(enders)
+        ):
             ruledOut = True
 
         # Also for TRS_DESC and S_DESC_TR layouts, we ONLY want to match
         # sections and multi-Sections that are followed by a colon (if
         # requiredColonBool == True):
-        if (require_colonBool) and (layout in [TRS_DESC, S_DESC_TR]) and \
-                not (_sec_ends_with_colon(sec_mo)):
+        if (
+            require_colonBool
+            and layout in [TRS_DESC, S_DESC_TR]
+            and not (_sec_ends_with_colon(sec_mo))
+        ):
             ruledOut = True
 
         if ruledOut:
@@ -3372,29 +3379,39 @@ def _parse_segment(
     working_sec_list = []
     working_multiSec_list = []
 
+    # constants for the different markers we'll use
+    TEXT_START = 'text_start'
+    TEXT_END = 'text_end'
+    TR_START = 'tr_start'
+    TR_END = 'tr_end'
+    SEC_START = 'sec_start'
+    SEC_END = 'sec_end'
+    MULTISEC_START = 'multiSec_start'
+    MULTISEC_END = 'multiSec_end'
+
     # A dict, keyed by index (i.e. start/end point of matched objects
     # within the text) and what was found at that index:
     markersDict = {}
     # This key/val will be overwritten if we found a T&R or Section at
     # the first character
-    markersDict[0] = 'text_start'
+    markersDict[0] = TEXT_START
     # Add the end of the string to the markersDict (may also get overwritten)
-    markersDict[len(text_block)] = 'text_end'
+    markersDict[len(text_block)] = TEXT_END
 
     for tuple in wTRList:
         working_tr_list.append(tuple[0])
-        markersDict[tuple[1]] = 'tr_start'
-        markersDict[tuple[2]] = 'tr_end'
+        markersDict[tuple[1]] = TR_START
+        markersDict[tuple[2]] = TR_END
 
     for tuple in wSecList:
         working_sec_list.append(tuple[0])
-        markersDict[tuple[1]] = 'sec_start'
-        markersDict[tuple[2]] = 'sec_end'
+        markersDict[tuple[1]] = SEC_START
+        markersDict[tuple[2]] = SEC_END
 
     for tuple in wMultiSecList:
         working_multiSec_list.append(tuple[0])  # A list of lists
-        markersDict[tuple[1]] = 'multiSec_start'
-        markersDict[tuple[2]] = 'multiSec_end'
+        markersDict[tuple[1]] = MULTISEC_START
+        markersDict[tuple[2]] = MULTISEC_END
 
     # If we're in either TRS_DESC or S_DESC_TR layouts and discovered
     # neither a standalone section nor a multiSec, then rerun the parse
@@ -3426,7 +3443,7 @@ def _parse_segment(
     # Get a list of all of the keys, then sort them, so that we're pulling
     # first-to-last (vis-a-vis the original text of this segment):
     mrkrsLst = list(markersDict.keys())
-    mrkrsLst.sort()  # We sort the keys, so that we're pulling first-to-last.
+    mrkrsLst.sort()
 
     def new_tract(
             text_for_new_desc, sec='default_sec', tr='default_tr') -> Tract:
@@ -3516,14 +3533,14 @@ def _parse_segment(
                 lastMarkerPos = markerPos
                 lastMarkerType = markerType
 
-            # We don't need to handle 'text_start' in this layout.
+            # We don't need to handle TEXT_START in this layout.
 
-            if markerType == 'tr_end':
+            if markerType == TR_END:
                 # This is included for handling secErrors in this layout.
                 # Note that it does not force a continue.
                 secErrorWriteBackToPos = markerPos
 
-            if markerType == 'tr_start':  # Pull the next T&R in our list
+            if markerType == TR_START:  # Pull the next T&R in our list
                 if len(working_tr_list) == 0:
                     # Will cause a TR error if another TRS+Desc is created:
                     working_tr = _ERR_TWPRGE
@@ -3531,7 +3548,7 @@ def _parse_segment(
                     working_tr = working_tr_list.pop(0)
                 continue
 
-            if nextMarkerType == 'sec_start':
+            if nextMarkerType == SEC_START:
                 # NOTE that this algorithm is looking for the start of a
                 # section at the NEXT marker!
 
@@ -3547,7 +3564,7 @@ def _parse_segment(
                 else:
                     secErrorWriteBackToPos = mrkrsLst[i + 1]
 
-            elif nextMarkerType == 'multiSec_start':
+            elif nextMarkerType == MULTISEC_START:
                 # NOTE that this algorithm is looking for the start of a
                 # multi-section at the NEXT marker!
 
@@ -3567,11 +3584,13 @@ def _parse_segment(
                 else:
                     secErrorWriteBackToPos = mrkrsLst[i + 1]
 
-            elif nextMarkerType == 'tr_start' \
-                    and markerType not in ['sec_end', 'multiSec_end'] \
-                    and nextMarkerPos - secErrorWriteBackToPos > 5:
+            elif (
+                nextMarkerType == TR_START
+                and markerType not in [SEC_END, MULTISEC_END]
+                and nextMarkerPos - secErrorWriteBackToPos > 5
+            ):
                 # If (1) we found a T&R next, and (2) we aren't CURRENTLY
-                # at a sec_end or multiSec_end, and (3) it's been more than
+                # at a SEC_END or MULTISEC_END, and (3) it's been more than
                 # a few characters since we last created a new Tract, then
                 # we're apparently dealing with a secError, and we need to
                 # make a flawed TractObj with  that secError.
@@ -3581,49 +3600,55 @@ def _parse_segment(
                         _ERR_SEC)
                 segParseBag.parsed_tracts.append(TractObj)
 
-            elif markerType == 'sec_start':
+            elif markerType == SEC_START:
                 if len(working_sec_list) == 0:
                     # Will cause a section error if another TRS+Desc is created
                     working_sec = _ERR_SEC
                 else:
                     working_sec = working_sec_list.pop(0)
 
-            elif markerType == 'multiSec_start':
+            elif markerType == MULTISEC_START:
                 if len(working_multiSec_list) == 0:
                     # Will cause a section error if another TRS+Desc is created
                     working_multiSec = [_ERR_SEC]
                 else:
                     working_multiSec = working_multiSec_list.pop(0)
 
-            elif markerType == 'sec_end':
-                if nextMarkerType not in ['sec_start', 'tr_start', 'multiSec_start'] \
-                        and markerPos != len(text_block):
+            elif markerType == SEC_END:
+                if (
+                    nextMarkerType not in [SEC_START, TR_START, MULTISEC_START]
+                    and markerPos != len(text_block)
+                ):
                     # Whenever we come across a Section end, the next thing must
-                    # be either a sec_start, multiSec_start, or tr_start.
+                    # be either a SEC_START, MULTISEC_START, or TR_START.
                     # Hence the warning flag, if that's not true:
                     unusedText = text_block[mrkrsLst[i]:mrkrsLst[i + 1]].strip()
                     segParseBag.w_flags.append('Unused_desc_<%s>' % unusedText)
 
-            elif markerType == 'text_end':
+            elif markerType == TEXT_END:
                 break
 
             # Capture unused text at the end of the string.
-            if layout == TR_DESC_S \
-                    and markerType in ['sec_end', 'multiSec_end'] \
-                    and not finalRun \
-                    and nextMarkerType not in ['sec_start', 'tr_start', 'multiSec_start']:
+            if (
+                layout == TR_DESC_S
+                and markerType in [SEC_END, MULTISEC_END]
+                and not finalRun
+                and nextMarkerType not in [SEC_START, TR_START, MULTISEC_START]
+            ):
                 # For TR_DESC_S, whenever we come across the end of a Section or
-                # multi-Section, the next thing must be either a sec_start,
-                # multiSec_start, or tr_start. Hence the warning flag, if that's
-                # not true:
+                # multi-Section, the next thing must be either a SEC_START,
+                # MULTISEC_START, or TR_START. Hence the warning flag, if that's
+                # not true.
                 unusedText = text_block[mrkrsLst[i]:mrkrsLst[i + 1]].strip()
                 flag_unused(unusedText, text_block[lastMarkerPos:nextMarkerPos])
 
             # Capture unused text at the end of a section/multiSec (if appropriate).
-            if layout == DESC_STR \
-                    and markerType in ['sec_end', 'multiSec_end'] \
-                    and not finalRun \
-                    and nextMarkerType not in ['sec_start', 'multiSec_start']:
+            if (
+                layout == DESC_STR
+                and markerType in [SEC_END, MULTISEC_END]
+                and not finalRun
+                and nextMarkerType not in [SEC_START, MULTISEC_START]
+            ):
                 unusedText = text_block[markerPos:nextMarkerPos]
                 if len(_cleanup_desc(unusedText)) > 3:
                     flag_unused(
@@ -3680,9 +3705,9 @@ def _parse_segment(
                 lastMarkerPos = markerPos
                 lastMarkerType = markersDict[markerPos]
 
-            # We don't need to handle 'text_start' in this layout.
+            # We don't need to handle TEXT_START in this layout.
 
-            if markerType == 'sec_start':
+            if markerType == SEC_START:
                 if len(working_sec_list) == 0:
                     # Will cause a section error if another TRS+Desc is created
                     working_sec = _ERR_SEC
@@ -3690,14 +3715,14 @@ def _parse_segment(
                     working_sec = working_sec_list.pop(0)
                 #continue
 
-            elif markerType == 'multiSec_start':
+            elif markerType == MULTISEC_START:
                 if len(working_multiSec_list) == 0:
                     # Will cause a section error if another TRS+Desc is created
                     working_multiSec = [_ERR_SEC]
                 else:
                     working_multiSec = working_multiSec_list.pop(0)
 
-            elif markerType == 'sec_end':
+            elif markerType == SEC_END:
                 # We found the start of a new desc block (betw Section's end
                 # and whatever's next).
 
@@ -3709,7 +3734,7 @@ def _parse_segment(
                         text_block[mrkrsLst[i]:mrkrsLst[i + 1]].strip()))
                 segParseBag.parsed_tracts.append(TractObj)
 
-            elif markerType == 'multiSec_end':
+            elif markerType == MULTISEC_END:
                 # We found start of a new desc block (betw multiSec end
                 # and whatever's next).
 
@@ -3725,15 +3750,15 @@ def _parse_segment(
                         sec)
                     segParseBag.parsed_tracts.append(TractObj)
 
-            elif markerType == 'tr_start':  # Pull the next T&R in our list
+            elif markerType == TR_START:  # Pull the next T&R in our list
                 if len(working_tr_list) == 0:
                     # Will cause a TR error if another TRS+Desc is created:
                     working_tr = _ERR_TWPRGE
                 else:
                     working_tr = working_tr_list.pop(0)
 
-            elif markerType == 'tr_end':
-                # The only effect 'tr_end' has on this layout is checking
+            elif markerType == TR_END:
+                # The only effect TR_END has on this layout is checking
                 # for unused text.
                 unusedText = text_block[markerPos:nextMarkerPos]
                 if len(unusedText.strip()) > 2:
@@ -3811,26 +3836,26 @@ def _parse_segment(
                 lastMarkerPos = markerPos
                 lastMarkerType = markerType
 
-            if markerType == 'text_start':
-                # 'text_start' does not have implications for parsing
+            if markerType == TEXT_START:
+                # TEXT_START does not have implications for parsing
                 # TRS_DESC layout. Move on to next.
                 pass
 
-            elif markerType == 'tr_start':
+            elif markerType == TR_START:
                 # Pull the next T&R in our list
-                if lastMarkerType == 'tr_end':
+                if lastMarkerType == TR_END:
                     segParseBag.e_flags.append('Unused_TR<%s>' % working_tr)
                 working_tr = working_tr_list.pop(0)
 
-            elif markerType == 'tr_end':
-                # The only effect 'tr_end' has on this layout is checking
+            elif markerType == TR_END:
+                # The only effect TR_END has on this layout is checking
                 # for unused text.
                 unusedText = text_block[markerPos:nextMarkerPos]
                 if len(unusedText.strip()) > 2:
                     flag_unused(
                         unusedText, text_block[lastMarkerPos:nextMarkerPos])
 
-            elif markerType == 'sec_start':
+            elif markerType == SEC_START:
                 if len(working_sec_list) == 0:
                     # If another TRS+Desc pair is created after this point,
                     # it will result in a Section error:
@@ -3838,7 +3863,7 @@ def _parse_segment(
                 else:
                     working_sec = working_sec_list.pop(0)
 
-            elif markerType == 'multiSec_start':
+            elif markerType == MULTISEC_START:
                 if len(working_multiSec_list) == 0:
                     # If another GROUP of TRS+Desc pairs is created
                     # after this point, it will result in a Section error.
@@ -3846,7 +3871,7 @@ def _parse_segment(
                 else:
                     working_multiSec = working_multiSec_list.pop(0)
 
-            elif markerType == 'sec_end':
+            elif markerType == SEC_END:
                 # Create a new TractObj, compiling our current working_tr
                 # and working_sec into a TRS, with the desc being the text
                 # between this marker and the next.
@@ -3854,7 +3879,7 @@ def _parse_segment(
                     clean_as_needed(text_block[markerPos:nextMarkerPos].strip()))
                 segParseBag.parsed_tracts.append(TractObj)
 
-            elif markerType == 'multiSec_end':
+            elif markerType == MULTISEC_END:
                 # Create a series of new TractObjs, compiling our current
                 # working_tr and elements from working_multiSec into a series
                 # of TRS, with the desc for EACH being the text between this
@@ -3864,7 +3889,7 @@ def _parse_segment(
                         clean_as_needed(text_block[markerPos:nextMarkerPos].strip()), sec)
                     segParseBag.parsed_tracts.append(TractObj)
 
-            elif markerType == 'text_end':
+            elif markerType == TEXT_END:
                 break
 
     if len(segParseBag.parsed_tracts) == 0:
