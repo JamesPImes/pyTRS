@@ -2437,6 +2437,11 @@ class ParseBag:
             self.lots = []
             self.lot_acres = {}
 
+        # This is only ever filled by `_findall_matching_tr()`. It will
+        # contain a list of tuples, being twprge matches and their start
+        # and end positions (indexes) in the string that was searched.
+        self.twprge_position_list = []
+
     def absorb(self, target_pb):
         """
         Absorb (i.e. append or set) the relevant attributes of a child
@@ -2861,7 +2866,7 @@ def _findall_matching_tr(text, layout=None) -> ParseBag:
     INTERNAL USE:
 
     Find T&R's that appropriately match the layout. Returns a ParseBag
-    that contains an ad-hoc `.trPosList` attribute, which holds a list
+    with a filled-in `.twprge_position_list` attribute, holding a list
     of tuples, each containing a T&R (as '000n000w' or fewer digits),
     and its start and end position in the string.
     """
@@ -2955,8 +2960,8 @@ def _findall_matching_tr(text, layout=None) -> ParseBag:
             i = i + len(tr_mo.group())
             continue
 
-    # Ad-hoc attribute (T&R/position list)
-    trParseBag.trPosList = wTRList
+    # Set attribute (T&R/position list)
+    trParseBag.twprge_position_list = wTRList
 
     return trParseBag
 
@@ -2987,9 +2992,9 @@ def _segment_by_tr(text, layout=None, twprge_first=None):
     # Search for all T&R's that match the layout requirements.
     trMatchPB = _findall_matching_tr(text, layout=layout)
 
-    # Pull ad-hoc `.trPosList` attribute from the ParseBag object. Do
-    # not absorb the rest.
-    wTRList = trMatchPB.trPosList
+    # Pull `.twprge_position_list` attribute from the ParseBag object.
+    # Do not absorb the rest.
+    wTRList = trMatchPB.twprge_position_list
 
     if wTRList == []:
         # If no T&R's had been matched, return the text block as single
@@ -3359,9 +3364,9 @@ def _parse_segment(
     # Find matching TR's that are appropriate to our layout (should only
     # be one, due to segmentation):
     trPB = _findall_matching_tr(text_block)
-    # Pull the ad-hoc `.trPosList` attribute from the ParseBag object,
+    # Pull `.twprge_position_list` attribute from the ParseBag object,
     # and absorb the rest of the data into segParseBag:
-    wTRList = trPB.trPosList
+    wTRList = trPB.twprge_position_list
     segParseBag.absorb(trPB)
 
     # Find matching Sections and MultiSections that are appropriate to
