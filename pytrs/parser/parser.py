@@ -2931,7 +2931,8 @@ def _findall_matching_tr(text, layout=None) -> ParseBag:
         # desc_STR layout -- ex. 'Section 1 of T154N-R97W'
         interveners = ['in', 'of', ',', 'all of', 'all in', 'within', 'all within']
         if (
-            secFound and text[j:i].strip() in interveners
+            secFound
+            and text[j:i].strip().lower() in interveners
             and layout in [TRS_DESC, S_DESC_TR]
         ):
             # In TRS_Desc and S_DESC_TR layouts specifically, this is
