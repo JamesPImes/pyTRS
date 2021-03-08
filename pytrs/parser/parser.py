@@ -4556,11 +4556,13 @@ def _pass_back_halves(aliquot_components: list) -> list:
     """
     INTERNAL USE:
     Quarters that precede halves in an aliquot block are nonstandard
-    but technically accurative. This function adjusts them to be the
-    standard version.
+    but technically accurate. This function adjusts them to the
+    equivalent description where the half occurs before the quarter.
+
     For example, ``'NE/4N/2'`` (passed here as ``['N', 'NE']``) is
     better described as the ``'N/2NE/4'``. Converted here to
     ``['NE', 'N']``.
+
     Similarly, the ``SE/4W/2'`` (passed here as ``['W', 'SE']``) is
     better described as the ``'E/2SW/4'``. Converted here to
     ``['SW', 'E']``.
