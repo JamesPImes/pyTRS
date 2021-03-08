@@ -4505,29 +4505,10 @@ def _unpack_aliquots(
     # Check for any consecutive halves that are on opposite axes.
     # E.g., the N/2E/2 should be converted to the NE/4, but the W/2E/2
     # should be left alone.
+    # Also check for any quarters that occur before halves, and convert
+    # them to halves before quarters. E.g., "SE/4W/2" -> "E/2SW/4"
 
-    component_list_clean = []
-    i = 0
-    while i < len(component_list):
-        aq1 = component_list[i]
-        if i + 1 == len(component_list):
-            # Last item.
-            component_list_clean.append(aq1)
-            break
-        aq2 = component_list[i + 1]
-        if aq1 in QQ_HALVES and aq2 in QQ_HALVES and aq2 not in QQ_SAME_AXIS[aq1]:
-            # e.g., the current component is 'N' and the next component is 'E';
-            # those do not exist on the same axis, so we combine them into
-            # the 'NE'. (And make sure the N/S direction goes before E/W.)
-            new_quarter = f"{aq2}{aq1}" if aq1 in "EW" else f"{aq1}{aq2}"
-            component_list_clean.append(new_quarter)
-            # Skip over the next component, because we already handled it during
-            # this iteration.
-            i += 2
-        else:
-            component_list_clean.append(aq1)
-            i += 1
-    component_list = component_list_clean
+    component_list = _standardize_aliquot_components(component_list)
 
     # ------------------------------------------------------------------
     # Convert the components into aliquot strings
@@ -4569,6 +4550,116 @@ def _unpack_aliquots(
 
     # Convert the 1-depth nested list into the final QQ list and return.
     return _rebuild_aliquots(subdivided_component_list)
+
+
+def _pass_back_halves(aliquot_components: list) -> list:
+    """
+    INTERNAL USE:
+    Quarters that precede halves in an aliquot block are nonstandard
+    but technically accurative. This function adjusts them to be the
+    standard version.
+    For example, ``'NE/4N/2'`` (passed here as ``['N', 'NE']``) is
+    better described as the ``'N/2NE/4'``. Converted here to
+    ``['NE', 'N']``.
+    Similarly, the ``SE/4W/2'`` (passed here as ``['W', 'SE']``) is
+    better described as the ``'E/2SW/4'``. Converted here to
+    ``['SW', 'E']``.
+
+    NOTE: This function does a single pass only!
+
+    :param aliquot_components: A list of aliquot components without any
+    fractions or numbers.
+    :return: The fixed list of aliquot components.
+    """
+    aliquot_components.reverse()
+    i = 0
+    while i < len(aliquot_components) - 1:
+        aq1 = aliquot_components[i]
+        aq2 = aliquot_components[i + 1]
+
+        # Looking for halves before quarters.
+        if not (aq2 in QQ_HALVES and aq1 in QQ_QUARTERS):
+            # This is OK.
+            i += 1
+            continue
+
+        # Break the 'NE' into 'N' and 'E'.
+        char1_ns, char2_ew = [*aq1]
+
+        if aq2 in QQ_NS:
+            rebuilt_aq2 = f"{aq2}{char2_ew}"
+            rebuilt_aq1 = char1_ns
+        else:
+            rebuilt_aq2 = f"{char1_ns}{aq2}"
+            rebuilt_aq1 = char2_ew
+        # Replace aq1 and aq2 with the rebuilt versions.
+        aliquot_components[i] = rebuilt_aq1
+        aliquot_components[i + 1] = rebuilt_aq2
+        i += 1
+
+    aliquot_components.reverse()
+    return aliquot_components
+
+
+def _combine_consecutive_halves(aliquot_components):
+    """
+    INTERNAL USE:
+    Check for any consecutive halves that are on opposite axes.
+    E.g., the N/2E/2 should be converted to the NE/4, but the W/2E/2
+    should be left alone.
+
+    NOTE: This function does a single pass only!
+
+    :param aliquot_components: A list of aliquot components without any
+    fractions or numbers.
+    :return: The fixed list of aliquot components.
+    """
+
+    aliquot_components_clean = []
+    i = 0
+    while i < len(aliquot_components):
+        aq1 = aliquot_components[i]
+        if i + 1 == len(aliquot_components):
+            # Last item.
+            aliquot_components_clean.append(aq1)
+            break
+        aq2 = aliquot_components[i + 1]
+        if aq1 in QQ_HALVES and aq2 in QQ_HALVES and aq2 not in QQ_SAME_AXIS[aq1]:
+            # e.g., the current component is 'N' and the next component is 'E';
+            # those do not exist on the same axis, so we combine them into
+            # the 'NE'. (And make sure the N/S direction goes before E/W.)
+            new_quarter = f"{aq2}{aq1}" if aq1 in "EW" else f"{aq1}{aq2}"
+            aliquot_components_clean.append(new_quarter)
+            # Skip over the next component, because we already handled it during
+            # this iteration.
+            i += 2
+        else:
+            aliquot_components_clean.append(aq1)
+            i += 1
+    aliquot_components = aliquot_components_clean
+    return aliquot_components
+
+
+def _standardize_aliquot_components(aliquot_components: list) -> list:
+    """
+    INTERNAL USE:
+    Iron out any non-standard aliquot descriptions, such as 'cross-axes'
+    halves (e.g., "W/2N/2" -> "NW/4") or quarters that occur before
+    halves (e.g., "SE/4W/2" -> "W/2SE/4").
+
+    :param aliquot_components: A list of aliquot components (already
+    broken down by ``_unpack_aliquots()``).
+    :return: The corrected list of aliquot components.
+    """
+    while True:
+        # Do at least one pass, and then as many more as are needed
+        # until the output matches the input.
+        check_orig = aliquot_components.copy()
+        aliquot_components = _pass_back_halves(aliquot_components)
+        aliquot_components = _combine_consecutive_halves(aliquot_components)
+        if aliquot_components == check_orig:
+            break
+    return aliquot_components
 
 
 def _rebuild_aliquots(nested_aliquot_list: list):
