@@ -3408,20 +3408,20 @@ def _parse_segment(
     # Add the end of the string to the markersDict (may also get overwritten)
     markersDict[len(text_block)] = TEXT_END
 
-    for tuple in wTRList:
-        working_tr_list.append(tuple[0])
-        markersDict[tuple[1]] = TR_START
-        markersDict[tuple[2]] = TR_END
+    for tup in wTRList:
+        working_tr_list.append(tup[0])
+        markersDict[tup[1]] = TR_START
+        markersDict[tup[2]] = TR_END
 
-    for tuple in wSecList:
-        working_sec_list.append(tuple[0])
-        markersDict[tuple[1]] = SEC_START
-        markersDict[tuple[2]] = SEC_END
+    for tup in wSecList:
+        working_sec_list.append(tup[0])
+        markersDict[tup[1]] = SEC_START
+        markersDict[tup[2]] = SEC_END
 
-    for tuple in wMultiSecList:
-        working_multiSec_list.append(tuple[0])  # A list of lists
-        markersDict[tuple[1]] = MULTISEC_START
-        markersDict[tuple[2]] = MULTISEC_END
+    for tup in wMultiSecList:
+        working_multiSec_list.append(tup[0])  # A list of lists
+        markersDict[tup[1]] = MULTISEC_START
+        markersDict[tup[2]] = MULTISEC_END
 
     # If we're in either TRS_DESC or S_DESC_TR layouts and discovered
     # neither a standalone section nor a multiSec, then rerun the parse
