@@ -88,39 +88,59 @@ IMPLEMENTED_LAYOUT_EXAMPLES = (
 )
 
 # For aliquot parsing.
-QQ_HALVES = ('N', 'S', 'E', 'W')
-QQ_QUARTERS = ('NE', 'NW', 'SE', 'SW')
+_N = 'N'
+_S = 'S'
+_E = 'E'
+_W = 'W'
+_NE = 'NE'
+_NW = 'NW'
+_SE = 'SE'
+_SW = 'SW'
+_ALL = 'ALL'
+
+QQ_HALVES = (_N, _S, _E, _W)
+QQ_QUARTERS = (_NE, _NW, _SE, _SW)
 QQ_SUBDIVIDE_DEFINITIONS = {
-    'ALL': QQ_QUARTERS,
-    'N': ('NE', 'NW'),
-    'S': ('SE', 'SW'),
-    'E': ('NE', 'SE'),
-    'W': ('NW', 'SW'),
+    _ALL: QQ_QUARTERS,
+    _N: (_NE, _NW),
+    _S: (_SE, _SW),
+    _E: (_NE, _SE),
+    _W: (_NW, _SW),
 }
-QQ_NS = ("N", "S")
-QQ_EW = ("E", "W")
+QQ_NS = (_N, _S)
+QQ_EW = (_E, _W)
 QQ_SAME_AXIS = {
-    "N": QQ_NS,
-    "S": QQ_NS,
-    "E": QQ_EW,
-    "W": QQ_EW
+    _N: QQ_NS,
+    _S: QQ_NS,
+    _E: QQ_EW,
+    _W: QQ_EW
 }
+
+# Clean aliquot abbreviations with fraction, for aliquot preprocessing.
+NE_FRAC = 'NE¼'
+NW_FRAC = 'NW¼'
+SE_FRAC = 'SE¼'
+SW_FRAC = 'SW¼'
+N2_FRAC = 'N½'
+S2_FRAC = 'S½'
+E2_FRAC = 'E½'
+W2_FRAC = 'W½'
 
 # Define what should replace matches of each regex that is used in the
 # _scrub_aliquots() function.
 QQ_SCRUBBER_DEFINITIONS = {
-    NE_regex: 'NE¼',
-    NW_regex: 'NW¼',
-    SE_regex: 'SE¼',
-    SW_regex: 'SW¼',
-    N2_regex: 'N½',
-    S2_regex: 'S½',
-    E2_regex: 'E½',
-    W2_regex: 'W½',
-    cleanNE_regex: 'NE¼',
-    cleanNW_regex: 'NW¼',
-    cleanSE_regex: 'SE¼',
-    cleanSW_regex: 'SW¼'
+    NE_regex: NE_FRAC,
+    NW_regex: NW_FRAC,
+    SE_regex: SE_FRAC,
+    SW_regex: SW_FRAC,
+    N2_regex: N2_FRAC,
+    S2_regex: S2_FRAC,
+    E2_regex: E2_FRAC,
+    W2_regex: W2_FRAC,
+    cleanNE_regex: NE_FRAC,
+    cleanNW_regex: NW_FRAC,
+    cleanSE_regex: SE_FRAC,
+    cleanSW_regex: SW_FRAC
 }
 
 CONFIG_ERROR = TypeError(
@@ -133,6 +153,13 @@ DEFAULT_NS_ERROR = ValueError(
 DEFAULT_EW_ERROR = ValueError(
     "default_ew must be either 'e' or 'w'."
 )
+
+
+_ERR_SEC = 'secError'
+_ERR_TWPRGE = 'TRerr'
+
+_E_FLAG_SECERR = 'secError'
+_E_FLAG_TWPRGE_ERR = 'TRerr'
 
 
 class PLSSDesc:
@@ -224,6 +251,9 @@ class PLSSDesc:
     .gen_flags() -- Scour the text for potential flag-raising issues.
     """
 
+    _DEFAULT_COLON = 'default_colon'
+    _SECOND_PASS = 'second_pass'
+
     def __init__(
             self, orig_desc: str, source='', layout=None, config=None,
             init_parse=None, init_parse_qq=None):
@@ -308,7 +338,7 @@ class PLSSDesc:
 
         # Whether we should require a colon between Section ## and tract
         # description (for TRS_DESC and S_DESC_TR layouts):
-        self.require_colon = True
+        self.require_colon = PLSSDesc._DEFAULT_COLON
 
         # Whether to include any divisions of lots
         # (i.e. 'N/2 of Lot 1' -> 'N2 of L1')
@@ -436,7 +466,7 @@ class PLSSDesc:
         But you CANNOT assign, pop, or insert with a `PLSSDesc`
         directly. If any of that functionality is required, work
         directly with the `.parsed_tracts` attribute. Or, get a new
-        `plss.TractList` to work with, thus:
+        `pytrs.TractList` to work with, thus:
         `new_tractlist = some_plssdesc.parse(commit=False)`
         (`TractList` is a subclass of the built-in `list`.)
         """
@@ -495,7 +525,7 @@ class PLSSDesc:
 
     def parse(
             self, text=None, layout=None, clean_up=None, init_parse_qq=None,
-            clean_qq=None, require_colon='default_colon', segment=None,
+            clean_qq=None, require_colon=None, segment=None,
             commit=True, qq_depth_min=None, qq_depth_max=None, qq_depth=None,
             break_halves=None):
         """
@@ -524,10 +554,12 @@ class PLSSDesc:
         :param require_colon: Whether to require a colon between the
         section number and the following description (only has an effect
         on 'TRS_desc' or 'S_desc_TR' layouts).
-        If not specified, it will default to a 'two-pass' method, where
-        first it will require the colon; and if no matching sections are
-        found, it will do a second pass where colons are not required.
-        Setting as `True` or `False` here prevent the two-pass method.
+        If not specified, it will default to whatever was set at init;
+        and unless otherwise specified there, will default to a 'two-
+        pass' method, where first it will require the colon; and if no
+        matching sections are found, it will do a second pass where
+        colons are not required. Setting as `True` or `False` here
+        prevent the two-pass method.
             ex: 'Section 14 NE/4'
                 `require_colon=True` --> no match
                 `require_colon=False` --> match (but beware false
@@ -589,6 +621,9 @@ class PLSSDesc:
             flagText = self.orig_desc
         else:
             flagText = text
+
+        if require_colon is None:
+            require_colon = self.require_colon
 
         # When layout is specified at init, or when calling
         # `.parse(layout=<string>)`, we prevent _parse_segment() from deducing,
@@ -705,9 +740,9 @@ class PLSSDesc:
                     ('trError', TractObj.trs + ':' + TractObj.desc))
                 bigPB.desc_is_flawed = True
             if TractObj.trs[-2:] == 'or':
-                bigPB.e_flags.append('secError')
+                bigPB.e_flags.append(_E_FLAG_SECERR)
                 bigPB.e_flag_lines.append(
-                    ('secError', TractObj.trs + ':' + TractObj.desc))
+                    (_E_FLAG_SECERR, TractObj.trs + ':' + TractObj.desc))
                 bigPB.desc_is_flawed = True
 
         # Check for warning flags (and a couple error flags).
@@ -1294,7 +1329,8 @@ class PLSSDesc:
         Simple printing of the arg-specified attributes for each Tract
         in the .parsed_tracts list.
         """
-        print(self.tracts_to_str(attributes))
+        # This functionality is handled by TractList method.
+        self.parsed_tracts.print_data(attributes)
         return
 
 
@@ -1326,7 +1362,7 @@ class Tract:
             Ex: Sec 1, T154N-R97W -> '154n97w01'
                 Sec 14, T1S-R9E -> '1s9e14'
     NOTE: If there was a flawed parse where Twp/Rge and/or Sec could not
-        be successfully identified, .trs may contain 'TRerr_' and/or
+        be successfully identified, .trs may contain 'TRerr' and/or
         'secError'.
     .twp -- The Twp portion of .trs, a string (ex: '154n')
     .rge -- The Rge portion of .trs, a string (ex: '97w')
@@ -1437,7 +1473,7 @@ class Tract:
         # format), _unpack it into the component parts
         self.twp, self.rge, self.sec = break_trs(trs)
         if self.sec is None:
-            self.sec = 'secError'
+            self.sec = _ERR_SEC
         self.twprge = self.twp + self.rge
 
         # Whether fatal flaws were identified during the parsing of the
@@ -1801,6 +1837,12 @@ class Tract:
         (equivalent to what would be stored in `.lots_qqs`).
         """
 
+        if commit:
+            # Wipe any prior parsed results.
+            self.lots = []
+            self.qqs = []
+            self.lots_qqs = []
+
         # TODO: Generate a list (saved as an attribute) of slice_indexes
         #   of the `pp_desc` for the text that was incorporated into
         #   lots and QQ's vs. not.
@@ -1921,7 +1963,7 @@ class Tract:
         if all_mo is not None:
             if all_mo.group(2) is None:
                 # If we ONLY found "ALL", then we're good.
-                aliqTextBlocks.append('ALL')
+                aliqTextBlocks.append(_ALL)
             # TODO: Make this more robust. As of now will only capture
             #  'ALL' in "Section 14: ALL", but there might be some
             #  disregardable context around "ALL" (e.g., punctuation)
@@ -2307,6 +2349,14 @@ class TractList(list):
 
         print(self.quick_desc(delim=delim, newline=newline))
 
+    def print_data(self, *attributes) -> None:
+        """
+        Simple printing of the arg-specified attributes for each Tract
+        in this TractList.
+        """
+        print(self.tracts_to_str(attributes))
+        return
+
     def list_trs(self, remove_duplicates=False):
         """
         Return a list all the TRS's in this TractList. Optionally remove
@@ -2386,6 +2436,11 @@ class ParseBag:
             # for unpacking text from a lot_regex match into component lots
             self.lots = []
             self.lot_acres = {}
+
+        # This is only ever filled by `_findall_matching_tr()`. It will
+        # contain a list of tuples, being twprge matches and their start
+        # and end positions (indexes) in the string that was searched.
+        self.twprge_position_list = []
 
     def absorb(self, target_pb):
         """
@@ -2811,7 +2866,7 @@ def _findall_matching_tr(text, layout=None) -> ParseBag:
     INTERNAL USE:
 
     Find T&R's that appropriately match the layout. Returns a ParseBag
-    that contains an ad-hoc `.trPosList` attribute, which holds a list
+    with a filled-in `.twprge_position_list` attribute, holding a list
     of tuples, each containing a T&R (as '000n000w' or fewer digits),
     and its start and end position in the string.
     """
@@ -2875,8 +2930,11 @@ def _findall_matching_tr(text, layout=None) -> ParseBag:
         # If we have such an intervening string, then this appears to be
         # desc_STR layout -- ex. 'Section 1 of T154N-R97W'
         interveners = ['in', 'of', ',', 'all of', 'all in', 'within', 'all within']
-        if secFound and text[j:i].strip() in interveners \
-                and layout in [TRS_DESC, S_DESC_TR]:
+        if (
+            secFound
+            and text[j:i].strip().lower() in interveners
+            and layout in [TRS_DESC, S_DESC_TR]
+        ):
             # In TRS_Desc and S_DESC_TR layouts specifically, this is
             # NOT a T&R match for a new Tract.
 
@@ -2903,8 +2961,8 @@ def _findall_matching_tr(text, layout=None) -> ParseBag:
             i = i + len(tr_mo.group())
             continue
 
-    # Ad-hoc attribute (T&R/position list)
-    trParseBag.trPosList = wTRList
+    # Set attribute (T&R/position list)
+    trParseBag.twprge_position_list = wTRList
 
     return trParseBag
 
@@ -2935,9 +2993,9 @@ def _segment_by_tr(text, layout=None, twprge_first=None):
     # Search for all T&R's that match the layout requirements.
     trMatchPB = _findall_matching_tr(text, layout=layout)
 
-    # Pull ad-hoc `.trPosList` attribute from the ParseBag object. Do
-    # not absorb the rest.
-    wTRList = trMatchPB.trPosList
+    # Pull `.twprge_position_list` attribute from the ParseBag object.
+    # Do not absorb the rest.
+    wTRList = trMatchPB.twprge_position_list
 
     if wTRList == []:
         # If no T&R's had been matched, return the text block as single
@@ -2982,7 +3040,8 @@ def _segment_by_tr(text, layout=None, twprge_first=None):
     return trTextBlocks, discardTextBlocks
 
 
-def _findall_matching_sec(text, layout=None, require_colon='default_colon'):
+def _findall_matching_sec(
+        text, layout=None, require_colon=PLSSDesc._DEFAULT_COLON):
     """
     INTERNAL USE:
 
@@ -3015,7 +3074,7 @@ def _findall_matching_sec(text, layout=None, require_colon='default_colon'):
 
     if isinstance(require_colon, bool):
         require_colonBool = require_colon
-    elif require_colon == 'second_pass':
+    elif require_colon == PLSSDesc._SECOND_PASS:
         require_colonBool = False
     else:
         require_colonBool = True
@@ -3050,7 +3109,7 @@ def _findall_matching_sec(text, layout=None, require_colon='default_colon'):
         """
         # sec_regex and multiSec_regex can match unlimited whitespace at
         # the end, so if we don't back up 1 char, we can end up with a
-        # situation where sec_end is at the same position as tr_start,
+        # situation where SEC_END is at the same position as TR_START,
         # which can mess up the parser.
         if sec_mo.group().endswith((' ', '\n', '\t', '\r')):
             return sec_mo.end() - 1
@@ -3076,15 +3135,20 @@ def _findall_matching_sec(text, layout=None, require_colon='default_colon'):
         # 'the NE/4 of Section 4'), because it very likely means its a
         # continuation of the same description.
         enders = (' of', ' said', ' in', ' within')
-        if (layout in [TRS_DESC, S_DESC_TR]) and \
-                text[:sec_mo.start()].rstrip().endswith(enders):
+        if (
+            layout in [TRS_DESC, S_DESC_TR]
+            and text[:sec_mo.start()].rstrip().endswith(enders)
+        ):
             ruledOut = True
 
         # Also for TRS_DESC and S_DESC_TR layouts, we ONLY want to match
         # sections and multi-Sections that are followed by a colon (if
         # requiredColonBool == True):
-        if (require_colonBool) and (layout in [TRS_DESC, S_DESC_TR]) and \
-                not (_sec_ends_with_colon(sec_mo)):
+        if (
+            require_colonBool
+            and layout in [TRS_DESC, S_DESC_TR]
+            and not (_sec_ends_with_colon(sec_mo))
+        ):
             ruledOut = True
 
         if ruledOut:
@@ -3135,19 +3199,19 @@ def _findall_matching_sec(text, layout=None, require_colon='default_colon'):
     # If we're in either TRS_DESC or S_DESC_TR layouts and discovered
     # neither a standalone section nor a multiSec, then rerun
     # _findall_matching_sec() under the same kwargs, except with
-    # require_colon='second_pass' (which sets require_colonBool=False),
-    # to see if we can capture a section after all.
-    # Will return those results instead.
+    # require_colon=PLSSDesc._SECOND_PASS (which sets
+    # require_colonBool=False), to see if we can capture a section after
+    # all.  Will return those results instead.
     do_second_pass = True
     if layout not in [TRS_DESC, S_DESC_TR]:
         do_second_pass = False
     if len(wSecList) > 0 or len(wMultiSecList) > 0:
         do_second_pass = False
-    if require_colon != 'default_colon':
+    if require_colon != PLSSDesc._DEFAULT_COLON:
         do_second_pass = False
     if do_second_pass:
         pass2_PB = _findall_matching_sec(
-            text, layout=layout, require_colon='second_pass')
+            text, layout=layout, require_colon=PLSSDesc._SECOND_PASS)
         if len(pass2_PB.sec_list) > 0 or len(pass2_PB.multiSecList) > 0:
             pass2_PB.w_flags.append('pulled_sec_without_colon')
         return pass2_PB
@@ -3159,7 +3223,7 @@ def _findall_matching_sec(text, layout=None, require_colon='default_colon'):
 
 
 def _parse_segment(
-        text_block, layout=None, clean_up=None, require_colon='default_colon',
+        text_block, layout=None, clean_up=None, require_colon=None,
         handed_down_config=None, init_parse_qq=False, clean_qq=None,
         qq_depth_min=None, qq_depth_max=None, qq_depth=None,
         break_halves=None):
@@ -3260,6 +3324,9 @@ def _parse_segment(
     if layout not in _IMPLEMENTED_LAYOUTS:
         layout = PLSSDesc._deduce_segment_layout(text_block)
 
+    if require_colon is None:
+        require_colon = PLSSDesc._DEFAULT_COLON
+
     segParseBag = ParseBag(parent_type='PLSSDesc')
 
     # If `clean_qq` was specified, convert it to a string, and set it to the
@@ -3298,9 +3365,9 @@ def _parse_segment(
     # Find matching TR's that are appropriate to our layout (should only
     # be one, due to segmentation):
     trPB = _findall_matching_tr(text_block)
-    # Pull the ad-hoc `.trPosList` attribute from the ParseBag object,
+    # Pull `.twprge_position_list` attribute from the ParseBag object,
     # and absorb the rest of the data into segParseBag:
-    wTRList = trPB.trPosList
+    wTRList = trPB.twprge_position_list
     segParseBag.absorb(trPB)
 
     # Find matching Sections and MultiSections that are appropriate to
@@ -3322,46 +3389,59 @@ def _parse_segment(
     working_sec_list = []
     working_multiSec_list = []
 
+    # constants for the different markers we'll use
+    TEXT_START = 'text_start'
+    TEXT_END = 'text_end'
+    TR_START = 'tr_start'
+    TR_END = 'tr_end'
+    SEC_START = 'sec_start'
+    SEC_END = 'sec_end'
+    MULTISEC_START = 'multiSec_start'
+    MULTISEC_END = 'multiSec_end'
+
     # A dict, keyed by index (i.e. start/end point of matched objects
     # within the text) and what was found at that index:
     markersDict = {}
     # This key/val will be overwritten if we found a T&R or Section at
     # the first character
-    markersDict[0] = 'text_start'
+    markersDict[0] = TEXT_START
     # Add the end of the string to the markersDict (may also get overwritten)
-    markersDict[len(text_block)] = 'text_end'
+    markersDict[len(text_block)] = TEXT_END
 
     for tuple in wTRList:
         working_tr_list.append(tuple[0])
-        markersDict[tuple[1]] = 'tr_start'
-        markersDict[tuple[2]] = 'tr_end'
+        markersDict[tuple[1]] = TR_START
+        markersDict[tuple[2]] = TR_END
 
     for tuple in wSecList:
         working_sec_list.append(tuple[0])
-        markersDict[tuple[1]] = 'sec_start'
-        markersDict[tuple[2]] = 'sec_end'
+        markersDict[tuple[1]] = SEC_START
+        markersDict[tuple[2]] = SEC_END
 
     for tuple in wMultiSecList:
         working_multiSec_list.append(tuple[0])  # A list of lists
-        markersDict[tuple[1]] = 'multiSec_start'
-        markersDict[tuple[2]] = 'multiSec_end'
+        markersDict[tuple[1]] = MULTISEC_START
+        markersDict[tuple[2]] = MULTISEC_END
 
     # If we're in either TRS_DESC or S_DESC_TR layouts and discovered
     # neither a standalone section nor a multiSec, then rerun the parse
-    # under the same kwargs, except with require_colon='second_pass' (which
-    # sets require_colonBool=False), to see if we can capture a section after
-    # all. Will return those results instead:
+    # under the same kwargs, except with `require_colon=PLSSDesc._SECOND_PASS`
+    # (which sets require_colonBool=False), to see if we can capture a
+    # section after all. Will return those results instead:
     do_second_pass = True
     if layout not in [TRS_DESC, S_DESC_TR]:
         do_second_pass = False
     if len(working_sec_list) > 0 or len(working_multiSec_list) > 0:
         do_second_pass = False
-    if require_colon != 'default_colon':
+    if require_colon != PLSSDesc._DEFAULT_COLON:
         do_second_pass = False
     if do_second_pass:
         replacementMidPB = _parse_segment(
-            text_block=text_block, layout=layout, require_colon='second_pass',
-            handed_down_config=handed_down_config, init_parse_qq=init_parse_qq)
+            text_block=text_block,
+            layout=layout,
+            require_colon=PLSSDesc._SECOND_PASS,
+            handed_down_config=handed_down_config,
+            init_parse_qq=init_parse_qq)
         TRS_found = replacementMidPB.parsed_tracts[0].trs is not None
         if TRS_found:
             # If THIS time we successfully found a TRS, flag that we ran
@@ -3376,7 +3456,7 @@ def _parse_segment(
     # Get a list of all of the keys, then sort them, so that we're pulling
     # first-to-last (vis-a-vis the original text of this segment):
     mrkrsLst = list(markersDict.keys())
-    mrkrsLst.sort()  # We sort the keys, so that we're pulling first-to-last.
+    mrkrsLst.sort()
 
     def new_tract(
             text_for_new_desc, sec='default_sec', tr='default_tr') -> Tract:
@@ -3409,7 +3489,7 @@ def _parse_segment(
         # initial TR is the only difference.
 
         # Defaults to a T&R error.
-        working_tr = 'TRerr_'
+        working_tr = _ERR_TWPRGE
 
         # For TR_DESC_S, will pop the working_tr when we encounter the
         # first TR. However, for desc_STR, need to pre-set our working_tr
@@ -3419,11 +3499,11 @@ def _parse_segment(
 
         # Description block comes before section in this layout, so we
         # pre-set the working_sec and working_multiSec (if any are available):
-        working_sec = 'secError'
+        working_sec = _ERR_SEC
         if len(working_sec_list) > 0:
             working_sec = working_sec_list.pop(0)
 
-        working_multiSec = ['secError']
+        working_multiSec = [_ERR_SEC]
         if len(working_multiSec_list) > 0:
             working_multiSec = working_multiSec_list.pop(0)
 
@@ -3466,22 +3546,22 @@ def _parse_segment(
                 lastMarkerPos = markerPos
                 lastMarkerType = markerType
 
-            # We don't need to handle 'text_start' in this layout.
+            # We don't need to handle TEXT_START in this layout.
 
-            if markerType == 'tr_end':
+            if markerType == TR_END:
                 # This is included for handling secErrors in this layout.
                 # Note that it does not force a continue.
                 secErrorWriteBackToPos = markerPos
 
-            if markerType == 'tr_start':  # Pull the next T&R in our list
+            if markerType == TR_START:  # Pull the next T&R in our list
                 if len(working_tr_list) == 0:
                     # Will cause a TR error if another TRS+Desc is created:
-                    working_tr = 'TRerr_'
+                    working_tr = _ERR_TWPRGE
                 else:
                     working_tr = working_tr_list.pop(0)
                 continue
 
-            if nextMarkerType == 'sec_start':
+            if nextMarkerType == SEC_START:
                 # NOTE that this algorithm is looking for the start of a
                 # section at the NEXT marker!
 
@@ -3497,7 +3577,7 @@ def _parse_segment(
                 else:
                     secErrorWriteBackToPos = mrkrsLst[i + 1]
 
-            elif nextMarkerType == 'multiSec_start':
+            elif nextMarkerType == MULTISEC_START:
                 # NOTE that this algorithm is looking for the start of a
                 # multi-section at the NEXT marker!
 
@@ -3517,63 +3597,71 @@ def _parse_segment(
                 else:
                     secErrorWriteBackToPos = mrkrsLst[i + 1]
 
-            elif nextMarkerType == 'tr_start' \
-                    and markerType not in ['sec_end', 'multiSec_end'] \
-                    and nextMarkerPos - secErrorWriteBackToPos > 5:
+            elif (
+                nextMarkerType == TR_START
+                and markerType not in [SEC_END, MULTISEC_END]
+                and nextMarkerPos - secErrorWriteBackToPos > 5
+            ):
                 # If (1) we found a T&R next, and (2) we aren't CURRENTLY
-                # at a sec_end or multiSec_end, and (3) it's been more than
+                # at a SEC_END or MULTISEC_END, and (3) it's been more than
                 # a few characters since we last created a new Tract, then
                 # we're apparently dealing with a secError, and we need to
                 # make a flawed TractObj with  that secError.
                 TractObj = new_tract(
                     clean_as_needed(
                         text_block[secErrorWriteBackToPos:mrkrsLst[i + 1]].strip()),
-                    'secError')
+                        _ERR_SEC)
                 segParseBag.parsed_tracts.append(TractObj)
 
-            elif markerType == 'sec_start':
+            elif markerType == SEC_START:
                 if len(working_sec_list) == 0:
                     # Will cause a section error if another TRS+Desc is created
-                    working_sec = 'secError'
+                    working_sec = _ERR_SEC
                 else:
                     working_sec = working_sec_list.pop(0)
 
-            elif markerType == 'multiSec_start':
+            elif markerType == MULTISEC_START:
                 if len(working_multiSec_list) == 0:
                     # Will cause a section error if another TRS+Desc is created
-                    working_multiSec = ['secError']
+                    working_multiSec = [_ERR_SEC]
                 else:
                     working_multiSec = working_multiSec_list.pop(0)
 
-            elif markerType == 'sec_end':
-                if nextMarkerType not in ['sec_start', 'tr_start', 'multiSec_start'] \
-                        and markerPos != len(text_block):
+            elif markerType == SEC_END:
+                if (
+                    nextMarkerType not in [SEC_START, TR_START, MULTISEC_START]
+                    and markerPos != len(text_block)
+                ):
                     # Whenever we come across a Section end, the next thing must
-                    # be either a sec_start, multiSec_start, or tr_start.
+                    # be either a SEC_START, MULTISEC_START, or TR_START.
                     # Hence the warning flag, if that's not true:
                     unusedText = text_block[mrkrsLst[i]:mrkrsLst[i + 1]].strip()
                     segParseBag.w_flags.append('Unused_desc_<%s>' % unusedText)
 
-            elif markerType == 'text_end':
+            elif markerType == TEXT_END:
                 break
 
             # Capture unused text at the end of the string.
-            if layout == TR_DESC_S \
-                    and markerType in ['sec_end', 'multiSec_end'] \
-                    and not finalRun \
-                    and nextMarkerType not in ['sec_start', 'tr_start', 'multiSec_start']:
+            if (
+                layout == TR_DESC_S
+                and markerType in [SEC_END, MULTISEC_END]
+                and not finalRun
+                and nextMarkerType not in [SEC_START, TR_START, MULTISEC_START]
+            ):
                 # For TR_DESC_S, whenever we come across the end of a Section or
-                # multi-Section, the next thing must be either a sec_start,
-                # multiSec_start, or tr_start. Hence the warning flag, if that's
-                # not true:
+                # multi-Section, the next thing must be either a SEC_START,
+                # MULTISEC_START, or TR_START. Hence the warning flag, if that's
+                # not true.
                 unusedText = text_block[mrkrsLst[i]:mrkrsLst[i + 1]].strip()
                 flag_unused(unusedText, text_block[lastMarkerPos:nextMarkerPos])
 
             # Capture unused text at the end of a section/multiSec (if appropriate).
-            if layout == DESC_STR \
-                    and markerType in ['sec_end', 'multiSec_end'] \
-                    and not finalRun \
-                    and nextMarkerType not in ['sec_start', 'multiSec_start']:
+            if (
+                layout == DESC_STR
+                and markerType in [SEC_END, MULTISEC_END]
+                and not finalRun
+                and nextMarkerType not in [SEC_START, MULTISEC_START]
+            ):
                 unusedText = text_block[markerPos:nextMarkerPos]
                 if len(_cleanup_desc(unusedText)) > 3:
                     flag_unused(
@@ -3586,14 +3674,14 @@ def _parse_segment(
 
         # Defaults to a T&R error if no T&R's were identified, but
         # pre-set our T&R (if one is available):
-        working_tr = 'TRerr_'
+        working_tr = _ERR_TWPRGE
         if len(working_tr_list) > 0:
             working_tr = working_tr_list.pop(0)
 
-        # Default to a 'secError' for this layout. Will change when we
+        # Default to a _ERR_SEC for this layout. Will change when we
         # meet the first sec and multiSec respectively.
-        working_sec = 'secError'
-        working_multiSec = ['secError']
+        working_sec = _ERR_SEC
+        working_multiSec = [_ERR_SEC]
 
         finalRun = False
 
@@ -3630,24 +3718,24 @@ def _parse_segment(
                 lastMarkerPos = markerPos
                 lastMarkerType = markersDict[markerPos]
 
-            # We don't need to handle 'text_start' in this layout.
+            # We don't need to handle TEXT_START in this layout.
 
-            if markerType == 'sec_start':
+            if markerType == SEC_START:
                 if len(working_sec_list) == 0:
                     # Will cause a section error if another TRS+Desc is created
-                    working_sec = 'secError'
+                    working_sec = _ERR_SEC
                 else:
                     working_sec = working_sec_list.pop(0)
                 #continue
 
-            elif markerType == 'multiSec_start':
+            elif markerType == MULTISEC_START:
                 if len(working_multiSec_list) == 0:
                     # Will cause a section error if another TRS+Desc is created
-                    working_multiSec = ['secError']
+                    working_multiSec = [_ERR_SEC]
                 else:
                     working_multiSec = working_multiSec_list.pop(0)
 
-            elif markerType == 'sec_end':
+            elif markerType == SEC_END:
                 # We found the start of a new desc block (betw Section's end
                 # and whatever's next).
 
@@ -3659,7 +3747,7 @@ def _parse_segment(
                         text_block[mrkrsLst[i]:mrkrsLst[i + 1]].strip()))
                 segParseBag.parsed_tracts.append(TractObj)
 
-            elif markerType == 'multiSec_end':
+            elif markerType == MULTISEC_END:
                 # We found start of a new desc block (betw multiSec end
                 # and whatever's next).
 
@@ -3675,15 +3763,15 @@ def _parse_segment(
                         sec)
                     segParseBag.parsed_tracts.append(TractObj)
 
-            elif markerType == 'tr_start':  # Pull the next T&R in our list
+            elif markerType == TR_START:  # Pull the next T&R in our list
                 if len(working_tr_list) == 0:
                     # Will cause a TR error if another TRS+Desc is created:
-                    working_tr = 'TRerr_'
+                    working_tr = _ERR_TWPRGE
                 else:
                     working_tr = working_tr_list.pop(0)
 
-            elif markerType == 'tr_end':
-                # The only effect 'tr_end' has on this layout is checking
+            elif markerType == TR_END:
+                # The only effect TR_END has on this layout is checking
                 # for unused text.
                 unusedText = text_block[markerPos:nextMarkerPos]
                 if len(unusedText.strip()) > 2:
@@ -3700,17 +3788,17 @@ def _parse_segment(
 
         if len(wTRList) == 0:
             # Defaults to a T&R error if no T&R's were identified
-            working_tr = 'TRerr_'
+            working_tr = _ERR_TWPRGE
         else:
             working_tr = wTRList[0][0]
 
         if len(wSecList) == 0:
-            working_sec = 'secError'
+            working_sec = _ERR_SEC
         else:
             working_sec = wSecList[0][0]
 
         # If no solo section was found, check for a multiSec we can pull from
-        if len(wMultiSecList) != 0 and working_sec == 'secError':
+        if len(wMultiSecList) != 0 and working_sec == _ERR_SEC:
             # Just pull the first section in the first multiSec.
             working_sec = wMultiSecList[0][0][0]
 
@@ -3722,9 +3810,9 @@ def _parse_segment(
     if layout == TRS_DESC:
 
         # Defaults to a T&R error and Sec errors for this layout.
-        working_tr = 'TRerr_'
-        working_sec = 'secError'
-        working_multiSec = ['secError']
+        working_tr = _ERR_TWPRGE
+        working_sec = _ERR_SEC
+        working_multiSec = [_ERR_SEC]
 
         finalRun = False
 
@@ -3761,42 +3849,42 @@ def _parse_segment(
                 lastMarkerPos = markerPos
                 lastMarkerType = markerType
 
-            if markerType == 'text_start':
-                # 'text_start' does not have implications for parsing
+            if markerType == TEXT_START:
+                # TEXT_START does not have implications for parsing
                 # TRS_DESC layout. Move on to next.
                 pass
 
-            elif markerType == 'tr_start':
+            elif markerType == TR_START:
                 # Pull the next T&R in our list
-                if lastMarkerType == 'tr_end':
+                if lastMarkerType == TR_END:
                     segParseBag.e_flags.append('Unused_TR<%s>' % working_tr)
                 working_tr = working_tr_list.pop(0)
 
-            elif markerType == 'tr_end':
-                # The only effect 'tr_end' has on this layout is checking
+            elif markerType == TR_END:
+                # The only effect TR_END has on this layout is checking
                 # for unused text.
                 unusedText = text_block[markerPos:nextMarkerPos]
                 if len(unusedText.strip()) > 2:
                     flag_unused(
                         unusedText, text_block[lastMarkerPos:nextMarkerPos])
 
-            elif markerType == 'sec_start':
+            elif markerType == SEC_START:
                 if len(working_sec_list) == 0:
                     # If another TRS+Desc pair is created after this point,
                     # it will result in a Section error:
-                    working_sec = 'secError'
+                    working_sec = _ERR_SEC
                 else:
                     working_sec = working_sec_list.pop(0)
 
-            elif markerType == 'multiSec_start':
+            elif markerType == MULTISEC_START:
                 if len(working_multiSec_list) == 0:
                     # If another GROUP of TRS+Desc pairs is created
                     # after this point, it will result in a Section error.
-                    working_multiSec = ['secError']
+                    working_multiSec = [_ERR_SEC]
                 else:
                     working_multiSec = working_multiSec_list.pop(0)
 
-            elif markerType == 'sec_end':
+            elif markerType == SEC_END:
                 # Create a new TractObj, compiling our current working_tr
                 # and working_sec into a TRS, with the desc being the text
                 # between this marker and the next.
@@ -3804,7 +3892,7 @@ def _parse_segment(
                     clean_as_needed(text_block[markerPos:nextMarkerPos].strip()))
                 segParseBag.parsed_tracts.append(TractObj)
 
-            elif markerType == 'multiSec_end':
+            elif markerType == MULTISEC_END:
                 # Create a series of new TractObjs, compiling our current
                 # working_tr and elements from working_multiSec into a series
                 # of TRS, with the desc for EACH being the text between this
@@ -3814,7 +3902,7 @@ def _parse_segment(
                         clean_as_needed(text_block[markerPos:nextMarkerPos].strip()), sec)
                     segParseBag.parsed_tracts.append(TractObj)
 
-            elif markerType == 'text_end':
+            elif markerType == TEXT_END:
                 break
 
     if len(segParseBag.parsed_tracts) == 0:
@@ -4417,29 +4505,10 @@ def _unpack_aliquots(
     # Check for any consecutive halves that are on opposite axes.
     # E.g., the N/2E/2 should be converted to the NE/4, but the W/2E/2
     # should be left alone.
+    # Also check for any quarters that occur before halves, and convert
+    # them to halves before quarters. E.g., "SE/4W/2" -> "E/2SW/4"
 
-    component_list_clean = []
-    i = 0
-    while i < len(component_list):
-        aq1 = component_list[i]
-        if i + 1 == len(component_list):
-            # Last item.
-            component_list_clean.append(aq1)
-            break
-        aq2 = component_list[i + 1]
-        if aq1 in QQ_HALVES and aq2 in QQ_HALVES and aq2 not in QQ_SAME_AXIS[aq1]:
-            # e.g., the current component is 'N' and the next component is 'E';
-            # those do not exist on the same axis, so we combine them into
-            # the 'NE'. (And make sure the N/S direction goes before E/W.)
-            new_quarter = f"{aq2}{aq1}" if aq1 in "EW" else f"{aq1}{aq2}"
-            component_list_clean.append(new_quarter)
-            # Skip over the next component, because we already handled it during
-            # this iteration.
-            i += 2
-        else:
-            component_list_clean.append(aq1)
-            i += 1
-    component_list = component_list_clean
+    component_list = _standardize_aliquot_components(component_list)
 
     # ------------------------------------------------------------------
     # Convert the components into aliquot strings
@@ -4481,6 +4550,118 @@ def _unpack_aliquots(
 
     # Convert the 1-depth nested list into the final QQ list and return.
     return _rebuild_aliquots(subdivided_component_list)
+
+
+def _pass_back_halves(aliquot_components: list) -> list:
+    """
+    INTERNAL USE:
+    Quarters that precede halves in an aliquot block are nonstandard
+    but technically accurate. This function adjusts them to the
+    equivalent description where the half occurs before the quarter.
+
+    For example, ``'NE/4N/2'`` (passed here as ``['N', 'NE']``) is
+    better described as the ``'N/2NE/4'``. Converted here to
+    ``['NE', 'N']``.
+
+    Similarly, the ``SE/4W/2'`` (passed here as ``['W', 'SE']``) is
+    better described as the ``'E/2SW/4'``. Converted here to
+    ``['SW', 'E']``.
+
+    NOTE: This function does a single pass only!
+
+    :param aliquot_components: A list of aliquot components without any
+    fractions or numbers.
+    :return: The fixed list of aliquot components.
+    """
+    aliquot_components.reverse()
+    i = 0
+    while i < len(aliquot_components) - 1:
+        aq1 = aliquot_components[i]
+        aq2 = aliquot_components[i + 1]
+
+        # Looking for halves before quarters.
+        if not (aq2 in QQ_HALVES and aq1 in QQ_QUARTERS):
+            # This is OK.
+            i += 1
+            continue
+
+        # Break the 'NE' into 'N' and 'E'.
+        char1_ns, char2_ew = [*aq1]
+
+        if aq2 in QQ_NS:
+            rebuilt_aq2 = f"{aq2}{char2_ew}"
+            rebuilt_aq1 = char1_ns
+        else:
+            rebuilt_aq2 = f"{char1_ns}{aq2}"
+            rebuilt_aq1 = char2_ew
+        # Replace aq1 and aq2 with the rebuilt versions.
+        aliquot_components[i] = rebuilt_aq1
+        aliquot_components[i + 1] = rebuilt_aq2
+        i += 1
+
+    aliquot_components.reverse()
+    return aliquot_components
+
+
+def _combine_consecutive_halves(aliquot_components):
+    """
+    INTERNAL USE:
+    Check for any consecutive halves that are on opposite axes.
+    E.g., the N/2E/2 should be converted to the NE/4, but the W/2E/2
+    should be left alone.
+
+    NOTE: This function does a single pass only!
+
+    :param aliquot_components: A list of aliquot components without any
+    fractions or numbers.
+    :return: The fixed list of aliquot components.
+    """
+
+    aliquot_components_clean = []
+    i = 0
+    while i < len(aliquot_components):
+        aq1 = aliquot_components[i]
+        if i + 1 == len(aliquot_components):
+            # Last item.
+            aliquot_components_clean.append(aq1)
+            break
+        aq2 = aliquot_components[i + 1]
+        if aq1 in QQ_HALVES and aq2 in QQ_HALVES and aq2 not in QQ_SAME_AXIS[aq1]:
+            # e.g., the current component is 'N' and the next component is 'E';
+            # those do not exist on the same axis, so we combine them into
+            # the 'NE'. (And make sure the N/S direction goes before E/W.)
+            new_quarter = f"{aq2}{aq1}" if aq1 in "EW" else f"{aq1}{aq2}"
+            aliquot_components_clean.append(new_quarter)
+            # Skip over the next component, because we already handled it during
+            # this iteration.
+            i += 2
+        else:
+            aliquot_components_clean.append(aq1)
+            i += 1
+    aliquot_components = aliquot_components_clean
+    return aliquot_components
+
+
+def _standardize_aliquot_components(aliquot_components: list) -> list:
+    """
+    INTERNAL USE:
+    Iron out any non-standard aliquot descriptions, such as 'cross-axes'
+    halves (e.g., "W/2N/2" -> "NW/4") or quarters that occur before
+    halves (e.g., "SE/4W/2" -> "W/2SE/4").
+
+    :param aliquot_components: A list of aliquot components (already
+    broken down by ``_unpack_aliquots()``).
+    :return: The corrected list of aliquot components.
+    """
+    while True:
+        # Do at least one pass, and then as many more as are needed
+        # until the output matches the input.
+        check_orig = aliquot_components.copy()
+        aliquot_components = _pass_back_halves(aliquot_components)
+        aliquot_components = _combine_consecutive_halves(aliquot_components)
+        if aliquot_components == check_orig:
+            break
+    return aliquot_components
 
 
 def _rebuild_aliquots(nested_aliquot_list: list):
@@ -4768,10 +4949,10 @@ def break_trs(trs: str) -> tuple:
         ex:  '154n97w14' -> ('154n', '97w', '14')
         ex:  '154n97w' -> ('154n', '97w', None)
         ex:  '154n97wsecError' -> ('154n', '97w', 'secError')
-        ex:  'TRerr_14' -> ('TRerr', 'TRerr', '14')
+        ex:  'TRerr14' -> ('TRerr', 'TRerr', '14')
         ex:  'asdf' -> ('TRerr', 'TRerr', 'secError')"""
 
-    DEFAULT_ERRORS = ('TRerr', 'TRerr', 'secError',)
+    DEFAULT_ERRORS = (_ERR_TWPRGE, _ERR_TWPRGE, _ERR_SEC)
 
     mo = TRS_unpacker_regex.search(trs)
     if mo is None:
