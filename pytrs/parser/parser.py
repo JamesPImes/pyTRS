@@ -251,6 +251,9 @@ class PLSSDesc:
     .gen_flags() -- Scour the text for potential flag-raising issues.
     """
 
+    MASTER_DEFAULT_NS = 'n'
+    MASTER_DEFAULT_EW = 'w'
+
     _DEFAULT_COLON = 'default_colon'
     _SECOND_PASS = 'second_pass'
 
@@ -366,11 +369,11 @@ class PLSSDesc:
 
         # If `default_ns` has not yet been specified, default to 'n'
         if self.default_ns is None:
-            self.default_ns = 'n'
+            self.default_ns = PLSSDesc.MASTER_DEFAULT_NS
 
         # If `default_ew` has not yet been specified, default to 'w'
         if self.default_ew is None:
-            self.default_ew = 'w'
+            self.default_ew = PLSSDesc.MASTER_DEFAULT_EW
 
         # Track fatal flaws in the parsing of this PLSS description
         self.desc_is_flawed = False
@@ -1555,11 +1558,11 @@ class Tract:
 
         # If `default_ns` has not yet been specified, default to 'n' :
         if self.default_ns is None:
-            self.default_ns = 'n'
+            self.default_ns = PLSSDesc.MASTER_DEFAULT_NS
 
         # If `default_ew` has not yet been specified, default to 'w' :
         if self.default_ew is None:
-            self.default_ew = 'w'
+            self.default_ew = PLSSDesc.MASTER_DEFAULT_EW
 
         # If kwarg-specified init_parse_qq, that will override config input
         if isinstance(init_parse_qq, bool):
@@ -1631,9 +1634,9 @@ class Tract:
         # If still not specified (i.e. neither set in kwarg, nor in config),
         # default to 'n' and 'w', respectively.
         if default_ns is None:
-            default_ns = 'n'
+            default_ns = PLSSDesc.MASTER_DEFAULT_NS
         if default_ew is None:
-            default_ew = 'w'
+            default_ew = PLSSDesc.MASTER_DEFAULT_EW
         # Ensure legal N/S and E/W values.
         if default_ns.lower() not in ['n', 'north', 's', 'south']:
             raise DEFAULT_NS_ERROR
