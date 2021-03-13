@@ -5352,10 +5352,24 @@ __all__ = [
 
 
 class PLSSParser:
+
+    # constants for the different markers we'll use
+    TEXT_START = 'text_start'
+    TEXT_END = 'text_end'
+    TR_START = 'tr_start'
+    TR_END = 'tr_end'
+    SEC_START = 'sec_start'
+    SEC_END = 'sec_end'
+    MULTISEC_START = 'multiSec_start'
+    MULTISEC_END = 'multiSec_end'
+
     def __init__(
             self,
             text,
             layout,
+            default_ns,
+            default_ew,
+            ocr_scrub,
             clean_up,
             init_parse_qq,
             clean_qq,
@@ -5365,12 +5379,15 @@ class PLSSParser:
             qq_depth_max=None,
             qq_depth=None,
             break_halves=False,
-            orig_text=None,
             handed_down_config=None,
             parent: PLSSDesc = None
     ):
         # Initial variables / control the parse.
-        self.text = text
+        self.orig_text = text
+        self.preprocessor = PLSSPreprocessor(
+            text, default_ns, default_ew, ocr_scrub)
+        self.text = self.preprocessor.text
+        # TODO: Unpack ``preprocessor.fixed_twprges`` into w_flags
         self.layout = layout
         self.clean_up = clean_up
         self.init_parse_qq = init_parse_qq
@@ -5381,9 +5398,6 @@ class PLSSParser:
         self.qq_depth_max = qq_depth_max
         self.qq_depth = qq_depth
         self.break_halves = break_halves
-        if not orig_text:
-            orig_text = text
-        self.orig_text = orig_text
         # For handing down to generated Tract objects
         self.handed_down_config = handed_down_config
 
@@ -5401,6 +5415,21 @@ class PLSSParser:
             self.w_flag_lines = parent.w_flag_lines.copy()
             self.e_flag_lines = parent.e_flag_lines.copy()
 
+        self.parse_cache = {}
+        self.reset_cache()
+
+    def reset_cache(self):
+        self.parse_cache = {
+            "text_block": "",
+            "markers_list": [],
+            "markers_dict": {},
+            "twprge_list": [],
+            "sec_list": [],
+            "multisec_list": [],
+            "new_tract_components": [],
+            "unused_text": [],
+            "unused_with_context": []
+        }
 
     def parse(self):
         """
@@ -5506,7 +5535,7 @@ class PLSSParser:
             raise ValueError(f"Non-implemented layout '{layout}'")
 
         # Config object for passing down to Tract objects.
-        config = self.config
+        config = self.handed_down_config
 
         if layout == COPY_ALL:
             # If a *segment* (which will be divided up shortly) finds itself in
@@ -5530,48 +5559,48 @@ class PLSSParser:
         bigPB = ParseBag(parent_type='PLSSDesc')
 
         if len(text) == 0 or not isinstance(text, str):
-            bigPB.e_flags.append('noText')
-            bigPB.e_flag_lines.append(
+            self.e_flags.append('noText')
+            self.e_flag_lines.append(
                 ('noText', '<No text was fed into the program.>'))
-            return bigPB
+            return self
 
-        if not isinstance(clean_up, bool):
-            if layout in [TRS_DESC, DESC_STR, S_DESC_TR, TR_DESC_S]:
-                # Default `clean_up` to True only for these layouts
-                clean_up = True
-            else:
-                clean_up = False
+        if (clean_up is None
+                and layout in [TRS_DESC, DESC_STR, S_DESC_TR, TR_DESC_S]):
+            # Default `clean_up` to True only for these layouts.
+            clean_up = True
+        else:
+            clean_up = False
 
         # ----------------------------------------
         # If doing a segment parse, break it up into segments now
         if segment:
             # Segment text into blocks, based on T&Rs that match our
             # layout requirements
-            trTextBlocks, discard_trTextBlocks = _segment_by_tr(
+            twprge_txt_blox, discard_txt_blox = _segment_by_tr(
                 text, layout=layout, twprge_first=None)
 
             # Append any discard text to the w_flags
-            for textBlock in discard_trTextBlocks:
-                bigPB.w_flags.append(f"Unused_desc_<{textBlock}>")
+            for txt_block in discard_txt_blox:
+                bigPB.w_flags.append(f"Unused_desc_<{txt_block}>")
                 bigPB.w_flag_lines.append(
-                    (f"Unused_desc_<{textBlock}>", textBlock))
+                    (f"Unused_desc_<{txt_block}>", txt_block))
 
         else:
             # If not segmented parse, pack entire text into list, with
             # a leading empty str (to mirror the output of the
             # _segment_by_tr() function)
-            trTextBlocks = [('', text)]
+            twprge_txt_blox = [('', text)]
 
         # ----------------------------------------
         # Parse each segment into a separate ParseBag obj, then absorb
         # that PB into the big PB each time:
-        for textBlock in trTextBlocks:
+        for txt_block in twprge_txt_blox:
             use_layout = layout
             if segment and layout != COPY_ALL:
                 # Let the segment parser deduce layout for each text_block.
                 use_layout = None
             midParseBag = _parse_segment(
-                textBlock[1], clean_up=clean_up, require_colon=require_colon,
+                txt_block[1], clean_up=clean_up, require_colon=require_colon,
                 layout=use_layout, handed_down_config=config,
                 init_parse_qq=init_parse_qq, clean_qq=clean_qq,
                 qq_depth_min=qq_depth_min, qq_depth_max=qq_depth_max,
@@ -5713,6 +5742,678 @@ class PLSSParser:
 
         return layout_guess
 
+    def _parse_segment(
+            self,
+            text_block, layout=None, clean_up=None, require_colon=None,
+            handed_down_config=None, init_parse_qq=False, clean_qq=None,
+            qq_depth_min=None, qq_depth_max=None, qq_depth=None,
+            break_halves=None):
+        """
+        INTERNAL USE:
+
+        Parse a segment of text into pytrs.Tract objects. Returns a
+        pytrs.ParseBag object.
+
+        :param text_block: The text to be parsed.
+        :param layout: The layout to be assumed. If not specified,
+        will be deduced.
+        :param clean_up: Whether to clean up common 'artefacts' from
+        parsing. If not specified, defaults to False for parsing the
+        'copy_all' layout, and `True` for all others.
+        :param init_parse_qq: Whether to parse each resulting Tract object
+        into lots and QQs when initialized. Defaults to False.
+        :param clean_qq: Whether to expect only clean lots and QQ's (i.e.
+        no metes-and-bounds, exceptions, complicated descriptions,
+        etc.). Defaults to False.
+        :param require_colon: Whether to require a colon between the
+        section number and the following description (only has an effect
+        on 'TRS_desc' or 'S_desc_TR' layouts).
+        If not specified, it will default to a 'two-pass' method, where
+        first it will require the colon; and if no matching sections are
+        found, it will do a second pass where colons are not required.
+        Setting as `True` or `False` here prevent the two-pass method.
+            ex: 'Section 14 NE/4'
+                `require_colon=True` --> no match
+                `require_colon=False` --> match (but beware false
+                    positives)
+                <not specified> --> no match on first pass; if no other
+                            sections are identified, will be matched on
+                            second pass.
+        :param handed_down_config: A Config object to be passed to any Tract
+        object that is created, so that they are configured identically to
+        a parent PLSSDesc object (if any). Defaults to None.
+        :param qq_depth_min: (Optional, and only relevant if parsing
+        Tracts into lots and QQs.) An int, specifying the minimum depth
+        of the parse. If not set here, will default to settings from
+        init (if any), which in turn default to 2, i.e. to
+        quarter-quarters (e.g., 'N/2NE/4' -> ['NENE', 'NENE']).
+        Setting to 3 would return 10-acre subdivisions (i.e. dividing
+        the 'NENE' into ['NENENE', 'NWNENE', 'SENENE', 'SWNENE']), and
+        so forth.
+        WARNING: Higher than a few levels of depth will result in very
+        slow performance.
+        :param qq_depth_max: (Optional, and only relevant if parsing
+        Tracts into lots and QQs.) An int, specifying the maximum depth
+        of the parse. If set as 2, any subdivision smaller than
+        quarter-quarter (e.g., 'NENE') would be discarded -- so, for
+        example, the 'N/2NE/4NE/4' would simply become the 'NENE'. Must
+        be greater than or equal to `qq_depth_min`. (Defaults to None --
+        i.e. no maximum. Can also be configured at init.)
+        :param qq_depth: (Optional, and only relevant if parsing Tracts
+        into lots and QQs.) An int, specifying both the minimum and
+        maximum depth of the parse. If specified, will override both
+        `qq_depth_min` and `qq_depth_max`. (Defaults to None -- i.e. use
+        qq_depth_min and optionally qq_depth_max; and can optionally be
+        configured at init.)
+        :param break_halves: (Optional, and only relevant if parsing
+        Tracts into lots and QQs.) Whether to break halves into
+        quarters, even if we're beyond the qq_depth_min. (False by
+        default, but can be configured at init.)
+        :return: a pytrs.ParseBag object with the parsed data.
+        """
+
+        ####################################################################
+        # General explanation of how this function works:
+        # 1) Lock down parameters for parse via kwargs, etc.
+        # 2) If the layout was not appropriately specified, deduce it with
+        #       `PLSSDesc.deduceSegment()`
+        # 3) Based on the layout, pull each of the T&R's that match our
+        #       layout (for segmented parse, /should/ only be one), with
+        #       `_findall_matching_tr()` function.
+        # 4) Based on the layout, pull each of the Sections and
+        #       Multi-Sections that match our layout with
+        #       `_findall_matching_sec()` function.
+        # 5) Combine all of the positions of starts/ends of T&R's, Sections,
+        #       and Multisections into a single dict.
+        # 6) Based on layout, apply the appropriate algorithm for breaking
+        #       down the text. Each algorithm decides where to break the
+        #       text apart based on section location, T&R location, etc.
+        #       (e.g., by definition, TR_DESC_S and DESC_STR both pull
+        #       the description block from BEFORE an identified section;
+        #       whereas S_DESC_TR and TRS_DESC both pull description
+        #       block /after/ the section).
+        # 6a) For COPY_ALL specifically, the entire text_block will be
+        #       copied as the `.desc` attribute of a Tract object.
+        # 7) If no Tract was created by the end of the parse (e.g., no
+        #       matching T&R found, or no section/multiSec found), then it
+        #       will rerun this function using COPY_ALL layout, which will
+        #       result in an error flag, but will capture the text as a
+        #       Tract. In that case, either the parsing algorithm can't
+        #       handle an apparent edge case, or the input is flawed.
+        ####################################################################
+
+        if layout not in _IMPLEMENTED_LAYOUTS:
+            layout = PLSSDesc._deduce_segment_layout(text_block)
+
+        if require_colon is None:
+            require_colon = PLSSDesc._DEFAULT_COLON
+
+        segParseBag = ParseBag(parent_type='PLSSDesc')
+
+        # If `clean_qq` was specified, convert it to a string, and set it to the
+        # `handed_down_config`.
+        handed_down_config = Config(handed_down_config)
+        if isinstance(clean_qq, bool):
+            handed_down_config._set_str_to_values(f"clean_qq.{clean_qq}")
+        if break_halves is not None:
+            handed_down_config._set_str_to_values(
+                f"break_halves.{break_halves}")
+        if qq_depth_min is not None:
+            handed_down_config._set_str_to_values(f"qq_depth_min.{qq_depth_min}")
+        if qq_depth_max is not None:
+            handed_down_config._set_str_to_values(f"qq_depth_max.{qq_depth_max}")
+        if qq_depth is not None:
+            handed_down_config._set_str_to_values(f"qq_depth.{qq_depth}")
+
+        # We want to handle init_parse_qq all at once in this PLSSParser,
+        # so mandate that it is False for now.
+        handed_down_config.init_parse_qq = False
+
+        if not isinstance(clean_up, bool):
+            # if clean_up has not been specified as a bool, then use these defaults:
+            if layout in [TRS_DESC, DESC_STR, S_DESC_TR, TR_DESC_S]:
+                clean_up = True
+            else:
+                clean_up = False
+
+        def clean_as_needed(candidate_text):
+            """
+            Will return either `candidate_text` (a string for the .desc
+            attribute of a `Tract` object that is about to be created) or the
+            cleaned-up version of it, depending on the bool `clean_up`.
+            """
+            if clean_up:
+                return _cleanup_desc(candidate_text)
+            else:
+                return candidate_text
+
+        def new_tract(desc, sec, twprge) -> Tract:
+            """Create and return a new Tract object"""
+            desc = clean_as_needed(desc)
+            return Tract(
+                desc=desc, trs=f"{twprge}{sec}", config=handed_down_config)
+
+        def flag_unused(unused_text, context):
+            """
+            Create a warning flag and flagLine for unused text.
+            """
+            flag = f"Unused_desc_<{unused_text}>"
+            self.w_flags.append(flag)
+            self.w_flag_lines.append((flag, context))
+
+        # Find matching TR's that are appropriate to our layout (should only
+        # be one, due to segmentation):
+        trPB = _findall_matching_tr(text_block)
+        # Pull `.twprge_position_list` attribute from the ParseBag object,
+        # and absorb the rest of the data into segParseBag:
+        wTRList = trPB.twprge_position_list
+        segParseBag.absorb(trPB)
+
+        # Find matching Sections and MultiSections that are appropriate to
+        # our layout (could be any number):
+        secPB = _findall_matching_sec(text_block, require_colon=require_colon)
+        # Pull the ad-hoc `.sec_list` and `.multiSecList` attributes from the
+        # ParseBag object, and absorb the rest of the data into segParseBag:
+        wSecList = secPB.sec_list
+        wMultiSecList = secPB.multiSecList
+        segParseBag.absorb(secPB)
+
+        ####################################################################
+        # Break down the wSecList, wMultiSecList, and wTRList into the index points
+        ####################################################################
+
+        # The Tract objects will be created from these component parts
+        # (first-in-first-out).
+        working_tr_list = []
+        working_sec_list = []
+        working_multiSec_list = []
+
+        # A dict, keyed by index (i.e. start/end point of matched objects
+        # within the text) and what was found at that index:
+        markersDict = {}
+        # This key/val will be overwritten if we found a T&R or Section at
+        # the first character
+        markersDict[0] = PLSSParser.TEXT_START
+        # Add the end of the string to the markersDict (may also get overwritten)
+        markersDict[len(text_block)] = PLSSParser.TEXT_END
+
+        for tup in wTRList:
+            working_tr_list.append(tup[0])
+            markersDict[tup[1]] = PLSSParser.TR_START
+            markersDict[tup[2]] = PLSSParser.TR_END
+
+        for tup in wSecList:
+            working_sec_list.append(tup[0])
+            markersDict[tup[1]] = PLSSParser.SEC_START
+            markersDict[tup[2]] = PLSSParser.SEC_END
+
+        for tup in wMultiSecList:
+            working_multiSec_list.append(tup[0])  # A list of lists
+            markersDict[tup[1]] = PLSSParser.MULTISEC_START
+            markersDict[tup[2]] = PLSSParser.MULTISEC_END
+
+        # If we're in either TRS_DESC or S_DESC_TR layouts and discovered
+        # neither a standalone section nor a multiSec, then rerun the parse
+        # under the same kwargs, except with `require_colon=PLSSDesc._SECOND_PASS`
+        # (which sets require_colonBool=False), to see if we can capture a
+        # section after all. Will return those results instead:
+        do_second_pass = True
+        if layout not in [TRS_DESC, S_DESC_TR]:
+            do_second_pass = False
+        if len(working_sec_list) > 0 or len(working_multiSec_list) > 0:
+            do_second_pass = False
+        if require_colon != PLSSDesc._DEFAULT_COLON:
+            do_second_pass = False
+        if do_second_pass:
+            replacementMidPB = _parse_segment(
+                text_block=text_block,
+                layout=layout,
+                require_colon=PLSSDesc._SECOND_PASS,
+                handed_down_config=handed_down_config,
+                init_parse_qq=init_parse_qq)
+            TRS_found = replacementMidPB.parsed_tracts[0].trs is not None
+            if TRS_found:
+                # If THIS time we successfully found a TRS, flag that we ran
+                # it without requiring colon...
+                replacementMidPB.w_flags.append('pulled_sec_without_colon')
+                for trObj in replacementMidPB.parsed_tracts:
+                    trObj.w_flags.append('pulled_sec_without_colon')
+                # TODO: Note, this may not get applied to all Tract objects
+                #   in the entire .parsed_tracts TractList.
+            return replacementMidPB
+
+        # Get a list of all of the keys, then sort them, so that we're pulling
+        # first-to-last (vis-a-vis the original text of this segment):
+        mrkrsLst = list(markersDict.keys())
+        mrkrsLst.sort()
+
+        # Cache these for access by the parser algorithm that is
+        # appropriate for the layout.
+        self.parse_cache["text_block"] = text_block
+        self.parse_cache["markers_list"] = mrkrsLst
+        self.parse_cache["markers_dict"] = markersDict
+        self.parse_cache["twprge_list"] = working_tr_list
+        self.parse_cache["sec_list"] = working_sec_list
+        self.parse_cache["multisec_list"] = working_multiSec_list
+
+        #
+        if layout in [DESC_STR, TR_DESC_S]:
+            self._descstr_trdescs(layout=layout)
+        elif layout in [TRS_DESC, S_DESC_TR]:
+            self._trsdesc_sdesctr(layout=layout)
+        else:
+            self._copyall()
+
+        new_tract_components = self.parse_cache["new_tract_components"]
+        unused_text = self.parse_cache["unused_text"]
+        uwc = self.parse_cache["unused_with_context"]
+
+        new_tracts = []
+        for tract_components in new_tract_components:
+            # First clean up the description, as needed.
+            tract_components["desc"] = clean_as_needed(tract_components["desc"])
+            # Create a new Tract object for each identified, and add it
+            # to our TractList stored in the `.parsed_tracts` attribute.
+            tract = new_tract(**tract_components)
+            new_tracts.append(tract)
+
+        if not new_tracts:
+            # If we identified no Tracts in this segment, re-parse using
+            # COPY_ALL layout.
+            self._parse_segment(
+                text_block, layout=COPY_ALL, clean_up=False, require_colon=False,
+                handed_down_config=handed_down_config, clean_qq=clean_qq)
+            return None
+
+        self.parsed_tracts.extend(new_tracts)
+
+        for ut in zip(unused_text, uwc):
+            # Generate a flag for each block of unused text longer than
+            # a few characters.
+            if len(ut[0]) > 3:
+                flag_unused(*ut)
+
+        # TESTING:
+        self.parsed_tracts.print_desc()
+
+        return None
+
+    def _descstr_trdescs(self, layout=None):
+
+        text_block = self.parse_cache["text_block"]
+        working_tr_list = self.parse_cache["twprge_list"]
+        working_sec_list = self.parse_cache["sec_list"]
+        working_multiSec_list = self.parse_cache["multisec_list"]
+        mrkrsLst = self.parse_cache["markers_list"]
+        markersDict = self.parse_cache["markers_dict"]
+
+        # These two layouts are handled nearly identically, except that
+        # in DESC_STR the TR is popped before it's encountered, and in
+        # TR_DESC_S it's popped only when encountered. So setting
+        # initial TR is the only difference.
+
+        # Defaults to a T&R error.
+        working_tr = _ERR_TWPRGE
+        # For TR_DESC_S, will pop the working_tr when we encounter the
+        # first TR. However, for DESC_STR, need to preset our working_tr
+        # (if one is available):
+        if layout == DESC_STR and len(working_tr_list) > 0:
+            working_tr = working_tr_list.pop(0)
+
+        # Description block comes before section in these layouts, so we
+        # pre-set the working_sec and working_multiSec (if any are available):
+        working_sec = _ERR_SEC
+        if len(working_sec_list) > 0:
+            working_sec = working_sec_list.pop(0)
+
+        working_multiSec = [_ERR_SEC]
+        if len(working_multiSec_list) > 0:
+            working_multiSec = working_multiSec_list.pop(0)
+
+        new_tract_components = []
+        unused_text = []
+        unused_with_context = []
+
+        finalRun = False  # Will switch to True on the final loop
+
+        # We'll check every marker to see what's at that point in the
+        # text; depending on the type of marker, it will tell us how to
+        # construct the next Tract object, or to pop the next section,
+        # multi-Section, or T&R from the start of the respective working
+        # list.
+
+        # Track how far back we'll write to when we come across
+        # secErrors in this layout:
+        secErrorWriteBackToPos = 0
+        for i in range(len(mrkrsLst)):
+
+            if i == len(mrkrsLst) - 1:
+                finalRun = True
+
+            # Get this marker position and type
+            markerPos = mrkrsLst[i]
+            markerType = markersDict[markerPos]
+
+            # Unless this is the last marker, get the next marker
+            # position and type
+            if not finalRun:
+                nextMarkerPos = mrkrsLst[i + 1]
+                nextMarkerType = markersDict[nextMarkerPos]
+            else:
+                # For the final run, default to the current marker
+                # position and type
+                nextMarkerPos = markerPos
+                nextMarkerType = markerType
+
+            # Unless it's the first one, get the last marker position and type
+            if i != 0:
+                lastMarkerPos = mrkrsLst[i - 1]
+                lastMarkerType = markersDict[lastMarkerPos]
+            else:
+                lastMarkerPos = markerPos
+                lastMarkerType = markerType
+
+            # We don't need to handle TEXT_START in this layout.
+
+            if markerType == PLSSParser.TR_END:
+                # This is included for handling secErrors in this layout.
+                # Note that it does not force a continue.
+                secErrorWriteBackToPos = markerPos
+
+            if markerType == PLSSParser.TR_START:  # Pull the next T&R in our list
+                if len(working_tr_list) == 0:
+                    # Will cause a TR error if another TRS+Desc is created:
+                    working_tr = _ERR_TWPRGE
+                else:
+                    working_tr = working_tr_list.pop(0)
+                continue
+
+            if nextMarkerType == PLSSParser.SEC_START:
+                # NOTE that this algorithm is looking for the start of a
+                # section at the NEXT marker!
+
+                # New tract identified, with our current working_tr
+                # and working_sec, and with the desc being the text
+                # between this marker and the next.
+                tract_identified = {
+                    "desc": text_block[mrkrsLst[i]:mrkrsLst[i + 1]].strip(),
+                    "sec": working_sec,
+                    "twprge": working_tr
+                }
+                new_tract_components.append(tract_identified)
+                if i + 2 <= len(mrkrsLst):
+                    secErrorWriteBackToPos = mrkrsLst[i + 2]
+                else:
+                    secErrorWriteBackToPos = mrkrsLst[i + 1]
+
+            elif nextMarkerType == PLSSParser.MULTISEC_START:
+                # NOTE that this algorithm is looking for the start of a
+                # multi-section at the NEXT marker!
+
+                # Use our current working_tr and EACH of the sections in
+                # the working_multiSec, with the desc being the text
+                # between this marker and the next.
+                for sec in working_multiSec:
+                    tract_identified = {
+                        "desc": text_block[mrkrsLst[i]:mrkrsLst[i + 1]].strip(),
+                        "sec": sec,
+                        "twprge": working_tr
+                    }
+                    new_tract_components.append(tract_identified)
+                if i + 2 <= len(mrkrsLst):
+                    secErrorWriteBackToPos = mrkrsLst[i + 2]
+                else:
+                    secErrorWriteBackToPos = mrkrsLst[i + 1]
+
+            elif (
+                    nextMarkerType == PLSSParser.TR_START
+                    and markerType not in [PLSSParser.SEC_END, PLSSParser.MULTISEC_END]
+                    and nextMarkerPos - secErrorWriteBackToPos > 5
+            ):
+                # If (1) we found a T&R next, and (2) we aren't CURRENTLY
+                # at a SEC_END or MULTISEC_END, and (3) it's been more than
+                # a few characters since we last created a new Tract, then
+                # we're apparently dealing with a secError, and we'll need
+                # to make a flawed Tract object with that secError.
+                tract_identified = {
+                    "desc": text_block[secErrorWriteBackToPos:mrkrsLst[i + 1]].strip(),
+                    "sec": _ERR_SEC,
+                    "twprge": working_tr
+                }
+                new_tract_components.append(tract_identified)
+
+            elif markerType == PLSSParser.SEC_START:
+                if len(working_sec_list) == 0:
+                    # Will cause a section error if another TRS+Desc is created
+                    working_sec = _ERR_SEC
+                else:
+                    working_sec = working_sec_list.pop(0)
+
+            elif markerType == PLSSParser.MULTISEC_START:
+                if len(working_multiSec_list) == 0:
+                    # Will cause a section error if another TRS+Desc is created
+                    working_multiSec = [_ERR_SEC]
+                else:
+                    working_multiSec = working_multiSec_list.pop(0)
+
+            elif markerType == PLSSParser.SEC_END:
+                if (nextMarkerType not in [PLSSParser.SEC_START,
+                                           PLSSParser.TR_START,
+                                           PLSSParser.MULTISEC_START]
+                    and markerPos != len(text_block)
+                ):
+                    # Whenever we come across a Section end, the next thing must
+                    # be either a SEC_START, MULTISEC_START, or TR_START.
+                    # We'll create a warning flag if that's not true.
+                    new_unused = text_block[mrkrsLst[i]:mrkrsLst[i + 1]].strip()
+                    unused_text.append(new_unused)
+                    unused_with_context.append(new_unused)
+
+            elif markerType == PLSSParser.TEXT_END:
+                break
+
+            # Capture unused text at the end of the string.
+            if (
+                    layout == TR_DESC_S
+                    and markerType in [PLSSParser.SEC_END, PLSSParser.MULTISEC_END]
+                    and not finalRun
+                    and nextMarkerType not in [PLSSParser.SEC_START,
+                                               PLSSParser.TR_START,
+                                               PLSSParser.MULTISEC_START]
+            ):
+                # For TR_DESC_S, whenever we come across the end of a Section or
+                # multi-Section, the next thing must be either a SEC_START,
+                # MULTISEC_START, or TR_START. Hence the warning flag, if that's
+                # not true.
+                new_unused = text_block[mrkrsLst[i]:mrkrsLst[i + 1]].strip()
+                unused_text.append(new_unused)
+                unused_with_context.append(new_unused)
+
+            # Capture unused text at the end of a section/multiSec (if appropriate).
+            if (layout == DESC_STR
+                    and markerType
+                        in [PLSSParser.SEC_END, PLSSParser.MULTISEC_END]
+                    and not finalRun
+                    and nextMarkerType
+                        not in [PLSSParser.SEC_START, PLSSParser.MULTISEC_START]):
+                unused_text.append(text_block[markerPos:nextMarkerPos])
+                unused_with_context.append(text_block[lastMarkerPos:nextMarkerPos])
+
+        self.parse_cache["new_tract_components"] = new_tract_components
+        self.parse_cache["unused_text"] = unused_text
+        self.parse_cache["unused_with_context"] = unused_with_context
+
+        return None
+
+    def _trsdesc_sdesctr(self, layout=None):
+
+        text_block = self.parse_cache["text_block"]
+        working_tr_list = self.parse_cache["twprge_list"]
+        working_sec_list = self.parse_cache["sec_list"]
+        working_multiSec_list = self.parse_cache["multisec_list"]
+        mrkrsLst = self.parse_cache["markers_list"]
+        markersDict = self.parse_cache["markers_dict"]
+
+        # Default to errors for T/R and Sec.
+        working_tr = _ERR_TWPRGE
+        working_sec = _ERR_SEC
+        working_multiSec = [_ERR_SEC]
+
+        if len(working_tr_list) > 0 and layout == S_DESC_TR:
+            working_tr = working_tr_list.pop(0)
+
+        new_tract_components = []
+        unused_text = []
+        unused_with_context = []
+
+        finalRun = False
+
+        # We'll check every marker to see what's at that point in the
+        # text; depending on the type of marker, it will tell us how to
+        # construct the next Tract object, or to pop the next section,
+        # multi-Section, or T&R from the respective working list.
+        for i in range(len(mrkrsLst)):
+
+            if i == len(mrkrsLst) - 1:
+                # Just a shorthand to not show the logic every time:
+                finalRun = True
+
+            # Get this marker position and type
+            markerPos = mrkrsLst[i]
+            markerType = markersDict[markerPos]
+
+            # Unless this is the last marker, get the next marker
+            # position and type
+            if not finalRun:
+                nextMarkerPos = mrkrsLst[i + 1]
+                nextMarkerType = markersDict[nextMarkerPos]
+            else:
+                # For the final run, default to the current marker
+                # position and type
+                nextMarkerPos = markerPos
+                nextMarkerType = markerType
+
+            # Unless it's the first one, get the last marker position and type
+            if i != 0:
+                lastMarkerPos = mrkrsLst[i - 1]
+                lastMarkerType = markersDict[lastMarkerPos]
+            else:
+                lastMarkerPos = markerPos
+                lastMarkerType = markersDict[markerPos]
+
+            # We don't need to handle TEXT_START in this layout.
+
+            if markerType == PLSSParser.SEC_START:
+                if len(working_sec_list) == 0:
+                    # Will cause a section error if another TRS+Desc is created
+                    working_sec = _ERR_SEC
+                else:
+                    working_sec = working_sec_list.pop(0)
+
+            elif markerType == PLSSParser.MULTISEC_START:
+                if len(working_multiSec_list) == 0:
+                    # Will cause a section error if another TRS+Desc is created
+                    working_multiSec = [_ERR_SEC]
+                else:
+                    working_multiSec = working_multiSec_list.pop(0)
+
+            elif markerType == PLSSParser.SEC_END:
+                # We found the start of a new desc block (betw Section's end
+                # and whatever's next).
+
+                # New tract identified, with our current working_tr
+                # and working_sec, and with the desc being the text
+                # between this marker and the next.
+                tract_identified = {
+                    "desc": text_block[mrkrsLst[i]:mrkrsLst[i + 1]].strip(),
+                    "sec": working_sec,
+                    "twprge": working_tr
+                }
+                new_tract_components.append(tract_identified)
+
+            elif markerType == PLSSParser.MULTISEC_END:
+                # We found start of a new desc block (betw multiSec end
+                # and whatever's next).
+
+                # Use our current working_tr and EACH of the sections in
+                # the working_multiSec, with the desc being the text
+                # between this marker and the next.
+                for sec in working_multiSec:
+                    tract_identified = {
+                        "desc": text_block[mrkrsLst[i]:mrkrsLst[i + 1]].strip(),
+                        "sec": sec,
+                        "twprge": working_tr
+                    }
+                    new_tract_components.append(tract_identified)
+
+            elif markerType == PLSSParser.TR_START:  # Pull the next T&R in our list
+                if len(working_tr_list) == 0:
+                    # Will cause a TR error if another TRS+Desc is created:
+                    working_tr = _ERR_TWPRGE
+                else:
+                    working_tr = working_tr_list.pop(0)
+
+            elif markerType == PLSSParser.TR_END:
+                # The only effect TR_END has on this layout is checking
+                # for unused text.
+                new_unused = text_block[markerPos:nextMarkerPos]
+                unused_text.append(new_unused)
+                unused_with_context.append(new_unused)
+
+        self.parse_cache["new_tract_components"] = new_tract_components
+        self.parse_cache["unused_text"] = unused_text
+        self.parse_cache["unused_with_context"] = unused_with_context
+
+        return None
+
+    def _copyall(self):
+        # A minimally-processed layout option. Basically just copies the
+        # entire text as a `.desc` attribute. Can serve as a fallback if
+        # deduce_layout() can't figure out what the real layout is (or
+        # it's a flawed input).
+        # TRS will be arbitrarily set to first T&R + Section (if either
+        # is actually found).
+
+        text_block = self.parse_cache["text_block"]
+        working_tr_list = self.parse_cache["twprge_list"]
+        working_sec_list = self.parse_cache["sec_list"]
+        working_multiSec_list = self.parse_cache["multisec_list"]
+        mrkrsLst = self.parse_cache["markers_list"]
+        markersDict = self.parse_cache["markers_dict"]
+
+        new_tract_components = []
+        unused_text = []
+        unused_with_context = []
+
+        # Defaults to a T&R error if no T&R's were identified
+        working_tr = _ERR_TWPRGE
+        if len(working_tr_list) > 0:
+            working_tr = working_tr_list.pop(0)
+
+        working_sec = _ERR_SEC
+        if len(working_sec_list) > 0:
+            working_sec = working_sec_list.pop(0)
+
+        # If no solo section was found, check for a multiSec we can pull from
+        if working_sec == _ERR_SEC and len(working_multiSec_list) > 0:
+            # Just pull the first section in the first multiSec.
+            working_sec = working_multiSec_list.pop(0)[0]
+
+        # Append a dummy TractObj that contains the full text as its `.desc`
+        # attribute. TRS is arbitrary, but will pull a TR + sec, if found.
+        tract_identified = {
+            "desc": text_block,
+            "sec": working_sec,
+            "twprge": working_tr
+        }
+        new_tract_components.append(tract_identified)
+
+        self.parse_cache["new_tract_components"] = new_tract_components
+        self.parse_cache["unused_text"] = unused_text
+        self.parse_cache["unused_with_context"] = unused_with_context
+
+        return None
+
 
 class PLSSPreprocessor:
     def __init__(self, text, default_ns=None, default_ew=None, ocr_scrub=False):
@@ -5730,6 +6431,7 @@ class PLSSPreprocessor:
         :param ocr_scrub: Whether to try to iron out common OCR
         'artifacts'. May cause unintended changes. (Defaults to `False`)
         """
+        # These attributes are populated by `.preprocess()`:
         self.fixed_twprges = None
         self.text = None
         self.preprocess(text, default_ns, default_ew, ocr_scrub)
