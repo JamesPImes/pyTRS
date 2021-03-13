@@ -1413,6 +1413,26 @@ class Tract:
     .to_list() -- Compile the requested attributes into a list.
     """
 
+    # Tract instance variables and a "header"-like definition of each
+    ATTRIBUTES = {
+        'trs': 'Twp/Rge/Sec',
+        'twp': 'Township',
+        'rge': 'Range',
+        'twprge': 'Twp & Rge',
+        'sec': 'Section',
+        'qqs': 'Aliquots',
+        'lots': 'Lots',
+        'lots_qqs': 'Lots & Aliquots',
+        'orig_desc': 'Original Description',
+        'pp_desc': 'Cleaned-Up Description',
+        'desc_is_flawed': 'Fatal Parsing Errors Identified',
+        'w_flags': 'Warning Flags',
+        'w_flag_lines': 'Warning Flags & Context',
+        'e_flags': 'Error Flags',
+        'e_flag_lines': 'Error Flags & Context',
+        'lot_acres': 'Lot Acreages'
+    }
+
     def __init__(
             self, desc='', trs='', source='', orig_desc='', orig_index=0,
             desc_is_flawed=False, config=None, init_parse_qq=None):
