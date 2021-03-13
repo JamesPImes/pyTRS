@@ -154,6 +154,8 @@ DEFAULT_EW_ERROR = ValueError(
     "default_ew must be either 'e' or 'w'."
 )
 
+_DEFAULT_COLON = 'default_colon'
+_SECOND_PASS = 'second_pass'
 
 _ERR_SEC = 'secError'
 _ERR_TWPRGE = 'TRerr'
@@ -278,9 +280,6 @@ class PLSSDesc:
     MASTER_DEFAULT_NS = NORTH
     MASTER_DEFAULT_EW = WEST
 
-    _DEFAULT_COLON = 'default_colon'
-    _SECOND_PASS = 'second_pass'
-
     def __init__(
             self, orig_desc: str, source='', layout=None, config=None,
             init_parse=None, init_parse_qq=None):
@@ -365,7 +364,7 @@ class PLSSDesc:
 
         # Whether we should require a colon between Section ## and tract
         # description (for TRS_DESC and S_DESC_TR layouts):
-        self.require_colon = PLSSDesc._DEFAULT_COLON
+        self.require_colon = _DEFAULT_COLON
 
         # Whether to include any divisions of lots
         # (i.e. 'N/2 of Lot 1' -> 'N2 of L1')
@@ -3088,7 +3087,7 @@ def _segment_by_tr(text, layout=None, twprge_first=None):
 
 
 def _findall_matching_sec(
-        text, layout=None, require_colon=PLSSDesc._DEFAULT_COLON):
+        text, layout=None, require_colon=_DEFAULT_COLON):
     """
     INTERNAL USE:
 
@@ -3121,7 +3120,7 @@ def _findall_matching_sec(
 
     if isinstance(require_colon, bool):
         require_colonBool = require_colon
-    elif require_colon == PLSSDesc._SECOND_PASS:
+    elif require_colon == _SECOND_PASS:
         require_colonBool = False
     else:
         require_colonBool = True
@@ -3246,7 +3245,7 @@ def _findall_matching_sec(
     # If we're in either TRS_DESC or S_DESC_TR layouts and discovered
     # neither a standalone section nor a multiSec, then rerun
     # _findall_matching_sec() under the same kwargs, except with
-    # require_colon=PLSSDesc._SECOND_PASS (which sets
+    # require_colon=_SECOND_PASS (which sets
     # require_colonBool=False), to see if we can capture a section after
     # all.  Will return those results instead.
     do_second_pass = True
@@ -3254,11 +3253,11 @@ def _findall_matching_sec(
         do_second_pass = False
     if len(wSecList) > 0 or len(wMultiSecList) > 0:
         do_second_pass = False
-    if require_colon != PLSSDesc._DEFAULT_COLON:
+    if require_colon != _DEFAULT_COLON:
         do_second_pass = False
     if do_second_pass:
         pass2_PB = _findall_matching_sec(
-            text, layout=layout, require_colon=PLSSDesc._SECOND_PASS)
+            text, layout=layout, require_colon=_SECOND_PASS)
         if len(pass2_PB.sec_list) > 0 or len(pass2_PB.multiSecList) > 0:
             pass2_PB.w_flags.append('pulled_sec_without_colon')
         return pass2_PB
@@ -3372,7 +3371,7 @@ def _parse_segment(
         layout = PLSSDesc._deduce_segment_layout(text_block)
 
     if require_colon is None:
-        require_colon = PLSSDesc._DEFAULT_COLON
+        require_colon = _DEFAULT_COLON
 
     segParseBag = ParseBag(parent_type='PLSSDesc')
 
@@ -3472,7 +3471,7 @@ def _parse_segment(
 
     # If we're in either TRS_DESC or S_DESC_TR layouts and discovered
     # neither a standalone section nor a multiSec, then rerun the parse
-    # under the same kwargs, except with `require_colon=PLSSDesc._SECOND_PASS`
+    # under the same kwargs, except with `require_colon=_SECOND_PASS`
     # (which sets require_colonBool=False), to see if we can capture a
     # section after all. Will return those results instead:
     do_second_pass = True
@@ -3480,13 +3479,13 @@ def _parse_segment(
         do_second_pass = False
     if len(working_sec_list) > 0 or len(working_multiSec_list) > 0:
         do_second_pass = False
-    if require_colon != PLSSDesc._DEFAULT_COLON:
+    if require_colon != _DEFAULT_COLON:
         do_second_pass = False
     if do_second_pass:
         replacementMidPB = _parse_segment(
             text_block=text_block,
             layout=layout,
-            require_colon=PLSSDesc._SECOND_PASS,
+            require_colon=_SECOND_PASS,
             handed_down_config=handed_down_config,
             init_parse_qq=init_parse_qq)
         TRS_found = replacementMidPB.parsed_tracts[0].trs is not None
@@ -5382,8 +5381,8 @@ class PLSSParser:
             handed_down_config=None,
             parent: PLSSDesc = None
     ):
-        # Initial variables / control the parse.
-        self.orig_text = text
+        # Initial variables to control the parse.
+        self.orig_desc = text
         self.preprocessor = PLSSPreprocessor(
             text, default_ns, default_ew, ocr_scrub)
         self.text = self.preprocessor.text
@@ -5400,6 +5399,7 @@ class PLSSParser:
         self.break_halves = break_halves
         # For handing down to generated Tract objects
         self.handed_down_config = handed_down_config
+        self.source = None
 
         # Generated variables / parsed data.
         self.parsed_tracts = TractList()
@@ -5407,6 +5407,7 @@ class PLSSParser:
         self.e_flags = []
         self.w_flag_lines = []
         self.e_flag_lines = []
+        self.desc_is_flawed = False
 
         # Pull pre-existing flags from the parent PLSSDesc, if applicable.
         if parent:
@@ -5414,6 +5415,7 @@ class PLSSParser:
             self.e_flags = parent.e_flags.copy()
             self.w_flag_lines = parent.w_flag_lines.copy()
             self.e_flag_lines = parent.e_flag_lines.copy()
+            self.source = parent.source
 
         self.parse_cache = {}
         self.reset_cache()
@@ -5428,7 +5430,8 @@ class PLSSParser:
             "multisec_list": [],
             "new_tract_components": [],
             "unused_text": [],
-            "unused_with_context": []
+            "unused_with_context": [],
+            "second_pass_match": False
         }
 
     def parse(self):
@@ -5523,7 +5526,7 @@ class PLSSParser:
         qq_depth = self.qq_depth
         break_halves = self.break_halves
 
-        flag_text = self.orig_text
+        flag_text = self.orig_desc
 
         # When layout is specified at init, or when calling
         # `.parse(layout=<string>)`, we prevent _parse_segment() from deducing,
@@ -5564,12 +5567,10 @@ class PLSSParser:
                 ('noText', '<No text was fed into the program.>'))
             return self
 
-        if (clean_up is None
+        if (not isinstance(clean_up, bool)
                 and layout in [TRS_DESC, DESC_STR, S_DESC_TR, TR_DESC_S]):
             # Default `clean_up` to True only for these layouts.
             clean_up = True
-        else:
-            clean_up = False
 
         # ----------------------------------------
         # If doing a segment parse, break it up into segments now
@@ -5599,79 +5600,90 @@ class PLSSParser:
             if segment and layout != COPY_ALL:
                 # Let the segment parser deduce layout for each text_block.
                 use_layout = None
-            midParseBag = _parse_segment(
+            self._parse_segment(
                 txt_block[1], clean_up=clean_up, require_colon=require_colon,
-                layout=use_layout, handed_down_config=config,
-                init_parse_qq=init_parse_qq, clean_qq=clean_qq,
+                layout=use_layout, handed_down_config=config, clean_qq=clean_qq,
                 qq_depth_min=qq_depth_min, qq_depth_max=qq_depth_max,
                 qq_depth=qq_depth, break_halves=break_halves)
-            bigPB.absorb(midParseBag)
 
         # If we've still not discovered any Tracts, run a final parse in
         # layout COPY_ALL, and include appropriate errors.
-        if len(bigPB.parsed_tracts) == 0:
-            bigPB.absorb(
-                _parse_segment(
+        if not self.parsed_tracts:
+            self._parse_segment(
                     text, layout=COPY_ALL, clean_up=False, require_colon=False,
-                    handed_down_config=config, init_parse_qq=init_parse_qq,
+                    handed_down_config=config,
                     clean_qq=clean_qq, qq_depth_min=qq_depth_min,
                     qq_depth_max=qq_depth_max, qq_depth=qq_depth,
-                    break_halves=break_halves))
-            bigPB.desc_is_flawed = True
+                    break_halves=break_halves)
+            self.desc_is_flawed = True
 
-        for TractObj in bigPB.parsed_tracts:
-            if TractObj.trs[:5] == 'TRerr':
-                bigPB.e_flags.append('trError')
-                bigPB.e_flag_lines.append(
-                    ('trError', TractObj.trs + ':' + TractObj.desc))
-                bigPB.desc_is_flawed = True
-            if TractObj.trs[-2:] == 'or':
-                bigPB.e_flags.append(_E_FLAG_SECERR)
-                bigPB.e_flag_lines.append(
-                    (_E_FLAG_SECERR, TractObj.trs + ':' + TractObj.desc))
-                bigPB.desc_is_flawed = True
+        for tract in self.parsed_tracts:
+            if tract.trs.startswith(_ERR_TWPRGE):
+                self.e_flags.append(_E_FLAG_TWPRGE_ERR)
+                self.e_flag_lines.append(
+                    (_E_FLAG_TWPRGE_ERR, f"{tract.trs}:{tract.desc}"))
+                self.desc_is_flawed = True
+            if tract.trs.endswith(_ERR_SEC):
+                self.e_flags.append(_E_FLAG_SECERR)
+                self.e_flag_lines.append(
+                    (_E_FLAG_SECERR, f"{tract.trs}:{tract.desc}"))
+                self.desc_is_flawed = True
 
         # Check for warning flags (and a couple error flags).
         # Note that .gen_flags() is being run on `flag_text`, not `text`.
-        flagParseBag = self.gen_flags(text=flag_text, commit=False)
-        bigPB.absorb(flagParseBag)
+        self.gen_flags(text=flag_text)
 
         # We want each Tract to have the entire PLSSDesc's warnings,
-        # because a computer can't automatically tell which limitations,
-        # etc. apply to which Tracts. (This is an ambiguity that often
-        # exists in the data, even when humans read it.) So for robust
-        # data, we apply flags from the whole PLSSDesc to each Tract.
+        # because the program can't automatically tell which issues
+        # apply to which Tracts. (This is an ambiguity that often exists
+        # in the data, even when humans read it.) So for robust data, we
+        # apply flags from the whole PLSSDesc to each Tract.
         # It will only _unpack the flags and flaglines, because that's
-        # all that is relevant to a Tract. Also apply TractNum (i.e.
+        # all that is relevant to a Tract. Also apply tract_num (i.e.
         # orig_index).
-        # Also, `tempPB` takes the wFlags and eFlags from the PLSSDesc
-        # object that may have been generated prior to calling .parse(),
-        # and they get passed down to each TractObj too.
-        tempPB = ParseBag()
-        tempPB.w_flags = self.w_flags
-        tempPB.w_flag_lines = self.w_flag_lines
-        tempPB.e_flags = self.e_flags
-        tempPB.e_flag_lines = self.e_flag_lines
-        TractNum = 0
-        for TractObj in bigPB.parsed_tracts:
+        # We also take any wFlags and eFlags from the PLSSDesc object
+        # that may have been generated prior to calling .parse()
+        # (inherited from `parent` when this PLSSParser was initialized)
+        # and those get passed down to each Tract object too.
 
-            # Unpack the flags from the PLSSDesc, held in `tempPB`.
-            TractObj._unpack_pb(tempPB)
+        w_flags = self.w_flags.copy()
+        w_flag_lines = self.w_flag_lines.copy()
+        e_flags = self.e_flags.copy()
+        e_flag_lines = self.e_flag_lines.copy()
+        tract_num = 0
+        for tract in self.parsed_tracts:
 
-            # Unpack the flags, etc. from `bigPB`.
-            TractObj._unpack_pb(bigPB)
+            if init_parse_qq:
+                tract.parse()
 
-            # And hand down the PLSSDesc object's `.source` and `.orig_desc`
-            # attributes to each of the Tract objects:
-            TractObj.source = self.source
-            TractObj.orig_desc = self.orig_desc
+            # Swap flags.
+            w_flags.extend(tract.w_flags)
+            w_flag_lines.extend(tract.w_flag_lines)
+            e_flags.extend(tract.e_flags)
+            e_flag_lines.extend(tract.e_flag_lines)
 
-            # And apply the TractNum for each Tract object:
-            TractObj.orig_index = TractNum
-            TractNum += 1
+            tract.w_flags.insert(0, self.w_flags)
+            tract.w_flag_lines.insert(0, self.w_flag_lines)
+            tract.e_flags.insert(0, self.e_flags)
+            tract.e_flag_lines.insert(0, self.e_flag_lines)
+
+            # And hand down the `.source` and `.orig_desc` attributes to
+            # each of the Tract objects:
+            tract.source = self.source
+            tract.orig_desc = self.orig_desc
+
+            # And apply the tract_num for each Tract object:
+            tract.orig_index = tract_num
+            tract_num += 1
+
+        # Set the flags/lines back to the newly compiled lists
+        self.w_flags = w_flags
+        self.w_flag_lines = w_flag_lines
+        self.e_flags = e_flags
+        self.e_flag_lines = e_flag_lines
 
         # Return the list of identified `Tract` objects (ie. a TractList object)
-        return bigPB.parsed_tracts
+        return self.parsed_tracts
 
     @staticmethod
     def deduce_layout(text, candidates=None):
@@ -5846,7 +5858,10 @@ class PLSSParser:
             layout = PLSSDesc._deduce_segment_layout(text_block)
 
         if require_colon is None:
-            require_colon = PLSSDesc._DEFAULT_COLON
+            require_colon = _DEFAULT_COLON
+
+        if require_colon != _SECOND_PASS:
+            self.reset_cache()
 
         segParseBag = ParseBag(parent_type='PLSSDesc')
 
@@ -5954,7 +5969,7 @@ class PLSSParser:
 
         # If we're in either TRS_DESC or S_DESC_TR layouts and discovered
         # neither a standalone section nor a multiSec, then rerun the parse
-        # under the same kwargs, except with `require_colon=PLSSDesc._SECOND_PASS`
+        # under the same kwargs, except with `require_colon=_SECOND_PASS`
         # (which sets require_colonBool=False), to see if we can capture a
         # section after all. Will return those results instead:
         do_second_pass = True
@@ -5962,25 +5977,15 @@ class PLSSParser:
             do_second_pass = False
         if len(working_sec_list) > 0 or len(working_multiSec_list) > 0:
             do_second_pass = False
-        if require_colon != PLSSDesc._DEFAULT_COLON:
+        if require_colon != _DEFAULT_COLON:
             do_second_pass = False
         if do_second_pass:
-            replacementMidPB = _parse_segment(
+            self._parse_segment(
                 text_block=text_block,
                 layout=layout,
-                require_colon=PLSSDesc._SECOND_PASS,
-                handed_down_config=handed_down_config,
-                init_parse_qq=init_parse_qq)
-            TRS_found = replacementMidPB.parsed_tracts[0].trs is not None
-            if TRS_found:
-                # If THIS time we successfully found a TRS, flag that we ran
-                # it without requiring colon...
-                replacementMidPB.w_flags.append('pulled_sec_without_colon')
-                for trObj in replacementMidPB.parsed_tracts:
-                    trObj.w_flags.append('pulled_sec_without_colon')
-                # TODO: Note, this may not get applied to all Tract objects
-                #   in the entire .parsed_tracts TractList.
-            return replacementMidPB
+                require_colon=_SECOND_PASS,
+                handed_down_config=handed_down_config)
+            return None
 
         # Get a list of all of the keys, then sort them, so that we're pulling
         # first-to-last (vis-a-vis the original text of this segment):
@@ -5996,7 +6001,9 @@ class PLSSParser:
         self.parse_cache["sec_list"] = working_sec_list
         self.parse_cache["multisec_list"] = working_multiSec_list
 
-        #
+        # Based on the layout, break apart the text into the relevant
+        # components for each new tract. Store the results to the
+        # parse_cache.
         if layout in [DESC_STR, TR_DESC_S]:
             self._descstr_trdescs(layout=layout)
         elif layout in [TRS_DESC, S_DESC_TR]:
@@ -6004,18 +6011,21 @@ class PLSSParser:
         else:
             self._copyall()
 
+        # Pull the new components from the parse_cache.
         new_tract_components = self.parse_cache["new_tract_components"]
         unused_text = self.parse_cache["unused_text"]
         uwc = self.parse_cache["unused_with_context"]
 
+        # Generate Tract objects from the parsed components.
         new_tracts = []
         for tract_components in new_tract_components:
-            # First clean up the description, as needed.
-            tract_components["desc"] = clean_as_needed(tract_components["desc"])
-            # Create a new Tract object for each identified, and add it
-            # to our TractList stored in the `.parsed_tracts` attribute.
             tract = new_tract(**tract_components)
             new_tracts.append(tract)
+
+        if new_tracts and require_colon == _SECOND_PASS:
+            # If we are on a second pass and have now successfully found
+            # a TRS, flag that we ran this without requiring colon.
+            self.w_flags.append('pulled_sec_without_colon')
 
         if not new_tracts:
             # If we identified no Tracts in this segment, re-parse using
@@ -6025,16 +6035,14 @@ class PLSSParser:
                 handed_down_config=handed_down_config, clean_qq=clean_qq)
             return None
 
+        # Add the new Tract objects to our TractList.
         self.parsed_tracts.extend(new_tracts)
 
+        # Generate a flag for each block of unused text longer than a
+        # few characters.
         for ut in zip(unused_text, uwc):
-            # Generate a flag for each block of unused text longer than
-            # a few characters.
             if len(ut[0]) > 3:
                 flag_unused(*ut)
-
-        # TESTING:
-        self.parsed_tracts.print_desc()
 
         return None
 
@@ -6413,6 +6421,9 @@ class PLSSParser:
         self.parse_cache["unused_with_context"] = unused_with_context
 
         return None
+
+    def gen_flags(self, text):
+        pass
 
 
 class PLSSPreprocessor:
