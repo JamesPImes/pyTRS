@@ -176,6 +176,25 @@ class PLSSDesc:
     containing equivalent config parameters -- see documentation on
     pytrs.Config objects for possible parameters).
 
+    NOTE: If direction for Township (N/S) or Range (E/W) is not provided
+    in the text being parsed, it will be assumed. Specify ``default_ns``
+    and ``default_ew`` for each ``PLSSDesc`` object to control how these
+    should be assumed (either as a ``config=`` parameter at init, or as
+    an argument in the appropriate method). Alternatively, we can change
+    ``PLSSDesc.MASTER_DEFAULT_NS`` and ``PLSSDesc.MASTER_DEFAULT_EW``
+    (class variables) to control all unspecified ``default_ns`` and
+    ``default_ew`` for (these class variables will control for both
+    PLSSDesc and Tract objects). However, specifying ``default_ns`` and
+    ``default_ew`` for a given object will override the master defaults
+    for that particular object.
+    The default settings are for North (`'n'`) and West (`'w'`).
+    IMPORTANT: When specifying ``default_ns``, ``default_ew``,
+    ``PLSSDesc.MASTER_DEFAULT_NS`` or ``PLSSDesc.MASTER_DEFAULT_EW``, be
+    sure to use ONLY single, lower-case letters (``'n'``, ``'s'``,
+    ``'e'``, and ``'w'``). Or don't worry about it, and just use
+    ``PLSSDesc.NORTH``, ``PLSSDesc.SOUTH``, ``PLSSDesc.EAST``, and
+    ``PLSSDesc.WEST``.
+
     ____ PARSING ____
     Parse the PLSSDesc object into pytrs.Tract objects with the
     `.parse()` method at some point after init. Alternatively, trigger
@@ -251,8 +270,13 @@ class PLSSDesc:
     .gen_flags() -- Scour the text for potential flag-raising issues.
     """
 
-    MASTER_DEFAULT_NS = 'n'
-    MASTER_DEFAULT_EW = 'w'
+    NORTH = 'n'
+    SOUTH = 's'
+    EAST = 'e'
+    WEST = 'w'
+
+    MASTER_DEFAULT_NS = NORTH
+    MASTER_DEFAULT_EW = WEST
 
     _DEFAULT_COLON = 'default_colon'
     _SECOND_PASS = 'second_pass'
