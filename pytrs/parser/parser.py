@@ -5349,3 +5349,505 @@ __all__ = [
     find_multisec,
     output_to_csv
 ]
+
+
+class PLSSParser:
+    def __init__(
+            self,
+            text,
+            layout,
+            clean_up,
+            init_parse_qq,
+            clean_qq,
+            require_colon,
+            segment,
+            qq_depth_min=2,
+            qq_depth_max=None,
+            qq_depth=None,
+            break_halves=False,
+            orig_text=None,
+            handed_down_config=None,
+            parent: PLSSDesc = None
+    ):
+        # Initial variables / control the parse.
+        self.text = text
+        self.layout = layout
+        self.clean_up = clean_up
+        self.init_parse_qq = init_parse_qq
+        self.clean_qq = clean_qq
+        self.require_colon = require_colon
+        self.segment = segment
+        self.qq_depth_min = qq_depth_min
+        self.qq_depth_max = qq_depth_max
+        self.qq_depth = qq_depth
+        self.break_halves = break_halves
+        if not orig_text:
+            orig_text = text
+        self.orig_text = orig_text
+        # For handing down to generated Tract objects
+        self.handed_down_config = handed_down_config
+
+        # Generated variables / parsed data.
+        self.parsed_tracts = TractList()
+        self.w_flags = []
+        self.e_flags = []
+        self.w_flag_lines = []
+        self.e_flag_lines = []
+
+        # Pull pre-existing flags from the parent PLSSDesc, if applicable.
+        if parent:
+            self.w_flags = parent.w_flags.copy()
+            self.e_flags = parent.e_flags.copy()
+            self.w_flag_lines = parent.w_flag_lines.copy()
+            self.e_flag_lines = parent.e_flag_lines.copy()
+
+
+    def parse(self):
+        """
+        Parse the description. If parameter `commit=True` (defaults to
+        on), the results will be stored to the various instance
+        attributes (.parsed_tracts, .w_flags, .w_flag_lines, .e_flags,
+        and .e_flag_lines). Returns only the TractList object containing
+        the parsed Tract objects (i.e. what would be stored to
+        `.parsed_tracts`).
+
+        :param text: The text to be parsed. If not specified, defaults
+        to the string currently stored in `self.pp_desc` (i.e. the
+        pre-processed description).
+        :param layout: The layout to be assumed. If not specified,
+        defaults to whatever is in `self.layout`.
+        :param clean_up: Whether to clean up common 'artefacts' from
+        parsing. If not specified, defaults to False for parsing the
+        'copy_all' layout, and `True` for all others.
+        :param init_parse_qq: Whether to parse each resulting Tract object
+        into lots and QQs when initialized. If not specified, defaults
+        to whatever is specified in `self.init_parse_qq`.
+        :param clean_qq: Whether to expect only clean lots and QQ's (i.e.
+        no metes-and-bounds, exceptions, complicated descriptions,
+        etc.). Defaults to whatever is specified in `self.clean_qq`
+        (which is False, unless configured otherwise).
+        :param require_colon: Whether to require a colon between the
+        section number and the following description (only has an effect
+        on 'TRS_desc' or 'S_desc_TR' layouts).
+        If not specified, it will default to whatever was set at init;
+        and unless otherwise specified there, will default to a 'two-
+        pass' method, where first it will require the colon; and if no
+        matching sections are found, it will do a second pass where
+        colons are not required. Setting as `True` or `False` here
+        prevent the two-pass method.
+            ex: 'Section 14 NE/4'
+                `require_colon=True` --> no match
+                `require_colon=False` --> match (but beware false
+                    positives)
+                <not specified> --> no match on first pass; if no other
+                            sections are identified, will be matched on
+                            second pass.
+        :param segment: Whether to break the text down into segments,
+        with one MATCHING township/range per segment (i.e. only T&R's
+        that are appropriate to the specified layout will count for the
+        purposes of this parameter). This can potentially capture
+        descriptions whose layout changes partway through, but can also
+        cause appropriate warning/error flags to be missed. If not
+        specified here, defaults to whatever is set in `self.segment`.
+        :param commit: Whether to commit the results to the appropriate
+        instance attributes. Defaults to `True`.
+        :param qq_depth_min: (Optional, and only relevant if parsing
+        Tracts into lots and QQs.) An int, specifying the minimum depth
+        of the parse. If not set here, will default to settings from
+        init (if any), which in turn default to 2, i.e. to
+        quarter-quarters (e.g., 'N/2NE/4' -> ['NENE', 'NENE']).
+        Setting to 3 would return 10-acre subdivisions (i.e. dividing
+        the 'NENE' into ['NENENE', 'NWNENE', 'SENENE', 'SWNENE']), and
+        so forth.
+        WARNING: Higher than a few levels of depth will result in very
+        slow performance.
+        :param qq_depth_max: (Optional, and only relevant if parsing
+        Tracts into lots and QQs.) An int, specifying the maximum depth
+        of the parse. If set as 2, any subdivision smaller than
+        quarter-quarter (e.g., 'NENE') would be discarded -- so, for
+        example, the 'N/2NE/4NE/4' would simply become the 'NENE'. Must
+        be greater than or equal to `qq_depth_min`. (Defaults to None --
+        i.e. no maximum. Can also be configured at init.)
+        :param qq_depth: (Optional, and only relevant if parsing Tracts
+        into lots and QQs.) An int, specifying both the minimum and
+        maximum depth of the parse. If specified, will override both
+        `qq_depth_min` and `qq_depth_max`. (Defaults to None -- i.e. use
+        qq_depth_min and optionally qq_depth_max; and can optionally be
+        configured at init.)
+        :param break_halves: (Optional, and only relevant if parsing
+        Tracts into lots and QQs.) Whether to break halves into
+        quarters, even if we're beyond the qq_depth_min. (False by
+        default, but can be configured at init.)
+        :return: Returns a pytrs.TractList object (a subclass of 'list')
+        of all of the resulting pytrs.Tract objects.
+        """
+
+        text = self.text
+        layout = self.layout
+        clean_up = self.clean_up
+        init_parse_qq = self.init_parse_qq
+        clean_qq = self.clean_qq
+        require_colon = self.require_colon
+        segment = self.segment
+        qq_depth_min = self.qq_depth_min
+        qq_depth_max = self.qq_depth_max
+        qq_depth = self.qq_depth
+        break_halves = self.break_halves
+
+        flag_text = self.orig_text
+
+        # When layout is specified at init, or when calling
+        # `.parse(layout=<string>)`, we prevent _parse_segment() from deducing,
+        # AS LONG AS the specified layout is among the implemented layouts.
+        if not layout:
+            layout = self.deduce_layout(text)
+
+        if layout not in _IMPLEMENTED_LAYOUTS:
+            raise ValueError(f"Non-implemented layout '{layout}'")
+
+        # Config object for passing down to Tract objects.
+        config = self.config
+
+        if layout == COPY_ALL:
+            # If a *segment* (which will be divided up shortly) finds itself in
+            # the COPY_ALL layout, that should still parse fine. But
+            # segmenting the whole description would defy the point of
+            # COPY_ALL layout. So prevent `segment` when the OVERALL layout
+            # is COPY_ALL
+            segment = False
+
+        # For QQ parsing (if applicable)
+        if break_halves is None:
+            break_halves = self.break_halves
+        if qq_depth is None and qq_depth_min is None and qq_depth_max is None:
+            qq_depth = self.qq_depth
+        if qq_depth_min is None:
+            qq_depth_min = self.qq_depth_min
+        if qq_depth_max is None:
+            qq_depth_max = self.qq_depth_max
+
+        # ParseBag obj for storing the data generated throughout.
+        bigPB = ParseBag(parent_type='PLSSDesc')
+
+        if len(text) == 0 or not isinstance(text, str):
+            bigPB.e_flags.append('noText')
+            bigPB.e_flag_lines.append(
+                ('noText', '<No text was fed into the program.>'))
+            return bigPB
+
+        if not isinstance(clean_up, bool):
+            if layout in [TRS_DESC, DESC_STR, S_DESC_TR, TR_DESC_S]:
+                # Default `clean_up` to True only for these layouts
+                clean_up = True
+            else:
+                clean_up = False
+
+        # ----------------------------------------
+        # If doing a segment parse, break it up into segments now
+        if segment:
+            # Segment text into blocks, based on T&Rs that match our
+            # layout requirements
+            trTextBlocks, discard_trTextBlocks = _segment_by_tr(
+                text, layout=layout, twprge_first=None)
+
+            # Append any discard text to the w_flags
+            for textBlock in discard_trTextBlocks:
+                bigPB.w_flags.append(f"Unused_desc_<{textBlock}>")
+                bigPB.w_flag_lines.append(
+                    (f"Unused_desc_<{textBlock}>", textBlock))
+
+        else:
+            # If not segmented parse, pack entire text into list, with
+            # a leading empty str (to mirror the output of the
+            # _segment_by_tr() function)
+            trTextBlocks = [('', text)]
+
+        # ----------------------------------------
+        # Parse each segment into a separate ParseBag obj, then absorb
+        # that PB into the big PB each time:
+        for textBlock in trTextBlocks:
+            use_layout = layout
+            if segment and layout != COPY_ALL:
+                # Let the segment parser deduce layout for each text_block.
+                use_layout = None
+            midParseBag = _parse_segment(
+                textBlock[1], clean_up=clean_up, require_colon=require_colon,
+                layout=use_layout, handed_down_config=config,
+                init_parse_qq=init_parse_qq, clean_qq=clean_qq,
+                qq_depth_min=qq_depth_min, qq_depth_max=qq_depth_max,
+                qq_depth=qq_depth, break_halves=break_halves)
+            bigPB.absorb(midParseBag)
+
+        # If we've still not discovered any Tracts, run a final parse in
+        # layout COPY_ALL, and include appropriate errors.
+        if len(bigPB.parsed_tracts) == 0:
+            bigPB.absorb(
+                _parse_segment(
+                    text, layout=COPY_ALL, clean_up=False, require_colon=False,
+                    handed_down_config=config, init_parse_qq=init_parse_qq,
+                    clean_qq=clean_qq, qq_depth_min=qq_depth_min,
+                    qq_depth_max=qq_depth_max, qq_depth=qq_depth,
+                    break_halves=break_halves))
+            bigPB.desc_is_flawed = True
+
+        for TractObj in bigPB.parsed_tracts:
+            if TractObj.trs[:5] == 'TRerr':
+                bigPB.e_flags.append('trError')
+                bigPB.e_flag_lines.append(
+                    ('trError', TractObj.trs + ':' + TractObj.desc))
+                bigPB.desc_is_flawed = True
+            if TractObj.trs[-2:] == 'or':
+                bigPB.e_flags.append(_E_FLAG_SECERR)
+                bigPB.e_flag_lines.append(
+                    (_E_FLAG_SECERR, TractObj.trs + ':' + TractObj.desc))
+                bigPB.desc_is_flawed = True
+
+        # Check for warning flags (and a couple error flags).
+        # Note that .gen_flags() is being run on `flag_text`, not `text`.
+        flagParseBag = self.gen_flags(text=flag_text, commit=False)
+        bigPB.absorb(flagParseBag)
+
+        # We want each Tract to have the entire PLSSDesc's warnings,
+        # because a computer can't automatically tell which limitations,
+        # etc. apply to which Tracts. (This is an ambiguity that often
+        # exists in the data, even when humans read it.) So for robust
+        # data, we apply flags from the whole PLSSDesc to each Tract.
+        # It will only _unpack the flags and flaglines, because that's
+        # all that is relevant to a Tract. Also apply TractNum (i.e.
+        # orig_index).
+        # Also, `tempPB` takes the wFlags and eFlags from the PLSSDesc
+        # object that may have been generated prior to calling .parse(),
+        # and they get passed down to each TractObj too.
+        tempPB = ParseBag()
+        tempPB.w_flags = self.w_flags
+        tempPB.w_flag_lines = self.w_flag_lines
+        tempPB.e_flags = self.e_flags
+        tempPB.e_flag_lines = self.e_flag_lines
+        TractNum = 0
+        for TractObj in bigPB.parsed_tracts:
+
+            # Unpack the flags from the PLSSDesc, held in `tempPB`.
+            TractObj._unpack_pb(tempPB)
+
+            # Unpack the flags, etc. from `bigPB`.
+            TractObj._unpack_pb(bigPB)
+
+            # And hand down the PLSSDesc object's `.source` and `.orig_desc`
+            # attributes to each of the Tract objects:
+            TractObj.source = self.source
+            TractObj.orig_desc = self.orig_desc
+
+            # And apply the TractNum for each Tract object:
+            TractObj.orig_index = TractNum
+            TractNum += 1
+
+        # Return the list of identified `Tract` objects (ie. a TractList object)
+        return bigPB.parsed_tracts
+
+    @staticmethod
+    def deduce_layout(text, candidates=None):
+        """
+        Deduce the layout of the description.
+
+        :param text: The text, whose layout is to be deduced.
+        :param candidates: A list of which layouts are to be considered.
+        If passed as `None` (the default), it will consider all
+        currently implemented meaningful layouts (i.e. 'TRS_desc',
+        'desc_STR', 'S_desc_TR', and 'TR_desc_S'), but will also
+        consider 'copy_all' if an apparently flawed description is
+        found. If specifying fewer than all candidates, ensure that at
+        least one layout from _IMPLEMENTED_LAYOUTS is in the list.
+        (Strings not in _IMPLEMENTED_LAYOUTS will have no effect.)
+        :return: Returns the algorithm's best guess at the layout (i.e.
+        a string).
+        """
+
+        if not candidates:
+            candidates = [TRS_DESC, DESC_STR, S_DESC_TR, TR_DESC_S]
+
+        try_trs_desc = TRS_DESC in candidates
+        try_desc_str = DESC_STR in candidates
+        try_s_desc_tr = S_DESC_TR in candidates
+        try_tr_desc_s = TR_DESC_S in candidates
+
+        # Default to COPY_ALL if we can't affirmatively deduce a better option.
+        layout_guess = COPY_ALL
+
+        # Strip out whitespace for this (mainly to avoid false misses in
+        # S_DESC_TR).
+        text = text.strip()
+
+        # we use the `noNum` version of the sec_regex here
+        sec_mo = noNum_sec_regex.search(text)
+        tr_mo = twprge_broad_regex.search(text)
+
+        if not sec_mo or not tr_mo:
+            # Default to COPY_ALL, as having no identifiable section or
+            # T&R is an insurmountable flaw.
+            return layout_guess
+
+        # If the first identified section comes before the first
+        # identified T&R, then it's probably DESC_STR or S_DESC_TR:
+        if sec_mo.start() < tr_mo.start():
+            if try_s_desc_tr:
+                # This is such an unlikely layout, that we give it very
+                # limited room for error. If the section comes first
+                # in the description, we should expect it VERY early
+                # in the text:
+                if sec_mo.start() <= 1:
+                    layout_guess = S_DESC_TR
+                else:
+                    layout_guess = DESC_STR
+            elif try_desc_str:
+                layout_guess = DESC_STR
+        elif try_trs_desc or try_tr_desc_s:
+            # If T&R comes before Section, it's most likely TRS_DESC,
+            # but could also be TR_DESC_S. Check how many characters
+            # appear between T&R and Sec, and decide whether it's
+            # TR_DESC_S or TRS_DESC, based on that.
+            string_between = text[tr_mo.end():sec_mo.start()].strip()
+            if len(string_between) >= 4 and try_tr_desc_s:
+                layout_guess = TR_DESC_S
+            elif try_trs_desc:
+                layout_guess = TRS_DESC
+
+        return layout_guess
+
+
+class PLSSPreprocessor:
+    def __init__(self, text, default_ns=None, default_ew=None, ocr_scrub=False):
+        """
+
+        :param text: The text to be preprocessed.
+        :param default_ns: How to interpret townships for which direction
+        was not specified -- i.e. either 'n' or 's'. (Defaults to
+        ``PLSSDesc.MASTER_DEFAULT_NS``, which is 'n' unless otherwise
+        specified.)
+        :param default_ew: How to interpret ranges for which direction
+        was not specified -- i.e. either 'e' or 'w'. (Defaults to
+        ``PLSSDesc.MASTER_DEFAULT_EW``, which is 'w' unless otherwise
+        specified.)
+        :param ocr_scrub: Whether to try to iron out common OCR
+        'artifacts'. May cause unintended changes. (Defaults to `False`)
+        """
+        self.fixed_twprges = None
+        self.text = None
+        self.preprocess(text, default_ns, default_ew, ocr_scrub)
+
+    def preprocess(self, text, default_ns, default_ew, ocr_scrub) -> str:
+        """
+        Preprocess the PLSS description to iron out common kinks in
+        the input data, and optionally store results to `self.pp_text`.
+
+        :return: The preprocessed string.
+        """
+
+        if not default_ns:
+            default_ns = PLSSDesc.MASTER_DEFAULT_NS
+
+        if not default_ew:
+            default_ew = PLSSDesc.MASTER_DEFAULT_EW
+
+        # Look for T&R's in original text (for checking if we fix any
+        # during preprocess, to raise a wFlag)
+        orig_twprge_list = find_twprge(text)
+
+        # Run each of the prepro regexes over the text, each working on
+        # the last-prepro'd version of the text. Swaps in the cleaned up
+        # TR (format 'T000N-R000W') for each T&R, every time.
+        pp_regexes = [
+            twprge_regex, preproTR_noNSWE_regex, preproTR_noR_noNS_regex,
+            preproTR_noT_noWE_regex, twprge_pm_regex
+        ]
+        if ocr_scrub:
+            # This invites potential mis-matches, so it is not included
+            # by default. Turn on with `ocr_scrub=True` kwarg.
+            pp_regexes.insert(0, twprge_ocr_scrub_regex)
+
+        for pp_rgx in pp_regexes:
+            i = 0
+            # working preprocessed description (reconstructed every loop):
+            w_pp_desc = ''
+            while True:
+                # Note: We do this as a loop, rather than using re.sub(),
+                # due to an erroneous over-matching of "Lots 6, 7, East"
+                # as "T6S-R7E" in the `preproTR_noR_noNS_regex` pattern.
+
+                tr_mo = pp_rgx.search(text, pos=i)
+
+                if tr_mo is None:
+                    # If we've found no more T&R's, append the remaining
+                    # text_block and end the loop
+                    w_pp_desc = f"{w_pp_desc}{text[i:]}"
+                    break
+
+                mo_start = tr_mo.start()
+
+                # Need some additional context to rule out 'Lots 6, 7, East'
+                # as matching as "T6S-R7E" (i.e. the 'ts' in 'Lots' as being
+                # picked up as 'Township'):
+                if pp_rgx == preproTR_noR_noNS_regex:
+                    # We'll look behind this many characters:
+                    lk_back = 3
+                    if lk_back > tr_mo.start():
+                        lk_back = tr_mo.start()
+
+                    # Get a context string containing that many characters
+                    # behind, plus a couple ahead. Will look for "Lot" or "Lots"
+                    # (allowing for slight typo) in that string:
+                    cntxt_str = text[mo_start - lk_back: mo_start + 2]
+                    lot_check_mo = lots_context_regex.search(cntxt_str)
+                    if lot_check_mo is not None:
+                        # If we matched, then we're dealing with a false
+                        # T&R match, and we need to move on.
+                        w_pp_desc = f"{w_pp_desc}{text[i:tr_mo.end()]}"
+                        i = tr_mo.end()
+                        continue
+
+                clean_twprge = _preprocess_twprge_mo(
+                    tr_mo, default_ns=default_ns, default_ew=default_ew)
+
+                # Add to the w_pp_desc all of the text since the last
+                # `i`, up to the identified tr_mo, and add the
+                # clean_twprge, with some spaces around it, just to keep
+                # it cleanly delineated from surrounding text.
+                w_pp_desc = f"{w_pp_desc}{text[i:mo_start]} {clean_twprge} "
+
+                # Move the search index to the end of the tr_mo.
+                i = tr_mo.end()
+
+            text = w_pp_desc
+
+        # Clean up white space:
+        text = text.strip()
+        while True:
+            # Scrub until text at start of loop == text at end of loop.
+            text1 = text
+
+            # Forbid consecutive spaces
+            text1 = re.sub(r" +", " ", text1)
+            # Convert carriage returns to linebreaks
+            text1 = re.sub(r"\r", "\n", text1)
+            # Maximum of two linebreaks in a row
+            text1 = re.sub(r"\n{2,}", "\n\n", text1)
+            # Remove spaces at the start of a new line
+            text1 = re.sub(r"\n ", "\n", text1)
+            # Remove tabs at the start of a new line
+            text1 = re.sub(r"\n\t", "\n", text1)
+            if text1 == text:
+                break
+            text = text1
+
+        # Look for T&R's in the preprocessed text
+        prepro_twprge_list = find_twprge(text)
+
+        # Remove from the post-preprocess TR list each of the elements
+        # in the list generated from the original text.
+        for tr in orig_twprge_list:
+            if tr in prepro_twprge_list:
+                prepro_twprge_list.remove(tr)
+
+        self.fixed_twprges = prepro_twprge_list
+        self.text = text
+
+        return text
