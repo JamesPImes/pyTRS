@@ -4121,7 +4121,7 @@ def _compile_twprge_mo(mo, default_ns='n', default_ew='w'):
     # can contain alpha characters in `rgeNum`.)
     try:
         rgeNum = str(int(rgeNum))
-    except:
+    except ValueError:
         pass
 
     if len(mo.groups()) > 10:
@@ -5351,6 +5351,13 @@ __all__ = [
 
 
 class PLSSParser:
+    """
+    INTERNAL USE:
+
+    A class to handle the heavy lifting of parsing ``PLSSDesc`` objects
+    into ``Tract`` objects. Not intended for use by the end-user. (All
+    functionality can be triggered by appropriate ``PLSSDesc`` methods.)
+    """
 
     # constants for the different markers we'll use
     TEXT_START = 'text_start'
@@ -5386,7 +5393,6 @@ class PLSSParser:
         self.preprocessor = PLSSPreprocessor(
             text, default_ns, default_ew, ocr_scrub)
         self.text = self.preprocessor.text
-        # TODO: Unpack ``preprocessor.fixed_twprges`` into w_flags
         self.layout = layout
         self.clean_up = clean_up
         self.init_parse_qq = init_parse_qq
@@ -5417,6 +5423,12 @@ class PLSSParser:
             self.e_flag_lines = parent.e_flag_lines.copy()
             self.source = parent.source
 
+        # `self.preprocessor.fixed_twprges` into w_flags
+        if self.preprocessor.fixed_twprges:
+            fixed = "//".join(self.preprocessor.fixed_twprges)
+            self.w_flags.append(f"T&R_fixed<{fixed}>")
+            self.w_flag_lines.append((f"T&R_fixed<{fixed}>", fixed))
+
         self.parse_cache = {}
         self.reset_cache()
 
@@ -5431,7 +5443,12 @@ class PLSSParser:
             "new_tract_components": [],
             "unused_text": [],
             "unused_with_context": [],
-            "second_pass_match": False
+            "second_pass_match": False,
+            "all_twprge_matches": [],
+            "all_sec_matches": [],
+            "all_multisec_matches": [],
+            "w_flags_staging": [],
+            "w_flag_lines_staging": []
         }
 
     def parse(self):
@@ -5577,7 +5594,7 @@ class PLSSParser:
         if segment:
             # Segment text into blocks, based on T&Rs that match our
             # layout requirements
-            twprge_txt_blox, discard_txt_blox = _segment_by_tr(
+            twprge_txt_blox, discard_txt_blox = self._segment_by_tr(
                 text, layout=layout, twprge_first=None)
 
             # Append any discard text to the w_flags
@@ -5653,6 +5670,8 @@ class PLSSParser:
         tract_num = 0
         for tract in self.parsed_tracts:
 
+            # If we wanted to parse to lots/QQ's, we do it now for all
+            # generated Tracts.
             if init_parse_qq:
                 tract.parse()
 
@@ -5661,11 +5680,10 @@ class PLSSParser:
             w_flag_lines.extend(tract.w_flag_lines)
             e_flags.extend(tract.e_flags)
             e_flag_lines.extend(tract.e_flag_lines)
-
-            tract.w_flags.insert(0, self.w_flags)
-            tract.w_flag_lines.insert(0, self.w_flag_lines)
-            tract.e_flags.insert(0, self.e_flags)
-            tract.e_flag_lines.insert(0, self.e_flag_lines)
+            tract.w_flags = self.w_flags + tract.w_flags
+            tract.w_flag_lines = self.w_flag_lines + tract.w_flag_lines
+            tract.e_flags = self.e_flags + tract.e_flags
+            tract.e_flag_lines = self.e_flag_lines + tract.e_flag_lines
 
             # And hand down the `.source` and `.orig_desc` attributes to
             # each of the Tract objects:
@@ -5711,7 +5729,8 @@ class PLSSParser:
         try_s_desc_tr = S_DESC_TR in candidates
         try_tr_desc_s = TR_DESC_S in candidates
 
-        # Default to COPY_ALL if we can't affirmatively deduce a better option.
+        # Default to COPY_ALL if we can't affirmatively deduce a better
+        # option.
         layout_guess = COPY_ALL
 
         # Strip out whitespace for this (mainly to avoid false misses in
@@ -5757,7 +5776,7 @@ class PLSSParser:
     def _parse_segment(
             self,
             text_block, layout=None, clean_up=None, require_colon=None,
-            handed_down_config=None, init_parse_qq=False, clean_qq=None,
+            handed_down_config=None, clean_qq=None,
             qq_depth_min=None, qq_depth_max=None, qq_depth=None,
             break_halves=None):
         """
@@ -5772,8 +5791,6 @@ class PLSSParser:
         :param clean_up: Whether to clean up common 'artefacts' from
         parsing. If not specified, defaults to False for parsing the
         'copy_all' layout, and `True` for all others.
-        :param init_parse_qq: Whether to parse each resulting Tract object
-        into lots and QQs when initialized. Defaults to False.
         :param clean_qq: Whether to expect only clean lots and QQ's (i.e.
         no metes-and-bounds, exceptions, complicated descriptions,
         etc.). Defaults to False.
@@ -5828,13 +5845,13 @@ class PLSSParser:
         # General explanation of how this function works:
         # 1) Lock down parameters for parse via kwargs, etc.
         # 2) If the layout was not appropriately specified, deduce it with
-        #       `PLSSDesc.deduceSegment()`
+        #       `PLSSParser.deduce_layout()`
         # 3) Based on the layout, pull each of the T&R's that match our
         #       layout (for segmented parse, /should/ only be one), with
         #       `_findall_matching_tr()` function.
         # 4) Based on the layout, pull each of the Sections and
         #       Multi-Sections that match our layout with
-        #       `_findall_matching_sec()` function.
+        #       `_findall_matching_sec()` method.
         # 5) Combine all of the positions of starts/ends of T&R's, Sections,
         #       and Multisections into a single dict.
         # 6) Based on layout, apply the appropriate algorithm for breaking
@@ -5843,7 +5860,7 @@ class PLSSParser:
         #       (e.g., by definition, TR_DESC_S and DESC_STR both pull
         #       the description block from BEFORE an identified section;
         #       whereas S_DESC_TR and TRS_DESC both pull description
-        #       block /after/ the section).
+        #       block AFTER the section).
         # 6a) For COPY_ALL specifically, the entire text_block will be
         #       copied as the `.desc` attribute of a Tract object.
         # 7) If no Tract was created by the end of the parse (e.g., no
@@ -5855,15 +5872,13 @@ class PLSSParser:
         ####################################################################
 
         if layout not in _IMPLEMENTED_LAYOUTS:
-            layout = PLSSDesc._deduce_segment_layout(text_block)
+            layout = PLSSParser.deduce_layout(text_block)
 
         if require_colon is None:
             require_colon = _DEFAULT_COLON
 
         if require_colon != _SECOND_PASS:
             self.reset_cache()
-
-        segParseBag = ParseBag(parent_type='PLSSDesc')
 
         # If `clean_qq` was specified, convert it to a string, and set it to the
         # `handed_down_config`.
@@ -5881,15 +5896,15 @@ class PLSSParser:
             handed_down_config._set_str_to_values(f"qq_depth.{qq_depth}")
 
         # We want to handle init_parse_qq all at once in this PLSSParser,
-        # so mandate that it is False for now.
+        # so mandate that it be False for now.
         handed_down_config.init_parse_qq = False
 
         if not isinstance(clean_up, bool):
-            # if clean_up has not been specified as a bool, then use these defaults:
+            # If clean_up has not been specified as a bool, then use
+            # these defaults.
+            clean_up = False
             if layout in [TRS_DESC, DESC_STR, S_DESC_TR, TR_DESC_S]:
                 clean_up = True
-            else:
-                clean_up = False
 
         def clean_as_needed(candidate_text):
             """
@@ -5898,9 +5913,8 @@ class PLSSParser:
             cleaned-up version of it, depending on the bool `clean_up`.
             """
             if clean_up:
-                return _cleanup_desc(candidate_text)
-            else:
-                return candidate_text
+                candidate_text = PLSSParser._cleanup_desc(candidate_text)
+            return candidate_text
 
         def new_tract(desc, sec, twprge) -> Tract:
             """Create and return a new Tract object"""
@@ -5916,22 +5930,26 @@ class PLSSParser:
             self.w_flags.append(flag)
             self.w_flag_lines.append((flag, context))
 
-        # Find matching TR's that are appropriate to our layout (should only
-        # be one, due to segmentation):
-        trPB = _findall_matching_tr(text_block)
-        # Pull `.twprge_position_list` attribute from the ParseBag object,
-        # and absorb the rest of the data into segParseBag:
-        wTRList = trPB.twprge_position_list
-        segParseBag.absorb(trPB)
+        # Find matching twprge's that are appropriate to our layout
+        # (should only be one if segmented). Store the results to the
+        # parse_cache, and add the w_flags and lines to the `.w_flags`
+        # and `.w_flag_lines` attributes.
+        self._findall_matching_tr(
+            text_block,
+            stage_flags_to=self.w_flags,
+            stage_flag_lines_to=self.w_flag_lines)
 
-        # Find matching Sections and MultiSections that are appropriate to
-        # our layout (could be any number):
-        secPB = _findall_matching_sec(text_block, require_colon=require_colon)
-        # Pull the ad-hoc `.sec_list` and `.multiSecList` attributes from the
-        # ParseBag object, and absorb the rest of the data into segParseBag:
-        wSecList = secPB.sec_list
-        wMultiSecList = secPB.multiSecList
-        segParseBag.absorb(secPB)
+        # Find matching Sections and MultiSections that are appropriate
+        # to our layout (could be any number). Store the results to the
+        # parse_cache.
+        self._findall_matching_sec(text_block, require_colon=require_colon)
+
+        # Pull the matched twprge's, sections, and multisections from
+        # the parse_cache.
+
+        wTRList = self.parse_cache["all_twprge_matches"]
+        wSecList = self.parse_cache["all_sec_matches"]
+        wMultiSecList = self.parse_cache["all_multisec_matches"]
 
         ####################################################################
         # Break down the wSecList, wMultiSecList, and wTRList into the index points
@@ -5980,6 +5998,9 @@ class PLSSParser:
         if require_colon != _DEFAULT_COLON:
             do_second_pass = False
         if do_second_pass:
+            # Note that by this point, `handed_down_config` has encoded
+            # all of the `qq_depth...` and `break_halves` kwargs, so we
+            # don't need to specify those again.
             self._parse_segment(
                 text_block=text_block,
                 layout=layout,
@@ -6047,7 +6068,17 @@ class PLSSParser:
         return None
 
     def _descstr_trdescs(self, layout=None):
+        """
+        INTERNAL USE:
 
+        Identify the Tract components assuming the syntax of
+        ``desc_STR`` or ``TR_desc_S`` layout. Stores the appropriate
+        data in the ``.parse_cache``.
+
+        :param layout: Whether we are using ``'desc_STR'`` or
+        ``'TR_desc_S'``.
+        :return: None.
+        """
         text_block = self.parse_cache["text_block"]
         working_tr_list = self.parse_cache["twprge_list"]
         working_sec_list = self.parse_cache["sec_list"]
@@ -6254,7 +6285,17 @@ class PLSSParser:
         return None
 
     def _trsdesc_sdesctr(self, layout=None):
+        """
+        INTERNAL USE:
 
+        Identify the Tract components assuming the syntax of
+        ``TRS_desc`` or ``S_desc_TR`` layout. Stores the appropriate
+        data in the ``.parse_cache``.
+
+        :param layout: Whether we are using ``'TRS_desc'`` or
+        ``'S_desc_TR'``.
+        :return: None.
+        """
         text_block = self.parse_cache["text_block"]
         working_tr_list = self.parse_cache["twprge_list"]
         working_sec_list = self.parse_cache["sec_list"]
@@ -6375,6 +6416,15 @@ class PLSSParser:
         return None
 
     def _copyall(self):
+        """
+        INTERNAL USE:
+
+        Generate the components for a Tract, assuming the syntax of
+        ``copy_all``. Stores the appropriate data in the
+        ``.parse_cache``.
+
+        :return: None.
+        """
         # A minimally-processed layout option. Basically just copies the
         # entire text as a `.desc` attribute. Can serve as a fallback if
         # deduce_layout() can't figure out what the real layout is (or
@@ -6386,8 +6436,6 @@ class PLSSParser:
         working_tr_list = self.parse_cache["twprge_list"]
         working_sec_list = self.parse_cache["sec_list"]
         working_multiSec_list = self.parse_cache["multisec_list"]
-        mrkrsLst = self.parse_cache["markers_list"]
-        markersDict = self.parse_cache["markers_dict"]
 
         new_tract_components = []
         unused_text = []
@@ -6407,8 +6455,9 @@ class PLSSParser:
             # Just pull the first section in the first multiSec.
             working_sec = working_multiSec_list.pop(0)[0]
 
-        # Append a dummy TractObj that contains the full text as its `.desc`
-        # attribute. TRS is arbitrary, but will pull a TR + sec, if found.
+        # For generating a dummy Tract that contains the full text as
+        # its `.desc` attribute. TRS is arbitrary, but will pull a
+        # TR + sec, if found.
         tract_identified = {
             "desc": text_block,
             "sec": working_sec,
@@ -6421,6 +6470,710 @@ class PLSSParser:
         self.parse_cache["unused_with_context"] = unused_with_context
 
         return None
+
+    def _findall_matching_sec(
+            self, text, layout=None, require_colon=_DEFAULT_COLON):
+        """
+        INTERNAL USE:
+
+        Pull from the text all sections and 'multi-sections' that are
+        appropriate to the description layout. Returns a ParseBag object
+        with ad-hoc attributes `.sec_list` and `.multiSecList`.
+        :param require_colon: Same effect as in PLSSDesc.parse()`
+        """
+
+        # require_colon=True will pass over sections that are NOT followed by
+        # colons, in the TRS_DESC and S_DESC_TR layouts. For this version,
+        # it is defaulted to True for those layouts. However, if no
+        # satisfactory section or multiSec is found during the first pass,
+        # it will rerun with `require_colon=_SECOND_PASS`.  Feeding
+        # `require_colon=True` as a kwarg will override allowing the
+        # second pass.
+
+        # Note: the kwarg `require_colon=` accepts either a string (for
+        # 'default_colon' and 'second_pass') or bool. If a bool is fed in
+        # (i.e. require_colon=True), a 'second_pass' will NOT be allowed.
+        # `require_colonBool` is the actual variable that controls the
+        # relevant logic throughout.
+        # Note also: Future versions COULD conceivably compare the
+        # first_pass and second_pass results to see which has more secErr's
+        # or other types of errors, and use the less-flawed of the two.
+        # But I'm not sure that would actually be better.
+
+        # Note also that `require_colonBool` has no effect on layouts
+        # other than TRS_DESC and S_DESC_TR, even if set to `True`
+
+        # Finally, note that because multiple passes may be done, we
+        # initially stage our w_flags (and flag_lines) in the parse_cache.
+        # After whichever pass is the final pass, the staged flags will
+        # be added to `self.w_flags`.
+
+        if isinstance(require_colon, bool):
+            require_colonBool = require_colon
+        elif require_colon == _SECOND_PASS:
+            require_colonBool = False
+            self.parse_cache["w_flags_staging"] = []
+            self.parse_cache["w_flag_line_staging"] = []
+        else:
+            require_colonBool = True
+
+        # Run through the description and find INDIVIDUAL sections or
+        # LISTS of sections that match our layout.
+        #   For INDIVIDUAL sections, we want "Section 5" in "T154N-R97W,
+        #       Section 5: NE/4, Sections 4 and 6 - 10: ALL".
+        #   For LISTS of sections (called "MultiSections" in this program),
+        #       we want "Sections 4 and 6 - 10" in the above example.
+
+        # For individual sections, save a list of tuples (wSecList), each
+        # containing the section number (as '00'), and its start and end
+        # position in the text.
+        wSecList = []
+
+        # For groups (lists) of sections, save a list of tuples
+        # (wMultiSecList), each containing a list of the section numbers
+        # (as ['01', '03, '04', '05' ...]), and the group's start and end
+        # position in the text.
+        wMultiSecList = []
+
+        if layout not in _IMPLEMENTED_LAYOUTS:
+            layout = PLSSParser.deduce_layout(text=text)
+
+        def adj_secmo_end(sec_mo):
+            """
+            If a sec_mo or multisec_mo ends in whitespace, give the
+            .end() minus 1; else return the .end()
+            """
+            # sec_regex and multiSec_regex can match unlimited whitespace at
+            # the end, so if we don't back up 1 char, we can end up with a
+            # situation where SEC_END is at the same position as TR_START,
+            # which can mess up the parser.
+            if sec_mo.group().endswith((' ', '\n', '\t', '\r')):
+                return sec_mo.end() - 1
+            else:
+                return sec_mo.end()
+
+        # A parsing index for text (marks where we're currently searching from):
+        i = 0
+        while True:
+            sec_mo = multiSec_regex.search(text, pos=i)
+
+            if sec_mo is None:
+                # There are no more sections matching our layout in the text
+                break
+
+            # Sections and multiSections can get ruled out for a few reasons.
+            # We want to deduce this condition various ways, but handle ruled
+            # out sections the same way. So for now, a bool:
+            ruled_out = False
+
+            # For TRS_DESC and S_DESC_TR layouts specifically, we do NOT want
+            # to match sections following "of", "said", or "in" (e.g.
+            # 'the NE/4 of Section 4'), because it very likely means its a
+            # continuation of the same description.
+            enders = (' of', ' said', ' in', ' within')
+            if (
+                    layout in [TRS_DESC, S_DESC_TR]
+                    and text[:sec_mo.start()].rstrip().endswith(enders)
+            ):
+                ruled_out = True
+
+            # Also for TRS_DESC and S_DESC_TR layouts, we ONLY want to match
+            # sections and multi-Sections that are followed by a colon (if
+            # requiredColonBool == True):
+            if (
+                    require_colonBool
+                    and layout in [TRS_DESC, S_DESC_TR]
+                    and not (_sec_ends_with_colon(sec_mo))
+            ):
+                ruled_out = True
+
+            if ruled_out:
+                # Move our index to the end of this sec_mo and move to the next pass
+                # through this loop, because we don't want to include this sec_mo.
+                i = sec_mo.end()
+
+                # Create a warning flag, that we did not pull this section or
+                # multiSec and move on to the next loop.
+                ignored_sec = _compile_sec_mo(sec_mo)
+                if isinstance(ignored_sec, list):
+                    flag = f"multiSec_not_pulled<{', '.join(ignored_sec)}>"
+                else:
+                    flag = f"sec_not_pulled<{ignored_sec}>"
+                self.parse_cache["w_flags_staging"].append(flag)
+                self.parse_cache["w_flag_lines_staging"].append((flag, sec_mo.group()))
+                continue
+
+            # Move the parsing index forward to the start of this next matched Sec
+            i = sec_mo.start()
+
+            # If we've gotten to here, then we've found a section or multiSec
+            # that we want. Determine which it is, and append it to the respective
+            # list:
+            if PLSSParser._is_multisec(sec_mo):
+                # If it's a multiSec, _unpack it, and append it to the
+                # wMultiSecList.  (We stage flags to temp list so that
+                # we maintain the intended order of flags: i.e. so that
+                # 'multisec_found' comes before any specific issues with
+                # that multisec.)
+                multisec_flags_temp = []
+                multisec_flag_lines_temp = []
+                unpackedMultiSec = self._unpack_sections(
+                    sec_mo.group(), stage_flags_to=multisec_flags_temp,
+                    stage_flag_lines_to=multisec_flag_lines_temp)
+
+                # First create an overall multisec flag.
+                flag = f"multiSec_found<{', '.join(unpackedMultiSec)}>"
+                self.parse_cache["w_flags_staging"].append(flag)
+                self.parse_cache["w_flag_lines_staging"].append((flag, sec_mo.group()))
+
+                # Then extend with any flags generated by _unpack_sections()
+                self.parse_cache["w_flags_staging"].extend(multisec_flags_temp)
+                self.parse_cache["w_flag_lines_staging"].extend(multisec_flag_lines_temp)
+
+                # And finally append the tuple for this multiSec
+                wMultiSecList.append((unpackedMultiSec, i, adj_secmo_end(sec_mo)))
+            else:
+                # Append the tuple for this individual section
+                wSecList.append(
+                    (self._compile_sec_mo(sec_mo), i, adj_secmo_end(sec_mo)))
+
+            # And move the parser index to the end of our current sec_mo
+            i = sec_mo.end()
+
+        # If we're in either TRS_DESC or S_DESC_TR layouts and discovered
+        # neither a standalone section nor a multiSec, then rerun
+        # _findall_matching_sec() under the same kwargs, except with
+        # require_colon=_SECOND_PASS (which sets
+        # require_colonBool=False), to see if we can capture a section after
+        # all.  Will return those results instead.
+        do_second_pass = True
+        if layout not in [TRS_DESC, S_DESC_TR]:
+            do_second_pass = False
+        if wSecList or wMultiSecList:
+            do_second_pass = False
+        if require_colon != _DEFAULT_COLON:
+            do_second_pass = False
+        if do_second_pass:
+            self._findall_matching_sec(
+                text, layout=layout, require_colon=_SECOND_PASS)
+            return None
+
+        # Add `sec_list` and `multiSecList` to parse_cache, and cement
+        # our staged w_flags.
+        self.parse_cache["all_sec_matches"] = wSecList
+        self.parse_cache["all_multisec_matches"] = wMultiSecList
+        self.w_flags.extend(self.parse_cache["w_flags_staging"])
+        self.w_flag_lines.extend(self.parse_cache["w_flag_lines_staging"])
+        return None
+
+    @staticmethod
+    def _compile_sec_mo(sec_mo):
+        """
+        INTERNAL USE:
+
+        Takes a match object (mo) of an identified multiSection, and
+        returns a string in the format of '00' for individual sections
+        and a list ['01', '02', ...] for multiSections.
+        """
+        if PLSSParser._is_multisec(sec_mo):
+            return PLSSParser._unpack_sections(sec_mo.group())
+        elif PLSSParser._is_singlesec(sec_mo):
+            return _get_last_sec(sec_mo).rjust(2, '0')
+        else:
+            return
+
+    @staticmethod
+    def _unpack_sections(
+            sec_text_block, stage_flags_to: list = None,
+            stage_flag_lines_to: list = None):
+        """
+        INTERNAL USE:
+        Feed in a string of a multiSec_regex match object, and return a
+        list of all of the sections (i.e. ``Sections 2, 3, 9 - 11`` will
+        return as ``['02', '03', '09', '10', 11']``).
+
+        :param sec_text_block: A string being the entire match of the
+        multiSec_regex pattern.
+        :param stage_flags_to: An optional list in which to add warning
+        flags (in-situ). If not specified, they will be discarded.
+        :param stage_flag_lines_to: An optional list in which to add
+        warning flags and flag-lines (in-situ). If not specified, they
+        will be discarded.
+        :return: A list of 2-digit strings, being the section numbers.
+        """
+
+        # TODO: Maybe just put together a simpler algorithm. Since there's
+        #   so much less possible text in a list of Sections, can probably
+        #   just add from left-to-right, unlike _unpack_lots.
+
+        sectionsList = []  #
+        remainingSecText = sec_text_block
+
+        if not stage_flags_to:
+            stage_flags_to = []
+        if not stage_flag_lines_to:
+            stage_flag_lines_to = []
+
+        # A working list of the sections. Note that this gets filled from
+        # last-to-first on this working text block, but gets reversed at the end.
+        wSectionsList = []
+        foundThrough = False
+        while True:
+            secs_mo = multiSec_regex.search(remainingSecText)
+
+            if secs_mo is None:  # we're out of section numbers.
+                break
+
+            else:
+                # Pull the right-most section number (still as a string):
+                secNum = _get_last_sec(secs_mo)
+
+                if PLSSParser._is_singlesec(secs_mo):
+                    # We can skip the next loop after we've found the last section.
+                    remainingSecText = ''
+
+                else:
+                    # If we've found >= 2 sections, we will need to loop at
+                    # least once more.
+                    remainingSecText = remainingSecText[:secs_mo.start(12)]
+
+                # Clean up any leading '0's in secNum.
+                secNum = str(int(secNum))
+
+                # Layout section number as 2 digits, with a leading 0, if needed.
+                newSec = secNum.rjust(2, '0')
+
+                if foundThrough:
+                    # If we've identified a elided list (e.g., 'Sections 3 - 9')...
+                    prevSec = wSectionsList[-1]
+                    # Take the secNum identified earlier this loop:
+                    start_of_list = int(secNum)
+                    # The the previously last-identified section:
+                    end_of_list = int(prevSec)
+                    correctOrder = True
+                    if start_of_list >= end_of_list:
+                        correctOrder = False
+                        stage_flags_to.append('nonSequen_sec')
+                        stage_flag_lines_to.append(
+                            ('nonSequen_sec',
+                             f'Sections {start_of_list} - {end_of_list}')
+                        )
+
+                    ########################################################
+                    # `start_of_list` and `end_of_list` variable names are
+                    # unintuitive. Here's an explanation:
+                    # The 'sections' list is being filled in reverse by this
+                    # algorithm, starting at the end of the search string
+                    # and running backwards. Thus, this particular loop,
+                    # which is attempting to _unpack "Sections 3 - 9", will
+                    # be fed into the sections list as [08, 07, 06, 05, 04,
+                    # 03]. (09 should already be in the list from the
+                    # previous loop.)  'start_of_list' refers to the
+                    # original text (i.e. in 'Sections 3 - 9', start_of_list
+                    # will be 3; end_of_list will be 9).
+                    ########################################################
+
+                    # vars a,b&c are the bounds (a&b) and incrementation (c)
+                    # of the range() for the secs in the elided list:
+                    # If the string is correctly 'Sections 3 - 9' (for example),
+                    # we use the default:
+                    a, b, c = end_of_list - 1, start_of_list - 1, -1
+                    # ... but if the string is 'sections 9 - 3' (i.e. wrong),
+                    # we use:
+                    if not correctOrder:
+                        a, b, c = end_of_list + 1, start_of_list + 1, 1
+
+                    for i in range(a, b, c):
+                        addSec = str(i).rjust(2, '0')
+                        if addSec in wSectionsList:
+                            stage_flags_to.append(f'dup_sec<{addSec}>')
+                            stage_flag_lines_to.append(
+                                (f'dup_sec<{addSec}>', f'Section {addSec}'))
+                        wSectionsList.append(addSec)
+                    foundThrough = False  # reset.
+
+                else:
+                    # Otherwise, if it's a standalone section (not the start
+                    #   of an elided list), we add it.
+                    # We check this new section to see if it's in EITHER
+                    #   sectionsList OR wSectionsList:
+                    if newSec in sectionsList or newSec in wSectionsList:
+                        stage_flags_to.append('dup_sec')
+                        stage_flag_lines_to.append(
+                            ('dup_sec', f'Section {newSec}'))
+                    wSectionsList.append(newSec)
+
+                # If we identified at least two sections, we need to check
+                # if the last one is the end of an elided list:
+                if PLSSParser._is_multisec(secs_mo):
+                    thru_mo = through_regex.search(secs_mo.group(6))
+                    # Check if we find 'through' (or equivalent symbol or
+                    # abbreviation) before this final section:
+                    if thru_mo is None:
+                        foundThrough = False
+                    else:
+                        foundThrough = True
+        wSectionsList.reverse()
+
+        return wSectionsList
+
+    def _findall_matching_tr(
+            self, text, layout=None, cache=True, stage_flags_to: list = None,
+            stage_flag_lines_to: list = None) -> list:
+        """
+        INTERNAL USE:
+
+        Find T&R's that appropriately match the layout. Returns a list
+        of tuples, each containing a T&R (as '000n000w' or fewer digits)
+        and its start and end position in the text.
+        :param text: The text in which to find matching Twp/Rge's.
+        :param layout: The pyTRS layout of the text. (Will be deduced if
+        not specified.)
+        :param cache: Whether to store the results to ``.parse_cache``.
+        (Defaults to True)
+        :param stage_flags_to: An optional list in which to stage
+        w_flags. If not specified, they will be discarded.
+        :param stage_flag_lines_to: An optional list in which to stage
+        w_flag_lines. If not specified, they will be discarded.
+        """
+
+        if not stage_flags_to:
+            stage_flags_to = []
+        if not stage_flag_lines_to:
+            stage_flag_lines_to = []
+
+        if layout not in _IMPLEMENTED_LAYOUTS:
+            layout = PLSSParser.deduce_layout(text=text)
+
+        wTRList = []
+        # A parsing index for text (marks where we're currently searching from):
+        i = 0
+        # j is the search-behind pos (indexed against the original text str):
+        j = 0
+        while True:
+            tr_mo = twprge_regex.search(text, pos=i)
+
+            # If there are no more T&R's in the text, end this loop.
+            if tr_mo is None:
+                break
+
+            # Move the parsing index forward to the start of this next matched T&R.
+            i = tr_mo.start()
+
+            # For most layouts we want to know what comes before this matched
+            # T&R to see if it is relevant for a NEW Tract, or if it's simply
+            # part of the description of another Tract (i.e., we probably
+            # don't want to pull the T&R or Section in "...less and except
+            # the wellbore of the Johnston #1 located in the NE/4NW/4 of
+            # Section 14, T154N-R97W" -- so we have to rule that out).
+
+            # We do that by looking behind our current match for context:
+
+            # We'll look up to this many characters behind i:
+            length_to_search_behind = 15
+            # ...but we only want to search back to the start of the text string:
+            if length_to_search_behind > i:
+                length_to_search_behind = i
+
+            # j is the search-behind pos (indexed against the original text str):
+            j = i - length_to_search_behind
+
+            # We also need to make sure there's only one section in the string,
+            # so loop until it's down to one section:
+            secFound = False
+            while True:
+                sec_mo = sec_regex.search(text[:i], pos=j)
+                if not sec_mo:
+                    # If no more sections were found, move on to the next step.
+                    break
+                else:
+                    # Otherwise, if we've found another sec, move the j-index
+                    # to the end of it
+                    j = sec_mo.end()
+                    secFound = True
+
+            # If we've found a section before our current T&R, then we need
+            # to check what's in between. For TRS_DESC and S_DESC_TR layouts,
+            # we want to rule out misc. interveners:
+            #       ','  'in'  'of'  'all of'  'all in'  (etc.).
+            # If we have such an intervening string, then this appears to be
+            # desc_STR layout -- ex. 'Section 1 of T154N-R97W'
+            interveners = ['in', 'of', ',', 'all of', 'all in', 'within', 'all within']
+            if (
+                    secFound
+                    and text[j:i].strip().lower() in interveners
+                    and layout in [TRS_DESC, S_DESC_TR]
+            ):
+                # In TRS_Desc and S_DESC_TR layouts specifically, this is
+                # NOT a T&R match for a new Tract.
+
+                # Move our parsing index to the end of the currently identified T&R.
+                # NOTE: the length of this tr_mo match is indexed against the text
+                # slice, so need to add it to i (which is indexed against the full
+                # text) to get the 'real' index
+                i = i + len(tr_mo.group())
+
+                # and append a warning flag that we've ignored this T&R:
+                ignoredTR = _compile_twprge_mo(tr_mo)
+                flag = 'TR_not_pulled<%s>' % ignoredTR
+                line = tr_mo.group()
+                stage_flags_to.append(flag)
+                stage_flag_lines_to.append((flag, line))
+                continue
+
+            # Otherwise, if there is NO intervener, or the layout is something
+            # other than TRS_DESC or S_DESC_TR, then this IS a match and we
+            # want to store it.
+            else:
+                wTRList.append((_compile_twprge_mo(tr_mo), i, i + len(tr_mo.group())))
+                # Move the parsing index to the end of the T&R that we just matched:
+                i = i + len(tr_mo.group())
+                continue
+
+        # Store to our parse_cache.
+        if cache:
+            self.parse_cache["all_twprge_matches"] = wTRList
+
+        return wTRList
+
+    def _segment_by_tr(self, text, layout=None, twprge_first=None):
+        """
+        INTERNAL USE:
+
+        Break the description into segments, based on previously
+        identified T&R's that match our description layout via the
+        _findall_matching_tr() function. Returns 2 lists: a list of text
+        blocks AND a list of discarded text blocks.
+
+        :param layout: Which layout to use. If not specified, will
+        deduce.
+        :param twprge_first: Whether it's a layout where Twp/Rge comes
+        first (i.e. 'TRS_desc' or 'TR_desc_S'). If not specified, will
+        deduce.
+        """
+
+        if layout not in _IMPLEMENTED_LAYOUTS:
+            layout = PLSSParser.deduce_layout(text=text)
+
+        if not isinstance(twprge_first, bool):
+            if layout in [TRS_DESC, TR_DESC_S]:
+                twprge_first = True
+            else:
+                twprge_first = False
+
+        # Search for all T&R's that match the layout requirements. (We
+        # do not store the flags, nor cache the results.)
+        wTRList = self._findall_matching_tr(text=text, layout=layout, cache=False)
+
+        if not wTRList:
+            # If no T&R's had been matched, return the text block as single
+            # element in a list (what would have been `trTextBlocks`), and
+            # another empty list (what would have been `discardTextBlocks`)
+            return [text], []
+
+        trStartPoints = []
+        trEndPoints = []
+        trList = []
+        trTextBlocks = []
+        discardTextBlocks = []
+        for TRtuple in wTRList:
+            trList.append(TRtuple[0])
+            trStartPoints.append(TRtuple[1])
+            trEndPoints.append(TRtuple[2])
+
+        if twprge_first:
+            for i in range(len(trStartPoints)):
+                if i == 0 and trStartPoints[i] != 0:
+                    # If the first element is not 0 (i.e. T&R right at the
+                    # start), this is discard text.
+                    discardTextBlocks.append(text[:trStartPoints[i]])
+                # Append each text_block
+                new_desc = text[trStartPoints[i]:]
+                if i + 1 != len(trStartPoints):
+                    new_desc = text[trStartPoints[i]:trStartPoints[i + 1]]
+                trTextBlocks.append(
+                    (trList.pop(0), PLSSParser._cleanup_desc(new_desc)))
+
+        else:
+            for i in range(len(trEndPoints)):
+                if i + 1 == len(trEndPoints) and trEndPoints[i] != len(text):
+                    # If the last element is not the final character in the
+                    # string (i.e. T&R ends at text end), discard text
+                    discardTextBlocks.append(text[trEndPoints[i]:])
+                # Append each text_block
+                new_desc = text[:trEndPoints[i]]
+                if i != 0:
+                    new_desc = text[trEndPoints[i - 1]:trEndPoints[i]]
+                trTextBlocks.append(
+                    (trList.pop(0), PLSSParser._cleanup_desc(new_desc)))
+
+        return trTextBlocks, discardTextBlocks
+
+    @staticmethod
+    def _compile_twprge_mo(mo, default_ns=None, default_ew=None):
+        """
+        INTERNAL USE:
+        Take a match object (`mo`) of an identified T&R, and return a string
+        in the format of '000n000w' (i.e. between 1 and 3 digits for
+        township and for range numbers).
+        """
+
+        if not default_ns:
+            default_ns = PLSSDesc.MASTER_DEFAULT_NS
+
+        if not default_ew:
+            default_ew = PLSSDesc.MASTER_DEFAULT_EW
+
+        twpNum = mo[2]
+        # Clean up any leading '0's in twpNum.
+        # (Try/except is used to handle twprge_ocr_scrub_regex mo's, which
+        # can contain alpha characters in `twpNum`.)
+        try:
+            twpNum = str(int(twpNum))
+        except:
+            pass
+
+        # if mo[4] is None:
+        if mo.group(3) == '':
+            ns = default_ns
+        else:
+            ns = mo[3][0].lower()
+
+        if len(mo.groups()) > 10:
+            # Only some of the `twprge_regex` variations generate this many
+            # groups. Those that do may have Rge number in groups 6 /or/ 12,
+            # and range direction in group 7 /or/ 13.
+            # So we handle those ones with extra if/else...
+            if mo[12] is None:
+                rgeNum = mo[6]
+            else:
+                rgeNum = mo[12]
+        else:
+            rgeNum = mo[6]
+
+        # --------------------------------------
+        # Clean up any leading '0's in rgeNum.
+        # (Try/except is used to handle twprge_ocr_scrub_regex mo's, which
+        # can contain alpha characters in `rgeNum`.)
+        try:
+            rgeNum = str(int(rgeNum))
+        except ValueError:
+            pass
+
+        if len(mo.groups()) > 10:
+            # Only some of the `twprge_regex` variations generate this many
+            # groups. Those that do may have Rge number in groups 6 /or/ 12,
+            # and range direction in group 7 /or/ 13.
+            # So we handle those ones with extra if/else...
+            if mo[13] is None:
+                if mo[7] in ['', None]:
+                    ew = default_ew
+                else:
+                    ew = mo[7][0].lower()
+            else:
+                ew = mo[13][0].lower()
+        else:
+            if mo[7] in ['', None]:
+                ew = default_ew
+            else:
+                ew = mo[7][0].lower()
+
+        return twpNum + ns + rgeNum + ew
+
+    @staticmethod
+    def _compile_sec_mo(sec_mo):
+        """
+        INTERNAL USE
+        Takes a match object (mo) of an identified multiSection, and
+        returns a string in the format of '00' for individual sections and a
+        list ['01', '02', ...] for multiSections
+        """
+        if _is_multisec(sec_mo):
+            multiSecParseBagObj = _unpack_sections(sec_mo.group())
+            return multiSecParseBagObj.sec_list  # Pull out the sec_list
+        elif _is_singlesec(sec_mo):
+            return _get_last_sec(sec_mo).rjust(2, '0')
+        else:
+            return
+
+    @staticmethod
+    def _cleanup_desc(text):
+        """
+        INTERNAL USE:
+        Clean up common 'artifacts' from parsing--especially layouts other
+        than TRS_DESC. (Intended to be run only on post-parsing .desc
+        attributes of Tract objects.)
+        """
+
+        # Run this loop until the input str matches the output str.
+        while True:
+            text1 = text
+            text1 = text1.lstrip('.')
+            text1 = text1.strip(',;:-–—\t\n ')
+            cull_list = [' the', ' all in', ' all of', ' of', ' in', ' and']
+            # Check to see if text1 ends with each of the strings in the
+            # cull_list, and if so, slice text1 down accordingly.
+            for cull_str in cull_list:
+                cull_length = len(cull_str)
+                if text1.lower().endswith(cull_str):
+                    text1 = text1[:-cull_length]
+            if text1 == text:
+                break
+            text = text1
+        return text
+
+    @staticmethod
+    def _is_multisec(multisec_mo) -> bool:
+        """
+        INTERNAL USE:
+        Determine whether a multiSec_regex match object is a multiSec.
+        """
+        return multisec_mo.group(12) is not None
+
+    @staticmethod
+    def _is_singlesec(multisec_mo) -> bool:
+        """
+        INTERNAL USE:
+        Determine whether a multiSec_regex match object is a single section.
+        """
+        return multisec_mo.group(12) is None and multisec_mo.group(5) is not None
+
+    @staticmethod
+    def _get_last_sec(multisec_mo) -> str:
+        """
+        INTERNAL USE:
+        Extract the right-most section in a multiSec_regex match object.
+        Returns None if no match.
+        """
+        if PLSSParser._is_multisec(multisec_mo):
+            return multisec_mo.group(12)
+        elif PLSSParser._is_singlesec(multisec_mo):
+            return multisec_mo.group(5)
+        else:
+            return None
+
+    @staticmethod
+    def _is_plural_singlesec(multisec_mo) -> bool:
+        """
+        INTERNAL USE:
+        Determine if a multiSec_regex match object is a single section
+        but pluralized (ex. 'Sections 14: ...').
+        """
+        # Only a single section in this match...
+        # But there's a plural "Sections" anyway!
+        if (PLSSParser._is_singlesec(multisec_mo)
+                and PLSSParser.multisec_mo.group(4) is not None):
+            return multisec_mo.group(4).lower() == 's'
+        else:
+            return False
+
+    @staticmethod
+    def _sec_ends_with_colon(multisec_mo) -> bool:
+        """
+        INTERNAL USE:
+        Determine whether a multiSec_regex match object ends with a colon.
+        """
+        return multisec_mo.group(13) == ':'
 
     def gen_flags(self, text):
         pass
@@ -6517,7 +7270,7 @@ class PLSSPreprocessor:
                         i = tr_mo.end()
                         continue
 
-                clean_twprge = _preprocess_twprge_mo(
+                clean_twprge = PLSSPreprocessor._preprocess_twprge_mo(
                     tr_mo, default_ns=default_ns, default_ew=default_ew)
 
                 # Add to the w_pp_desc all of the text since the last
@@ -6564,3 +7317,41 @@ class PLSSPreprocessor:
         self.text = text
 
         return text
+
+    @staticmethod
+    def _preprocess_twprge_mo(tr_mo, default_ns=None, default_ew=None) -> str:
+        """
+        INTERNAL USE:
+        Take a T&R match object (tr_mo) and check for missing 'T', 'R',
+        and and if N/S and E/W are filled in. Will fill in any missing
+        elements (using default_ns and default_ew as necessary) and
+        outputs a string in the format T000N-R000W (or fewer digits for
+        twp & rge), which is to be swapped into the source text where
+        the tr_mo was originally matched, in order to clean up the
+        preprocessed description.
+        """
+
+        if not default_ns:
+            default_ns = PLSSDesc.MASTER_DEFAULT_NS
+
+        if not default_ew:
+            default_ew = PLSSDesc.MASTER_DEFAULT_EW
+
+        clean_tr = PLSSParser._compile_twprge_mo(
+            tr_mo, default_ns=default_ns, default_ew=default_ew)
+        twp, ns, rge, ew = decompile_twprge(clean_tr)
+
+        # Maintain the first character, if it's a whitespace.
+        first = ''
+        if tr_mo.group().startswith(('\n', '\t', ' ')):
+            first = tr_mo.group()[0]
+
+        twp = _ocr_scrub_alpha_to_num(twp)  # twp number
+        rge = _ocr_scrub_alpha_to_num(rge)  # rge number
+
+        # Maintain the last character, if it's a whitespace.
+        last = ''
+        if tr_mo.group().endswith(('\n', '\t', ' ')):
+            last = tr_mo.group()[-1]
+
+        return f"{first}T{twp}{ns.upper()}-R{rge}{ew.upper()}{last}"
