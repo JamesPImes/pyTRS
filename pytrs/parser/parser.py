@@ -262,14 +262,10 @@ class PLSSDesc:
     called automatically:
     .deduce_layout() -- Deduces the layout of the description, if it was
         not dictated at init, or otherwise.
-    ._deduce_segment_layout() -- (Static method)  Deduces the layout of a
-        segment of the description.
     .preprocess() -- Attempt to scrub the original description of common
         flaws, typos, etc. into a format more consistently understood by
-        the parser.
-    .static_preprocess() -- (Static method)  Same as .preprocess(), but
-        processes text without saving any data.
-    .gen_flags() -- Scour the text for potential flag-raising issues.
+        the parser. (Will be done automatically when the text gets
+        parsed.)
     """
 
     NORTH = 'n'
@@ -325,14 +321,10 @@ class PLSSDesc:
         # The source of this PLSS description:
         self.source = source
 
-        # The layout of this PLSS description -- Initially None, but will be
-        # set to one of the values in the _IMPLEMENTED_LAYOUTS list before
-        # __init__() returns -- either by kwarg `layout=`, or by
-        # `set_config()`:
+        # The layout of this PLSS description -- Initially None, but may
+        # be set to one of the values in the _IMPLEMENTED_LAYOUTS tuple
+        # before __init__() returns, if specified in `config`.
         self.layout = None
-
-        # Whether the layout was specified at initialization.
-        self.layout_specified = False
 
         # If a T&R is identified without 'North/South' specified, or without
         # 'East/West' specified, fall back on default_ns and default_ew,
@@ -410,43 +402,24 @@ class PLSSDesc:
         self.e_flags = []
         # list of 2-tuples that caused error flags (error flag, text string)
         self.e_flag_lines = []
-        # Track whether the preprocess has been completed
-        self.preprocess_done = False
 
         # If init_parse_qq specified as init parameter, it will override
         # `config` parameter.
         #    ex:   config='n,w,init_parse_qq', init_parse_qq=False   ...
         #       -> Will NOT parse lots/QQs at init.
-        if isinstance(init_parse_qq, bool):
-            self.init_parse_qq = init_parse_qq
+        if init_parse_qq:
+            self.init_parse_qq = True
 
         # If kwarg-specified init_parse, that will override config input
         #   (similar to init_parse_qq)
-        if isinstance(init_parse, bool):
-            self.init_parse = init_parse
+        if init_parse:
+            self.init_parse = True
 
-        ocr_scrub_now = False
-        if self.ocr_scrub:
-            ocr_scrub_now = True
-
-        # Optionally can preprocess the desc when the object is initiated
-        # (on by default).
-        if self.init_preprocess or ocr_scrub_now:
-            self.preprocess(commit=True, ocr_scrub=ocr_scrub_now)
-        else:
-            # Preprocessed descrip set to .orig_desc if preprocess is declined
-            self.pp_desc = self.orig_desc
+        # Preprocessed description set to .orig_desc until parsed.
+        self.pp_desc = self.orig_desc
 
         # If layout was specified as kwarg, use that:
-        if layout is not None:
-            self.layout = layout
-            self.layout_specified = True
-
-        # If layout has not yet been /validly/ set by the user or
-        # set_config(), deduce it:
-        if self.layout not in _IMPLEMENTED_LAYOUTS:
-            self.layout = self.deduce_layout(commit=True)
-            self.layout_specified = False
+        self.layout = layout
 
         # Compile and store the final Config file (for passing down to
         # Tract objects)
@@ -456,6 +429,9 @@ class PLSSDesc:
         # (off by default).
         if self.init_parse or self.init_parse_qq:
             self.parse(commit=True)
+
+        elif self.init_preprocess:
+            self.preprocess()
 
     def __str__(self):
         pt = len(self.parsed_tracts)
@@ -518,36 +494,6 @@ class PLSSDesc:
                 setattr(self, attrib, value)
                 if attrib == 'layout':
                     self.layout_specified = True
-
-    def _unpack_pb(self, target_pb):
-        """
-        Unpack (append or set) the relevant attributes of the
-        `target_pb` into self's attributes.
-
-        :param target_pb: A ParseBag object containing data from
-        the parse.
-        """
-
-        if not isinstance(target_pb, ParseBag):
-            raise TypeError("Can only `_unpack_pb()` a pytrs.ParseBag object.")
-
-        if target_pb.desc_is_flawed:
-            self.desc_is_flawed = True
-
-        if len(target_pb.w_flags) > 0:
-            self.w_flags.extend(target_pb.w_flags)
-
-        if len(target_pb.e_flags) > 0:
-            self.e_flags.extend(target_pb.e_flags)
-
-        if len(target_pb.w_flag_lines) > 0:
-            self.w_flag_lines.extend(target_pb.w_flag_lines)
-
-        if len(target_pb.e_flag_lines) > 0:
-            self.e_flag_lines.extend(target_pb.e_flag_lines)
-
-        if len(target_pb.parsed_tracts) > 0:
-            self.parsed_tracts.extend(target_pb.parsed_tracts)
 
     def parse_old(
             self, text=None, layout=None, clean_up=None, init_parse_qq=None,
@@ -894,7 +840,7 @@ class PLSSDesc:
         Tracts into lots and QQs.) Whether to break halves into
         quarters, even if we're beyond the qq_depth_min. (False by
         default, but can be configured at init.)
-        :return: Returns a pytrs.TractList object (a subclass of
+        :return: Returns a ``pytrs.TractList`` object (a subclass of
         built-in ``list``) of all of the resulting ``pytrs.Tract``
         objects.
         """
@@ -960,8 +906,13 @@ class PLSSDesc:
         )
 
         if commit:
-            # Wipe the existing parsed_tracts, if any.
+            # Wipe the existing parsed_tracts, etc., if any.
             self.parsed_tracts = TractList()
+            self.w_flags = []
+            self.e_flags = []
+            self.w_flag_lines = []
+            self.e_flag_lines = []
+            self.desc_is_flawed = False
 
             # Unpack each of the 'unpackable' attributes.
             for attribute in parser.UNPACKABLES:
@@ -973,36 +924,7 @@ class PLSSDesc:
 
         return parser.parsed_tracts
 
-    @staticmethod
-    def _deduce_segment_layout(text, candidates=None, deduce_by='TRS_order'):
-        """
-        INTERNAL USE:
-        Deduce the layout of a *segment* of a description, without
-        committing any results.
-
-        :param text: The text, whose layout is to be deduced.
-        :param candidates: A list of which layouts are to be considered.
-        If passed as `None` (the default), it will consider all
-        currently implemented meaningful layouts (i.e. 'TRS_desc',
-        'desc_STR', 'S_desc_TR', and 'TR_desc_S'), but will also
-        consider 'copy_all' if an apparently flawed description is
-        found. If specifying fewer than all candidates, ensure that at
-        least one layout from _IMPLEMENTED_LAYOUTS is in the list.
-        (Strings not in _IMPLEMENTED_LAYOUTS will have no effect.)
-        :param deduce_by: The preferred deduction algorithm. (Currently
-        only uses 'TRS_order' -- i.e. basically, the apparent order of
-        the Twp, Rge, Sec, and description block.)
-        :return: Returns the algorithm's best guess at the layout (i.e.
-        a string).
-        """
-
-        return PLSSDesc.deduce_layout(
-            self=None, text=text, candidates=candidates, deduce_by=deduce_by,
-            commit=False)
-
-    def deduce_layout(
-            self, text=None, candidates=None, deduce_by='TRS_order',
-            commit=True):
+    def deduce_layout(self, candidates=None):
         """
         Deduce the layout of the description.
 
@@ -1017,119 +939,15 @@ class PLSSDesc:
         found. If specifying fewer than all candidates, ensure that at
         least one layout from _IMPLEMENTED_LAYOUTS is in the list.
         (Strings not in _IMPLEMENTED_LAYOUTS will have no effect.)
-        :param deduce_by: The preferred deduction algorithm. (Currently
-        only uses 'TRS_order' -- i.e. basically, the apparent order of
-        the Twp, Rge, Sec, and description block.)
-        :param commit: Whether to store the guessed layout to
-        `self.layout`.
         :return: Returns the algorithm's best guess at the layout (i.e.
         a string).
         """
 
-        if text is None:
-            text = self.pp_desc
-
-        if not isinstance(candidates, list):
-            candidates = [TRS_DESC, DESC_STR, S_DESC_TR, TR_DESC_S]
-
-        try_TRS_desc = TRS_DESC in candidates
-        try_desc_STR = DESC_STR in candidates
-        try_S_desc_TR = S_DESC_TR in candidates
-        try_TR_desc_S = TR_DESC_S in candidates
-        try_subdivision = 'subdivision' in candidates
-
-        if deduce_by == 'demerits':
-            # Not yet ready for deployment. Fall back to 'TRS_order'.
-            return self.deduce_layout(
-                text=text, candidates=candidates, deduce_by='TRS_order',
-                commit=commit)
-
-        else:
-            # Default to 'TRS_order' (i.e. check whether a Section comes
-            # before a T&R, or vice versa). Strip out whitespace for this
-            # (mainly to avoid false misses in S_DESC_TR).
-
-            # we use the noNum version of the sec_regex here
-            sec_mo = noNum_sec_regex.search(text.strip())
-            tr_mo = twprge_broad_regex.search(text.strip())
-
-            if sec_mo is None:
-                # If we find no Sections, best guess is it's a
-                # subdivision (as long as that's an option).
-                if try_subdivision:
-                    layoutGuess = 'subdivision'
-                    if commit:
-                        self.layout = layoutGuess
-                    return layoutGuess
-                else:
-                    # If subdivision isn't option, default to COPY_ALL,
-                    # as no identifiable section is an insurmountable flaw
-                    layoutGuess = COPY_ALL
-                    if commit:
-                        self.layout = layoutGuess
-                    return layoutGuess
-
-            if tr_mo is None:
-                # If found no T&R's, default to COPY_ALL because desc is
-                # likely flawed.
-                layoutGuess = COPY_ALL
-                if commit:
-                    self.layout = layoutGuess
-                return layoutGuess
-
-            # If the first identified section comes before the first
-            # identified T&R, then it's probably DESC_STR or S_DESC_TR:
-            if sec_mo.start() < tr_mo.start():
-                if try_S_desc_TR:
-                    # This is such an unlikely layout, we give it very
-                    # limited room for error. If the section comes first
-                    # in the description, we should expect it VERY early
-                    # in the text:
-                    if sec_mo.start() <= 1:
-                        layoutGuess = S_DESC_TR
-                    else:
-                        layoutGuess = DESC_STR
-                else:
-                    layoutGuess = DESC_STR
-            else:
-                # If T&R comes before Section, it's most likely TRS_DESC,
-                # but could also be TR_DESC_S. Check how many characters
-                # appear between T&R and Sec, and decide whether it's
-                # TR_DESC_S or TRS_DESC, based on that.
-                stringBetween = text.strip()[tr_mo.end():sec_mo.start()].strip()
-                if len(stringBetween) >= 4 and try_TR_desc_S:
-                    layoutGuess = TR_DESC_S
-                else:
-                    layoutGuess = TRS_DESC
-
-        if commit:
-            self.layout = layoutGuess
-
-        return layoutGuess
-
-    @staticmethod
-    def static_preprocess(text, default_ns='n', default_ew='w', ocr_scrub=False):
-        """
-        Run the description preprocessor on text without storing any
-        data / objects.
-
-        :param text: The text (string) to be preprocessed.
-        :param default_ns: How to interpret townships for which direction
-        was not specified -- i.e. either 'n' or 's'. (Defaults to 'n')
-        :param default_ew: How to interpret ranges for which direction
-        was not specified -- i.e. either 'e' or 'w'. (Defaults to 'w')
-        :param ocr_scrub: Whether to try to iron out common OCR
-        'artifacts'. May cause unintended changes. (Defaults to `False`)
-        :return: The preprocessed string.
-        """
-
-        dummyObj = PLSSDesc(text, config='preprocess.False')
-        return dummyObj.preprocess(
-            default_ns=default_ns, default_ew=default_ew, ocr_scrub=ocr_scrub,
-            commit=False)
+        text = PLSSPreprocessor(self.orig_desc, ocr_scrub=self.ocr_scrub)
+        return PLSSParser.deduce_layout(text, candidates=candidates)
 
     def preprocess(
-            self, text=None, default_ns=None, default_ew=None, commit=True,
+            self, default_ns=None, default_ew=None, commit=True,
             ocr_scrub=None) -> str:
         """
         Preprocess the PLSS description to iron out common kinks in
@@ -1146,14 +964,14 @@ class PLSSDesc:
         :param ocr_scrub: Whether to try to iron out common OCR
         'artifacts'. May cause unintended changes. (Defaults to
         `self.ocr_scrub`, which is `False` unless otherwise specified.)
-        :param commit: Whether to store the resluts to `self.pp_desc`.
-        (Defaults to `True`)
+        :param commit: Whether to store the results to `self.pp_desc`.
+        (Defaults to `True`) NOTE: Regardless whether committed, the
+        description will be preprocessed (again) when parsed.
         :return: The preprocessed string.
         """
 
         # Defaults to pulling the text from the orig_desc of the object:
-        if text is None:
-            text = self.orig_desc
+        text = self.orig_desc
 
         if default_ns is None:
             default_ns = self.default_ns
@@ -1164,181 +982,13 @@ class PLSSDesc:
         if ocr_scrub is None:
             ocr_scrub = self.ocr_scrub
 
-        # Look for T&R's in original text (for checking if we fix any
-        # during preprocess, to raise a wFlag)
-        cleanTR_list = find_twprge(text)
-
-        # Run each of the prepro regexes over the text, each working on
-        # the last-prepro'd version of the text. Swaps in the cleaned up
-        # TR (format 'T000N-R000W') for each T&R, every time.
-        ppRegexes = [
-            twprge_regex, preproTR_noNSWE_regex, preproTR_noR_noNS_regex,
-            preproTR_noT_noWE_regex, twprge_pm_regex
-        ]
-        if ocr_scrub:
-            # This invites potential mis-matches, so it is not included
-            # by default. Turn on with `ocr_scrub=True` kwarg, or at init
-            # with `config='ocr_scrub'`.
-            ppRegexes.insert(0, twprge_ocr_scrub_regex)
-
-        for ppRegex in ppRegexes:
-            i = 0
-            # working preprocessed description (gets reconstructed every loop):
-            w_pp_desc = ''
-            while True:
-                searchTextBlock = text[i:]
-                ppTr_mo = ppRegex.search(searchTextBlock)
-
-                if ppTr_mo is None:
-                    # If we've found no more T&R's, append the remaining
-                    # text_block and end the loop
-                    w_pp_desc = w_pp_desc + searchTextBlock
-                    break
-
-                # Need some additional context to rule out 'Lots 6, 7, East'
-                # as matching as "T6S-R7E" (i.e. the 'ts' in 'Lots' as being
-                # picked up as 'Township'):
-                if ppRegex == preproTR_noR_noNS_regex:
-                    lk_back = 3  # We'll look behind this many characters
-                    if lk_back > ppTr_mo.start() + i:
-                        lk_back = ppTr_mo.start() + i
-
-                    # Get a context string containing that many characters
-                    # behind, plus a couple ahead. Will look for "Lot" or "Lots"
-                    # (allowing for slight typo) in that string:
-                    cntxt_str = text[i + ppTr_mo.start() - lk_back: i + ppTr_mo.start() + 2]
-                    lot_check_mo = lots_context_regex.search(cntxt_str)
-                    if lot_check_mo is not None:
-                        # If we matched, then we're dealing with a false
-                        # T&R match, and we need to move on.
-                        w_pp_desc = w_pp_desc + searchTextBlock[:ppTr_mo.end()]
-                        i = i + ppTr_mo.end()
-                        continue
-
-                cleanTR = _preprocess_twprge_mo(
-                    ppTr_mo, default_ns=default_ns, default_ew=default_ew)
-
-                # Add to the w_pp_desc all of the searchTextBlock, up to the
-                # identified ppTr_mo, and add the cleanTR, with some spaces
-                # around it, just to keep it cleanly delineated from
-                # surrounding text
-                w_pp_desc = w_pp_desc + searchTextBlock[:ppTr_mo.start()] + ' ' + cleanTR + ' '
-
-                # Move the search index to the end of the ppTr_mo. Note
-                # that ppTr_mo is indexed against the searchTextBlock,
-                # so we have to add its .end() to i (which is indexed
-                # against the source text)
-                i = i + ppTr_mo.end()
-
-            text = w_pp_desc
-
-        # Clean up white space:
-        text = text.strip()
-        while True:
-            # Scrub until text at start of loop == text at end of loop.
-            text1 = text
-
-            # Forbid consecutive spaces
-            text1 = text1.replace('  ', ' ')
-            # Maximum of two linebreaks in a row
-            text1 = text1.replace('\n\n\n', '\n\n')
-            # Remove spaces at the start of a new line
-            text1 = text1.replace('\n ', '\n')
-            # Remove tabs at the start of a new line
-            text1 = text1.replace('\n\t', '\n')
-            if text1 == text:
-                break
-            text = text1
-
-        # Look for T&R's in the preprocessed text
-        afterPrepro_TR_list = find_twprge(text)
-
-        # Remove from the post-preprocess TR list each of the elements
-        # in the list generated from the original text.
-        for tr in cleanTR_list:
-            if tr in afterPrepro_TR_list:
-                afterPrepro_TR_list.remove(tr)
+        pp_desc = PLSSPreprocessor.static_preprocess(
+            text, default_ns, default_ew, ocr_scrub)
 
         if commit:
-            self.pp_desc = text
-            if len(afterPrepro_TR_list) > 0:
-                # If any T&R's still remain in the post-pp_desc-generated
-                # T&R list...
-                self.w_flags.append(
-                    'T&R_fixed<%s>' % '//'.join(afterPrepro_TR_list))
-                # Append a tuple to the w_flag_lines list:
-                self.w_flag_lines.append(
-                    (f"T&R_fixed<{'//'.join(afterPrepro_TR_list)}>",
-                     '//'.join(afterPrepro_TR_list)))
-            self.preprocess_done = True
+            self.pp_desc = pp_desc
 
-        return text
-
-    def gen_flags(self, text=None, commit=False):
-        """
-        Return a ParseBag object containing w_flags, w_flag_lines,
-        e_flags, and eFlagLine, and maybe desc_is_flawed. Each element
-        in w_flag_lines or e_flag_lines is a tuple, the first element being
-        the warning or error flag, and the second element being the line
-        that raised the flag.  If parameter `commit=True` is passed (off
-        by default), it will commit them to the PLSSDesc object's
-        attributes--which is probably already done by the .parse()
-        method.
-        """
-
-        if text is None:
-            text = self.orig_desc
-
-        flag_pb = ParseBag(parent_type='PLSSDesc')
-
-        lines = text.split('\n')
-
-        ################################################################
-        # Error flags
-        ################################################################
-
-        # Preprocess the text, but only to make sure at least one T&R exists
-        ppText = self.preprocess(text=text, commit=False)
-        if len(find_twprge(ppText)) == 0:
-            flag_pb.e_flags.append('noTR')
-            flag_pb.e_flag_lines.append(
-                ('noTR', 'No T&R\'s identified!'))
-            flag_pb.desc_is_flawed = True
-
-        # For everything else, we check against the orig_desc
-        if len(find_sec(text)) == 0 and len(find_multisec(text)) == 0:
-            flag_pb.e_flags.append('noSection')
-            flag_pb.e_flag_lines.append(
-                ('noSection', 'No Sections identified!'))
-            flag_pb.desc_is_flawed = True
-
-        ################################################################
-        # Warning flags
-        ################################################################
-
-        # A few warning flag regexes, and the appropriate flag to
-        # generate if one or more matches are found.
-        wflag_regexes = [
-            (isfa_regex, "isfa"),
-            (less_except_regex, "except"),
-            (including_regex, "including")
-        ]
-
-        def check_for_wflag(line, rgx, flag):
-            if len(rgx.findall(line)) == 0:
-                return
-            if flag not in flag_pb.w_flags:
-                flag_pb.w_flags.append(flag)
-            flag_pb.w_flag_lines.append((flag, line))
-
-        for line in lines:
-            for rgx, flag in wflag_regexes:
-                check_for_wflag(line, rgx, flag)
-
-        if commit:
-            self._unpack_pb(flag_pb)
-
-        return flag_pb
+        return pp_desc
 
     def tracts_to_dict(self, *attributes) -> list:
         """
@@ -5724,8 +5374,6 @@ class PLSSParser:
 
         self.current_layout = layout
 
-        flag_text = self.orig_desc
-
         if layout not in _IMPLEMENTED_LAYOUTS:
             raise ValueError(f"Non-implemented layout '{layout}'")
 
@@ -5750,9 +5398,6 @@ class PLSSParser:
         if qq_depth_max is None:
             qq_depth_max = self.qq_depth_max
 
-        # ParseBag obj for storing the data generated throughout.
-        bigPB = ParseBag(parent_type='PLSSDesc')
-
         if len(text) == 0 or not isinstance(text, str):
             self.e_flags.append('noText')
             self.e_flag_lines.append(
@@ -5774,8 +5419,8 @@ class PLSSParser:
 
             # Append any discard text to the w_flags
             for txt_block in discard_txt_blox:
-                bigPB.w_flags.append(f"Unused_desc_<{txt_block}>")
-                bigPB.w_flag_lines.append(
+                self.w_flags.append(f"Unused_desc_<{txt_block}>")
+                self.w_flag_lines.append(
                     (f"Unused_desc_<{txt_block}>", txt_block))
 
         else:
@@ -5822,7 +5467,7 @@ class PLSSParser:
 
         # Check for warning flags (and a couple error flags).
         # Note that .gen_flags() is being run on `flag_text`, not `text`.
-        self.gen_flags(text=flag_text)
+        self.gen_flags()
 
         # We want each Tract to have the entire PLSSDesc's warnings,
         # because the program can't automatically tell which issues
@@ -5975,8 +5620,8 @@ class PLSSParser:
         """
         INTERNAL USE:
 
-        Parse a segment of text into pytrs.Tract objects. Returns a
-        pytrs.ParseBag object.
+        Parse a segment of text into pytrs.Tract objects. Stores the
+        results in the appropriate attribute.
 
         :param text_block: The text to be parsed.
         :param layout: The layout to be assumed. If not specified,
@@ -6001,9 +5646,10 @@ class PLSSParser:
                 <not specified> --> no match on first pass; if no other
                             sections are identified, will be matched on
                             second pass.
-        :param handed_down_config: A Config object to be passed to any Tract
-        object that is created, so that they are configured identically to
-        a parent PLSSDesc object (if any). Defaults to None.
+        :param handed_down_config: A ``Config`` object to be passed to
+        any ``Tract`` object that is created, so that they are
+        configured identically to a parent ``PLSSDesc`` object. Defaults
+        to None.
         :param qq_depth_min: (Optional, and only relevant if parsing
         Tracts into lots and QQs.) An int, specifying the minimum depth
         of the parse. If not set here, will default to settings from
@@ -6031,7 +5677,7 @@ class PLSSParser:
         Tracts into lots and QQs.) Whether to break halves into
         quarters, even if we're beyond the qq_depth_min. (False by
         default, but can be configured at init.)
-        :return: a pytrs.ParseBag object with the parsed data.
+        :return: None (stores the results to the appropriate attributes)
         """
 
         ####################################################################
@@ -6065,7 +5711,7 @@ class PLSSParser:
         ####################################################################
 
         if layout not in _IMPLEMENTED_LAYOUTS:
-            layout = PLSSParser.safe_deduce_layout(text_block, override=True)
+            layout = self.safe_deduce_layout(text_block, override=True)
 
         if require_colon is None:
             require_colon = _DEFAULT_COLON
@@ -6670,9 +6316,9 @@ class PLSSParser:
         INTERNAL USE:
 
         Pull from the text all sections and 'multi-sections' that are
-        appropriate to the description layout. Returns a ParseBag object
-        with ad-hoc attributes `.sec_list` and `.multiSecList`.
-        :param require_colon: Same effect as in PLSSDesc.parse()`
+        appropriate to the description layout. Stores the results in the
+        ``parse_cache``.
+        :param require_colon: Same effect as in PLSSParser.parse()`
         """
 
         # require_colon=True will pass over sections that are NOT followed by
@@ -6871,7 +6517,7 @@ class PLSSParser:
         if PLSSParser._is_multisec(sec_mo):
             return PLSSParser._unpack_sections(sec_mo.group())
         elif PLSSParser._is_singlesec(sec_mo):
-            return _get_last_sec(sec_mo).rjust(2, '0')
+            return PLSSParser._get_last_sec(sec_mo).rjust(2, '0')
         else:
             return
 
@@ -6919,7 +6565,7 @@ class PLSSParser:
 
             else:
                 # Pull the right-most section number (still as a string):
-                secNum = _get_last_sec(secs_mo)
+                secNum = PLSSParser._get_last_sec(secs_mo)
 
                 if PLSSParser._is_singlesec(secs_mo):
                     # We can skip the next loop after we've found the last section.
@@ -7285,7 +6931,7 @@ class PLSSParser:
             multiSecParseBagObj = _unpack_sections(sec_mo.group())
             return multiSecParseBagObj.sec_list  # Pull out the sec_list
         elif _is_singlesec(sec_mo):
-            return _get_last_sec(sec_mo).rjust(2, '0')
+            return PLSSParser._get_last_sec(sec_mo).rjust(2, '0')
         else:
             return
 
@@ -7342,8 +6988,7 @@ class PLSSParser:
             return multisec_mo.group(12)
         elif PLSSParser._is_singlesec(multisec_mo):
             return multisec_mo.group(5)
-        else:
-            return None
+        return None
 
     @staticmethod
     def _is_plural_singlesec(multisec_mo) -> bool:
@@ -7357,8 +7002,7 @@ class PLSSParser:
         if (PLSSParser._is_singlesec(multisec_mo)
                 and PLSSParser.multisec_mo.group(4) is not None):
             return multisec_mo.group(4).lower() == 's'
-        else:
-            return False
+        return False
 
     @staticmethod
     def _sec_ends_with_colon(multisec_mo) -> bool:
@@ -7368,8 +7012,66 @@ class PLSSParser:
         """
         return multisec_mo.group(13) == ':'
 
-    def gen_flags(self, text):
-        pass
+    def gen_flags(self):
+        """
+                Return a ParseBag object containing w_flags, w_flag_lines,
+                e_flags, and eFlagLine, and maybe desc_is_flawed. Each element
+                in w_flag_lines or e_flag_lines is a tuple, the first element being
+                the warning or error flag, and the second element being the line
+                that raised the flag.  If parameter `commit=True` is passed (off
+                by default), it will commit them to the PLSSDesc object's
+                attributes--which is probably already done by the .parse()
+                method.
+                """
+        text = self.orig_desc
+        preprocessed = self.text
+        flag_pb = ParseBag(parent_type='PLSSDesc')
+
+        lines = text.split('\n')
+
+        ################################################################
+        # Error flags
+        ################################################################
+
+        # We use the preprocessed text only to make sure at least one
+        # T&R exists
+        if not find_twprge(preprocessed):
+            self.e_flags.append('noTR')
+            self.e_flag_lines.append(
+                ('noTR', 'No T&R\'s identified!'))
+            self.desc_is_flawed = True
+
+        # For everything else, we check against the orig_desc
+        if len(find_sec(text)) == 0 and len(find_multisec(text)) == 0:
+            self.e_flags.append('noSection')
+            self.e_flag_lines.append(
+                ('noSection', 'No Sections identified!'))
+            self.desc_is_flawed = True
+
+        ################################################################
+        # Warning flags
+        ################################################################
+
+        # A few warning flag regexes, and the appropriate flag to
+        # generate if one or more matches are found.
+        wflag_regexes = [
+            (isfa_regex, "isfa"),
+            (less_except_regex, "except"),
+            (including_regex, "including")
+        ]
+
+        def check_for_wflag(line, rgx, flag):
+            if not rgx.findall(line):
+                return
+            if flag not in self.w_flags:
+                self.w_flags.append(flag)
+            self.w_flag_lines.append((flag, line))
+
+        for line in lines:
+            for rgx, flag in wflag_regexes:
+                check_for_wflag(line, rgx, flag)
+
+        return flag_pb
 
 
 class PLSSPreprocessor:
@@ -7548,3 +7250,24 @@ class PLSSPreprocessor:
             last = tr_mo.group()[-1]
 
         return f"{first}T{twp}{ns.upper()}-R{rge}{ew.upper()}{last}"
+
+    @staticmethod
+    def static_preprocess(
+            text, default_ns=None, default_ew=None, ocr_scrub=False):
+        """
+        Run the description preprocessor on text without storing any
+        data / objects.
+
+        :param text: The text (string) to be preprocessed.
+        :param default_ns: How to interpret townships for which direction
+        was not specified -- i.e. either 'n' or 's'. (Defaults to 'n')
+        :param default_ew: How to interpret ranges for which direction
+        was not specified -- i.e. either 'e' or 'w'. (Defaults to 'w')
+        :param ocr_scrub: Whether to try to iron out common OCR
+        'artifacts'. May cause unintended changes. (Defaults to `False`)
+        :return: The preprocessed string.
+        """
+        processor = PLSSPreprocessor(
+            text, default_ns, default_ew, ocr_scrub=ocr_scrub)
+        return processor.text
+
