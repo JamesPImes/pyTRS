@@ -1,4 +1,4 @@
-# Copyright (c) 2020, James P. Imes, All rights reserved.
+# Copyright (c) 2020-2021, James P. Imes, All rights reserved.
 
 """
 The main parsing package. Primary classes:
@@ -549,7 +549,7 @@ class PLSSDesc:
         if len(target_pb.parsed_tracts) > 0:
             self.parsed_tracts.extend(target_pb.parsed_tracts)
 
-    def parse(
+    def parse_old(
             self, text=None, layout=None, clean_up=None, init_parse_qq=None,
             clean_qq=None, require_colon=None, segment=None,
             commit=True, qq_depth_min=None, qq_depth_max=None, qq_depth=None,
@@ -815,6 +815,163 @@ class PLSSDesc:
 
         # Return the list of identified `Tract` objects (ie. a TractList object)
         return bigPB.parsed_tracts
+
+    def parse(
+            self, layout=None, clean_up=None, init_parse_qq=None,
+            clean_qq=None, require_colon=None, segment=None,
+            commit=True, qq_depth_min=None, qq_depth_max=None, qq_depth=None,
+            break_halves=None):
+        """
+        Parse the description. If parameter ``commit=True`` (default),
+        the results will be stored to the various instance
+        attributes (``.parsed_tracts``, ``.w_flags``, ``.w_flag_lines``,
+        ``.e_flags``, and ``.e_flag_lines``). Returns only the
+        ``TractList`` object containing the parsed ``Tract`` objects
+        (i.e. what would be stored to ``.parsed_tracts``).
+
+        :param layout: The layout to be assumed. If not specified,
+        defaults to whatever is in `self.layout`; and if not specified
+        there, will be automatically deduced.
+        :param clean_up: Whether to clean up common 'artefacts' from
+        parsing. If not specified, defaults to False for parsing the
+        'copy_all' layout, and `True` for all others.
+        :param init_parse_qq: Whether to parse each resulting Tract object
+        into lots and QQs when initialized. If not specified, defaults
+        to whatever is specified in `self.init_parse_qq`.
+        :param clean_qq: Whether to expect only clean lots and QQ's (i.e.
+        no metes-and-bounds, exceptions, complicated descriptions,
+        etc.). Defaults to whatever is specified in `self.clean_qq`
+        (which is False, unless configured otherwise).
+        :param require_colon: Whether to require a colon between the
+        section number and the following description (only has an effect
+        on 'TRS_desc' or 'S_desc_TR' layouts).
+        If not specified, it will default to whatever was set at init;
+        and unless otherwise specified there, will default to a 'two-
+        pass' method, where first it will require the colon; and if no
+        matching sections are found, it will do a second pass where
+        colons are not required. Setting as `True` or `False` here
+        prevent the two-pass method.
+            ex: 'Section 14 NE/4'
+                `require_colon=True` --> no match
+                `require_colon=False` --> match (but beware false
+                    positives)
+                <not specified> --> no match on first pass; if no other
+                            sections are identified, will be matched on
+                            second pass.
+        :param segment: Whether to break the text down into segments,
+        with one MATCHING township/range per segment (i.e. only T&R's
+        that are appropriate to the specified layout will count for the
+        purposes of this parameter). This can potentially capture
+        descriptions whose layout changes partway through, but can also
+        cause appropriate warning/error flags to be missed. If not
+        specified here, defaults to whatever is set in `self.segment`.
+        :param commit: Whether to commit the results to the appropriate
+        instance attributes. Defaults to `True`.
+        :param qq_depth_min: (Optional, and only relevant if parsing
+        Tracts into lots and QQs.) An int, specifying the minimum depth
+        of the parse. If not set here, will default to settings from
+        init (if any), which in turn default to 2, i.e. to
+        quarter-quarters (e.g., 'N/2NE/4' -> ['NENE', 'NENE']).
+        Setting to 3 would return 10-acre subdivisions (i.e. dividing
+        the 'NENE' into ['NENENE', 'NWNENE', 'SENENE', 'SWNENE']), and
+        so forth.
+        WARNING: Higher than a few levels of depth will result in very
+        slow performance.
+        :param qq_depth_max: (Optional, and only relevant if parsing
+        Tracts into lots and QQs.) An int, specifying the maximum depth
+        of the parse. If set as 2, any subdivision smaller than
+        quarter-quarter (e.g., 'NENE') would be discarded -- so, for
+        example, the 'N/2NE/4NE/4' would simply become the 'NENE'. Must
+        be greater than or equal to `qq_depth_min`. (Defaults to None --
+        i.e. no maximum. Can also be configured at init.)
+        :param qq_depth: (Optional, and only relevant if parsing Tracts
+        into lots and QQs.) An int, specifying both the minimum and
+        maximum depth of the parse. If specified, will override both
+        `qq_depth_min` and `qq_depth_max`. (Defaults to None -- i.e. use
+        qq_depth_min and optionally qq_depth_max; and can optionally be
+        configured at init.)
+        :param break_halves: (Optional, and only relevant if parsing
+        Tracts into lots and QQs.) Whether to break halves into
+        quarters, even if we're beyond the qq_depth_min. (False by
+        default, but can be configured at init.)
+        :return: Returns a pytrs.TractList object (a subclass of
+        built-in ``list``) of all of the resulting ``pytrs.Tract``
+        objects.
+        """
+
+        # ----------------------------------------
+        # Lock down parameters for this parse.
+
+        if require_colon is None:
+            require_colon = self.require_colon
+
+        # NOTE: If layout was specified at init or when calling
+        # `.parse(layout=<string>)`, PLSSParser._parse_segment() will be
+        # prevented from from deducing it.  Leave as None to allow the
+        # parser to deduce.
+
+        if init_parse_qq is None:
+            init_parse_qq = self.init_parse_qq
+
+        if clean_qq is None:
+            clean_qq = self.clean_qq
+
+        # Config object for passing down to Tract objects.
+        handed_down_config = self.config
+
+        if segment is None:
+            segment = self.segment
+
+        if layout == COPY_ALL:
+            # If a *segment* (which will be divided up shortly) finds
+            # itself in the COPY_ALL layout, that should still parse
+            # fine. But segmenting the whole description would defy the
+            # point of COPY_ALL layout. So prevent `segment` when the
+            # OVERALL layout is COPY_ALL.
+            segment = False
+
+        # For QQ parsing (if applicable)
+        if break_halves is None:
+            break_halves = self.break_halves
+        if qq_depth is None and qq_depth_min is None and qq_depth_max is None:
+            qq_depth = self.qq_depth
+        if qq_depth_min is None:
+            qq_depth_min = self.qq_depth_min
+        if qq_depth_max is None:
+            qq_depth_max = self.qq_depth_max
+
+        parser = PLSSParser(
+            text=self.orig_desc,
+            mandated_layout=layout,
+            default_ns=self.default_ns,
+            default_ew=self.default_ew,
+            ocr_scrub=self.ocr_scrub,
+            clean_up=clean_up,
+            init_parse_qq=init_parse_qq,
+            clean_qq=clean_qq,
+            require_colon=require_colon,
+            segment=segment,
+            qq_depth_min=qq_depth_min,
+            qq_depth_max=qq_depth_max,
+            qq_depth=qq_depth,
+            break_halves=break_halves,
+            handed_down_config=handed_down_config,
+            parent=self
+        )
+
+        if commit:
+            # Wipe the existing parsed_tracts, if any.
+            self.parsed_tracts = TractList()
+
+            # Unpack each of the 'unpackable' attributes.
+            for attribute in parser.UNPACKABLES:
+                setattr(self, attribute, getattr(parser, attribute))
+
+            # The resulting `.text` in the parser is the preprocessed
+            # description.
+            self.pp_desc = parser.text
+
+        return parser.parsed_tracts
 
     @staticmethod
     def _deduce_segment_layout(text, candidates=None, deduce_by='TRS_order'):
@@ -5357,6 +5514,14 @@ class PLSSParser:
     A class to handle the heavy lifting of parsing ``PLSSDesc`` objects
     into ``Tract`` objects. Not intended for use by the end-user. (All
     functionality can be triggered by appropriate ``PLSSDesc`` methods.)
+
+    NOTE: All parsing parameters must be locked in before initializing
+    the PLSSParser. Upon initializing, the parse will be automatically
+    triggered and cannot be modified.
+
+    The ``PLSSDesc.parse()`` method is actually a wrapper for
+    initializing a ``PLSSParser`` object, and for extracting the
+    relevant attributes from it.
     """
 
     # constants for the different markers we'll use
@@ -5369,18 +5534,29 @@ class PLSSParser:
     MULTISEC_START = 'multiSec_start'
     MULTISEC_END = 'multiSec_end'
 
+    # These attributes have corresponding attributes in PLSSDesc objects.
+    UNPACKABLES = (
+        "parsed_tracts",
+        "w_flags",
+        "e_flags",
+        "w_flag_lines",
+        "e_flag_lines",
+        "desc_is_flawed",
+        "current_layout"
+    )
+
     def __init__(
             self,
             text,
-            layout,
-            default_ns,
-            default_ew,
-            ocr_scrub,
-            clean_up,
-            init_parse_qq,
-            clean_qq,
-            require_colon,
-            segment,
+            mandated_layout=None,
+            default_ns=PLSSDesc.MASTER_DEFAULT_NS,
+            default_ew=PLSSDesc.MASTER_DEFAULT_EW,
+            ocr_scrub=False,
+            clean_up=None,
+            init_parse_qq=False,
+            clean_qq=False,
+            require_colon=_DEFAULT_COLON,
+            segment=False,
             qq_depth_min=2,
             qq_depth_max=None,
             qq_depth=None,
@@ -5393,7 +5569,7 @@ class PLSSParser:
         self.preprocessor = PLSSPreprocessor(
             text, default_ns, default_ew, ocr_scrub)
         self.text = self.preprocessor.text
-        self.layout = layout
+        self.current_layout = None
         self.clean_up = clean_up
         self.init_parse_qq = init_parse_qq
         self.clean_qq = clean_qq
@@ -5405,6 +5581,7 @@ class PLSSParser:
         self.break_halves = break_halves
         # For handing down to generated Tract objects
         self.handed_down_config = handed_down_config
+        self.mandated_layout = mandated_layout
         self.source = None
 
         # Generated variables / parsed data.
@@ -5423,7 +5600,7 @@ class PLSSParser:
             self.e_flag_lines = parent.e_flag_lines.copy()
             self.source = parent.source
 
-        # `self.preprocessor.fixed_twprges` into w_flags
+        # Unpack `self.preprocessor.fixed_twprges` into w_flags.
         if self.preprocessor.fixed_twprges:
             fixed = "//".join(self.preprocessor.fixed_twprges)
             self.w_flags.append(f"T&R_fixed<{fixed}>")
@@ -5431,6 +5608,8 @@ class PLSSParser:
 
         self.parse_cache = {}
         self.reset_cache()
+
+        self.parse()
 
     def reset_cache(self):
         self.parse_cache = {
@@ -5532,7 +5711,7 @@ class PLSSParser:
         """
 
         text = self.text
-        layout = self.layout
+        layout = self.safe_deduce_layout(text)
         clean_up = self.clean_up
         init_parse_qq = self.init_parse_qq
         clean_qq = self.clean_qq
@@ -5543,13 +5722,9 @@ class PLSSParser:
         qq_depth = self.qq_depth
         break_halves = self.break_halves
 
-        flag_text = self.orig_desc
+        self.current_layout = layout
 
-        # When layout is specified at init, or when calling
-        # `.parse(layout=<string>)`, we prevent _parse_segment() from deducing,
-        # AS LONG AS the specified layout is among the implemented layouts.
-        if not layout:
-            layout = self.deduce_layout(text)
+        flag_text = self.orig_desc
 
         if layout not in _IMPLEMENTED_LAYOUTS:
             raise ValueError(f"Non-implemented layout '{layout}'")
@@ -5610,8 +5785,7 @@ class PLSSParser:
             twprge_txt_blox = [('', text)]
 
         # ----------------------------------------
-        # Parse each segment into a separate ParseBag obj, then absorb
-        # that PB into the big PB each time:
+        # Parse each segment into Tracts.
         for txt_block in twprge_txt_blox:
             use_layout = layout
             if segment and layout != COPY_ALL:
@@ -5702,6 +5876,25 @@ class PLSSParser:
 
         # Return the list of identified `Tract` objects (ie. a TractList object)
         return self.parsed_tracts
+
+    def safe_deduce_layout(self, text, candidates=None, override=False):
+        """
+        Same effect as `.deduce_layout()`, except that it will defer to
+        the mandated layout, if one was specified at init. Override the
+        safety with ``override=True`` (False by default) -- for example,
+        if deducing the layout of a *segment* of the original text,
+        rather than the entirety of the original text.
+
+        :param text: Same as in `.deduce_layout()`
+        :param candidates: Same as in `.deduce_layout()`
+        :param override: A bool, whether to override the safety
+        :return: The mandated_layout, if it was specified at init;
+        otherwise, the algorithm-deduced layout.
+        """
+        layout = self.mandated_layout
+        if layout is None or override:
+            layout = PLSSParser.deduce_layout(text, candidates)
+        return layout
 
     @staticmethod
     def deduce_layout(text, candidates=None):
@@ -5872,7 +6065,7 @@ class PLSSParser:
         ####################################################################
 
         if layout not in _IMPLEMENTED_LAYOUTS:
-            layout = PLSSParser.deduce_layout(text_block)
+            layout = PLSSParser.safe_deduce_layout(text_block, override=True)
 
         if require_colon is None:
             require_colon = _DEFAULT_COLON
