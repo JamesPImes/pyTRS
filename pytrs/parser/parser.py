@@ -6036,14 +6036,14 @@ class PLSSParser:
         # Note: the kwarg `require_colon=` accepts either a string (for
         # 'default_colon' and 'second_pass') or bool. If a bool is fed in
         # (i.e. require_colon=True), a 'second_pass' will NOT be allowed.
-        # `require_colonBool` is the actual variable that controls the
+        # `require_colon_bool` is the actual variable that controls the
         # relevant logic throughout.
         # Note also: Future versions COULD conceivably compare the
         # first_pass and second_pass results to see which has more secErr's
         # or other types of errors, and use the less-flawed of the two.
         # But I'm not sure that would actually be better.
 
-        # Note also that `require_colonBool` has no effect on layouts
+        # Note also that `require_colon_bool` has no effect on layouts
         # other than TRS_DESC and S_DESC_TR, even if set to `True`
 
         # Finally, note that because multiple passes may be done, we
@@ -6052,13 +6052,13 @@ class PLSSParser:
         # be added to `self.w_flags`.
 
         if isinstance(require_colon, bool):
-            require_colonBool = require_colon
+            require_colon_bool = require_colon
         elif require_colon == _SECOND_PASS:
-            require_colonBool = False
+            require_colon_bool = False
             self.parse_cache["w_flags_staging"] = []
             self.parse_cache["w_flag_line_staging"] = []
         else:
-            require_colonBool = True
+            require_colon_bool = True
 
         # Run through the description and find INDIVIDUAL sections or
         # LISTS of sections that match our layout.
@@ -6067,16 +6067,16 @@ class PLSSParser:
         #   For LISTS of sections (called "MultiSections" in this program),
         #       we want "Sections 4 and 6 - 10" in the above example.
 
-        # For individual sections, save a list of tuples (wSecList), each
+        # For individual sections, save a list of tuples (all_sec_matches), each
         # containing the section number (as '00'), and its start and end
         # position in the text.
-        wSecList = []
+        all_sec_matches = []
 
         # For groups (lists) of sections, save a list of tuples
-        # (wMultiSecList), each containing a list of the section numbers
+        # (all_multisec_matches), each containing a list of the section numbers
         # (as ['01', '03, '04', '05' ...]), and the group's start and end
         # position in the text.
-        wMultiSecList = []
+        all_multisec_matches = []
 
         if layout not in _IMPLEMENTED_LAYOUTS:
             layout = PLSSParser.deduce_layout(text=text)
@@ -6124,7 +6124,7 @@ class PLSSParser:
             # sections and multi-Sections that are followed by a colon (if
             # requiredColonBool == True):
             if (
-                    require_colonBool
+                    require_colon_bool
                     and layout in [TRS_DESC, S_DESC_TR]
                     and not (_sec_ends_with_colon(sec_mo))
             ):
@@ -6153,8 +6153,8 @@ class PLSSParser:
             # that we want. Determine which it is, and append it to the respective
             # list:
             if PLSSParser._is_multisec(sec_mo):
-                # If it's a multiSec, _unpack it, and append it to the
-                # wMultiSecList.  (We stage flags to temp list so that
+                # If it's a multiSec, _unpack it, and append it to
+                # all_multisec_matches.  (We stage flags to temp list so that
                 # we maintain the intended order of flags: i.e. so that
                 # 'multisec_found' comes before any specific issues with
                 # that multisec.)
@@ -6174,10 +6174,10 @@ class PLSSParser:
                 self.parse_cache["w_flag_lines_staging"].extend(multisec_flag_lines_temp)
 
                 # And finally append the tuple for this multiSec
-                wMultiSecList.append((unpackedMultiSec, i, adj_secmo_end(sec_mo)))
+                all_multisec_matches.append((unpackedMultiSec, i, adj_secmo_end(sec_mo)))
             else:
                 # Append the tuple for this individual section
-                wSecList.append(
+                all_sec_matches.append(
                     (self._compile_sec_mo(sec_mo), i, adj_secmo_end(sec_mo)))
 
             # And move the parser index to the end of our current sec_mo
@@ -6187,16 +6187,17 @@ class PLSSParser:
         # neither a standalone section nor a multiSec, then rerun
         # _findall_matching_sec() under the same kwargs, except with
         # require_colon=_SECOND_PASS (which sets
-        # require_colonBool=False), to see if we can capture a section after
+        # require_colon_bool=False), to see if we can capture a section after
         # all.  Will return those results instead.
         do_second_pass = True
         if layout not in [TRS_DESC, S_DESC_TR]:
             do_second_pass = False
-        if wSecList or wMultiSecList:
+        if all_sec_matches or all_multisec_matches:
+            # If we've found at lease one sec or multisec
             do_second_pass = False
             if require_colon == _SECOND_PASS:
-                all_sections = [sec_tuple[0] for sec_tuple in wSecList]
-                for sections in [tup[0] for tup in wMultiSecList]:
+                all_sections = [sec_tuple[0] for sec_tuple in all_sec_matches]
+                for sections in [tup[0] for tup in all_multisec_matches]:
                     all_sections.extend(sections)
                 flag = f"pulled_sec_without_colon<{','.join(all_sections)}>"
                 self.parse_cache["w_flags_staging"].append(flag)
@@ -6210,8 +6211,8 @@ class PLSSParser:
 
         # Add `sec_list` and `multiSecList` to parse_cache, and cement
         # our staged w_flags.
-        self.parse_cache["all_sec_matches"] = wSecList
-        self.parse_cache["all_multisec_matches"] = wMultiSecList
+        self.parse_cache["all_sec_matches"] = all_sec_matches
+        self.parse_cache["all_multisec_matches"] = all_multisec_matches
         self.w_flags.extend(self.parse_cache["w_flags_staging"])
         self.w_flag_lines.extend(self.parse_cache["w_flag_lines_staging"])
         return None
@@ -6256,53 +6257,60 @@ class PLSSParser:
         #   so much less possible text in a list of Sections, can probably
         #   just add from left-to-right, unlike _unpack_lots.
 
-        sectionsList = []  #
-        remainingSecText = sec_text_block
+        remaining_sec_text = sec_text_block
 
-        if not stage_flags_to:
+        if stage_flags_to is None:
             stage_flags_to = []
-        if not stage_flag_lines_to:
+        if stage_flag_lines_to is None:
             stage_flag_lines_to = []
 
         # A working list of the sections. Note that this gets filled from
         # last-to-first on this working text block, but gets reversed at the end.
-        wSectionsList = []
-        foundThrough = False
+        sec_list = []
+
+        def flag_duplicates(sec_num):
+            """Check for and flag duplicate sections."""
+            if sec_num in sec_list:
+                stage_flags_to.append(f'dup_sec<{sec_num}>')
+                stage_flag_lines_to.append(
+                    (f'dup_sec<{sec_num}>', f'Section {sec_num}'))
+
+        found_through = False
         while True:
-            secs_mo = multiSec_regex.search(remainingSecText)
+            secs_mo = multiSec_regex.search(remaining_sec_text)
 
             if secs_mo is None:  # we're out of section numbers.
                 break
 
             else:
                 # Pull the right-most section number (still as a string):
-                secNum = PLSSParser._get_last_sec(secs_mo)
+                sec_num = PLSSParser._get_last_sec(secs_mo)
 
                 if PLSSParser._is_singlesec(secs_mo):
                     # We can skip the next loop after we've found the last section.
-                    remainingSecText = ''
+                    remaining_sec_text = ''
 
                 else:
                     # If we've found >= 2 sections, we will need to loop at
                     # least once more.
-                    remainingSecText = remainingSecText[:secs_mo.start(12)]
+                    remaining_sec_text = remaining_sec_text[:secs_mo.start(12)]
 
-                # Clean up any leading '0's in secNum.
-                secNum = str(int(secNum))
+                # Clean up any leading '0's in sec_num.
+                sec_num = str(int(sec_num))
 
                 # Layout section number as 2 digits, with a leading 0, if needed.
-                newSec = secNum.rjust(2, '0')
+                new_sec = sec_num.rjust(2, '0')
 
-                if foundThrough:
+                if found_through:
                     # If we've identified a elided list (e.g., 'Sections 3 - 9')...
-                    prevSec = wSectionsList[-1]
-                    # Take the secNum identified earlier this loop:
-                    start_of_list = int(secNum)
+                    prevSec = sec_list[-1]
+                    # Take the sec_num identified earlier this loop:
+                    start_of_list = int(sec_num)
                     # The the previously last-identified section:
                     end_of_list = int(prevSec)
-                    correctOrder = True
+                    correct_order = True
                     if start_of_list >= end_of_list:
-                        correctOrder = False
+                        correct_order = False
                         stage_flags_to.append('nonSequen_sec')
                         stage_flag_lines_to.append(
                             ('nonSequen_sec',
@@ -6323,35 +6331,28 @@ class PLSSParser:
                     # will be 3; end_of_list will be 9).
                     ########################################################
 
-                    # vars a,b&c are the bounds (a&b) and incrementation (c)
+                    # vars a, b & c are the bounds (a & b) and incrementation (c)
                     # of the range() for the secs in the elided list:
                     # If the string is correctly 'Sections 3 - 9' (for example),
                     # we use the default:
                     a, b, c = end_of_list - 1, start_of_list - 1, -1
                     # ... but if the string is 'sections 9 - 3' (i.e. wrong),
                     # we use:
-                    if not correctOrder:
+                    if not correct_order:
                         a, b, c = end_of_list + 1, start_of_list + 1, 1
 
                     for i in range(a, b, c):
-                        addSec = str(i).rjust(2, '0')
-                        if addSec in wSectionsList:
-                            stage_flags_to.append(f'dup_sec<{addSec}>')
-                            stage_flag_lines_to.append(
-                                (f'dup_sec<{addSec}>', f'Section {addSec}'))
-                        wSectionsList.append(addSec)
-                    foundThrough = False  # reset.
+                        add_sec = str(i).rjust(2, '0')
+                        flag_duplicates(add_sec)
+                        sec_list.append(add_sec)
+                    found_through = False  # reset.
 
                 else:
                     # Otherwise, if it's a standalone section (not the start
                     #   of an elided list), we add it.
-                    # We check this new section to see if it's in EITHER
-                    #   sectionsList OR wSectionsList:
-                    if newSec in sectionsList or newSec in wSectionsList:
-                        stage_flags_to.append('dup_sec')
-                        stage_flag_lines_to.append(
-                            ('dup_sec', f'Section {newSec}'))
-                    wSectionsList.append(newSec)
+                    # First check if this new section is in sec_list:
+                    flag_duplicates(new_sec)
+                    sec_list.append(new_sec)
 
                 # If we identified at least two sections, we need to check
                 # if the last one is the end of an elided list:
@@ -6360,12 +6361,12 @@ class PLSSParser:
                     # Check if we find 'through' (or equivalent symbol or
                     # abbreviation) before this final section:
                     if thru_mo is None:
-                        foundThrough = False
+                        found_through = False
                     else:
-                        foundThrough = True
-        wSectionsList.reverse()
+                        found_through = True
+        sec_list.reverse()
 
-        return wSectionsList
+        return sec_list
 
     def _findall_matching_tr(
             self, text, layout=None, cache=True, stage_flags_to: list = None,
