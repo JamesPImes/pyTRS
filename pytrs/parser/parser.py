@@ -8,7 +8,6 @@ The main parsing package. Primary classes:
 > TractList objects contain a list of Tracts, and can compile that Tract
     data into broadly useful formats (i.e. into list, dict, string).
 > Config objects configure parsing parameters for Tract and PLSSDesc.
-> ParseBag objects handle data within / between Tract and PLSSDesc.
 """
 
 import re
@@ -604,9 +603,6 @@ class PLSSDesc:
         """
         Deduce the layout of the description.
 
-        :param text: The text, whose layout is to be deduced.
-        If not specified, will use whatever is stored in `self.pp_desc`,
-        i.e. the preprocessed description.
         :param candidates: A list of which layouts are to be considered.
         If passed as `None` (the default), it will consider all
         currently implemented meaningful layouts (i.e. 'TRS_desc',
@@ -627,22 +623,23 @@ class PLSSDesc:
             ocr_scrub=None) -> str:
         """
         Preprocess the PLSS description to iron out common kinks in
-        the input data, and optionally store results to `self.pp_desc`.
+        the input data, and optionally store results to the ``.pp_desc``
+        attribute.
 
-        :param text: The text to be preprocessed. Defaults to what is
-        stored in `self.orig_desc` (i.e. the original description).
+        NOTE: Regardless whether committed, the description will be
+        preprocessed (again) when parsed.
+
         :param default_ns: How to interpret townships for which direction
         was not specified -- i.e. either 'n' or 's'. (Defaults to
-        `self.default_ns`, which is 'n' unless otherwise specified.)
+        `self.default_ns`, which is 'n' unless otherwise configured.)
         :param default_ew: How to interpret ranges for which direction
         was not specified -- i.e. either 'e' or 'w'. (Defaults to
-        `self.default_ew`, which is 'w' unless otherwise specified.)
+        `self.default_ew`, which is 'w' unless otherwise configured.)
         :param ocr_scrub: Whether to try to iron out common OCR
         'artifacts'. May cause unintended changes. (Defaults to
-        `self.ocr_scrub`, which is `False` unless otherwise specified.)
+        `self.ocr_scrub`, which is `False` unless otherwise configured.)
         :param commit: Whether to store the results to `self.pp_desc`.
-        (Defaults to `True`) NOTE: Regardless whether committed, the
-        description will be preprocessed (again) when parsed.
+        (Defaults to `True`)
         :return: The preprocessed string.
         """
 
@@ -893,7 +890,7 @@ class Tract:
         Ex:     Lots 1(38.29), 2(39.22), 3(39.78)
                     -> {'L1': '38.29', 'L2':'39.22', 'L3':'39.78'}
     .pp_desc -- The preprocessed description. (If the object has not yet
-        been preprocessed, it will be equivalent to .desc)
+        been parsed, it will be equivalent to .desc)
     .source -- (Optional) A string specifying where the description came
         from. Useful if parsing multiple descriptions and need to
         internally keep track where they came from. (Optionally specify
@@ -959,7 +956,7 @@ class Tract:
         and need to internally keep track where they came from.
         :param orig_desc: The full, original text of the parent PLSSDesc
         object, if any.
-        :param orig_index: An integer represeting the order in which this
+        :param orig_index: An integer representing the order in which this
         Tract object was created while parsing the parent PLSSDesc
         object, if any
         :param desc_is_flawed: a bool, whether or not an apparently fatal
@@ -1239,80 +1236,16 @@ class Tract:
             if value is not None:
                 setattr(self, attrib, value)
 
-    def _unpack_pb(self, target_pb):
-        """
-        Unpack (append or set) the relevant attributes of the
-        `target_pb` into self's attributes.
-
-        :param target_pb: A ParseBag object containing data from
-        the parse.
-        """
-
-        if not isinstance(target_pb, ParseBag):
-            raise TypeError("Can only `_unpack_pb()` a pytrs.ParseBag object.")
-
-        if target_pb.desc_is_flawed:
-            self.desc_is_flawed = True
-
-        if len(target_pb.w_flags) > 0:
-            self.w_flags.extend(target_pb.w_flags)
-
-        if len(target_pb.e_flags) > 0:
-            self.e_flags.extend(target_pb.e_flags)
-
-        if len(target_pb.w_flag_lines) > 0:
-            self.w_flag_lines.extend(target_pb.w_flag_lines)
-
-        if len(target_pb.e_flag_lines) > 0:
-            self.e_flag_lines.extend(target_pb.e_flag_lines)
-
-        if target_pb.parent_type == 'Tract':
-            # Only if unpacking a Tract-level ParseBag... Otherwise,
-            # these attributes won't exist for that ParseBagObj.
-
-            if len(target_pb.qqs) > 0:
-                # Only append fresh (non-duplicate) QQ's, and raise a
-                # flag if there are any duplicates
-                dupQQs = []
-                freshQQs = []
-                for qq in target_pb.qqs:
-                    if qq in self.qqs or qq in freshQQs:
-                        dupQQs.append(qq)
-                    else:
-                        freshQQs.append(qq)
-                self.qqs.extend(freshQQs)
-                if len(dupQQs) > 0:
-                    self.w_flags.append('dup_QQ')
-                    self.w_flag_lines.append(
-                        ('dup_QQ', f'<{self.trs}: {", ".join(dupQQs)}>'))
-
-            if len(target_pb.lots) > 0:
-                # Only append fresh (non-duplicate) Lots, and raise a
-                # flag if there are any duplicates
-                dupLots = []
-                freshLots = []
-                for lot in target_pb.lots:
-                    if lot in self.lots or lot in freshLots:
-                        dupLots.append(lot)
-                    else:
-                        freshLots.append(lot)
-                self.lots.extend(freshLots)
-                if len(dupLots) > 0:
-                    self.w_flags.append('dup_lot')
-                    self.w_flag_lines.append(
-                        ('dup_lot', f'<{self.trs}: {", ".join(dupLots)}>'))
-
-            self.lots_qqs = self.lots + self.qqs
-
-            if len(target_pb.lot_acres) > 0:
-                self.lot_acres = target_pb.lot_acres
-                # TODO: Handle discrepancies, if there's already data in
-                #   lot_acres.
-
     def parse(
-            self, text=None, commit=True, clean_qq=None, include_lot_divs=None,
-            qq_depth_min=None, qq_depth_max=None,
-            qq_depth=None, break_halves=None):
+            self,
+            text=None,
+            commit=True,
+            clean_qq=None,
+            include_lot_divs=None,
+            qq_depth_min=None,
+            qq_depth_max=None,
+            qq_depth=None,
+            break_halves=None):
         """
         Parse the description block of this Tract into lots and QQ's.
 
@@ -1331,8 +1264,6 @@ class Tract:
             ex:  North Half of Lot 1
                     `True` -> 'N2 of L1'
                     `False` -> 'L1'
-        :param preprocess: Whether to preprocess the text before parsing
-        it (if the preprocess has not already been done).
         :param qq_depth_min: An int, specifying the minimum depth of the
         parse. If not set here, will default to settings from init (if
         any), which in turn default to 2, i.e. to quarter-quarters
@@ -1760,106 +1691,6 @@ class TractList(list):
         return all_trs
 
 
-class ParseBag:
-    """
-    INTERNAL USE:
-
-    An object for temporarily holding data during various steps of
-    the parsing process.
-    """
-
-    # This class only exists to serve as "luggage" between various
-    # functions / methods that are called during parsing. Output data of
-    # varying kinds are temporarily packed into a ParseBag. When it gets
-    # back to the PLSSDesc and/or Tract object, that object will
-    # ._unpack_pb() the contents of the ParseBag into its own attributes
-    # -- i.e. `plssdesc_object._unpack_pb(parsebag_object)`.
-
-    # It was designed this way because different functions process
-    # different components of the PLSS description, but almost all of
-    # them can generate warning flags and error flags for the user's
-    # attention. For UX reasons, we want those warning/error data stored
-    # in a single location (i.e. a in the `.w_flags` or `.e_flags`).
-    # Tract objects also contain `.w_flags` and `.e_flags`
-
-    # So these ParseBag objects will hold those warning/error data (and
-    # the TractList, etc.) in one place until the intended endpoint is
-    # reached, where it is unpacked.
-
-    # A ParseBag object can also absorb a child ParseBag object by
-    # appending (but not overwriting) its own data:
-    #       `parent_pb.absorb(child_pb)`
-    # This is done, for example, where `child_pb` stores Tract-level
-    # parsing data (e.g., qqs, lots) -- but where warning flags
-    # can also be generated that would be relevant to the higher-level
-    # class PLSSDesc.
-
-    def __init__(self, parent_type='PLSSDesc'):
-
-        # parent_type will establish additional attributes, as necessary,
-        # depending on the function or method that created the ParseBag
-        self.parent_type = parent_type
-
-        # for all types of objects:
-        self.w_flags = []
-        self.w_flag_lines = []
-        self.e_flags = []
-        self.e_flag_lines = []
-        self.desc_is_flawed = False
-
-        if parent_type == 'PLSSDesc':
-            self.parsed_tracts = TractList()
-
-        elif parent_type == 'Tract':
-            self.qqs = []
-            self.lots = []
-            self.lot_acres = {}
-
-        elif parent_type == 'multisec':
-            # for unpacking multiSec
-            self.sec_list = []
-
-        elif parent_type == 'lot_text':
-            # for unpacking text from a lot_regex match into component lots
-            self.lots = []
-            self.lot_acres = {}
-
-        # This is only ever filled by `_findall_matching_tr()`. It will
-        # contain a list of tuples, being twprge matches and their start
-        # and end positions (indexes) in the string that was searched.
-        self.twprge_position_list = []
-
-    def absorb(self, target_pb):
-        """
-        Absorb (i.e. append or set) the relevant attributes of a child
-        `target_pb` into the parent (i.e. self).
-        """
-
-        if not isinstance(target_pb, ParseBag):
-            raise TypeError("Can only `absorb()` a pytrs.ParseBag object.")
-
-        # We do not absorb qqs, lots, or lot_acres, since those are not
-        # relevant to a PLSSDescObj (only TractObj).
-
-        if target_pb.desc_is_flawed:
-            self.desc_is_flawed = True
-
-        if len(target_pb.w_flags) > 0:
-            self.w_flags.extend(target_pb.w_flags)
-
-        if len(target_pb.e_flags) > 0:
-            self.e_flags.extend(target_pb.e_flags)
-
-        if len(target_pb.w_flag_lines) > 0:
-            self.w_flag_lines.extend(target_pb.w_flag_lines)
-
-        if len(target_pb.e_flag_lines) > 0:
-            self.e_flag_lines.extend(target_pb.e_flag_lines)
-
-        if target_pb.parent_type == 'PLSSDesc':
-            self.parsed_tracts.extend(target_pb.parsed_tracts)
-
-
 class Config:
     """
     A class to configure how PLSSDesc and Tract objects should be
@@ -2062,7 +1893,7 @@ class Config:
 
         file = open(filepath, 'w')
 
-        attsToWrite = ['config_name'] + list(Config._CONFIG_ATTRIBUTES)
+        atts_to_write = ['config_name'] + list(Config._CONFIG_ATTRIBUTES)
 
         file.write(f"<Contains config data for parsing PLSSDesc "
                    f"and/or Tract objects with the pytrs library.>\n")
@@ -2078,7 +1909,7 @@ class Config:
                 text = ''
             return text
 
-        for att in attsToWrite:
+        for att in atts_to_write:
             file.write(attrib_text(att))
 
         file.close()
@@ -3523,22 +3354,6 @@ class PLSSParser:
         return None
 
     @staticmethod
-    def _compile_sec_mo(sec_mo):
-        """
-        INTERNAL USE:
-
-        Takes a match object (mo) of an identified multiSection, and
-        returns a string in the format of '00' for individual sections
-        and a list ['01', '02', ...] for multiSections.
-        """
-        if PLSSParser._is_multisec(sec_mo):
-            return PLSSParser._unpack_sections(sec_mo.group())
-        elif PLSSParser._is_singlesec(sec_mo):
-            return PLSSParser._get_last_sec(sec_mo).rjust(2, '0')
-        else:
-            return
-
-    @staticmethod
     def _unpack_sections(
             sec_text_block, stage_flags_to: list = None,
             stage_flag_lines_to: list = None):
@@ -3950,8 +3765,7 @@ class PLSSParser:
             return PLSSParser._unpack_sections(sec_mo.group())
         elif PLSSParser._is_singlesec(sec_mo):
             return PLSSParser._get_last_sec(sec_mo).rjust(2, '0')
-        else:
-            return
+        return None
 
     @staticmethod
     def _cleanup_desc(text):
@@ -4031,15 +3845,12 @@ class PLSSParser:
 
     def gen_flags(self):
         """
-                Return a ParseBag object containing w_flags, w_flag_lines,
-                e_flags, and eFlagLine, and maybe desc_is_flawed. Each element
-                in w_flag_lines or e_flag_lines is a tuple, the first element being
-                the warning or error flag, and the second element being the line
-                that raised the flag.  If parameter `commit=True` is passed (off
-                by default), it will commit them to the PLSSDesc object's
-                attributes--which is probably already done by the .parse()
-                method.
-                """
+        Generate w_flags, w_flag_lines, e_flags, and eFlagLine, and
+        maybe whether desc_is_flawed. Each element in w_flag_lines or
+        e_flag_lines is a tuple, the first element being the warning or
+        error flag, and the second element being the line that raised
+        the flag.
+        """
         text = self.orig_desc
         preprocessed = self.text
 
@@ -5290,8 +5101,7 @@ class TractParser:
                 return lots_mo.start(19)
             elif TractParser._is_single_lot(lots_mo):
                 return lots_mo.start(11)
-            else:
-                return None
+            return None
         except (IndexError, AttributeError):
             return None
 
