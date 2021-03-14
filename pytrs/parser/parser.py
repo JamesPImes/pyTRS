@@ -87,34 +87,6 @@ IMPLEMENTED_LAYOUT_EXAMPLES = (
     "description, regardless of what the actual layout is."
 )
 
-# For aliquot parsing.
-_N = 'N'
-_S = 'S'
-_E = 'E'
-_W = 'W'
-_NE = 'NE'
-_NW = 'NW'
-_SE = 'SE'
-_SW = 'SW'
-_ALL = 'ALL'
-
-QQ_HALVES = (_N, _S, _E, _W)
-QQ_QUARTERS = (_NE, _NW, _SE, _SW)
-QQ_SUBDIVIDE_DEFINITIONS = {
-    _ALL: QQ_QUARTERS,
-    _N: (_NE, _NW),
-    _S: (_SE, _SW),
-    _E: (_NE, _SE),
-    _W: (_NW, _SW),
-}
-QQ_NS = (_N, _S)
-QQ_EW = (_E, _W)
-QQ_SAME_AXIS = {
-    _N: QQ_NS,
-    _S: QQ_NS,
-    _E: QQ_EW,
-    _W: QQ_EW
-}
 
 CONFIG_ERROR = TypeError(
     "config must be a str, None, or another Config object.")
@@ -1122,16 +1094,9 @@ class Tract:
         if isinstance(init_parse_qq, bool):
             self.init_parse_qq = init_parse_qq
 
-        ################################################################
-        # If config settings require calling preprocess() and parse() at
-        # initialization, do it now:
-        ################################################################
+        self.pp_desc = self.desc
 
-        if self.init_preprocess or self.clean_qq:
-            self.preprocess(commit=True)
-        else:
-            self.pp_desc = self.desc
-
+        # If config settings require calling parse() at init, do it now.
         if self.init_parse_qq:
             self.parse(commit=True)
 
@@ -1344,7 +1309,7 @@ class Tract:
                 # TODO: Handle discrepancies, if there's already data in
                 #   lot_acres.
 
-    def parse(
+    def parse_old(
             self, text=None, commit=True, clean_qq=None, include_lot_divs=None,
             preprocess=None, qq_depth_min=None, qq_depth_max=None,
             qq_depth=None, break_halves=None):
@@ -1577,6 +1542,115 @@ class Tract:
             self._unpack_pb(plqqParseBag)
 
         return ret_lots_qqs
+
+    def parse(
+            self, text=None, commit=True, clean_qq=None, include_lot_divs=None,
+            preprocess=None, qq_depth_min=None, qq_depth_max=None,
+            qq_depth=None, break_halves=None):
+        """
+        Parse the description block of this Tract into lots and QQ's.
+
+        :param text: The text to be parsed into lots and QQ's. If not
+        specified, will pull from `self.pp_desc` (i.e. the preprocessed
+        description).
+        :param commit: Whether to commit the results to the appropriate
+        instance attributes. Defaults to `True`.
+        :param clean_qq: Whether to expect only clean lots and QQ's (i.e.
+        no metes-and-bounds, exceptions, complicated descriptions,
+        etc.). Defaults to whatever is specified in `self.clean_qq`
+        (which is False, unless configured otherwise).
+        :param include_lot_divs: Whether to report divisions of lots.
+        Defaults to whatever is specified in `self.include_lot_divs`
+        (which is True, unless configured otherwise).
+            ex:  North Half of Lot 1
+                    `True` -> 'N2 of L1'
+                    `False` -> 'L1'
+        :param preprocess: Whether to preprocess the text before parsing
+        it (if the preprocess has not already been done).
+        :param qq_depth_min: An int, specifying the minimum depth of the
+        parse. If not set here, will default to settings from init (if
+        any), which in turn default to 2, i.e. to quarter-quarters
+        (e.g., 'N/2NE/4' -> ['NENE', 'NENE']). Setting to 3 would return
+        10-acre subdivisions (i.e. dividing the 'NENE' into ['NENENE',
+        'NWNENE', 'SENENE', 'SWNENE']), and so forth.
+        WARNING: Higher than a few levels of depth will result in very
+        slow performance.
+        :param qq_depth_max: (Optional) An int, specifying the maximum
+        depth of the parse. If set as 2, any subdivision smaller than
+        quarter-quarter (e.g., 'NENE') would be discarded -- so, for
+        example, the 'N/2NE/4NE/4' would simply become the 'NENE'. Must
+        be greater than or equal to `qq_depth_min`. (Defaults to None --
+        i.e. no maximum. Can also be configured at init.)
+        :param qq_depth: (Optional) An int, specifying both the min and
+        max depth of the parse. If specified, will override both
+        `qq_depth_min` and `qq_depth_max`. (Defaults to None -- i.e. use
+        qq_depth_min and optionally qq_depth_max; but can also be
+        configured at init.)
+        :param break_halves: Whether to break halves into quarters,
+        even if we're beyond the qq_depth_min. (False by default, but can
+        be configured at init.)
+        :return: Returns the a single list of identified lots and QQ's
+        (equivalent to what would be stored in `.lots_qqs`).
+        """
+
+        if text is None:
+            text = self.desc
+
+        if clean_qq is None:
+            clean_qq = self.clean_qq
+
+        if include_lot_divs is None:
+            include_lot_divs = self.include_lot_divs
+
+        # Determine whether to use the _min and _max, or to use the
+        # qq_depth -- and whether to use the arg-specified or what was
+        # set in the instance attributes.
+        # If qq_depth is specified as an arg, that gets top priority.
+        # If qq_depth_min or qq_depth_max are specified as an arg, we
+        # will NOT use the instance attribute `self.qq_depth`.
+        # If none of them were set as arguments, we will use
+        # `self.qq_depth` (as long as it is not None) or else fall back
+        # to `self.qq_depth_min` and `self.qq_depth_max`.
+        use_min_max = False
+        if qq_depth_min is None:
+            qq_depth_min = self.qq_depth_min
+        else:
+            use_min_max = True
+        if qq_depth_max is None:
+            qq_depth_max = self.qq_depth_max
+        else:
+            use_min_max = True
+        if qq_depth is not None:
+            qq_depth_min = qq_depth_max = qq_depth
+        elif not use_min_max and self.qq_depth is not None:
+            qq_depth_min = qq_depth_max = self.qq_depth
+
+        if break_halves is None:
+            break_halves = self.break_halves
+
+        parser = TractParser(
+            text=text,
+            clean_qq=clean_qq,
+            include_lot_divs=include_lot_divs,
+            qq_depth_min=qq_depth_min,
+            qq_depth_max=qq_depth_max,
+            qq_depth=qq_depth,
+            break_halves=break_halves,
+            parent=self
+        )
+
+        # Store the results, if instructed to do so.
+        if commit:
+            self.parse_complete = True
+
+            # Unpack the appropriate attributes.
+            for attribute in parser.UNPACKABLES:
+                setattr(self, attribute, getattr(parser, attribute))
+
+            # Pull the preprocessed text from the parser.
+            self.pp_desc = parser.text
+
+        return parser.lots_qqs
 
     def preprocess(self, text=None, commit=True, clean_qq=None) -> str:
         """
@@ -4924,6 +4998,11 @@ class PLSSParser:
             handed_down_config=None,
             parent: PLSSDesc = None
     ):
+        """
+        NOTE: Documentation for this class is not maintained here. See
+        instead ``PLSSDesc.parse()``, which essentially serves as a
+        wrapper for this class.
+        """
         # Initial variables to control the parse.
         self.orig_desc = text
         self.preprocessor = PLSSPreprocessor(
@@ -4992,82 +5071,11 @@ class PLSSParser:
 
     def parse(self):
         """
-        Parse the description. If parameter `commit=True` (defaults to
-        on), the results will be stored to the various instance
-        attributes (.parsed_tracts, .w_flags, .w_flag_lines, .e_flags,
-        and .e_flag_lines). Returns only the TractList object containing
-        the parsed Tract objects (i.e. what would be stored to
-        `.parsed_tracts`).
+        Parse the description.
 
-        :param text: The text to be parsed. If not specified, defaults
-        to the string currently stored in `self.pp_desc` (i.e. the
-        pre-processed description).
-        :param layout: The layout to be assumed. If not specified,
-        defaults to whatever is in `self.layout`.
-        :param clean_up: Whether to clean up common 'artefacts' from
-        parsing. If not specified, defaults to False for parsing the
-        'copy_all' layout, and `True` for all others.
-        :param init_parse_qq: Whether to parse each resulting Tract object
-        into lots and QQs when initialized. If not specified, defaults
-        to whatever is specified in `self.init_parse_qq`.
-        :param clean_qq: Whether to expect only clean lots and QQ's (i.e.
-        no metes-and-bounds, exceptions, complicated descriptions,
-        etc.). Defaults to whatever is specified in `self.clean_qq`
-        (which is False, unless configured otherwise).
-        :param require_colon: Whether to require a colon between the
-        section number and the following description (only has an effect
-        on 'TRS_desc' or 'S_desc_TR' layouts).
-        If not specified, it will default to whatever was set at init;
-        and unless otherwise specified there, will default to a 'two-
-        pass' method, where first it will require the colon; and if no
-        matching sections are found, it will do a second pass where
-        colons are not required. Setting as `True` or `False` here
-        prevent the two-pass method.
-            ex: 'Section 14 NE/4'
-                `require_colon=True` --> no match
-                `require_colon=False` --> match (but beware false
-                    positives)
-                <not specified> --> no match on first pass; if no other
-                            sections are identified, will be matched on
-                            second pass.
-        :param segment: Whether to break the text down into segments,
-        with one MATCHING township/range per segment (i.e. only T&R's
-        that are appropriate to the specified layout will count for the
-        purposes of this parameter). This can potentially capture
-        descriptions whose layout changes partway through, but can also
-        cause appropriate warning/error flags to be missed. If not
-        specified here, defaults to whatever is set in `self.segment`.
-        :param commit: Whether to commit the results to the appropriate
-        instance attributes. Defaults to `True`.
-        :param qq_depth_min: (Optional, and only relevant if parsing
-        Tracts into lots and QQs.) An int, specifying the minimum depth
-        of the parse. If not set here, will default to settings from
-        init (if any), which in turn default to 2, i.e. to
-        quarter-quarters (e.g., 'N/2NE/4' -> ['NENE', 'NENE']).
-        Setting to 3 would return 10-acre subdivisions (i.e. dividing
-        the 'NENE' into ['NENENE', 'NWNENE', 'SENENE', 'SWNENE']), and
-        so forth.
-        WARNING: Higher than a few levels of depth will result in very
-        slow performance.
-        :param qq_depth_max: (Optional, and only relevant if parsing
-        Tracts into lots and QQs.) An int, specifying the maximum depth
-        of the parse. If set as 2, any subdivision smaller than
-        quarter-quarter (e.g., 'NENE') would be discarded -- so, for
-        example, the 'N/2NE/4NE/4' would simply become the 'NENE'. Must
-        be greater than or equal to `qq_depth_min`. (Defaults to None --
-        i.e. no maximum. Can also be configured at init.)
-        :param qq_depth: (Optional, and only relevant if parsing Tracts
-        into lots and QQs.) An int, specifying both the minimum and
-        maximum depth of the parse. If specified, will override both
-        `qq_depth_min` and `qq_depth_max`. (Defaults to None -- i.e. use
-        qq_depth_min and optionally qq_depth_max; and can optionally be
-        configured at init.)
-        :param break_halves: (Optional, and only relevant if parsing
-        Tracts into lots and QQs.) Whether to break halves into
-        quarters, even if we're beyond the qq_depth_min. (False by
-        default, but can be configured at init.)
-        :return: Returns a pytrs.TractList object (a subclass of 'list')
-        of all of the resulting pytrs.Tract objects.
+        NOTE: Documentation for this method is mostly maintained under
+        ``PLSSDesc.parse()``, which essentially serves as a wrapper for
+        the PLSSParser class and this method.
         """
 
         text = self.text
@@ -7160,6 +7168,46 @@ class TractPreprocessor:
 
 
 class TractParser:
+
+    _N = 'N'
+    _S = 'S'
+    _E = 'E'
+    _W = 'W'
+    _NE = 'NE'
+    _NW = 'NW'
+    _SE = 'SE'
+    _SW = 'SW'
+    _ALL = 'ALL'
+
+    QQ_HALVES = (_N, _S, _E, _W)
+    QQ_QUARTERS = (_NE, _NW, _SE, _SW)
+    QQ_SUBDIVIDE_DEFINITIONS = {
+        _ALL: QQ_QUARTERS,
+        _N: (_NE, _NW),
+        _S: (_SE, _SW),
+        _E: (_NE, _SE),
+        _W: (_NW, _SW),
+    }
+    QQ_NS = (_N, _S)
+    QQ_EW = (_E, _W)
+    QQ_SAME_AXIS = {
+        _N: QQ_NS,
+        _S: QQ_NS,
+        _E: QQ_EW,
+        _W: QQ_EW
+    }
+
+    UNPACKABLES = (
+        "lots",
+        "qqs",
+        "lots_qqs",
+        "lot_acres",
+        "w_flags",
+        "w_flag_lines",
+        "e_flags",
+        "e_flag_lines",
+    )
+
     def __init__(
             self,
             text,
@@ -7171,4 +7219,807 @@ class TractParser:
             break_halves=False,
             parent=None
     ):
-        self.text = text
+        self.orig_text = text
+        self.preprocessor = TractPreprocessor(text, clean_qq)
+        self.text = self.preprocessor.text
+        self.clean_qq = clean_qq
+        self.include_lot_divs = include_lot_divs
+        self.qq_depth_min = qq_depth_min
+        self.qq_depth_max = qq_depth_max
+        self.qq_depth = qq_depth
+        self.break_halves = break_halves
+        self.parent = parent
+
+        self.lots = []
+        self.qqs = []
+        self.lots_qqs = []
+        self.lot_acres = {}
+
+        self.w_flags = []
+        self.e_flags = []
+        self.w_flag_lines = []
+        self.e_flag_lines = []
+
+        self.parse_cache = {}
+        self.reset_cache()
+
+        self.parse()
+
+    def reset_cache(self):
+        self.parse_cache = {
+            "text_block": "",
+            "unused_text": [],
+            "unused_with_context": [],
+            "w_flags_staging": [],
+            "w_flag_lines_staging": []
+        }
+
+    def parse(self):
+        """
+
+        """
+        # TODO: Generate a list (saved as an attribute) of slice_indexes
+        #   of the `pp_desc` for the text that was incorporated into
+        #   lots and QQ's vs. not.
+
+        text = self.text
+        include_lot_divs = self.include_lot_divs
+        qq_depth_min = self.qq_depth_min
+        qq_depth_max = self.qq_depth_max
+        qq_depth = self.qq_depth
+        break_halves = self.break_halves
+
+        # TODO : DON'T pull the QQ in "less and except the Johnston #1
+        #   well in the NE/4NE/4 of Section 4, T154N-R97W" (for example)
+
+        # TODO : DON'T pull the QQ in "To the east line of the NW/4NW/4"
+        #   (for example). May need some additional context limitations.
+        #   (exclude "of the said <match>"; "<match> of [the] Section..." etc.)
+
+        ################################################################
+        # General process is as follows:
+        # 1) Scrub the aliquots (i.e. Convert 'Northeast Quarter of
+        #       Southwest Quarter, E/2, NE4' to 'NE¼SW¼, E½, NE¼')
+        # 2) Extract lot_regex matches from the text (actually uses
+        #       lot_with_aliquot_regex to capture lot divisions).
+        # 3) Unpack lot_regex matches into a lots.
+        # 4) Extract aliquot_regex matches from the text.
+        # 5) Convert the aliquot_regex matches into a qqs.
+        # 6) Pack it all into a ParseBag.
+        # 6a) If committing the results, self._unpack_pb() the ParseBag.
+        # 7) Join the lots and qqs from the ParseBag, and return it.
+        ################################################################
+
+        # For holding the data during parsing
+        plqqParseBag = ParseBag(parent_type='Tract')
+
+        # Extract the lots from the description (and leave the rest of
+        # the description for aliquot parsing).  Replace any extracted
+        # lots with ';;' to prevent unintentionally combining aliquots later.
+        lot_text_blocks = []
+        remainingText = text
+        while True:
+            # We use `lot_with_aliquot_regex` instead of `lot_regex`,
+            # in order to ALSO capture leading aliquots -- i.e. we want
+            # to capture 'N½ of Lot 1' (even if we won't be reporting
+            # lot divisions), because otherwise the 'N½' will be read as
+            # <the entire N/2> of the section.
+            lot_aliq_mo = lot_with_aliquot_regex.search(remainingText)
+            if lot_aliq_mo is None:
+                break
+            else:
+                lot_text_blocks.append(lot_aliq_mo.group())
+                # reconstruct remainingText, injecting ';;' where the
+                # match was located
+                p1 = remainingText[:lot_aliq_mo.start()]
+                p2 = remainingText[lot_aliq_mo.end():]
+                remainingText = f"{p1};;{p2}"
+        text = remainingText
+
+        for block in lot_text_blocks:
+            # Unpack the lots in this block, and store the results
+            # to the appropriate attributes
+            self._unpack_lots(block, include_lot_divs=include_lot_divs)
+
+        # Get a list of all of the aliquots strings
+        aliq_text_blocks = []
+        remainingText = text
+        while True:
+            # Run this loop, pulling the next aliquot match until we run out.
+            aliq_mo = aliquot_unpacker_regex.search(remainingText)
+            if aliq_mo is None:
+                break
+            else:
+                # TODO: Implement context awareness. Should not pull aliquots
+                #   before "of Section ##", for example.
+                aliq_text_blocks.append(aliq_mo.group())
+                remainingText = remainingText[:aliq_mo.start()] + ';;' \
+                                + remainingText[aliq_mo.end():]
+        text = remainingText
+
+        # And also pull out "ALL" as an aliquot if it is clear of any
+        # context (e.g., pull "ALL" but not "All of the").  First, get a
+        # working text string, and replace each group of whitespace with
+        # a single space.
+        wText = re.sub(r'\s+', ' ', text).strip()
+        all_mo = ALL_regex.search(wText)
+        if all_mo is not None:
+            if all_mo.group(2) is None:
+                # If we ONLY found "ALL", then we're good.
+                aliq_text_blocks.append(TractParser._ALL)
+            # TODO: Make this more robust. As of now will only capture
+            #  'ALL' in "Section 14: ALL", but there might be some
+            #  disregardable context around "ALL" (e.g., punctuation)
+            #  that could currently prevent it from being picked up.
+
+        # --------------------------------------------------------------
+        # Now that we have list of text blocks, each containing a separate
+        # aliquot, parse each of them into QQ's (or smaller, if further
+        # divided).
+        #   ex:  ['NE¼', 'E½NE¼NW¼']
+        #           -> ['NENE' , 'NWNE' , 'SENE' , 'SWNE', 'E2NENW']
+
+        if qq_depth is not None:
+            qq_depth_min = qq_depth_max = qq_depth
+
+        for aliqTextBlock in aliq_text_blocks:
+            # Unpack each aliq_text_block, and store its results to the
+            # appropriate attribute.
+            self._unpack_aliquots(
+                aliqTextBlock, qq_depth_min, qq_depth_max, qq_depth,
+                break_halves)
+
+        lots_qqs = self.lots + self.qqs
+        self.lots_qqs = lots_qqs
+
+        return lots_qqs
+
+    def _unpack_aliquots(
+            self, aliquot_text_block, qq_depth_min=2, qq_depth_max=None,
+            qq_depth=None, break_halves=False) -> list:
+        """
+        INTERNAL USE:
+        Convert an aliquot with fraction symbols (or 'ALL') into a list of
+        clean QQs. Returns a list of QQ's (or smaller, if applicable):
+            'N½SW¼NE¼' -> ['N2SWNE']
+            'N½SW¼' -> ['NESW', 'NWSW']
+
+        NOTE: Input a single aliquot_text_block (i.e. feed only 'N½SW¼NE¼',
+        even if we have a larger list of ['N½SW¼NE¼', 'NW¼'] to process).
+
+        :param aliquot_text_block: A clean string, as generated by the
+        `Tract.parse()` method (e.g., 'E½NW¼NE¼' or 'ALL').
+        :param qq_depth_min: An int, specifying the minimum depth of the parse.
+        Defaults to 2, i.e. to quarter-quarters (e.g., 'N/2NE/4' -> ['NENE',
+        'NENE']). Setting to 3 would return 10-acre subdivisions (i.e.
+        dividing the 'NENE' into ['NENENE', 'NWNENE', 'SENENE', 'SWNENE']),
+        and so forth.
+        WARNING: Higher than a few levels of depth will result in very slow
+        performance.
+        :param qq_depth_max: (Optional) An int, specifying the maximum depth of
+        the parse. If set as 2, any subdivision smaller than quarter-quarter
+        (e.g., 'NENE') would be discarded -- so, for example, the
+        'N/2NE/4NE/4' would simply become the 'NENE'. Must be greater than
+        or equal to `qq_depth_min`. (Defaults to None -- i.e. no maximum.)
+        :param qq_depth: (Optional) An int, specifying both the min and max
+        depth of the parse. If specified, will override both `qq_depth_min`
+        and `qq_depth_max`. (Defaults to None -- i.e. use qq_depth_min and
+        optionally qq_depth_max.)
+        :param break_halves: Whether to break halves into quarters, even
+        if we're beyond the qq_depth_min. (False by default.)
+        """
+
+        if qq_depth is not None:
+            qq_depth_min = qq_depth_max = qq_depth
+
+        if qq_depth_max is not None and qq_depth_max < qq_depth_min:
+            import warnings
+            msg = (
+                "If specified, `qq_depth_max` should be greater than or equal to "
+                f"`qq_depth_min` (passed as {qq_depth_max} and {qq_depth_min}, "
+                "respectively). Using a larger qq_depth_max than qq_depth_min may "
+                "result in more QQ's being returned than actually exist in the "
+                "Tract."
+            )
+            warnings.warn(msg)
+
+        # ------------------------------------------------------------------
+        # Get a list of the component parts of the aliquot string, and then
+        # reverse it -- i.e. 'N½SW¼NE¼' becomes ['NE', 'SW', 'N']
+
+        # Note that group(2) of a `single_aliquot_unpacker_regex` match is
+        # the aliquot component without the fraction, and it is at index 1
+        # in each tuple within the list returned by `.findall()`
+        raw_matches = single_aliquot_unpacker_regex.findall(aliquot_text_block)
+
+        # Unpack the list of tuples into a list of only the aliquot components
+        component_list = [aq_tuple[1] for aq_tuple in raw_matches]
+
+        # Reverse, so that the aliquot divisions are in the order of
+        # largest-to-smallest.
+        component_list.reverse()
+
+        # ------------------------------------------------------------------
+        # If no components found, there are no QQ's to _unpack.
+        if len(component_list) == 0:
+            return component_list
+
+        # ------------------------------------------------------------------
+        # Check for any consecutive halves that are on opposite axes.
+        # E.g., the N/2E/2 should be converted to the NE/4, but the W/2E/2
+        # should be left alone.
+        # Also check for any quarters that occur before halves, and convert
+        # them to halves before quarters. E.g., "SE/4W/2" -> "E/2SW/4"
+
+        component_list = TractParser._standardize_aliquot_components(component_list)
+
+        # ------------------------------------------------------------------
+        # Convert the components into aliquot strings
+
+        # (Remember that the component_list is ordered last-to-first
+        # vis-a-vis the original aliquot string.)
+
+        # Discard any subdivisions greater than the qq_depth_max, if it was set.
+        if qq_depth_max is not None and len(component_list) > qq_depth_max:
+            component_list = component_list[:qq_depth_max]
+
+        subdivided_component_list = []
+        for i, comp in enumerate(component_list, start=1):
+            # Determine how deeply we need to subdivide (i.e. break down) each
+            # component, such that we ultimately capture the intended qq_depth_min.
+
+            depth = 0
+            if i == qq_depth_min:
+                depth = 1
+            elif i == len(component_list) and len(component_list) < qq_depth_min:
+                depth = qq_depth_min - i + 1
+            elif comp in TractParser.QQ_HALVES and (i < qq_depth_min or break_halves):
+                depth = 1
+            if comp in TractParser.QQ_QUARTERS:
+                # Quarters (by definition) are already 1 depth more broken down
+                # than halves (or 'ALL'), so subtract 1 to account for that
+                depth -= 1
+
+            # Subdivide this aliquot component, as deep as needed
+            new_comp = TractParser._subdivide_aliquot(comp, depth)
+
+            # Append it to our list of components (with subdivisions arranged
+            # largest-to-smallest).
+            subdivided_component_list.append(new_comp)
+
+        # subdivided_component_list is now in the format:
+        #   `[['SE'], ['NW', 'SW'], ['E2']]`
+        # ...for E/2W/2SE/4, parsed to a qq_depth_min of 2.
+
+        # Convert the 1-depth nested list into the final QQ list.
+        qqs = TractParser._rebuild_aliquots(subdivided_component_list)
+        self.qqs.extend(qqs)
+
+        return qqs
+
+    @staticmethod
+    def _pass_back_halves(aliquot_components: list) -> list:
+        """
+        INTERNAL USE:
+        Quarters that precede halves in an aliquot block are nonstandard
+        but technically accurate. This function adjusts them to the
+        equivalent description where the half occurs before the quarter.
+
+        For example, ``'NE/4N/2'`` (passed here as ``['N', 'NE']``) is
+        better described as the ``'N/2NE/4'``. Converted here to
+        ``['NE', 'N']``.
+
+        Similarly, the ``SE/4W/2'`` (passed here as ``['W', 'SE']``) is
+        better described as the ``'E/2SW/4'``. Converted here to
+        ``['SW', 'E']``.
+
+        NOTE: This function does a single pass only!
+
+        :param aliquot_components: A list of aliquot components without any
+        fractions or numbers.
+        :return: The fixed list of aliquot components.
+        """
+        aliquot_components.reverse()
+        i = 0
+        while i < len(aliquot_components) - 1:
+            aq1 = aliquot_components[i]
+            aq2 = aliquot_components[i + 1]
+
+            # Looking for halves before quarters.
+            if not (aq2 in TractParser.QQ_HALVES and aq1 in TractParser.QQ_QUARTERS):
+                # This is OK.
+                i += 1
+                continue
+
+            # Break the 'NE' into 'N' and 'E'.
+            char1_ns, char2_ew = [*aq1]
+
+            if aq2 in TractParser.QQ_NS:
+                rebuilt_aq2 = f"{aq2}{char2_ew}"
+                rebuilt_aq1 = char1_ns
+            else:
+                rebuilt_aq2 = f"{char1_ns}{aq2}"
+                rebuilt_aq1 = char2_ew
+            # Replace aq1 and aq2 with the rebuilt versions.
+            aliquot_components[i] = rebuilt_aq1
+            aliquot_components[i + 1] = rebuilt_aq2
+            i += 1
+
+        aliquot_components.reverse()
+        return aliquot_components
+
+    @staticmethod
+    def _combine_consecutive_halves(aliquot_components):
+        """
+        INTERNAL USE:
+        Check for any consecutive halves that are on opposite axes.
+        E.g., the N/2E/2 should be converted to the NE/4, but the W/2E/2
+        should be left alone.
+
+        NOTE: This function does a single pass only!
+
+        :param aliquot_components: A list of aliquot components without any
+        fractions or numbers.
+        :return: The fixed list of aliquot components.
+        """
+
+        aliquot_components_clean = []
+        i = 0
+        while i < len(aliquot_components):
+            aq1 = aliquot_components[i]
+            if i + 1 == len(aliquot_components):
+                # Last item.
+                aliquot_components_clean.append(aq1)
+                break
+            aq2 = aliquot_components[i + 1]
+            if (aq1 in TractParser.QQ_HALVES
+                    and aq2 in TractParser.QQ_HALVES
+                    and aq2 not in TractParser.QQ_SAME_AXIS[aq1]):
+                # e.g., the current component is 'N' and the next component is 'E';
+                # those do not exist on the same axis, so we combine them into
+                # the 'NE'. (And make sure the N/S direction goes before E/W.)
+                new_quarter = f"{aq2}{aq1}" if aq1 in "EW" else f"{aq1}{aq2}"
+                aliquot_components_clean.append(new_quarter)
+                # Skip over the next component, because we already handled it during
+                # this iteration.
+                i += 2
+            else:
+                aliquot_components_clean.append(aq1)
+                i += 1
+        aliquot_components = aliquot_components_clean
+        return aliquot_components
+
+    @staticmethod
+    def _standardize_aliquot_components(aliquot_components: list) -> list:
+        """
+        INTERNAL USE:
+        Iron out any non-standard aliquot descriptions, such as 'cross-axes'
+        halves (e.g., "W/2N/2" -> "NW/4") or quarters that occur before
+        halves (e.g., "SE/4W/2" -> "W/2SE/4").
+
+        :param aliquot_components: A list of aliquot components (already
+        broken down by ``_unpack_aliquots()``).
+        :return: The corrected list of aliquot components.
+        """
+        while True:
+            # Do at least one pass, and then as many more as are needed
+            # until the output matches the input.
+            check_orig = aliquot_components.copy()
+            aliquot_components = TractParser._pass_back_halves(aliquot_components)
+            aliquot_components = TractParser._combine_consecutive_halves(aliquot_components)
+            if aliquot_components == check_orig:
+                break
+        return aliquot_components
+
+    @staticmethod
+    def _rebuild_aliquots(nested_aliquot_list: list):
+        """
+        INTERNAL USE:
+
+        A shallow-nested (single-depth) list of aliquot components is
+        returned as a flattened list of rebuilt aliquots.
+
+        :param nested_aliquot_list: A single-depth nested list of aliquot
+        components, arranged by subdivision size, largest to smallest. For
+        example:  [['SE'], ['NW', 'SW'], ['E2']]  ...for 'E/2W/2SE/4',
+        parsed to a qq_depth_min of 2.
+        :return: A clean QQ list, in the format ['E2NWSE', 'E2SWSE'] (or
+        smaller strings, if parsed to a less qq_depth_min).
+        """
+        qq_list = []
+        while len(nested_aliquot_list) > 0:
+            deepest = nested_aliquot_list.pop(-1)
+            if len(nested_aliquot_list) == 0:
+                # deepest is our final QQ list
+                qq_list = deepest
+                break
+            second_deepest = nested_aliquot_list.pop(-1)
+            rebuilt = []
+            for shallow in second_deepest:
+                rebuilt.extend(map(lambda deep: f"{deep}{shallow}", deepest))
+
+            nested_aliquot_list.append(rebuilt)
+
+        return qq_list
+
+    @staticmethod
+    def _subdivide_aliquot(aliquot_component: str, depth: int):
+        """
+        INTERNAL USE:
+
+        Subdivide an aliquot into smaller pieces, to the specified `depth`.
+
+        Return examples:
+
+        _subdivide_aliquot('N', 0)
+        ->  ['N2']
+
+        _subdivide_aliquot('N', 1)
+        ->  ['NE', 'NW']
+
+        _subdivide_aliquot('N', 2)
+        ->  ['NENE', 'NWNE', 'SENE', 'SWNE', 'NENW', 'NWNW', 'SENW', 'SWNW']
+
+        _subdivide_aliquot('NE', 1)
+        ->  ['NENE', 'NWNE', 'SENE', 'SWNE']
+
+        :param aliquot_component: Any element that appears in the variable
+        `QQ_QUARTERS` or as a key in the `QQ_SUBDIVIDE_DEFINITIONS` dict.
+
+        :param depth: How many times to subdivide this aliquot (i.e. halves
+        or 'ALL' into quarters, or quarters into deeper quarters). More
+        precisely stated, the section will be subdivided into a total number
+        of pieces equal to `4^(depth - 1)` -- assuming we're parsing the
+        complete section (i.e. 'ALL'). Thus, setting depth greater than 5 or
+        so will probably take a long time to process.  NOTE: A depth of 0 or
+        less will simply place the aliquot in a list and return it, after
+        adding the half designator '2', if appropriate (i.e. 'NE' -> ['NE'],
+        but 'E' -> ['E2'] ).
+
+        :return: A list of aliquots, in the format shown above.
+        """
+        if depth <= 0:
+            # We don't actually need to subdivide the aliquot component, so
+            # just make sure it is appropriately formatted if it's a half
+            # (i.e. 'N' -> 'N2'), then put it in a list and return it.
+            if aliquot_component in TractParser.QQ_HALVES:
+                return [aliquot_component + "2"]
+            return [aliquot_component]
+
+        # Construct a nested list, which _rebuild_aliquots() requires,
+        # which will process it and spit out a flat list before this function
+        # returns.
+        divided = [[aliquot_component]]
+        for _ in range(depth):
+            if divided[-1][0] in TractParser.QQ_SUBDIVIDE_DEFINITIONS.keys():
+                # replace halves and 'ALL' with quarters
+                comp = divided.pop(-1)[0]
+                divided.append(list(TractParser.QQ_SUBDIVIDE_DEFINITIONS[comp]))
+            else:
+                divided.append(list(TractParser.QQ_QUARTERS))
+
+        # The N/2 (passed to this function as 'N') would now be parsed into
+        # a format (at a depth of 2):
+        #       [['NE', 'NW'], ['NE', 'NW', 'SE', 'SW']]
+        # ... which gets reconstructed to:
+        #       ['NENE', 'NWNE', 'SENE', 'SWNE', 'NENW', 'NWNW', 'SENW', 'SWNW']
+        # ...by `_rebuild_aliquots()`
+
+        return TractParser._rebuild_aliquots(divided)
+
+    def _unpack_lots(self, lot_text_block, include_lot_divs=True):
+        """
+        INTERNAL USE:
+        Feed in a string of a lot_regex match object, and parse them
+        into formatted lot strings. Also parse lot acreages, if they
+        exist in the string. Stores the results to ``.lots`` and
+        ``.lot_acres`` attributes.
+
+        ex:  ``'Lot 1(39.80), 2(30.22)'``
+            -> ``.lots`` --> ``['L1', 'L2']``
+            -> ``.lot_acres`` --> ``{'L1' : '39.80', 'L2' : '30.22'}``
+        """
+
+        # This will be the output list of Lot numbers [L1, L2, L5, ...]:
+        lots = []
+
+        # This will be a dict of stated gross acres for the respective lots,
+        # keyed by 'L1', 'L2', etc. It only gets filled for the lots for
+        # which gross acreage was specified in parentheses.
+        lotsAcresDict = {}
+
+        # A working list of the lots. Note that this gets filled from
+        # last-to-first on this working text block. It will be reversed
+        # before adding it to the main lots list:
+        wLots = []
+
+        # `foundThrough` will switch to True at the start of an elided list
+        # (e.g., when we're at '3' in "Lots 3 - 9")
+        foundThrough = False
+        remainingLotsText = lot_text_block
+
+        while True:
+            lots_mo = lot_regex.search(remainingLotsText)
+
+            if lots_mo is None:  # we're out of lot numbers.
+                break
+
+            else:
+                # We still have at least one lot to _unpack.
+
+                # Pull the right-most lot number (as a string):
+                lotNum = _get_last_lot(lots_mo)
+
+                if _is_single_lot(lots_mo):
+                    # Skip the next loop after we've reached the left-most lot
+                    remainingLotsText = ''
+
+                else:
+                    # If we've found at least two lots.
+                    remainingLotsText = remainingLotsText[:_start_of_last_lot(lots_mo)]
+
+                # Clean up any leading '0's in lotNum.
+                lotNum = str(int(lotNum))
+                if lotNum == '0':
+                    self.w_flags.append('Lot0')
+
+                newLot = 'L' + lotNum
+
+                if foundThrough:
+                    # If we've identified an elided list (e.g., 'Lots 3 - 9')
+                    prevLot = wLots[-1]
+                    # Start at lotNum identified earlier this loop:
+                    start_of_list = int(lotNum)
+                    # End at last round's lotNum (omit leading 'L'; convert to int):
+                    end_of_list = int(prevLot[1:])
+                    correctOrder = True
+                    if start_of_list >= end_of_list:
+                        self.w_flags.append('nonSequen_Lots')
+                        self.w_flag_lines.append(
+                            ('nonSequen_Lots',
+                             f"Lots {start_of_list} - {end_of_list}"))
+                        correctOrder = False
+
+                    ########################################################
+                    # start_of_list and end_of_list variable names are
+                    # unintuitive. Here's an explanation:
+                    # The 'lots' list is being filled in reverse by this
+                    # algorithm, starting at the end of the search string
+                    # and running backwards. Thus, this particular loop,
+                    # which is attempting to _unpack "Lots 3 - 9", will be
+                    # fed into the lots list as [L8, L7, L6, L5, L4, L3].
+                    # (L9 should already be in the list from the previous
+                    # loop.)
+                    #
+                    # 'start_of_list' refers to the original text (i.e. in
+                    # 'Lots 3 - 9', start_of_list will be 3; end_of_list
+                    # will be 9).
+                    ########################################################
+
+                    # vars a,b&c are the bounds (a&b) and incrementation (c)
+                    # of the range() for the lots in the elided list:
+                    # If the string is correctly 'Lots 3 - 9' (for example),
+                    # we use the default:
+                    a, b, c = end_of_list - 1, start_of_list - 1, -1
+                    # ... but if the string is 'Lots 9 - 3' (i.e. wrong),
+                    # we use:
+                    if not correctOrder:
+                        a, b, c = end_of_list + 1, start_of_list + 1, 1
+
+                    for i in range(a, b, c):
+                        # Append each new lot in this range.
+                        wLots.append('L' + str(i))
+                    # Reset the foundThrough.
+                    foundThrough = False
+
+                else:
+                    # If it's a standalone lot (not the start of an elided
+                    # list), we append it
+                    wLots.append(newLot)
+
+                # If acreage was specified for this lot, clean it up and add
+                # to dict, keyed by the newLot.
+                newAcres = _get_lot_acres(lots_mo)
+                if newAcres is not None:
+                    lotsAcresDict[newLot] = newAcres
+
+                # If we identified at least two lots, we need to check if
+                # the last one is the end of an elided list, by calling
+                # _thru_lot() to check for us:
+                if _is_multi_lot(lots_mo):
+                    foundThrough = _thru_lot(lots_mo)
+
+        # Reverse wLots, so that it's in the order it was in the original
+        # description, and append it to our main list:
+        wLots.reverse()
+        lots.extend(wLots)
+
+        if include_lot_divs:
+            # If we want include_lot_divs, add it to the front of each parsed lot.
+            leadingAliq = _get_leading_aliquot(
+                lot_with_aliquot_regex.search(lot_text_block))
+            leadingAliq = leadingAliq.replace('¼', '')
+            leadingAliq = leadingAliq.replace('½', '2')
+            if leadingAliq != '':
+                if _first_lot_is_plural(lot_regex.search(lot_text_block)):
+                    # If the first lot is plural, we apply leadingAliq to
+                    # all lots in the list
+                    lots = [f'{leadingAliq} of {lot}' for lot in lots]
+                else:
+                    # If the first lot is NOT plural, apply leadingAliq to
+                    # ONLY the first lot:
+                    firstLot = f'{leadingAliq} of {lots.pop(0)}'
+                    lots.insert(0, firstLot)
+                # TODO: This needs to be a bit more robust to handle all real-world
+                #   permutations.  For example: 'N/2 of Lot 1 and 2' (meaning
+                #   ['N2 of L1', 'N2 of L2']) is possible -- albeit poorly formatted
+
+        self.lots.extend(lots)
+        for k, v in lotsAcresDict.items():
+            self.lot_acres[k] = v
+
+        return None
+
+    ####################################################################
+    # Tools for interpreting lot_regex and lot_with_aliquot_regex match
+    # objects:
+    ####################################################################
+
+    @staticmethod
+    def _is_multi_lot(lots_mo) -> bool:
+        """
+        INTERNAL USE:
+        Return a bool, whether a lot_regex match object is a multiLot.
+        """
+        try:
+            return (lots_mo.group(11) is not None) and (lots_mo.group(19) is not None)
+        except (IndexError, AttributeError):
+            return False
+
+    @staticmethod
+    def _thru_lot(lots_mo) -> bool:
+        """
+        INTERNAL USE:
+        Return a bool, whether the word 'through' (or an abbreviation)
+        appears before the right-most lot in a lot_regex match object.
+        """
+
+        try:
+            if _is_multi_lot(lots_mo):
+                try:
+                    thru_mo = through_regex.search(lots_mo.group(15))
+                except (IndexError, AttributeError):
+                    return False
+            else:
+                return False
+
+            if thru_mo is None:
+                foundThrough = False
+            else:
+                foundThrough = True
+
+            return foundThrough
+        except (IndexError, AttributeError):
+            return False
+
+    @staticmethod
+    def _is_single_lot(lots_mo) -> bool:
+        """
+        INTERNAL USE:
+        Return a bool, whether a lot_regex match object is a single lot.
+        """
+        try:
+            return (lots_mo.group(11) is not None) and (lots_mo.group(19) is None)
+        except (IndexError, AttributeError):
+            return False
+
+    @staticmethod
+    def _get_last_lot(lots_mo):
+        """
+        INTERNAL USE:
+        Extract the right-most lot in a lot_regex match object. Returns a
+        string if found; if none found, returns None.
+        """
+        try:
+            if _is_multi_lot(lots_mo):
+                return lots_mo.group(19)
+            elif _is_single_lot(lots_mo):
+                return lots_mo.group(11)
+            else:
+                return None
+        except (IndexError, AttributeError):
+            return None
+
+    @staticmethod
+    def _start_of_last_lot(lots_mo) -> int:
+        """
+        INTERNAL USE:
+        Return an int of the starting position of the right-most lot in a
+        lot_regex match object. Returns None if none found.
+        """
+        try:
+            if _is_multi_lot(lots_mo):
+                return lots_mo.start(19)
+            elif _is_single_lot(lots_mo):
+                return lots_mo.start(11)
+            else:
+                return None
+        except (IndexError, AttributeError):
+            return None
+
+    @staticmethod
+    def _get_lot_acres(lots_mo) -> str:
+        """
+        INTERNAL USE:
+        Return the string of the lot_acres for the right-most lot,
+        without parentheses. If no match, then returns None.
+        """
+        try:
+            if _is_multi_lot(lots_mo):
+                if lots_mo.group(14) is None:
+                    return None
+                else:
+                    lotAcres_mo = lotAcres_unpacker_regex.search(lots_mo.group(14))
+
+            elif _is_single_lot(lots_mo):
+                if lots_mo.group(12) is None:
+                    return None
+                else:
+                    lotAcres_mo = lotAcres_unpacker_regex.search(lots_mo.group(12))
+
+            else:
+                return None
+
+            if lotAcres_mo is None:
+                return None
+            else:
+                lotAcres_text = lotAcres_mo.group(1)
+
+                # Swap in a period if there was a comma separating:
+                lotAcres_text = lotAcres_text.replace(',', '.')
+                return lotAcres_text
+        except (IndexError, AttributeError):
+            return None
+
+    @staticmethod
+    def _first_lot_is_plural(lots_mo) -> bool:
+        """
+        INTERNAL USE:
+        Return a bool, whether the first instance of the word 'lot' in a
+        lots_regex match object is pluralized.
+        """
+        try:
+            return lots_mo.group(9).lower() == 'lots'
+        except (IndexError, AttributeError):
+            return None
+
+    ####################################################################
+    # Tools for interpreting lot_with_aliquot_regex match objects:
+    ####################################################################
+
+    @staticmethod
+    def _has_leading_aliquot(mo) -> bool:
+        """
+        INTERNAL USE:
+        Return a bool, whether this lot_with_aliquot_regex match object
+        has a leading aliquot. Returns None if no match found.
+        """
+        try:
+            return mo.group(1) is None
+        except (IndexError, AttributeError):
+            return None
+
+    @staticmethod
+    def _get_lot_component(mo):
+        """
+        INTERNAL USE:
+        Return the string of the entire lots component from a
+        lot_with_aliquot_regex match object. Returns None if no match.
+        """
+        try:
+            if mo.group(7):
+                return mo.group(7)
+            else:
+                return ''
+        except (IndexError, AttributeError):
+            return None
