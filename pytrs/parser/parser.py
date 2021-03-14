@@ -6522,51 +6522,51 @@ class PLSSParser:
 
         # Search for all T&R's that match the layout requirements. (We
         # do not store the flags, nor cache the results.)
-        wTRList = self._findall_matching_tr(text=text, layout=layout, cache=False)
+        twprge_matches = self._findall_matching_tr(text=text, layout=layout, cache=False)
 
-        if not wTRList:
+        if not twprge_matches:
             # If no T&R's had been matched, return the text block as single
-            # element in a list (what would have been `trTextBlocks`), and
-            # another empty list (what would have been `discardTextBlocks`)
+            # element in a list (what would have been `twprge_text_blocks`), and
+            # another empty list (what would have been `discard_text_blocks`)
             return [text], []
 
-        trStartPoints = []
-        trEndPoints = []
-        trList = []
-        trTextBlocks = []
-        discardTextBlocks = []
-        for TRtuple in wTRList:
-            trList.append(TRtuple[0])
-            trStartPoints.append(TRtuple[1])
-            trEndPoints.append(TRtuple[2])
+        start_points = []
+        end_points = []
+        twprge_list = []
+        twprge_text_blocks = []
+        discard_text_blocks = []
+        for twprge_tuple in twprge_matches:
+            twprge_list.append(twprge_tuple[0])
+            start_points.append(twprge_tuple[1])
+            end_points.append(twprge_tuple[2])
 
         if twprge_first:
-            for i in range(len(trStartPoints)):
-                if i == 0 and trStartPoints[i] != 0:
+            for i in range(len(start_points)):
+                if i == 0 and start_points[i] != 0:
                     # If the first element is not 0 (i.e. T&R right at the
                     # start), this is discard text.
-                    discardTextBlocks.append(text[:trStartPoints[i]])
+                    discard_text_blocks.append(text[:start_points[i]])
                 # Append each text_block
-                new_desc = text[trStartPoints[i]:]
-                if i + 1 != len(trStartPoints):
-                    new_desc = text[trStartPoints[i]:trStartPoints[i + 1]]
-                trTextBlocks.append(
-                    (trList.pop(0), PLSSParser._cleanup_desc(new_desc)))
+                new_desc = text[start_points[i]:]
+                if i + 1 != len(start_points):
+                    new_desc = text[start_points[i]:start_points[i + 1]]
+                twprge_text_blocks.append(
+                    (twprge_list.pop(0), PLSSParser._cleanup_desc(new_desc)))
 
         else:
-            for i in range(len(trEndPoints)):
-                if i + 1 == len(trEndPoints) and trEndPoints[i] != len(text):
+            for i in range(len(end_points)):
+                if i + 1 == len(end_points) and end_points[i] != len(text):
                     # If the last element is not the final character in the
                     # string (i.e. T&R ends at text end), discard text
-                    discardTextBlocks.append(text[trEndPoints[i]:])
+                    discard_text_blocks.append(text[end_points[i]:])
                 # Append each text_block
-                new_desc = text[:trEndPoints[i]]
+                new_desc = text[:end_points[i]]
                 if i != 0:
-                    new_desc = text[trEndPoints[i - 1]:trEndPoints[i]]
-                trTextBlocks.append(
-                    (trList.pop(0), PLSSParser._cleanup_desc(new_desc)))
+                    new_desc = text[end_points[i - 1]:end_points[i]]
+                twprge_text_blocks.append(
+                    (twprge_list.pop(0), PLSSParser._cleanup_desc(new_desc)))
 
-        return trTextBlocks, discardTextBlocks
+        return twprge_text_blocks, discard_text_blocks
 
     @staticmethod
     def _compile_twprge_mo(mo, default_ns=None, default_ew=None):
@@ -6583,13 +6583,13 @@ class PLSSParser:
         if not default_ew:
             default_ew = PLSSDesc.MASTER_DEFAULT_EW
 
-        twpNum = mo[2]
-        # Clean up any leading '0's in twpNum.
+        twp_num = mo[2]
+        # Clean up any leading '0's in twp_num.
         # (Try/except is used to handle twprge_ocr_scrub_regex mo's, which
-        # can contain alpha characters in `twpNum`.)
+        # can contain alpha characters in `twp_num`.)
         try:
-            twpNum = str(int(twpNum))
-        except:
+            twp_num = str(int(twp_num))
+        except ValueError:
             pass
 
         # if mo[4] is None:
@@ -6604,18 +6604,18 @@ class PLSSParser:
             # and range direction in group 7 /or/ 13.
             # So we handle those ones with extra if/else...
             if mo[12] is None:
-                rgeNum = mo[6]
+                rge_num = mo[6]
             else:
-                rgeNum = mo[12]
+                rge_num = mo[12]
         else:
-            rgeNum = mo[6]
+            rge_num = mo[6]
 
         # --------------------------------------
-        # Clean up any leading '0's in rgeNum.
+        # Clean up any leading '0's in rge_num.
         # (Try/except is used to handle twprge_ocr_scrub_regex mo's, which
-        # can contain alpha characters in `rgeNum`.)
+        # can contain alpha characters in `rge_num`.)
         try:
-            rgeNum = str(int(rgeNum))
+            rge_num = str(int(rge_num))
         except ValueError:
             pass
 
@@ -6637,7 +6637,7 @@ class PLSSParser:
             else:
                 ew = mo[7][0].lower()
 
-        return twpNum + ns + rgeNum + ew
+        return f"{twp_num}{ns}{rge_num}{ew}"
 
     @staticmethod
     def _compile_sec_mo(sec_mo):
@@ -6648,8 +6648,7 @@ class PLSSParser:
         list ['01', '02', ...] for multiSections
         """
         if _is_multisec(sec_mo):
-            multiSecParseBagObj = _unpack_sections(sec_mo.group())
-            return multiSecParseBagObj.sec_list  # Pull out the sec_list
+            return PLSSParser._unpack_sections(sec_mo.group())
         elif _is_singlesec(sec_mo):
             return PLSSParser._get_last_sec(sec_mo).rjust(2, '0')
         else:
@@ -6663,13 +6662,12 @@ class PLSSParser:
         than TRS_DESC. (Intended to be run only on post-parsing .desc
         attributes of Tract objects.)
         """
-
+        cull_list = [' the', ' all in', ' all of', ' of', ' in', ' and']
         # Run this loop until the input str matches the output str.
         while True:
             text1 = text
             text1 = text1.lstrip('.')
             text1 = text1.strip(',;:-–—\t\n ')
-            cull_list = [' the', ' all in', ' all of', ' of', ' in', ' and']
             # Check to see if text1 ends with each of the strings in the
             # cull_list, and if so, slice text1 down accordingly.
             for cull_str in cull_list:
@@ -6720,7 +6718,7 @@ class PLSSParser:
         # Only a single section in this match...
         # But there's a plural "Sections" anyway!
         if (PLSSParser._is_singlesec(multisec_mo)
-                and PLSSParser.multisec_mo.group(4) is not None):
+                and multisec_mo.group(4) is not None):
             return multisec_mo.group(4).lower() == 's'
         return False
 
@@ -6745,7 +6743,6 @@ class PLSSParser:
                 """
         text = self.orig_desc
         preprocessed = self.text
-        flag_pb = ParseBag(parent_type='PLSSDesc')
 
         lines = text.split('\n')
 
@@ -6791,7 +6788,7 @@ class PLSSParser:
             for rgx, flag in wflag_regexes:
                 check_for_wflag(line, rgx, flag)
 
-        return flag_pb
+        return None
 
 
 class PLSSPreprocessor:
