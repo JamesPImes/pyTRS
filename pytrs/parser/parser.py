@@ -2971,7 +2971,7 @@ def _parse_segment(
     # (first-in-first-out).
     working_tr_list = []
     working_sec_list = []
-    working_multiSec_list = []
+    working_multisec_list = []
 
     # constants for the different markers we'll use
     TEXT_START = 'text_start'
@@ -2985,27 +2985,27 @@ def _parse_segment(
 
     # A dict, keyed by index (i.e. start/end point of matched objects
     # within the text) and what was found at that index:
-    markersDict = {}
+    markers_dict = {}
     # This key/val will be overwritten if we found a T&R or Section at
     # the first character
-    markersDict[0] = TEXT_START
-    # Add the end of the string to the markersDict (may also get overwritten)
-    markersDict[len(text_block)] = TEXT_END
+    markers_dict[0] = TEXT_START
+    # Add the end of the string to the markers_dict (may also get overwritten)
+    markers_dict[len(text_block)] = TEXT_END
 
     for tup in wTRList:
         working_tr_list.append(tup[0])
-        markersDict[tup[1]] = TR_START
-        markersDict[tup[2]] = TR_END
+        markers_dict[tup[1]] = TR_START
+        markers_dict[tup[2]] = TR_END
 
     for tup in wSecList:
         working_sec_list.append(tup[0])
-        markersDict[tup[1]] = SEC_START
-        markersDict[tup[2]] = SEC_END
+        markers_dict[tup[1]] = SEC_START
+        markers_dict[tup[2]] = SEC_END
 
     for tup in wMultiSecList:
-        working_multiSec_list.append(tup[0])  # A list of lists
-        markersDict[tup[1]] = MULTISEC_START
-        markersDict[tup[2]] = MULTISEC_END
+        working_multisec_list.append(tup[0])  # A list of lists
+        markers_dict[tup[1]] = MULTISEC_START
+        markers_dict[tup[2]] = MULTISEC_END
 
     # If we're in either TRS_DESC or S_DESC_TR layouts and discovered
     # neither a standalone section nor a multiSec, then rerun the parse
@@ -3015,7 +3015,7 @@ def _parse_segment(
     do_second_pass = True
     if layout not in [TRS_DESC, S_DESC_TR]:
         do_second_pass = False
-    if len(working_sec_list) > 0 or len(working_multiSec_list) > 0:
+    if len(working_sec_list) > 0 or len(working_multisec_list) > 0:
         do_second_pass = False
     if require_colon != _DEFAULT_COLON:
         do_second_pass = False
@@ -3039,8 +3039,8 @@ def _parse_segment(
 
     # Get a list of all of the keys, then sort them, so that we're pulling
     # first-to-last (vis-a-vis the original text of this segment):
-    mrkrsLst = list(markersDict.keys())
-    mrkrsLst.sort()
+    markers_list = list(markers_dict.keys())
+    markers_list.sort()
 
     def new_tract(
             text_for_new_desc, sec='default_sec', tr='default_tr') -> Tract:
@@ -3082,14 +3082,14 @@ def _parse_segment(
             working_tr = working_tr_list.pop(0)
 
         # Description block comes before section in this layout, so we
-        # pre-set the working_sec and working_multiSec (if any are available):
+        # pre-set the working_sec and working_multisec (if any are available):
         working_sec = _ERR_SEC
         if len(working_sec_list) > 0:
             working_sec = working_sec_list.pop(0)
 
-        working_multiSec = [_ERR_SEC]
-        if len(working_multiSec_list) > 0:
-            working_multiSec = working_multiSec_list.pop(0)
+        working_multisec = [_ERR_SEC]
+        if len(working_multisec_list) > 0:
+            working_multisec = working_multisec_list.pop(0)
 
         finalRun = False  # Will switch to True on the final loop
 
@@ -3102,20 +3102,20 @@ def _parse_segment(
         # Track how far back we'll write to when we come across
         # secErrors in this layout:
         secErrorWriteBackToPos = 0
-        for i in range(len(mrkrsLst)):
+        for i in range(len(markers_list)):
 
-            if i == len(mrkrsLst) - 1:
+            if i == len(markers_list) - 1:
                 finalRun = True
 
             # Get this marker position and type
-            markerPos = mrkrsLst[i]
-            markerType = markersDict[markerPos]
+            markerPos = markers_list[i]
+            markerType = markers_dict[markerPos]
 
             # Unless this is the last marker, get the next marker
             # position and type
             if not finalRun:
-                nextMarkerPos = mrkrsLst[i + 1]
-                nextMarkerType = markersDict[nextMarkerPos]
+                nextMarkerPos = markers_list[i + 1]
+                nextMarkerType = markers_dict[nextMarkerPos]
             else:
                 # For the final run, default to the current marker
                 # position and type
@@ -3124,8 +3124,8 @@ def _parse_segment(
 
             # Unless it's the first one, get the last marker position and type
             if i != 0:
-                lastMarkerPos = mrkrsLst[i - 1]
-                lastMarkerType = markersDict[lastMarkerPos]
+                lastMarkerPos = markers_list[i - 1]
+                lastMarkerType = markers_dict[lastMarkerPos]
             else:
                 lastMarkerPos = markerPos
                 lastMarkerType = markerType
@@ -3154,32 +3154,32 @@ def _parse_segment(
                 # text between this marker and the next.
                 TractObj = new_tract(
                     clean_as_needed(
-                        text_block[mrkrsLst[i]:mrkrsLst[i + 1]].strip()))
+                        text_block[markers_list[i]:markers_list[i + 1]].strip()))
                 segParseBag.parsed_tracts.append(TractObj)
-                if i + 2 <= len(mrkrsLst):
-                    secErrorWriteBackToPos = mrkrsLst[i + 2]
+                if i + 2 <= len(markers_list):
+                    secErrorWriteBackToPos = markers_list[i + 2]
                 else:
-                    secErrorWriteBackToPos = mrkrsLst[i + 1]
+                    secErrorWriteBackToPos = markers_list[i + 1]
 
             elif nextMarkerType == MULTISEC_START:
                 # NOTE that this algorithm is looking for the start of a
                 # multi-section at the NEXT marker!
 
                 # Create a new TractObj, compiling our current working_tr
-                # and each of the sections in the working_multiSec into a
+                # and each of the sections in the working_multisec into a
                 # TRS, with the desc being the text between this marker
                 # and the next. Do that for EACH of the sections in the
-                # working_multiSec
-                for sec in working_multiSec:
+                # working_multisec
+                for sec in working_multisec:
                     TractObj = new_tract(
                         clean_as_needed(
-                            text_block[mrkrsLst[i]:mrkrsLst[i + 1]].strip()),
+                            text_block[markers_list[i]:markers_list[i + 1]].strip()),
                         sec)
                     segParseBag.parsed_tracts.append(TractObj)
-                if i + 2 <= len(mrkrsLst):
-                    secErrorWriteBackToPos = mrkrsLst[i + 2]
+                if i + 2 <= len(markers_list):
+                    secErrorWriteBackToPos = markers_list[i + 2]
                 else:
-                    secErrorWriteBackToPos = mrkrsLst[i + 1]
+                    secErrorWriteBackToPos = markers_list[i + 1]
 
             elif (
                 nextMarkerType == TR_START
@@ -3193,7 +3193,7 @@ def _parse_segment(
                 # make a flawed TractObj with  that secError.
                 TractObj = new_tract(
                     clean_as_needed(
-                        text_block[secErrorWriteBackToPos:mrkrsLst[i + 1]].strip()),
+                        text_block[secErrorWriteBackToPos:markers_list[i + 1]].strip()),
                         _ERR_SEC)
                 segParseBag.parsed_tracts.append(TractObj)
 
@@ -3205,11 +3205,11 @@ def _parse_segment(
                     working_sec = working_sec_list.pop(0)
 
             elif markerType == MULTISEC_START:
-                if len(working_multiSec_list) == 0:
+                if len(working_multisec_list) == 0:
                     # Will cause a section error if another TRS+Desc is created
-                    working_multiSec = [_ERR_SEC]
+                    working_multisec = [_ERR_SEC]
                 else:
-                    working_multiSec = working_multiSec_list.pop(0)
+                    working_multisec = working_multisec_list.pop(0)
 
             elif markerType == SEC_END:
                 if (
@@ -3219,7 +3219,7 @@ def _parse_segment(
                     # Whenever we come across a Section end, the next thing must
                     # be either a SEC_START, MULTISEC_START, or TR_START.
                     # Hence the warning flag, if that's not true:
-                    unusedText = text_block[mrkrsLst[i]:mrkrsLst[i + 1]].strip()
+                    unusedText = text_block[markers_list[i]:markers_list[i + 1]].strip()
                     segParseBag.w_flags.append('Unused_desc_<%s>' % unusedText)
 
             elif markerType == TEXT_END:
@@ -3236,7 +3236,7 @@ def _parse_segment(
                 # multi-Section, the next thing must be either a SEC_START,
                 # MULTISEC_START, or TR_START. Hence the warning flag, if that's
                 # not true.
-                unusedText = text_block[mrkrsLst[i]:mrkrsLst[i + 1]].strip()
+                unusedText = text_block[markers_list[i]:markers_list[i + 1]].strip()
                 flag_unused(unusedText, text_block[lastMarkerPos:nextMarkerPos])
 
             # Capture unused text at the end of a section/multiSec (if appropriate).
@@ -3265,7 +3265,7 @@ def _parse_segment(
         # Default to a _ERR_SEC for this layout. Will change when we
         # meet the first sec and multiSec respectively.
         working_sec = _ERR_SEC
-        working_multiSec = [_ERR_SEC]
+        working_multisec = [_ERR_SEC]
 
         finalRun = False
 
@@ -3273,21 +3273,21 @@ def _parse_segment(
         # text; depending on the type of marker, it will tell us how to
         # construct the next Tract object, or to pop the next section,
         # multi-Section, or T&R from the respective working list.
-        for i in range(len(mrkrsLst)):
+        for i in range(len(markers_list)):
 
-            if i == len(mrkrsLst) - 1:
+            if i == len(markers_list) - 1:
                 # Just a shorthand to not show the logic every time:
                 finalRun = True
 
             # Get this marker position and type
-            markerPos = mrkrsLst[i]
-            markerType = markersDict[markerPos]
+            markerPos = markers_list[i]
+            markerType = markers_dict[markerPos]
 
             # Unless this is the last marker, get the next marker
             # position and type
             if not finalRun:
-                nextMarkerPos = mrkrsLst[i + 1]
-                nextMarkerType = markersDict[nextMarkerPos]
+                nextMarkerPos = markers_list[i + 1]
+                nextMarkerType = markers_dict[nextMarkerPos]
             else:
                 # For the final run, default to the current marker
                 # position and type
@@ -3296,11 +3296,11 @@ def _parse_segment(
 
             # Unless it's the first one, get the last marker position and type
             if i != 0:
-                lastMarkerPos = mrkrsLst[i - 1]
-                lastMarkerType = markersDict[lastMarkerPos]
+                lastMarkerPos = markers_list[i - 1]
+                lastMarkerType = markers_dict[lastMarkerPos]
             else:
                 lastMarkerPos = markerPos
-                lastMarkerType = markersDict[markerPos]
+                lastMarkerType = markers_dict[markerPos]
 
             # We don't need to handle TEXT_START in this layout.
 
@@ -3313,11 +3313,11 @@ def _parse_segment(
                 #continue
 
             elif markerType == MULTISEC_START:
-                if len(working_multiSec_list) == 0:
+                if len(working_multisec_list) == 0:
                     # Will cause a section error if another TRS+Desc is created
-                    working_multiSec = [_ERR_SEC]
+                    working_multisec = [_ERR_SEC]
                 else:
-                    working_multiSec = working_multiSec_list.pop(0)
+                    working_multisec = working_multisec_list.pop(0)
 
             elif markerType == SEC_END:
                 # We found the start of a new desc block (betw Section's end
@@ -3328,7 +3328,7 @@ def _parse_segment(
                 # between this marker and the next.
                 TractObj = new_tract(
                     clean_as_needed(
-                        text_block[mrkrsLst[i]:mrkrsLst[i + 1]].strip()))
+                        text_block[markers_list[i]:markers_list[i + 1]].strip()))
                 segParseBag.parsed_tracts.append(TractObj)
 
             elif markerType == MULTISEC_END:
@@ -3336,14 +3336,14 @@ def _parse_segment(
                 # and whatever's next).
 
                 # Create a new TractObj, compiling our current working_tr
-                # and each of the sections in the working_multiSec into a
+                # and each of the sections in the working_multisec into a
                 # TRS, with the desc being the text between this marker
                 # and the next. Do that for EACH of the sections in the
-                # working_multiSec.
-                for sec in working_multiSec:
+                # working_multisec.
+                for sec in working_multisec:
                     TractObj = new_tract(
                         clean_as_needed(
-                            text_block[mrkrsLst[i]:mrkrsLst[i + 1]].strip()),
+                            text_block[markers_list[i]:markers_list[i + 1]].strip()),
                         sec)
                     segParseBag.parsed_tracts.append(TractObj)
 
@@ -3396,7 +3396,7 @@ def _parse_segment(
         # Defaults to a T&R error and Sec errors for this layout.
         working_tr = _ERR_TWPRGE
         working_sec = _ERR_SEC
-        working_multiSec = [_ERR_SEC]
+        working_multisec = [_ERR_SEC]
 
         finalRun = False
 
@@ -3404,21 +3404,21 @@ def _parse_segment(
         # depending on the type of marker, it will tell us how to construct
         # the next Tract object, or to pop the next section, multi-Section,
         # or T&R from the respective working list.
-        for i in range(len(mrkrsLst)):
+        for i in range(len(markers_list)):
 
-            if i == len(mrkrsLst) - 1:
+            if i == len(markers_list) - 1:
                 # Just shorthand to avoid writing the logic every time.
                 finalRun = True
 
             # Get this marker position and type
-            markerPos = mrkrsLst[i]
-            markerType = markersDict[markerPos]
+            markerPos = markers_list[i]
+            markerType = markers_dict[markerPos]
 
             # Unless this is the last marker, get the next marker
             # position and type
             if not finalRun:
-                nextMarkerPos = mrkrsLst[i + 1]
-                nextMarkerType = markersDict[nextMarkerPos]
+                nextMarkerPos = markers_list[i + 1]
+                nextMarkerType = markers_dict[nextMarkerPos]
             else:
                 # For the final run, default to the current marker
                 # position and type
@@ -3427,8 +3427,8 @@ def _parse_segment(
 
             # Unless it's the first one, get the last marker position and type
             if i != 0:
-                lastMarkerPos = mrkrsLst[i - 1]
-                lastMarkerType = markersDict[lastMarkerPos]
+                lastMarkerPos = markers_list[i - 1]
+                lastMarkerType = markers_dict[lastMarkerPos]
             else:
                 lastMarkerPos = markerPos
                 lastMarkerType = markerType
@@ -3461,12 +3461,12 @@ def _parse_segment(
                     working_sec = working_sec_list.pop(0)
 
             elif markerType == MULTISEC_START:
-                if len(working_multiSec_list) == 0:
+                if len(working_multisec_list) == 0:
                     # If another GROUP of TRS+Desc pairs is created
                     # after this point, it will result in a Section error.
-                    working_multiSec = [_ERR_SEC]
+                    working_multisec = [_ERR_SEC]
                 else:
-                    working_multiSec = working_multiSec_list.pop(0)
+                    working_multisec = working_multisec_list.pop(0)
 
             elif markerType == SEC_END:
                 # Create a new TractObj, compiling our current working_tr
@@ -3478,10 +3478,10 @@ def _parse_segment(
 
             elif markerType == MULTISEC_END:
                 # Create a series of new TractObjs, compiling our current
-                # working_tr and elements from working_multiSec into a series
+                # working_tr and elements from working_multisec into a series
                 # of TRS, with the desc for EACH being the text between this
                 # marker and the next.
-                for sec in working_multiSec:
+                for sec in working_multisec:
                     TractObj = new_tract(
                         clean_as_needed(text_block[markerPos:nextMarkerPos].strip()), sec)
                     segParseBag.parsed_tracts.append(TractObj)
@@ -5450,14 +5450,14 @@ class PLSSParser:
         if require_colon != _SECOND_PASS:
             self.reset_cache()
 
-        # If `clean_qq` was specified, convert it to a string, and set it to the
-        # `handed_down_config`.
+        # If `clean_qq` was specified, convert it to a string, and set
+        # it to the `handed_down_config`. (We use the setter method to
+        # prevent illegal values for a given attribute.) 
         handed_down_config = Config(handed_down_config)
         if isinstance(clean_qq, bool):
             handed_down_config._set_str_to_values(f"clean_qq.{clean_qq}")
         if break_halves is not None:
-            handed_down_config._set_str_to_values(
-                f"break_halves.{break_halves}")
+            handed_down_config._set_str_to_values(f"break_halves.{break_halves}")
         if qq_depth_min is not None:
             handed_down_config._set_str_to_values(f"qq_depth_min.{qq_depth_min}")
         if qq_depth_max is not None:
@@ -5469,7 +5469,7 @@ class PLSSParser:
         # so mandate that it be False for now.
         handed_down_config.init_parse_qq = False
 
-        if not isinstance(clean_up, bool):
+        if clean_up is None:
             # If clean_up has not been specified as a bool, then use
             # these defaults.
             clean_up = False
@@ -5517,80 +5517,58 @@ class PLSSParser:
         # Pull the matched twprge's, sections, and multisections from
         # the parse_cache.
 
-        wTRList = self.parse_cache["all_twprge_matches"]
-        wSecList = self.parse_cache["all_sec_matches"]
-        wMultiSecList = self.parse_cache["all_multisec_matches"]
+        all_twprge_matches = self.parse_cache["all_twprge_matches"]
+        all_sec_matches = self.parse_cache["all_sec_matches"]
+        all_multisec_matches = self.parse_cache["all_multisec_matches"]
 
         ####################################################################
-        # Break down the wSecList, wMultiSecList, and wTRList into the index points
+        # Break down all_sec_matches, all_multisec_matches, and
+        # all_twprge_matches into the index points
         ####################################################################
 
         # The Tract objects will be created from these component parts
         # (first-in-first-out).
-        working_tr_list = []
+        working_twprge_list = []
         working_sec_list = []
-        working_multiSec_list = []
+        working_multisec_list = []
 
         # A dict, keyed by index (i.e. start/end point of matched objects
         # within the text) and what was found at that index:
-        markersDict = {}
+        markers_dict = {}
         # This key/val will be overwritten if we found a T&R or Section at
         # the first character
-        markersDict[0] = PLSSParser.TEXT_START
-        # Add the end of the string to the markersDict (may also get overwritten)
-        markersDict[len(text_block)] = PLSSParser.TEXT_END
+        markers_dict[0] = PLSSParser.TEXT_START
+        # Add the end of the string to the markers_dict (may also get overwritten)
+        markers_dict[len(text_block)] = PLSSParser.TEXT_END
 
-        for tup in wTRList:
-            working_tr_list.append(tup[0])
-            markersDict[tup[1]] = PLSSParser.TR_START
-            markersDict[tup[2]] = PLSSParser.TR_END
+        for tup in all_twprge_matches:
+            working_twprge_list.append(tup[0])
+            markers_dict[tup[1]] = PLSSParser.TR_START
+            markers_dict[tup[2]] = PLSSParser.TR_END
 
-        for tup in wSecList:
+        for tup in all_sec_matches:
             working_sec_list.append(tup[0])
-            markersDict[tup[1]] = PLSSParser.SEC_START
-            markersDict[tup[2]] = PLSSParser.SEC_END
+            markers_dict[tup[1]] = PLSSParser.SEC_START
+            markers_dict[tup[2]] = PLSSParser.SEC_END
 
-        for tup in wMultiSecList:
-            working_multiSec_list.append(tup[0])  # A list of lists
-            markersDict[tup[1]] = PLSSParser.MULTISEC_START
-            markersDict[tup[2]] = PLSSParser.MULTISEC_END
-
-        # If we're in either TRS_DESC or S_DESC_TR layouts and discovered
-        # neither a standalone section nor a multiSec, then rerun the parse
-        # under the same kwargs, except with `require_colon=_SECOND_PASS`
-        # (which sets require_colonBool=False), to see if we can capture a
-        # section after all. Will return those results instead:
-        do_second_pass = True
-        if layout not in [TRS_DESC, S_DESC_TR]:
-            do_second_pass = False
-        if len(working_sec_list) > 0 or len(working_multiSec_list) > 0:
-            do_second_pass = False
-        if require_colon != _DEFAULT_COLON:
-            do_second_pass = False
-        if do_second_pass:
-            # Note that by this point, `handed_down_config` has encoded
-            # all of the `qq_depth...` and `break_halves` kwargs, so we
-            # don't need to specify those again.
-            self._parse_segment(
-                text_block=text_block,
-                layout=layout,
-                require_colon=_SECOND_PASS,
-                handed_down_config=handed_down_config)
-            return None
+        for tup in all_multisec_matches:
+            working_multisec_list.append(tup[0])  # A list of lists
+            markers_dict[tup[1]] = PLSSParser.MULTISEC_START
+            markers_dict[tup[2]] = PLSSParser.MULTISEC_END
 
         # Get a list of all of the keys, then sort them, so that we're pulling
         # first-to-last (vis-a-vis the original text of this segment):
-        mrkrsLst = list(markersDict.keys())
-        mrkrsLst.sort()
+        markers_list = list(markers_dict.keys())
+        markers_list.sort()
 
         # Cache these for access by the parser algorithm that is
         # appropriate for the layout.
         self.parse_cache["text_block"] = text_block
-        self.parse_cache["markers_list"] = mrkrsLst
-        self.parse_cache["markers_dict"] = markersDict
-        self.parse_cache["twprge_list"] = working_tr_list
+        self.parse_cache["markers_list"] = markers_list
+        self.parse_cache["markers_dict"] = markers_dict
+        self.parse_cache["twprge_list"] = working_twprge_list
         self.parse_cache["sec_list"] = working_sec_list
-        self.parse_cache["multisec_list"] = working_multiSec_list
+        self.parse_cache["multisec_list"] = working_multisec_list
 
         # Based on the layout, break apart the text into the relevant
         # components for each new tract. Store the results to the
@@ -5612,11 +5590,6 @@ class PLSSParser:
         for tract_components in new_tract_components:
             tract = new_tract(**tract_components)
             new_tracts.append(tract)
-
-        if new_tracts and require_colon == _SECOND_PASS:
-            # If we are on a second pass and have now successfully found
-            # a TRS, flag that we ran this without requiring colon.
-            self.w_flags.append('pulled_sec_without_colon')
 
         if not new_tracts:
             # If we identified no Tracts in this segment, re-parse using
@@ -5650,11 +5623,11 @@ class PLSSParser:
         :return: None.
         """
         text_block = self.parse_cache["text_block"]
-        working_tr_list = self.parse_cache["twprge_list"]
+        working_twprge_list = self.parse_cache["twprge_list"]
         working_sec_list = self.parse_cache["sec_list"]
-        working_multiSec_list = self.parse_cache["multisec_list"]
-        mrkrsLst = self.parse_cache["markers_list"]
-        markersDict = self.parse_cache["markers_dict"]
+        working_multisec_list = self.parse_cache["multisec_list"]
+        markers_list = self.parse_cache["markers_list"]
+        markers_dict = self.parse_cache["markers_dict"]
 
         # These two layouts are handled nearly identically, except that
         # in DESC_STR the TR is popped before it's encountered, and in
@@ -5662,28 +5635,28 @@ class PLSSParser:
         # initial TR is the only difference.
 
         # Defaults to a T&R error.
-        working_tr = _ERR_TWPRGE
-        # For TR_DESC_S, will pop the working_tr when we encounter the
-        # first TR. However, for DESC_STR, need to preset our working_tr
+        working_twprge = _ERR_TWPRGE
+        # For TR_DESC_S, will pop the working_twprge when we encounter the
+        # first TR. However, for DESC_STR, need to preset our working_twprge
         # (if one is available):
-        if layout == DESC_STR and len(working_tr_list) > 0:
-            working_tr = working_tr_list.pop(0)
+        if layout == DESC_STR and len(working_twprge_list) > 0:
+            working_twprge = working_twprge_list.pop(0)
 
         # Description block comes before section in these layouts, so we
-        # pre-set the working_sec and working_multiSec (if any are available):
+        # pre-set the working_sec and working_multisec (if any are available):
         working_sec = _ERR_SEC
         if len(working_sec_list) > 0:
             working_sec = working_sec_list.pop(0)
 
-        working_multiSec = [_ERR_SEC]
-        if len(working_multiSec_list) > 0:
-            working_multiSec = working_multiSec_list.pop(0)
+        working_multisec = [_ERR_SEC]
+        if len(working_multisec_list) > 0:
+            working_multisec = working_multisec_list.pop(0)
 
         new_tract_components = []
         unused_text = []
         unused_with_context = []
 
-        finalRun = False  # Will switch to True on the final loop
+        final_run = False  # Will switch to True on the final loop
 
         # We'll check every marker to see what's at that point in the
         # text; depending on the type of marker, it will tell us how to
@@ -5693,91 +5666,91 @@ class PLSSParser:
 
         # Track how far back we'll write to when we come across
         # secErrors in this layout:
-        secErrorWriteBackToPos = 0
-        for i in range(len(mrkrsLst)):
+        sec_err_write_back_to_pos = 0
+        for i in range(len(markers_list)):
 
-            if i == len(mrkrsLst) - 1:
-                finalRun = True
+            if i == len(markers_list) - 1:
+                final_run = True
 
             # Get this marker position and type
-            markerPos = mrkrsLst[i]
-            markerType = markersDict[markerPos]
+            marker_pos = markers_list[i]
+            marker_type = markers_dict[marker_pos]
 
             # Unless this is the last marker, get the next marker
             # position and type
-            if not finalRun:
-                nextMarkerPos = mrkrsLst[i + 1]
-                nextMarkerType = markersDict[nextMarkerPos]
+            if not final_run:
+                next_marker_pos = markers_list[i + 1]
+                next_marker_type = markers_dict[next_marker_pos]
             else:
                 # For the final run, default to the current marker
                 # position and type
-                nextMarkerPos = markerPos
-                nextMarkerType = markerType
+                next_marker_pos = marker_pos
+                next_marker_type = marker_type
 
             # Unless it's the first one, get the last marker position and type
             if i != 0:
-                lastMarkerPos = mrkrsLst[i - 1]
-                lastMarkerType = markersDict[lastMarkerPos]
+                prev_marker_pos = markers_list[i - 1]
+                prev_marker_type = markers_dict[prev_marker_pos]
             else:
-                lastMarkerPos = markerPos
-                lastMarkerType = markerType
+                prev_marker_pos = marker_pos
+                prev_marker_type = marker_type
 
             # We don't need to handle TEXT_START in this layout.
 
-            if markerType == PLSSParser.TR_END:
+            if marker_type == PLSSParser.TR_END:
                 # This is included for handling secErrors in this layout.
                 # Note that it does not force a continue.
-                secErrorWriteBackToPos = markerPos
+                sec_err_write_back_to_pos = marker_pos
 
-            if markerType == PLSSParser.TR_START:  # Pull the next T&R in our list
-                if len(working_tr_list) == 0:
+            if marker_type == PLSSParser.TR_START:  # Pull the next T&R in our list
+                if len(working_twprge_list) == 0:
                     # Will cause a TR error if another TRS+Desc is created:
-                    working_tr = _ERR_TWPRGE
+                    working_twprge = _ERR_TWPRGE
                 else:
-                    working_tr = working_tr_list.pop(0)
+                    working_twprge = working_twprge_list.pop(0)
                 continue
 
-            if nextMarkerType == PLSSParser.SEC_START:
+            if next_marker_type == PLSSParser.SEC_START:
                 # NOTE that this algorithm is looking for the start of a
                 # section at the NEXT marker!
 
-                # New tract identified, with our current working_tr
+                # New tract identified, with our current working_twprge
                 # and working_sec, and with the desc being the text
                 # between this marker and the next.
                 tract_identified = {
-                    "desc": text_block[mrkrsLst[i]:mrkrsLst[i + 1]].strip(),
+                    "desc": text_block[markers_list[i]:markers_list[i + 1]].strip(),
                     "sec": working_sec,
-                    "twprge": working_tr
+                    "twprge": working_twprge
                 }
                 new_tract_components.append(tract_identified)
-                if i + 2 <= len(mrkrsLst):
-                    secErrorWriteBackToPos = mrkrsLst[i + 2]
+                if i + 2 <= len(markers_list):
+                    sec_err_write_back_to_pos = markers_list[i + 2]
                 else:
-                    secErrorWriteBackToPos = mrkrsLst[i + 1]
+                    sec_err_write_back_to_pos = markers_list[i + 1]
 
-            elif nextMarkerType == PLSSParser.MULTISEC_START:
+            elif next_marker_type == PLSSParser.MULTISEC_START:
                 # NOTE that this algorithm is looking for the start of a
                 # multi-section at the NEXT marker!
 
-                # Use our current working_tr and EACH of the sections in
-                # the working_multiSec, with the desc being the text
+                # Use our current working_twprge and EACH of the sections in
+                # the working_multisec, with the desc being the text
                 # between this marker and the next.
-                for sec in working_multiSec:
+                for sec in working_multisec:
                     tract_identified = {
-                        "desc": text_block[mrkrsLst[i]:mrkrsLst[i + 1]].strip(),
+                        "desc": text_block[markers_list[i]:markers_list[i + 1]].strip(),
                         "sec": sec,
-                        "twprge": working_tr
+                        "twprge": working_twprge
                     }
                     new_tract_components.append(tract_identified)
-                if i + 2 <= len(mrkrsLst):
-                    secErrorWriteBackToPos = mrkrsLst[i + 2]
+                if i + 2 <= len(markers_list):
+                    sec_err_write_back_to_pos = markers_list[i + 2]
                 else:
-                    secErrorWriteBackToPos = mrkrsLst[i + 1]
+                    sec_err_write_back_to_pos = markers_list[i + 1]
 
             elif (
-                    nextMarkerType == PLSSParser.TR_START
-                    and markerType not in [PLSSParser.SEC_END, PLSSParser.MULTISEC_END]
-                    and nextMarkerPos - secErrorWriteBackToPos > 5
+                    next_marker_type == PLSSParser.TR_START
+                    and marker_type not in [PLSSParser.SEC_END, PLSSParser.MULTISEC_END]
+                    and next_marker_pos - sec_err_write_back_to_pos > 5
             ):
                 # If (1) we found a T&R next, and (2) we aren't CURRENTLY
                 # at a SEC_END or MULTISEC_END, and (3) it's been more than
@@ -5785,48 +5758,48 @@ class PLSSParser:
                 # we're apparently dealing with a secError, and we'll need
                 # to make a flawed Tract object with that secError.
                 tract_identified = {
-                    "desc": text_block[secErrorWriteBackToPos:mrkrsLst[i + 1]].strip(),
+                    "desc": text_block[sec_err_write_back_to_pos:markers_list[i + 1]].strip(),
                     "sec": _ERR_SEC,
-                    "twprge": working_tr
+                    "twprge": working_twprge
                 }
                 new_tract_components.append(tract_identified)
 
-            elif markerType == PLSSParser.SEC_START:
+            elif marker_type == PLSSParser.SEC_START:
                 if len(working_sec_list) == 0:
                     # Will cause a section error if another TRS+Desc is created
                     working_sec = _ERR_SEC
                 else:
                     working_sec = working_sec_list.pop(0)
 
-            elif markerType == PLSSParser.MULTISEC_START:
-                if len(working_multiSec_list) == 0:
+            elif marker_type == PLSSParser.MULTISEC_START:
+                if len(working_multisec_list) == 0:
                     # Will cause a section error if another TRS+Desc is created
-                    working_multiSec = [_ERR_SEC]
+                    working_multisec = [_ERR_SEC]
                 else:
-                    working_multiSec = working_multiSec_list.pop(0)
+                    working_multisec = working_multisec_list.pop(0)
 
-            elif markerType == PLSSParser.SEC_END:
-                if (nextMarkerType not in [PLSSParser.SEC_START,
+            elif marker_type == PLSSParser.SEC_END:
+                if (next_marker_type not in [PLSSParser.SEC_START,
                                            PLSSParser.TR_START,
                                            PLSSParser.MULTISEC_START]
-                    and markerPos != len(text_block)
+                    and marker_pos != len(text_block)
                 ):
                     # Whenever we come across a Section end, the next thing must
                     # be either a SEC_START, MULTISEC_START, or TR_START.
                     # We'll create a warning flag if that's not true.
-                    new_unused = text_block[mrkrsLst[i]:mrkrsLst[i + 1]].strip()
+                    new_unused = text_block[markers_list[i]:markers_list[i + 1]].strip()
                     unused_text.append(new_unused)
                     unused_with_context.append(new_unused)
 
-            elif markerType == PLSSParser.TEXT_END:
+            elif marker_type == PLSSParser.TEXT_END:
                 break
 
             # Capture unused text at the end of the string.
             if (
                     layout == TR_DESC_S
-                    and markerType in [PLSSParser.SEC_END, PLSSParser.MULTISEC_END]
-                    and not finalRun
-                    and nextMarkerType not in [PLSSParser.SEC_START,
+                    and marker_type in [PLSSParser.SEC_END, PLSSParser.MULTISEC_END]
+                    and not final_run
+                    and next_marker_type not in [PLSSParser.SEC_START,
                                                PLSSParser.TR_START,
                                                PLSSParser.MULTISEC_START]
             ):
@@ -5834,19 +5807,19 @@ class PLSSParser:
                 # multi-Section, the next thing must be either a SEC_START,
                 # MULTISEC_START, or TR_START. Hence the warning flag, if that's
                 # not true.
-                new_unused = text_block[mrkrsLst[i]:mrkrsLst[i + 1]].strip()
+                new_unused = text_block[markers_list[i]:markers_list[i + 1]].strip()
                 unused_text.append(new_unused)
                 unused_with_context.append(new_unused)
 
             # Capture unused text at the end of a section/multiSec (if appropriate).
             if (layout == DESC_STR
-                    and markerType
+                    and marker_type
                         in [PLSSParser.SEC_END, PLSSParser.MULTISEC_END]
-                    and not finalRun
-                    and nextMarkerType
+                    and not final_run
+                    and next_marker_type
                         not in [PLSSParser.SEC_START, PLSSParser.MULTISEC_START]):
-                unused_text.append(text_block[markerPos:nextMarkerPos])
-                unused_with_context.append(text_block[lastMarkerPos:nextMarkerPos])
+                unused_text.append(text_block[marker_pos:next_marker_pos])
+                unused_with_context.append(text_block[prev_marker_pos:next_marker_pos])
 
         self.parse_cache["new_tract_components"] = new_tract_components
         self.parse_cache["unused_text"] = unused_text
@@ -5867,115 +5840,115 @@ class PLSSParser:
         :return: None.
         """
         text_block = self.parse_cache["text_block"]
-        working_tr_list = self.parse_cache["twprge_list"]
+        working_twprge_list = self.parse_cache["twprge_list"]
         working_sec_list = self.parse_cache["sec_list"]
-        working_multiSec_list = self.parse_cache["multisec_list"]
-        mrkrsLst = self.parse_cache["markers_list"]
-        markersDict = self.parse_cache["markers_dict"]
+        working_multisec_list = self.parse_cache["multisec_list"]
+        markers_list = self.parse_cache["markers_list"]
+        markers_dict = self.parse_cache["markers_dict"]
 
         # Default to errors for T/R and Sec.
-        working_tr = _ERR_TWPRGE
+        working_twprge = _ERR_TWPRGE
         working_sec = _ERR_SEC
-        working_multiSec = [_ERR_SEC]
+        working_multisec = [_ERR_SEC]
 
-        if len(working_tr_list) > 0 and layout == S_DESC_TR:
-            working_tr = working_tr_list.pop(0)
+        if len(working_twprge_list) > 0 and layout == S_DESC_TR:
+            working_twprge = working_twprge_list.pop(0)
 
         new_tract_components = []
         unused_text = []
         unused_with_context = []
 
-        finalRun = False
+        final_run = False
 
         # We'll check every marker to see what's at that point in the
         # text; depending on the type of marker, it will tell us how to
         # construct the next Tract object, or to pop the next section,
         # multi-Section, or T&R from the respective working list.
-        for i in range(len(mrkrsLst)):
+        for i in range(len(markers_list)):
 
-            if i == len(mrkrsLst) - 1:
+            if i == len(markers_list) - 1:
                 # Just a shorthand to not show the logic every time:
-                finalRun = True
+                final_run = True
 
             # Get this marker position and type
-            markerPos = mrkrsLst[i]
-            markerType = markersDict[markerPos]
+            marker_pos = markers_list[i]
+            marker_type = markers_dict[marker_pos]
 
             # Unless this is the last marker, get the next marker
             # position and type
-            if not finalRun:
-                nextMarkerPos = mrkrsLst[i + 1]
-                nextMarkerType = markersDict[nextMarkerPos]
+            if not final_run:
+                next_marker_pos = markers_list[i + 1]
+                next_marker_type = markers_dict[next_marker_pos]
             else:
                 # For the final run, default to the current marker
                 # position and type
-                nextMarkerPos = markerPos
-                nextMarkerType = markerType
+                next_marker_pos = marker_pos
+                next_marker_type = marker_type
 
             # Unless it's the first one, get the last marker position and type
             if i != 0:
-                lastMarkerPos = mrkrsLst[i - 1]
-                lastMarkerType = markersDict[lastMarkerPos]
+                prev_marker_pos = markers_list[i - 1]
+                prev_marker_type = markers_dict[prev_marker_pos]
             else:
-                lastMarkerPos = markerPos
-                lastMarkerType = markersDict[markerPos]
+                prev_marker_pos = marker_pos
+                prev_marker_type = markers_dict[marker_pos]
 
             # We don't need to handle TEXT_START in this layout.
 
-            if markerType == PLSSParser.SEC_START:
+            if marker_type == PLSSParser.SEC_START:
                 if len(working_sec_list) == 0:
                     # Will cause a section error if another TRS+Desc is created
                     working_sec = _ERR_SEC
                 else:
                     working_sec = working_sec_list.pop(0)
 
-            elif markerType == PLSSParser.MULTISEC_START:
-                if len(working_multiSec_list) == 0:
+            elif marker_type == PLSSParser.MULTISEC_START:
+                if len(working_multisec_list) == 0:
                     # Will cause a section error if another TRS+Desc is created
-                    working_multiSec = [_ERR_SEC]
+                    working_multisec = [_ERR_SEC]
                 else:
-                    working_multiSec = working_multiSec_list.pop(0)
+                    working_multisec = working_multisec_list.pop(0)
 
-            elif markerType == PLSSParser.SEC_END:
+            elif marker_type == PLSSParser.SEC_END:
                 # We found the start of a new desc block (betw Section's end
                 # and whatever's next).
 
-                # New tract identified, with our current working_tr
+                # New tract identified, with our current working_twprge
                 # and working_sec, and with the desc being the text
                 # between this marker and the next.
                 tract_identified = {
-                    "desc": text_block[mrkrsLst[i]:mrkrsLst[i + 1]].strip(),
+                    "desc": text_block[markers_list[i]:markers_list[i + 1]].strip(),
                     "sec": working_sec,
-                    "twprge": working_tr
+                    "twprge": working_twprge
                 }
                 new_tract_components.append(tract_identified)
 
-            elif markerType == PLSSParser.MULTISEC_END:
+            elif marker_type == PLSSParser.MULTISEC_END:
                 # We found start of a new desc block (betw multiSec end
                 # and whatever's next).
 
-                # Use our current working_tr and EACH of the sections in
-                # the working_multiSec, with the desc being the text
+                # Use our current working_twprge and EACH of the sections in
+                # the working_multisec, with the desc being the text
                 # between this marker and the next.
-                for sec in working_multiSec:
+                for sec in working_multisec:
                     tract_identified = {
-                        "desc": text_block[mrkrsLst[i]:mrkrsLst[i + 1]].strip(),
+                        "desc": text_block[markers_list[i]:markers_list[i + 1]].strip(),
                         "sec": sec,
-                        "twprge": working_tr
+                        "twprge": working_twprge
                     }
                     new_tract_components.append(tract_identified)
 
-            elif markerType == PLSSParser.TR_START:  # Pull the next T&R in our list
-                if len(working_tr_list) == 0:
+            elif marker_type == PLSSParser.TR_START:  # Pull the next T&R in our list
+                if len(working_twprge_list) == 0:
                     # Will cause a TR error if another TRS+Desc is created:
-                    working_tr = _ERR_TWPRGE
+                    working_twprge = _ERR_TWPRGE
                 else:
-                    working_tr = working_tr_list.pop(0)
+                    working_twprge = working_twprge_list.pop(0)
 
-            elif markerType == PLSSParser.TR_END:
+            elif marker_type == PLSSParser.TR_END:
                 # The only effect TR_END has on this layout is checking
                 # for unused text.
-                new_unused = text_block[markerPos:nextMarkerPos]
+                new_unused = text_block[marker_pos:next_marker_pos]
                 unused_text.append(new_unused)
                 unused_with_context.append(new_unused)
 
@@ -6003,27 +5976,27 @@ class PLSSParser:
         # is actually found).
 
         text_block = self.parse_cache["text_block"]
-        working_tr_list = self.parse_cache["twprge_list"]
+        working_twprge_list = self.parse_cache["twprge_list"]
         working_sec_list = self.parse_cache["sec_list"]
-        working_multiSec_list = self.parse_cache["multisec_list"]
+        working_multisec_list = self.parse_cache["multisec_list"]
 
         new_tract_components = []
         unused_text = []
         unused_with_context = []
 
         # Defaults to a T&R error if no T&R's were identified
-        working_tr = _ERR_TWPRGE
-        if len(working_tr_list) > 0:
-            working_tr = working_tr_list.pop(0)
+        working_twprge = _ERR_TWPRGE
+        if len(working_twprge_list) > 0:
+            working_twprge = working_twprge_list.pop(0)
 
         working_sec = _ERR_SEC
         if len(working_sec_list) > 0:
             working_sec = working_sec_list.pop(0)
 
         # If no solo section was found, check for a multiSec we can pull from
-        if working_sec == _ERR_SEC and len(working_multiSec_list) > 0:
+        if working_sec == _ERR_SEC and len(working_multisec_list) > 0:
             # Just pull the first section in the first multiSec.
-            working_sec = working_multiSec_list.pop(0)[0]
+            working_sec = working_multisec_list.pop(0)[0]
 
         # For generating a dummy Tract that contains the full text as
         # its `.desc` attribute. TRS is arbitrary, but will pull a
@@ -6031,7 +6004,7 @@ class PLSSParser:
         tract_identified = {
             "desc": text_block,
             "sec": working_sec,
-            "twprge": working_tr
+            "twprge": working_twprge
         }
         new_tract_components.append(tract_identified)
 
@@ -6221,6 +6194,13 @@ class PLSSParser:
             do_second_pass = False
         if wSecList or wMultiSecList:
             do_second_pass = False
+            if require_colon == _SECOND_PASS:
+                all_sections = [sec_tuple[0] for sec_tuple in wSecList]
+                for sections in [tup[0] for tup in wMultiSecList]:
+                    all_sections.extend(sections)
+                flag = f"pulled_sec_without_colon<{','.join(all_sections)}>"
+                self.parse_cache["w_flags_staging"].append(flag)
+                self.parse_cache["w_flag_lines_staging"].append((flag, text))
         if require_colon != _DEFAULT_COLON:
             do_second_pass = False
         if do_second_pass:
