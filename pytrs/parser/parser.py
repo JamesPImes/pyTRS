@@ -4915,6 +4915,12 @@ class PLSSParser:
     MULTISEC_START = 'multiSec_start'
     MULTISEC_END = 'multiSec_end'
 
+    # Text that often comes between Section ## and Twp/Rge
+    SEC_TWP_INTERVENERS = [
+        'in', 'of', ',', 'all of', 'all in', 'within', 'all within',
+        'lying within', 'that lies within', 'lying in'
+    ]
+
     # These attributes have corresponding attributes in PLSSDesc objects.
     UNPACKABLES = (
         "parsed_tracts",
@@ -6388,19 +6394,17 @@ class PLSSParser:
         w_flag_lines. If not specified, they will be discarded.
         """
 
-        if not stage_flags_to:
+        if stage_flags_to is None:
             stage_flags_to = []
-        if not stage_flag_lines_to:
+        if stage_flag_lines_to is None:
             stage_flag_lines_to = []
 
-        if layout not in _IMPLEMENTED_LAYOUTS:
-            layout = PLSSParser.deduce_layout(text=text)
+        if layout is None:
+            layout = self.safe_deduce_layout(text=text)
 
-        wTRList = []
+        all_twprge_matches = []
         # A parsing index for text (marks where we're currently searching from):
         i = 0
-        # j is the search-behind pos (indexed against the original text str):
-        j = 0
         while True:
             tr_mo = twprge_regex.search(text, pos=i)
 
@@ -6408,7 +6412,8 @@ class PLSSParser:
             if tr_mo is None:
                 break
 
-            # Move the parsing index forward to the start of this next matched T&R.
+            # Move the parsing index forward to the start of this next
+            # matched T&R.
             i = tr_mo.start()
 
             # For most layouts we want to know what comes before this matched
@@ -6421,7 +6426,7 @@ class PLSSParser:
             # We do that by looking behind our current match for context:
 
             # We'll look up to this many characters behind i:
-            length_to_search_behind = 15
+            length_to_search_behind = 25
             # ...but we only want to search back to the start of the text string:
             if length_to_search_behind > i:
                 length_to_search_behind = i
@@ -6431,9 +6436,9 @@ class PLSSParser:
 
             # We also need to make sure there's only one section in the string,
             # so loop until it's down to one section:
-            secFound = False
+            sec_found = False
             while True:
-                sec_mo = sec_regex.search(text[:i], pos=j)
+                sec_mo = sec_regex.search(text, pos=j, endpos=i)
                 if not sec_mo:
                     # If no more sections were found, move on to the next step.
                     break
@@ -6441,7 +6446,7 @@ class PLSSParser:
                     # Otherwise, if we've found another sec, move the j-index
                     # to the end of it
                     j = sec_mo.end()
-                    secFound = True
+                    sec_found = True
 
             # If we've found a section before our current T&R, then we need
             # to check what's in between. For TRS_DESC and S_DESC_TR layouts,
@@ -6449,10 +6454,10 @@ class PLSSParser:
             #       ','  'in'  'of'  'all of'  'all in'  (etc.).
             # If we have such an intervening string, then this appears to be
             # desc_STR layout -- ex. 'Section 1 of T154N-R97W'
-            interveners = ['in', 'of', ',', 'all of', 'all in', 'within', 'all within']
+
             if (
-                    secFound
-                    and text[j:i].strip().lower() in interveners
+                    sec_found
+                    and text[j:i].strip().lower() in PLSSParser.SEC_TWP_INTERVENERS
                     and layout in [TRS_DESC, S_DESC_TR]
             ):
                 # In TRS_Desc and S_DESC_TR layouts specifically, this is
@@ -6465,8 +6470,8 @@ class PLSSParser:
                 i = i + len(tr_mo.group())
 
                 # and append a warning flag that we've ignored this T&R:
-                ignoredTR = _compile_twprge_mo(tr_mo)
-                flag = 'TR_not_pulled<%s>' % ignoredTR
+                ignored_twprge = PLSSParser._compile_twprge_mo(tr_mo)
+                flag = f'TR_not_pulled<{ignored_twprge}>'
                 line = tr_mo.group()
                 stage_flags_to.append(flag)
                 stage_flag_lines_to.append((flag, line))
@@ -6476,16 +6481,19 @@ class PLSSParser:
             # other than TRS_DESC or S_DESC_TR, then this IS a match and we
             # want to store it.
             else:
-                wTRList.append((_compile_twprge_mo(tr_mo), i, i + len(tr_mo.group())))
-                # Move the parsing index to the end of the T&R that we just matched:
+                twprge = PLSSParser._compile_twprge_mo(tr_mo)
+                match = tr_mo.group()
+                all_twprge_matches.append((twprge, i, i + len(match)))
+                # Move the parsing index to the end of the T&R that we
+                # just matched.
                 i = i + len(tr_mo.group())
                 continue
 
         # Store to our parse_cache.
         if cache:
-            self.parse_cache["all_twprge_matches"] = wTRList
+            self.parse_cache["all_twprge_matches"] = all_twprge_matches
 
-        return wTRList
+        return all_twprge_matches
 
     def _segment_by_tr(self, text, layout=None, twprge_first=None):
         """
