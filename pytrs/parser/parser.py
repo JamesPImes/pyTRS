@@ -6257,7 +6257,7 @@ class PLSSParser:
         #   so much less possible text in a list of Sections, can probably
         #   just add from left-to-right, unlike _unpack_lots.
 
-        remaining_sec_text = sec_text_block
+        text = sec_text_block
 
         if stage_flags_to is None:
             stage_flags_to = []
@@ -6276,94 +6276,94 @@ class PLSSParser:
                     (f'dup_sec<{sec_num}>', f'Section {sec_num}'))
 
         found_through = False
+        endpos = len(text)
         while True:
-            secs_mo = multiSec_regex.search(remaining_sec_text)
+            secs_mo = multiSec_regex.search(text, endpos=endpos)
 
-            if secs_mo is None:  # we're out of section numbers.
+            if not secs_mo:
+                # We're out of section numbers.
                 break
 
+            # Pull the right-most section number (still as a string):
+            sec_num = PLSSParser._get_last_sec(secs_mo)
+
+            # Assume we've found the last section and can therefore skip
+            # the next loop after we've found the last section.
+            endpos = 0
+            if PLSSParser._is_multisec(secs_mo):
+                # If multiple sections remain, we will continue our
+                # search next loop.
+                endpos = secs_mo.start(12)
+
+            # Clean up any leading '0's in sec_num.
+            sec_num = str(int(sec_num))
+
+            # Format section number as 2 digits.
+            new_sec = sec_num.rjust(2, '0')
+
+            if found_through:
+                # If we've identified a elided list (e.g., 'Sections 3 - 9')...
+                prev_sec = sec_list[-1]
+                # Take the sec_num identified earlier this loop:
+                start_of_list = int(sec_num)
+                # The the previously last-identified section:
+                end_of_list = int(prev_sec)
+                correct_order = True
+                if start_of_list >= end_of_list:
+                    correct_order = False
+                    stage_flags_to.append('nonSequen_sec')
+                    stage_flag_lines_to.append(
+                        ('nonSequen_sec',
+                         f'Sections {start_of_list} - {end_of_list}')
+                    )
+
+                ########################################################
+                # `start_of_list` and `end_of_list` variable names are
+                # unintuitive. Here's an explanation:
+                # The 'sections' list is being filled in reverse by this
+                # algorithm, starting at the end of the search string
+                # and running backwards. Thus, this particular loop,
+                # which is attempting to _unpack "Sections 3 - 9", will
+                # be fed into the sections list as [08, 07, 06, 05, 04,
+                # 03]. (09 should already be in the list from the
+                # previous loop.)  'start_of_list' refers to the
+                # original text (i.e. in 'Sections 3 - 9', start_of_list
+                # will be 3; end_of_list will be 9).
+                ########################################################
+
+                # vars a, b & c are the bounds (a & b) and incrementation (c)
+                # of the range() for the secs in the elided list:
+                # If the string is correctly 'Sections 3 - 9' (for example),
+                # we use the default:
+                a, b, c = end_of_list - 1, start_of_list - 1, -1
+                # ... but if the string is 'sections 9 - 3' (i.e. wrong),
+                # we use:
+                if not correct_order:
+                    a, b, c = end_of_list + 1, start_of_list + 1, 1
+
+                for i in range(a, b, c):
+                    add_sec = str(i).rjust(2, '0')
+                    flag_duplicates(add_sec)
+                    sec_list.append(add_sec)
+                found_through = False  # reset.
+
             else:
-                # Pull the right-most section number (still as a string):
-                sec_num = PLSSParser._get_last_sec(secs_mo)
+                # Otherwise, if it's a standalone section (not the start
+                #   of an elided list), we add it.
+                # First check if this new section is in sec_list:
+                flag_duplicates(new_sec)
+                sec_list.append(new_sec)
 
-                if PLSSParser._is_singlesec(secs_mo):
-                    # We can skip the next loop after we've found the last section.
-                    remaining_sec_text = ''
-
+            # If we identified at least two sections, we need to check
+            # if the last one is the end of an elided list:
+            if PLSSParser._is_multisec(secs_mo):
+                thru_mo = through_regex.search(secs_mo.group(6))
+                # Check if we find 'through' (or equivalent symbol or
+                # abbreviation) before this final section:
+                if thru_mo is None:
+                    found_through = False
                 else:
-                    # If we've found >= 2 sections, we will need to loop at
-                    # least once more.
-                    remaining_sec_text = remaining_sec_text[:secs_mo.start(12)]
-
-                # Clean up any leading '0's in sec_num.
-                sec_num = str(int(sec_num))
-
-                # Layout section number as 2 digits, with a leading 0, if needed.
-                new_sec = sec_num.rjust(2, '0')
-
-                if found_through:
-                    # If we've identified a elided list (e.g., 'Sections 3 - 9')...
-                    prevSec = sec_list[-1]
-                    # Take the sec_num identified earlier this loop:
-                    start_of_list = int(sec_num)
-                    # The the previously last-identified section:
-                    end_of_list = int(prevSec)
-                    correct_order = True
-                    if start_of_list >= end_of_list:
-                        correct_order = False
-                        stage_flags_to.append('nonSequen_sec')
-                        stage_flag_lines_to.append(
-                            ('nonSequen_sec',
-                             f'Sections {start_of_list} - {end_of_list}')
-                        )
-
-                    ########################################################
-                    # `start_of_list` and `end_of_list` variable names are
-                    # unintuitive. Here's an explanation:
-                    # The 'sections' list is being filled in reverse by this
-                    # algorithm, starting at the end of the search string
-                    # and running backwards. Thus, this particular loop,
-                    # which is attempting to _unpack "Sections 3 - 9", will
-                    # be fed into the sections list as [08, 07, 06, 05, 04,
-                    # 03]. (09 should already be in the list from the
-                    # previous loop.)  'start_of_list' refers to the
-                    # original text (i.e. in 'Sections 3 - 9', start_of_list
-                    # will be 3; end_of_list will be 9).
-                    ########################################################
-
-                    # vars a, b & c are the bounds (a & b) and incrementation (c)
-                    # of the range() for the secs in the elided list:
-                    # If the string is correctly 'Sections 3 - 9' (for example),
-                    # we use the default:
-                    a, b, c = end_of_list - 1, start_of_list - 1, -1
-                    # ... but if the string is 'sections 9 - 3' (i.e. wrong),
-                    # we use:
-                    if not correct_order:
-                        a, b, c = end_of_list + 1, start_of_list + 1, 1
-
-                    for i in range(a, b, c):
-                        add_sec = str(i).rjust(2, '0')
-                        flag_duplicates(add_sec)
-                        sec_list.append(add_sec)
-                    found_through = False  # reset.
-
-                else:
-                    # Otherwise, if it's a standalone section (not the start
-                    #   of an elided list), we add it.
-                    # First check if this new section is in sec_list:
-                    flag_duplicates(new_sec)
-                    sec_list.append(new_sec)
-
-                # If we identified at least two sections, we need to check
-                # if the last one is the end of an elided list:
-                if PLSSParser._is_multisec(secs_mo):
-                    thru_mo = through_regex.search(secs_mo.group(6))
-                    # Check if we find 'through' (or equivalent symbol or
-                    # abbreviation) before this final section:
-                    if thru_mo is None:
-                        found_through = False
-                    else:
-                        found_through = True
+                    found_through = True
         sec_list.reverse()
 
         return sec_list
