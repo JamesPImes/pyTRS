@@ -116,33 +116,6 @@ QQ_SAME_AXIS = {
     _W: QQ_EW
 }
 
-# Clean aliquot abbreviations with fraction, for aliquot preprocessing.
-NE_FRAC = 'NE¼'
-NW_FRAC = 'NW¼'
-SE_FRAC = 'SE¼'
-SW_FRAC = 'SW¼'
-N2_FRAC = 'N½'
-S2_FRAC = 'S½'
-E2_FRAC = 'E½'
-W2_FRAC = 'W½'
-
-# Define what should replace matches of each regex that is used in the
-# _scrub_aliquots() function.
-QQ_SCRUBBER_DEFINITIONS = {
-    NE_regex: NE_FRAC,
-    NW_regex: NW_FRAC,
-    SE_regex: SE_FRAC,
-    SW_regex: SW_FRAC,
-    N2_regex: N2_FRAC,
-    S2_regex: S2_FRAC,
-    E2_regex: E2_FRAC,
-    W2_regex: W2_FRAC,
-    cleanNE_regex: NE_FRAC,
-    cleanNW_regex: NW_FRAC,
-    cleanSE_regex: SE_FRAC,
-    cleanSW_regex: SW_FRAC
-}
-
 CONFIG_ERROR = TypeError(
     "config must be a str, None, or another Config object.")
 
@@ -6061,6 +6034,7 @@ class PLSSParser:
             require_colon_bool = require_colon
         elif require_colon == _SECOND_PASS:
             require_colon_bool = False
+            # Clear any staged flags from the first pass.
             self.parse_cache["w_flags_staging"] = []
             self.parse_cache["w_flag_line_staging"] = []
         else:
@@ -6792,6 +6766,26 @@ class PLSSParser:
 
 
 class PLSSPreprocessor:
+    """
+    INTERNAL USE:
+
+    A class for preprocessing text for the PLSSParser. Get the
+    preprocessed text from the ``.text`` attribute, or the original text
+    from the ``.orig_text`` attribute.  Get a list of Twp/Rge's that
+    were fixed in the ``.fixed_twprges`` attribute.
+    """
+
+    SCRUBBER_REGEXES = (
+        twprge_regex,
+        preproTR_noNSWE_regex,
+        preproTR_noR_noNS_regex,
+        preproTR_noT_noWE_regex,
+        twprge_pm_regex
+    )
+
+    # Turn this one on with `ocr_scrub=True`
+    OCR_SCRUBBER = twprge_ocr_scrub_regex
+
     def __init__(self, text, default_ns=None, default_ew=None, ocr_scrub=False):
         """
 
@@ -6807,24 +6801,47 @@ class PLSSPreprocessor:
         :param ocr_scrub: Whether to try to iron out common OCR
         'artifacts'. May cause unintended changes. (Defaults to `False`)
         """
-        # These attributes are populated by `.preprocess()`:
-        self.fixed_twprges = None
-        self.text = None
-        self.preprocess(text, default_ns, default_ew, ocr_scrub)
 
-    def preprocess(self, text, default_ns, default_ew, ocr_scrub) -> str:
-        """
-        Preprocess the PLSS description to iron out common kinks in
-        the input data, and optionally store results to `self.pp_text`.
-
-        :return: The preprocessed string.
-        """
+        self.orig_text = text
+        self.ocr_scrub = ocr_scrub
 
         if not default_ns:
             default_ns = PLSSDesc.MASTER_DEFAULT_NS
 
         if not default_ew:
             default_ew = PLSSDesc.MASTER_DEFAULT_EW
+
+        self.default_ns = default_ns
+        self.default_ew = default_ew
+
+        # These attributes are populated by `.preprocess()`:
+        self.fixed_twprges = []
+        self.text = text
+
+        self.preprocess()
+
+    def preprocess(
+            self, text=None, default_ns=None, default_ew=None,
+            ocr_scrub=None) -> str:
+        """
+        Preprocess the PLSS description to iron out common kinks in
+        the input data. Stores the results to ``.text`` attribute and
+        a list of fixed Twp/Rges to ``.fixed_twprges``.
+
+        :return: The preprocessed string.
+        """
+
+        if not text:
+            text = self.text
+
+        if not default_ns:
+            default_ns = self.default_ns
+
+        if not default_ew:
+            default_ew = self.default_ew
+
+        if ocr_scrub is None:
+            ocr_scrub = self.ocr_scrub
 
         # Look for T&R's in original text (for checking if we fix any
         # during preprocess, to raise a wFlag)
@@ -6833,14 +6850,11 @@ class PLSSPreprocessor:
         # Run each of the prepro regexes over the text, each working on
         # the last-prepro'd version of the text. Swaps in the cleaned up
         # TR (format 'T000N-R000W') for each T&R, every time.
-        pp_regexes = [
-            twprge_regex, preproTR_noNSWE_regex, preproTR_noR_noNS_regex,
-            preproTR_noT_noWE_regex, twprge_pm_regex
-        ]
+        pp_regexes = list(PLSSPreprocessor.SCRUBBER_REGEXES)
         if ocr_scrub:
             # This invites potential mis-matches, so it is not included
             # by default. Turn on with `ocr_scrub=True` kwarg.
-            pp_regexes.insert(0, twprge_ocr_scrub_regex)
+            pp_regexes.insert(0, PLSSPreprocessor.OCR_SCRUBBER)
 
         for pp_rgx in pp_regexes:
             i = 0
@@ -6988,3 +7002,173 @@ class PLSSPreprocessor:
             text, default_ns, default_ew, ocr_scrub=ocr_scrub)
         return processor.text
 
+
+class TractPreprocessor:
+    """
+    INTERNAL USE:
+
+    A class for preprocessing text for the TractParser. Get the
+    preprocessed text from the ``.text`` attribute, or the original text
+    from the ``.orig_text`` attribute.
+    """
+
+    # Clean aliquot abbreviations with fraction, for aliquot preprocessing.
+    NE_FRAC = 'NE¼'
+    NW_FRAC = 'NW¼'
+    SE_FRAC = 'SE¼'
+    SW_FRAC = 'SW¼'
+    N2_FRAC = 'N½'
+    S2_FRAC = 'S½'
+    E2_FRAC = 'E½'
+    W2_FRAC = 'W½'
+
+    # Define what should replace matches of each regex that is used in the
+    # TractPreprocessor._scrub_aliquots() method.
+    QQ_SCRUBBER_DEFINITIONS = {
+        NE_regex: NE_FRAC,
+        NW_regex: NW_FRAC,
+        SE_regex: SE_FRAC,
+        SW_regex: SW_FRAC,
+        N2_regex: N2_FRAC,
+        S2_regex: S2_FRAC,
+        E2_regex: E2_FRAC,
+        W2_regex: W2_FRAC,
+        cleanNE_regex: NE_FRAC,
+        cleanNW_regex: NW_FRAC,
+        cleanSE_regex: SE_FRAC,
+        cleanSW_regex: SW_FRAC
+    }
+
+    SCRUBBER_REGEXES = (
+        NE_regex,
+        NW_regex,
+        SE_regex,
+        SW_regex,
+        N2_regex,
+        S2_regex,
+        E2_regex,
+        W2_regex
+    )
+
+    CLEAN_QQ_REGEXES = (
+        cleanNE_regex,
+        cleanNW_regex,
+        cleanSE_regex,
+        cleanSW_regex
+    )
+
+    def __init__(self, text, clean_qq=False):
+        self.orig_text = text
+        self.text = text
+        self.clean_qq = clean_qq
+        self.preprocess()
+
+    def preprocess(self, text=None, clean_qq=None):
+        """
+        Preprocess the text, store the results to ``.text`` attribute,
+        and return the results.
+        :param text: The text to be preprocessed.
+        :return: The preprocessed text.
+        """
+        if not text:
+            text = self.text
+        if clean_qq is None:
+            clean_qq = self.clean_qq
+        text = TractPreprocessor._scrub_aliquots(text, clean_qq)
+        self.text = text
+        return text
+
+    @staticmethod
+    def _scrub_aliquots(text, clean_qq=False) -> str:
+        """
+        INTERNAL USE:
+        Scrub the raw text of a Tract's description, to convert aliquot
+        components into standard abbreviations with fraction symbols.
+        """
+
+        def scrubber(txt, regex_run):
+            """
+            Convert the raw aliquots to cleaner components, using the
+            regex fed as the second arg, and returns the scrubbed text.
+            (Will only function properly with specific aliquots regexes.)
+            """
+
+            # The str we'll use to replace matches of this regex pattern.
+            replace_with = TractPreprocessor.QQ_SCRUBBER_DEFINITIONS[regex_run]
+
+            # All of the preprocess regex patterns have been designed
+            # such that Group 1 will be kept, and Group 2 will be
+            # replaced. So we sub in group 1 + the replacement string.
+            txt = re.sub(regex_run, rf"\1{replace_with}", txt)
+            return txt
+
+        # We'll run these scrubber regexes on the text:
+        scrubber_rgxs = list(TractPreprocessor.SCRUBBER_REGEXES)
+
+        # If the user has specified that the input data is clean (i.e.
+        # no metes-and-bounds tracts, etc.), then broader regexes can
+        # also be applied.
+        if clean_qq:
+            scrubber_rgxs.extend(TractPreprocessor.CLEAN_QQ_REGEXES)
+        # Now run each of the regexes over the text:
+        for reg_to_run in scrubber_rgxs:
+            text = scrubber(text, reg_to_run)
+
+        # And now that 'halves' have been cleaned up, we can also
+        # convert matches like 'E½NE' into 'E½NE¼'. Group 3 of the
+        # halfPlusQ_regex is the half (without its fraction) and Group 5
+        # is the quarter (without its fraction). However, we may need to
+        # do some additional scrubbing on the quarter, if it did not
+        # have a fraction or the word "quarter" in the original text.
+        # So we break it apart and run the clean_qq regexes on that part
+        # only.
+        i = 0
+        while True:
+            mo = halfPlusQ_regex.search(text, pos=i)
+            if not mo:
+                break
+
+            # Run the clean_qq scrubber on this match, and see if
+            # anything changes.
+            replacement = mo.group()
+            check_for_changes = replacement
+            for rgx in TractPreprocessor.CLEAN_QQ_REGEXES:
+                replacement = scrubber(replacement, rgx)
+            if replacement == check_for_changes:
+                # If clean_qq scrubbing changed nothing, we need not sub
+                # anything in, so move the index to the end of this
+                # match and go back to look for later matches.
+                i = mo.end()
+                continue
+
+            # rebuild the text by subbing in `replacement`
+            text = f"{text[:mo.start()]}{replacement}{text[mo.end():]}"
+
+            # Continue searching from the end of that last replacement.
+            i = mo.start() + len(replacement)
+
+        # Clean up the remaining text, to convert "NE¼ of the NE¼" into
+        # "NE¼NE¼" and "SW¼ SW¼" into "SW¼SW¼", by removing extraneous
+        # "of the" and whitespace between previously identified
+        # aliquots. Group 1 and 8 are the only parts we want to keep.
+        check_for_changes = None
+        while text != check_for_changes:
+            check_for_changes = text
+            text = re.sub(aliquot_intervener_remover_regex, r"\1\8", text)
+
+        return text
+
+
+class TractParser:
+    def __init__(
+            self,
+            text,
+            clean_qq=False,
+            include_lot_divs=True,
+            qq_depth_min=2,
+            qq_depth_max=None,
+            qq_depth=None,
+            break_halves=False,
+            parent=None
+    ):
+        self.text = text
