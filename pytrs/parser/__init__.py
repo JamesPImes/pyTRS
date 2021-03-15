@@ -1,4 +1,4 @@
-# Copyright (c) 2020, James P. Imes, All rights reserved.
+# Copyright (c) 2020-2021, James P. Imes, All rights reserved.
 
 """
 The main parsing package. Primary classes:
@@ -11,21 +11,27 @@ The main parsing package. Primary classes:
 > ParseBag objects handle data within / between Tract and PLSSDesc.
 """
 
-# Primary parsing classes
-from .parser import PLSSDesc, Tract, TractList, Config
-
-# Misc. functions for examining / handling descriptions:
 from .parser import (
+    # Primary parsing classes and their helper classes
+    PLSSDesc,
+    Tract,
+    TractList,
+    Config,
+
+    # Misc. functions for examining / handling descriptions
     find_twprge,
     find_sec,
     decompile_twprge,
     find_multisec,
-    break_trs
+    break_trs,
+    trs_to_dict,
+
+    # For outputting parsed data to csv files
+    output_to_csv,
+
+    # A tuple of currently implemented layouts
+    IMPLEMENTED_LAYOUTS,
+
+    # Examples of the currently implemented layouts
+    IMPLEMENTED_LAYOUT_EXAMPLES
 )
-
-# For outputting parsed data to csv files
-from .parser import output_to_csv
-
-# A current list of implemented layouts
-from .parser import IMPLEMENTED_LAYOUTS
-from .parser import IMPLEMENTED_LAYOUT_EXAMPLES
