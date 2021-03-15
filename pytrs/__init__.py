@@ -43,6 +43,7 @@ from pytrs.parser import (
     decompile_twprge,
     find_multisec,
     break_trs,
+    trs_to_dict,
 
     # For outputting parsed data to csv files
     output_to_csv,
