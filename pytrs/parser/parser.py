@@ -283,7 +283,7 @@ class PLSSDesc:
         ###############################################################
 
         # Whether we should preprocess the text at initialization:
-        self.init_preprocess = True
+        self.init_preprocess = False
 
         # Whether we should parse the text at initialization:
         self.init_parse = False
@@ -375,7 +375,7 @@ class PLSSDesc:
             self.parse(commit=True)
 
         elif self.init_preprocess:
-            self.preprocess()
+            self.preprocess(commit=True)
 
     def __str__(self):
         pt = len(self.parsed_tracts)
@@ -520,6 +520,13 @@ class PLSSDesc:
         objects.
         """
 
+        # --------------------------------------------------------------
+        # Note that this method is actually a wrapper for initializing
+        # a PLSSParser object and extracting the relevant attributes
+        # from that. User-facing documentation for that class is
+        # maintained here.
+        # --------------------------------------------------------------
+
         # ----------------------------------------
         # Lock down parameters for this parse.
 
@@ -560,6 +567,9 @@ class PLSSDesc:
             qq_depth_min = self.qq_depth_min
         if qq_depth_max is None:
             qq_depth_max = self.qq_depth_max
+
+        # ----------------------------------------
+        # Parse it.
 
         parser = PLSSParser(
             text=self.orig_desc,
@@ -619,12 +629,12 @@ class PLSSDesc:
         return PLSSParser.deduce_layout(text, candidates=candidates)
 
     def preprocess(
-            self, default_ns=None, default_ew=None, commit=True,
+            self, default_ns=None, default_ew=None, commit=False,
             ocr_scrub=None) -> str:
         """
         Preprocess the PLSS description to iron out common kinks in
-        the input data, and optionally store results to the ``.pp_desc``
-        attribute.
+        the input data, and optionally store the results to the
+        ``.pp_desc`` attribute.
 
         NOTE: Regardless whether committed, the description will be
         preprocessed (again) when parsed.
@@ -638,29 +648,22 @@ class PLSSDesc:
         :param ocr_scrub: Whether to try to iron out common OCR
         'artifacts'. May cause unintended changes. (Defaults to
         `self.ocr_scrub`, which is `False` unless otherwise configured.)
-        :param commit: Whether to store the results to `self.pp_desc`.
-        (Defaults to `True`)
+        :param commit: Whether to store the results to ``.pp_desc``.
+        (Defaults to `False`)
         :return: The preprocessed string.
         """
-
         # Defaults to pulling the text from the orig_desc of the object:
         text = self.orig_desc
-
         if default_ns is None:
             default_ns = self.default_ns
-
         if default_ew is None:
             default_ew = self.default_ew
-
         if ocr_scrub is None:
             ocr_scrub = self.ocr_scrub
-
         pp_desc = PLSSPreprocessor.static_preprocess(
             text, default_ns, default_ew, ocr_scrub)
-
         if commit:
             self.pp_desc = pp_desc
-
         return pp_desc
 
     def tracts_to_dict(self, *attributes) -> list:
@@ -1035,9 +1038,6 @@ class Tract:
         # A dict of lot acreages, keyed by 'L1', 'L2', etc.
         self.lot_acres = {}
 
-        # A bool to track whether the preprocess has been completed
-        self.preprocess_done = False
-
         # --------------------------------------------------------------
         # Configure how the Tract should be parsed:
 
@@ -1053,7 +1053,7 @@ class Tract:
         # NOTE: only applicable for using .from_twprgesec()
         self.default_ew = None
 
-        # NOTE: `initPreproces`, `init_parse_qq`, `clean_qq`, &
+        # NOTE: `init_preprocess`, `init_parse_qq`, `clean_qq`, &
         # `include_lot_divs` will be changed in set_config(), if needed.
 
         # Whether we should preprocess the text at initialization:
@@ -1096,6 +1096,9 @@ class Tract:
         # If config settings require calling parse() at init, do it now.
         if self.init_parse_qq:
             self.parse(commit=True)
+
+        elif self.init_preprocess:
+            self.preprocess(commit=True)
 
     def __str__(self):
         return (
@@ -1238,7 +1241,6 @@ class Tract:
 
     def parse(
             self,
-            text=None,
             commit=True,
             clean_qq=None,
             include_lot_divs=None,
@@ -1249,9 +1251,6 @@ class Tract:
         """
         Parse the description block of this Tract into lots and QQ's.
 
-        :param text: The text to be parsed into lots and QQ's. If not
-        specified, will pull from `self.pp_desc` (i.e. the preprocessed
-        description).
         :param commit: Whether to commit the results to the appropriate
         instance attributes. Defaults to `True`.
         :param clean_qq: Whether to expect only clean lots and QQ's (i.e.
@@ -1290,14 +1289,24 @@ class Tract:
         (equivalent to what would be stored in `.lots_qqs`).
         """
 
-        if text is None:
-            text = self.desc
+        # --------------------------------------------------------------
+        # Note that this method is actually a wrapper for initializing
+        # a PLSSParser object and extracting the relevant attributes
+        # from that. User-facing documentation for that class is
+        # maintained here.
+        # --------------------------------------------------------------
+
+        # ----------------------------------------
+        # Lock down parameters for this parse.
 
         if clean_qq is None:
             clean_qq = self.clean_qq
 
         if include_lot_divs is None:
             include_lot_divs = self.include_lot_divs
+
+        if break_halves is None:
+            break_halves = self.break_halves
 
         # Determine whether to use the _min and _max, or to use the
         # qq_depth -- and whether to use the arg-specified or what was
@@ -1322,11 +1331,11 @@ class Tract:
         elif not use_min_max and self.qq_depth is not None:
             qq_depth_min = qq_depth_max = self.qq_depth
 
-        if break_halves is None:
-            break_halves = self.break_halves
+        # ----------------------------------------
+        # Parse it.
 
         parser = TractParser(
-            text=text,
+            text=self.desc,
             clean_qq=clean_qq,
             include_lot_divs=include_lot_divs,
             qq_depth_min=qq_depth_min,
@@ -1349,25 +1358,30 @@ class Tract:
 
         return parser.lots_qqs
 
-    def preprocess(self, text=None, clean_qq=None) -> str:
+    def preprocess(self, clean_qq=None, commit=False) -> str:
         """
         Preprocess the description text to iron out common kinks in the
-        input data, and optionally store results to `self.pp_desc`.
+        input data, and optionally store the results to ``.pp_desc``
+        attribute (with ``commit=True``).
 
-        :param text: The text to be preprocessed. Defaults to what is
-        stored in `self.desc` (i.e. the original description block).
+        NOTE: Regardless whether committed, the description will be
+        preprocessed (again) when parsed.
+
         :param clean_qq: Whether to expect only clean lots and QQ's
         (i.e. no metes-and-bounds, exceptions, complicated descriptions,
         etc.). Defaults to whatever is specified in `self.clean_qq`
         (which is False, unless configured otherwise).
+        :param commit: Whether to store the results to ``.pp_desc``.
+        (Defaults to `False`)
         :return: The preprocessed string.
         """
-        if text is None:
-            text = self.desc
+        text = self.desc
         if clean_qq is None:
             clean_qq = self.clean_qq
         preprocessor = TractPreprocessor(text, clean_qq=clean_qq)
-        return preprocessor.text
+        text = preprocessor.text
+        self.pp_desc = text
+        return text
 
     def to_dict(self, *attributes) -> dict:
         """
@@ -1378,10 +1392,7 @@ class Tract:
         :return: A dict, keyed by attribute.
         """
 
-        # Unpack any lists or tuples included among attributes, and
-        # ensure elements are all strings:
         attributes = _clean_attributes(attributes)
-
         return {att: getattr(self, att, f"{att}: n/a") for att in attributes}
 
     def to_list(self, *attributes) -> list:
@@ -4456,24 +4467,24 @@ class TractParser:
         # lots with ';;' to prevent unintentionally combining aliquots
         # later.
         lot_text_blocks = []
-        remainingText = text
+        remaining_text = text
         while True:
             # We use `lot_with_aliquot_regex` instead of `lot_regex`,
             # in order to ALSO capture leading aliquots -- i.e. we want
             # to capture 'N½ of Lot 1' (even if we won't be reporting
             # lot divisions), because otherwise the 'N½' will be read as
             # <the entire N/2> of the section.
-            lot_aliq_mo = lot_with_aliquot_regex.search(remainingText)
+            lot_aliq_mo = lot_with_aliquot_regex.search(remaining_text)
             if lot_aliq_mo is None:
                 break
             else:
                 lot_text_blocks.append(lot_aliq_mo.group())
-                # reconstruct remainingText, injecting ';;' where the
+                # reconstruct remaining_text, injecting ';;' where the
                 # match was located
-                p1 = remainingText[:lot_aliq_mo.start()]
-                p2 = remainingText[lot_aliq_mo.end():]
-                remainingText = f"{p1};;{p2}"
-        text = remainingText
+                p1 = remaining_text[:lot_aliq_mo.start()]
+                p2 = remaining_text[lot_aliq_mo.end():]
+                remaining_text = f"{p1};;{p2}"
+        text = remaining_text
 
         for block in lot_text_blocks:
             # Unpack the lots in this block, and store the results
@@ -4482,26 +4493,26 @@ class TractParser:
 
         # Get a list of all of the aliquots strings
         aliq_text_blocks = []
-        remainingText = text
+        remaining_text = text
         while True:
             # Run this loop, pulling the next aliquot match until we run out.
-            aliq_mo = aliquot_unpacker_regex.search(remainingText)
+            aliq_mo = aliquot_unpacker_regex.search(remaining_text)
             if aliq_mo is None:
                 break
             else:
                 # TODO: Implement context awareness. Should not pull aliquots
                 #   before "of Section ##", for example.
                 aliq_text_blocks.append(aliq_mo.group())
-                remainingText = remainingText[:aliq_mo.start()] + ';;' \
-                                + remainingText[aliq_mo.end():]
-        text = remainingText
+                remaining_text = remaining_text[:aliq_mo.start()] + ';;' \
+                                + remaining_text[aliq_mo.end():]
+        text = remaining_text
 
         # And also pull out "ALL" as an aliquot if it is clear of any
         # context (e.g., pull "ALL" but not "All of the").  First, get a
         # working text string, and replace each group of whitespace with
         # a single space.
-        wText = re.sub(r'\s+', ' ', text).strip()
-        all_mo = ALL_regex.search(wText)
+        check_for_acceptable_all = re.sub(r'\s+', ' ', text).strip()
+        all_mo = ALL_regex.search(check_for_acceptable_all)
         if all_mo is not None:
             if all_mo.group(2) is None:
                 # If we ONLY found "ALL", then we're good.
@@ -4521,15 +4532,17 @@ class TractParser:
         if qq_depth is not None:
             qq_depth_min = qq_depth_max = qq_depth
 
-        for aliqTextBlock in aliq_text_blocks:
+        for aliq_text_block in aliq_text_blocks:
             # Unpack each aliq_text_block, and store its results to the
             # appropriate attribute.
             self._unpack_aliquots(
-                aliqTextBlock, qq_depth_min, qq_depth_max, qq_depth,
+                aliq_text_block, qq_depth_min, qq_depth_max, qq_depth,
                 break_halves)
 
         lots_qqs = self.lots + self.qqs
         self.lots_qqs = lots_qqs
+
+        self.gen_flags()
 
         return lots_qqs
 
@@ -4885,139 +4898,164 @@ class TractParser:
         # This will be a dict of stated gross acres for the respective lots,
         # keyed by 'L1', 'L2', etc. It only gets filled for the lots for
         # which gross acreage was specified in parentheses.
-        lotsAcresDict = {}
+        lot_acreages = {}
 
         # A working list of the lots. Note that this gets filled from
         # last-to-first on this working text block. It will be reversed
         # before adding it to the main lots list:
-        wLots = []
+        working_lots = []
 
-        # `foundThrough` will switch to True at the start of an elided list
+        # `found_through` will switch to True at the start of an elided list
         # (e.g., when we're at '3' in "Lots 3 - 9")
-        foundThrough = False
-        remainingLotsText = lot_text_block
-
+        found_through = False
+        i = len(lot_text_block)
         while True:
-            lots_mo = lot_regex.search(remainingLotsText)
+            lots_mo = lot_regex.search(lot_text_block, endpos=i)
 
-            if lots_mo is None:  # we're out of lot numbers.
+            if not lots_mo:
+                # We're done when we're out of lot numbers.
                 break
 
+            # Pull the right-most lot number (as a string):
+            lot_num = TractParser._get_last_lot(lots_mo)
+
+            # How far we'll search in the next loop.
+            i = TractParser._start_of_last_lot(lots_mo)
+
+            # Clean up any leading '0's in lot_num.
+            lot_num = str(int(lot_num))
+            if lot_num == '0':
+                self.w_flags.append('Lot0')
+
+            new_lot = f"L{lot_num}"
+
+            if found_through:
+                # If we've identified an elided list (e.g., 'Lots 3 - 9').
+                prev_lot = working_lots[-1]
+                # Start at lot_num identified earlier this loop.
+                start_of_list = int(lot_num)
+                # End at last round's lot_num (omit leading 'L'; convert to int).
+                end_of_list = int(prev_lot[1:])
+                correct_order = True
+                if start_of_list >= end_of_list:
+                    self.w_flags.append('nonSequen_Lots')
+                    self.w_flag_lines.append(
+                        ('nonSequen_Lots',
+                         f"Lots {start_of_list} - {end_of_list}"))
+                    correct_order = False
+
+                ########################################################
+                # start_of_list and end_of_list variable names are
+                # unintuitive. Here's an explanation:
+                # The 'lots' list is being filled in reverse by this
+                # algorithm, starting at the end of the search string
+                # and running backwards. Thus, this particular loop,
+                # which is attempting to _unpack "Lots 3 - 9", will be
+                # fed into the lots list as [L8, L7, L6, L5, L4, L3].
+                # (L9 should already be in the list from the previous
+                # loop.)
+                #
+                # 'start_of_list' refers to the original text (i.e. in
+                # 'Lots 3 - 9', start_of_list will be 3; end_of_list
+                # will be 9).
+                ########################################################
+
+                # vars a,b&c are the bounds (a&b) and incrementation (c)
+                # of the range() for the lots in the elided list:
+                # If the string is correctly 'Lots 3 - 9' (for example),
+                # we use the default:
+                a, b, c = end_of_list - 1, start_of_list - 1, -1
+                # ... but if the string is 'Lots 9 - 3' (i.e. wrong),
+                # we use:
+                if not correct_order:
+                    a, b, c = end_of_list + 1, start_of_list + 1, 1
+
+                # Add each new lot in this range.
+                new_lots = [f"L{i}" for i in range(a, b, c)]
+                working_lots.extend(new_lots)
+                found_through = False  # reset.
+
             else:
-                # We still have at least one lot to _unpack.
+                # If it's a standalone lot (not the start of an elided
+                # list), we append it
+                working_lots.append(new_lot)
 
-                # Pull the right-most lot number (as a string):
-                lotNum = TractParser._get_last_lot(lots_mo)
+            # If acreage was specified for this lot, clean it up and add
+            # to dict, keyed by the new_lot.
+            new_acres = TractParser._get_lot_acres(lots_mo)
+            if new_acres:
+                lot_acreages[new_lot] = new_acres
 
-                if TractParser._is_single_lot(lots_mo):
-                    # Skip the next loop after we've reached the left-most lot
-                    remainingLotsText = ''
+            # If we identified at least two lots, we need to check if
+            # the last one is the end of an elided list, by calling
+            # _thru_lot() to check for us:
+            if TractParser._is_multi_lot(lots_mo):
+                found_through = TractParser._thru_lot(lots_mo)
 
-                else:
-                    # If we've found at least two lots.
-                    remainingLotsText = remainingLotsText[:TractParser._start_of_last_lot(lots_mo)]
-
-                # Clean up any leading '0's in lotNum.
-                lotNum = str(int(lotNum))
-                if lotNum == '0':
-                    self.w_flags.append('Lot0')
-
-                newLot = 'L' + lotNum
-
-                if foundThrough:
-                    # If we've identified an elided list (e.g., 'Lots 3 - 9')
-                    prevLot = wLots[-1]
-                    # Start at lotNum identified earlier this loop:
-                    start_of_list = int(lotNum)
-                    # End at last round's lotNum (omit leading 'L'; convert to int):
-                    end_of_list = int(prevLot[1:])
-                    correctOrder = True
-                    if start_of_list >= end_of_list:
-                        self.w_flags.append('nonSequen_Lots')
-                        self.w_flag_lines.append(
-                            ('nonSequen_Lots',
-                             f"Lots {start_of_list} - {end_of_list}"))
-                        correctOrder = False
-
-                    ########################################################
-                    # start_of_list and end_of_list variable names are
-                    # unintuitive. Here's an explanation:
-                    # The 'lots' list is being filled in reverse by this
-                    # algorithm, starting at the end of the search string
-                    # and running backwards. Thus, this particular loop,
-                    # which is attempting to _unpack "Lots 3 - 9", will be
-                    # fed into the lots list as [L8, L7, L6, L5, L4, L3].
-                    # (L9 should already be in the list from the previous
-                    # loop.)
-                    #
-                    # 'start_of_list' refers to the original text (i.e. in
-                    # 'Lots 3 - 9', start_of_list will be 3; end_of_list
-                    # will be 9).
-                    ########################################################
-
-                    # vars a,b&c are the bounds (a&b) and incrementation (c)
-                    # of the range() for the lots in the elided list:
-                    # If the string is correctly 'Lots 3 - 9' (for example),
-                    # we use the default:
-                    a, b, c = end_of_list - 1, start_of_list - 1, -1
-                    # ... but if the string is 'Lots 9 - 3' (i.e. wrong),
-                    # we use:
-                    if not correctOrder:
-                        a, b, c = end_of_list + 1, start_of_list + 1, 1
-
-                    for i in range(a, b, c):
-                        # Append each new lot in this range.
-                        wLots.append('L' + str(i))
-                    # Reset the foundThrough.
-                    foundThrough = False
-
-                else:
-                    # If it's a standalone lot (not the start of an elided
-                    # list), we append it
-                    wLots.append(newLot)
-
-                # If acreage was specified for this lot, clean it up and add
-                # to dict, keyed by the newLot.
-                newAcres = TractParser._get_lot_acres(lots_mo)
-                if newAcres is not None:
-                    lotsAcresDict[newLot] = newAcres
-
-                # If we identified at least two lots, we need to check if
-                # the last one is the end of an elided list, by calling
-                # _thru_lot() to check for us:
-                if TractParser._is_multi_lot(lots_mo):
-                    foundThrough = TractParser._thru_lot(lots_mo)
-
-        # Reverse wLots, so that it's in the order it was in the original
+        # Reverse working_lots, so that it's in the order it was in the original
         # description, and append it to our main list:
-        wLots.reverse()
-        lots.extend(wLots)
+        working_lots.reverse()
+        lots.extend(working_lots)
 
         if include_lot_divs:
             # If we want include_lot_divs, add it to the front of each parsed lot.
-            leadingAliq = TractParser._get_leading_aliquot(
+            leading_aliq = TractParser._get_leading_aliquot(
                 lot_with_aliquot_regex.search(lot_text_block))
-            leadingAliq = leadingAliq.replace('¼', '')
-            leadingAliq = leadingAliq.replace('½', '2')
-            if leadingAliq != '':
+            leading_aliq = leading_aliq.replace('¼', '')
+            leading_aliq = leading_aliq.replace('½', '2')
+            if leading_aliq != '':
                 if TractParser._first_lot_is_plural(lot_regex.search(lot_text_block)):
-                    # If the first lot is plural, we apply leadingAliq to
+                    # If the first lot is plural, we apply leading_aliq to
                     # all lots in the list
-                    lots = [f'{leadingAliq} of {lot}' for lot in lots]
+                    lots = [f'{leading_aliq} of {lot}' for lot in lots]
                 else:
-                    # If the first lot is NOT plural, apply leadingAliq to
+                    # If the first lot is NOT plural, apply leading_aliq to
                     # ONLY the first lot:
-                    firstLot = f'{leadingAliq} of {lots.pop(0)}'
+                    firstLot = f'{leading_aliq} of {lots.pop(0)}'
                     lots.insert(0, firstLot)
                 # TODO: This needs to be a bit more robust to handle all real-world
                 #   permutations.  For example: 'N/2 of Lot 1 and 2' (meaning
                 #   ['N2 of L1', 'N2 of L2']) is possible -- albeit poorly formatted
+                #   See also, "N/2 of Lot 1 - 3"...
 
         self.lots.extend(lots)
-        for k, v in lotsAcresDict.items():
+        for k, v in lot_acreages.items():
             self.lot_acres[k] = v
 
         return None
+
+    def gen_flags(self):
+        """
+        INTERNAL USE:
+
+        Look for duplicate lots and QQ's and store the appropriate
+        flags.
+        :return: None.
+        """
+        def find_duplicates(lst):
+            last = len(lst)
+            duplicates = []
+            for i, elem in enumerate(lst, start=1):
+                if i == last:
+                    break
+                if elem in lst[i:]:
+                    duplicates.append(elem)
+            return duplicates
+
+        dup_lots = find_duplicates(self.lots)
+        dup_qqs = find_duplicates(self.qqs)
+
+        if dup_lots:
+            flag = "dup_lot"
+            context = f"{flag}<{','.join(dup_lots)}>"
+            self.w_flags.append(flag)
+            self.w_flag_lines.append((flag, context))
+
+        if dup_qqs:
+            flag = "dup_qq"
+            context = f"{flag}<{','.join(dup_qqs)}>"
+            self.w_flags.append(flag)
+            self.w_flag_lines.append((flag, context))
 
     ####################################################################
     # Tools for interpreting lot_regex and lot_with_aliquot_regex match
@@ -5045,19 +5083,16 @@ class TractParser:
 
         try:
             if TractParser._is_multi_lot(lots_mo):
-                try:
-                    thru_mo = through_regex.search(lots_mo.group(15))
-                except (IndexError, AttributeError):
-                    return False
+                thru_mo = through_regex.search(lots_mo.group(15))
             else:
                 return False
 
+            found_through = True
             if thru_mo is None:
-                foundThrough = False
-            else:
-                foundThrough = True
+                found_through = False
 
-            return foundThrough
+            return found_through
+
         except (IndexError, AttributeError):
             return False
 
@@ -5214,8 +5249,7 @@ def find_twprge(text, default_ns=None, default_ew=None):
 
     # For each match, compile a clean T&R and append it.
     for twprge_mo in twprge_mo_iter:
-        twprge = PLSSParser._compile_twprge_mo(
-            twprge_mo, default_ns, default_ew)
+        twprge = PLSSParser._compile_twprge_mo(twprge_mo, default_ns, default_ew)
         tr_list.append(twprge)
     return tr_list
 
@@ -5264,31 +5298,26 @@ def find_multisec(text, flat=True) -> list:
     """
     Returns a list of all identified multi-Section numbers in the
     text (formatted as '00'). Returns a flattened list by default, but
-    can return a nested list (one per multiSec) with `flat=False`.
+    can return a nested list (one per multisec) with `flat=False`.
     """
 
-    packedMultiSec_list = []
-    unpackedMultiSec_list = []
+    packed_multisec_list = []
+    unpacked_multisec_list = []
 
-    i = 0
-    while True:
-        multiSec_mo = multiSec_regex.search(text, pos=i)
-        if multiSec_mo is None:
-            break
-        packedMultiSec_list.append(multiSec_mo.group())
-        i = multiSec_mo.end()
+    for ms_mo in multiSec_regex.finditer(text):
+        packed_multisec_list.append(ms_mo.group())
 
-    for multiSec in packedMultiSec_list:
-        workingSecList = PLSSParser._unpack_sections(multiSec)
-        if len(workingSecList) == 1:
+    for multisec in packed_multisec_list:
+        working_sec_list = PLSSParser._unpack_sections(multisec)
+        if len(working_sec_list) == 1:
             # skip any single-section matches
             continue
-        unpackedMultiSec_list.append(workingSecList)
+        unpacked_multisec_list.append(working_sec_list)
 
     if flat:
-        unpackedMultiSec_list = flatten(unpackedMultiSec_list)
+        unpacked_multisec_list = flatten(unpacked_multisec_list)
 
-    return unpackedMultiSec_list
+    return unpacked_multisec_list
 
 
 def flatten(list_or_tuple=None) -> list:
@@ -5326,18 +5355,18 @@ def break_trs(trs: str) -> tuple:
         ex:  'TRerr14' -> ('TRerr', 'TRerr', '14')
         ex:  'asdf' -> ('TRerr', 'TRerr', 'secError')"""
 
-    DEFAULT_ERRORS = (_ERR_TWPRGE, _ERR_TWPRGE, _ERR_SEC)
+    default_errors = (_ERR_TWPRGE, _ERR_TWPRGE, _ERR_SEC)
 
     mo = TRS_unpacker_regex.search(trs)
-    if mo is None:
-        return DEFAULT_ERRORS
+    if not mo:
+        return default_errors
 
     if mo[2] is not None:
         twp = mo[2].lower()
         rge = mo[3].lower()
     else:
-        # Pull twp, rge from DEFAULT_ERRORS; discard the val for section error
-        twp, rge, _ = DEFAULT_ERRORS
+        # Pull twp, rge from default_errors; discard the val for section error
+        twp, rge, _ = default_errors
 
     # mo.group(5) may be a 2-digit numerical string (e.g., '14' from
     # '154n97w14'); or a string 'secError' (from '154n97wsecError'); or
@@ -5378,16 +5407,16 @@ def _clean_attributes(*attributes) -> list:
     if len(attributes) == 0:
         return []
 
-    cleanArgList = []
+    clean = []
     for att in attributes:
         if not isinstance(att, str):
             raise TypeError(
                 'Attributes must be specified as strings (or list of strings).')
 
         else:
-            cleanArgList.append(att)
+            clean.append(att)
 
-    return cleanArgList
+    return clean
 
 
 ########################################################################
@@ -5425,11 +5454,14 @@ def output_to_csv(
     ACCEPTABLE_TYPES = (PLSSDesc, Tract, TractList)
     ACCEPTABLE_TYPES_PLUS = (PLSSDesc, Tract, TractList, list)
 
-    if filepath[-4:].lower() != '.csv':
-        # Attempted filename did not end in '.csv'
-        raise ValueError('Error: filename must be .csv file')
+    import csv
+    import os
+    from pathlib import Path
 
-    import csv, os
+    filepath = Path(filepath)
+
+    if filepath.suffix.lower() != '.csv':
+        raise ValueError('Error: filename must be .csv file')
 
     # If the file already exists and we're not writing a new file, turn
     # off headers
@@ -5437,13 +5469,13 @@ def output_to_csv(
         include_headers = False
 
     # Default to opening in `write` mode (create new file). However...
-    openMode = 'w'
+    open_mode = 'w'
     # If we don't want to create a new file, will open in `append` mode instead.
     if resume:
-        openMode = 'a'
+        open_mode = 'a'
 
-    csvFile = open(filepath, openMode, newline='')
-    outputWriter = csv.writer(csvFile)
+    csv_file = open(filepath, open_mode, newline='')
+    output_writer = csv.writer(csv_file)
 
     if not isinstance(to_output, ACCEPTABLE_TYPES_PLUS):
         # If not the correct type, abort before writing any more.
@@ -5464,7 +5496,7 @@ def output_to_csv(
 
     if include_headers:
         # Write the attribute names as headers:
-        outputWriter.writerow(attributes)
+        output_writer.writerow(attributes)
 
     for obj in to_output:
         if not isinstance(obj, ACCEPTABLE_TYPES):
@@ -5474,32 +5506,32 @@ def output_to_csv(
         elif isinstance(obj, (PLSSDesc, TractList)):
             # Note that both PLSSDesc and TractList have equivalent
             # `.tracts_to_list()` methods, so both types are handled here
-            allTractData = obj.tracts_to_list(attributes)
+            all_tract_data = obj.tracts_to_list(attributes)
         else:
             # i.e. `obj` is a `Tract` object.
             # Get the Tract object's attr values in a list, and nest
-            # that list as the only element in allTractData list:
-            allTractData = [obj.to_list(attributes)]
+            # that list as the only element in all_tract_data list:
+            all_tract_data = [obj.to_list(attributes)]
 
-        for TractData in allTractData:
-            dataToWrite = []
-            for data in TractData:
+        for tract_data in all_tract_data:
+            data_to_write = []
+            for data in tract_data:
                 if isinstance(data, (list, tuple)) and unpack_lists:
                     # If this data is a list / tuple, flatten & join its
                     # elements with ',' and then append:
                     try:
-                        dataToWrite.append(','.join(flatten(data)))
+                        data_to_write.append(','.join(flatten(data)))
                     except:
                         # Cannot .join() non-string elements, so handle
                         # with try/except.
                         # TODO: Write a more robust joiner function.
-                        dataToWrite.append(data)
+                        data_to_write.append(data)
                 else:
                     # If this data is NOT a list / tuple, just append:
-                    dataToWrite.append(data)
-            outputWriter.writerow(dataToWrite)
+                    data_to_write.append(data)
+            output_writer.writerow(data_to_write)
 
-    csvFile.close()
+    csv_file.close()
 
 
 __all__ = [
@@ -5514,5 +5546,5 @@ __all__ = [
     find_twprge,
     find_sec,
     find_multisec,
-    output_to_csv
+    output_to_csv,
 ]
