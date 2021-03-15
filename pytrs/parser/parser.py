@@ -87,16 +87,35 @@ IMPLEMENTED_LAYOUT_EXAMPLES = (
 )
 
 
-CONFIG_ERROR = TypeError(
-    "config must be a str, None, or another Config object.")
+class ConfigError(TypeError):
+    """
+    Wrong type of object was passed to `config=` argument or when
+    initializing a Config() object.
+    """
+    def __init__(self, obj=None):
+        msg = "`config` must be a str, None, or another pytrs.Config object."
+        if obj is not None:
+            msg = f"{msg} Passed type {type(obj)!r}."
+        super().__init__(msg)
 
-DEFAULT_NS_ERROR = ValueError(
-    "default_ns must be either 'n' or 's'."
-)
 
-DEFAULT_EW_ERROR = ValueError(
-    "default_ew must be either 'e' or 'w'."
-)
+class DefaultNSError(ValueError):
+    """Illegal value for `default_ns`."""
+    def __init__(self, obj=None):
+        msg = "`default_ns` must be either 'n' or 's'."
+        if obj is not None:
+            msg = f"{msg} Passed {obj!r}."
+        super().__init__(msg)
+
+
+class DefaultEWError(ValueError):
+    """Illegal value for `default_ew`."""
+    def __init__(self, obj=None):
+        msg = "`default_ew` must be either 'e' or 'w'."
+        if obj is not None:
+            msg = f"{msg} Passed {obj!r}."
+        super().__init__(msg)
+
 
 _DEFAULT_COLON = 'default_colon'
 _SECOND_PASS = 'second_pass'
@@ -430,7 +449,7 @@ class PLSSDesc:
         if isinstance(config, str) or config is None:
             config = Config(config)
         if not isinstance(config, Config):
-            raise CONFIG_ERROR
+            raise ConfigError(config)
 
         for attrib in Config._PLSSDESC_ATTRIBUTES:
             value = getattr(config, attrib)
@@ -1143,7 +1162,7 @@ class Tract:
         if isinstance(config, str) or config is None:
             config = Config(config)
         if not isinstance(config, Config):
-            raise CONFIG_ERROR
+            raise ConfigError(config)
 
         # Get our default_ns and default_ew from kwargs or config
         if default_ns is None:
@@ -1158,9 +1177,9 @@ class Tract:
             default_ew = PLSSDesc.MASTER_DEFAULT_EW
         # Ensure legal N/S and E/W values.
         if default_ns.lower() not in ['n', 'north', 's', 'south']:
-            raise DEFAULT_NS_ERROR
+            raise DefaultNSError(default_ns)
         if default_ew.lower() not in ['w', 'west', 'e', 'east']:
-            raise DEFAULT_EW_ERROR
+            raise DefaultEWError(default_ew)
 
         # Whether to scrub twp, rge, and sec strings for OCR artifacts
         ocr_scrub = False
@@ -1232,7 +1251,7 @@ class Tract:
         if isinstance(config, str) or config is None:
             config = Config(config)
         if not isinstance(config, Config):
-            raise CONFIG_ERROR
+            raise ConfigError(config)
 
         for attrib in Config._TRACT_ATTRIBUTES:
             value = getattr(config, attrib)
@@ -1850,7 +1869,7 @@ class Config:
         elif config_text is None:
             config_text = ''
         elif not isinstance(config_text, str):
-            raise CONFIG_ERROR
+            raise ConfigError(config_text)
         self.config_text = config_text
         self.config_name = config_name
 
