@@ -1,4 +1,4 @@
-# Copyright (c) 2020, James P. Imes, all rights reserved.
+# Copyright (c) 2020-2021, James P. Imes, all rights reserved.
 
 """
 pyTRS - a pure Python library for parsing Public Land Survey System
@@ -8,7 +8,7 @@ spreadsheets, and databases generally. It accounts for common variations
 in layout, abbreviations, typos, etc. and can therefore process a range
 of real-world data.
 
-Copyright (c) 2020, James P. Imes, all rights reserved.
+Copyright (c) 2020-2021, James P. Imes, all rights reserved.
 
 THIS LIBRARY IS NOT TO BE USED FOR ANY UNLICENSED COMMERCIAL PURPOSES OR
 FOR GENERATING OR MODIFYING LEGAL DESCRIPTIONS IN ANY LEGAL DOCUMENT!
