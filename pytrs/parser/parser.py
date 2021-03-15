@@ -5149,28 +5149,28 @@ class TractParser:
         """
         try:
             if TractParser._is_multi_lot(lots_mo):
-                if lots_mo.group(14) is None:
+                if not lots_mo.group(14):
                     return None
                 else:
-                    lotAcres_mo = lotAcres_unpacker_regex.search(lots_mo.group(14))
+                    lot_acres_mo = lotAcres_unpacker_regex.search(lots_mo.group(14))
 
             elif TractParser._is_single_lot(lots_mo):
-                if lots_mo.group(12) is None:
+                if not lots_mo.group(12):
                     return None
                 else:
-                    lotAcres_mo = lotAcres_unpacker_regex.search(lots_mo.group(12))
+                    lot_acres_mo = lotAcres_unpacker_regex.search(lots_mo.group(12))
 
             else:
                 return None
 
-            if lotAcres_mo is None:
+            if not lot_acres_mo:
                 return None
             else:
-                lotAcres_text = lotAcres_mo.group(1)
+                lot_acres_text = lot_acres_mo.group(1)
 
                 # Swap in a period if there was a comma separating:
-                lotAcres_text = lotAcres_text.replace(',', '.')
-                return lotAcres_text
+                lot_acres_text = lot_acres_text.replace(',', '.')
+                return lot_acres_text
         except (IndexError, AttributeError):
             return None
 
@@ -5237,21 +5237,75 @@ class TractParser:
 # Misc. tools
 ########################################################################
 
-def find_twprge(text, default_ns=None, default_ew=None):
+def find_twprge(text, default_ns=None, default_ew=None, preprocess=False):
     """
     Returns a list of all T&R's in the text (formatted as '000n000w',
     or with fewer digits as needed).
+
+    :param text: The text to scour for Twp/Rge's.
+    :param default_ns: If N/S is not specified for the Twp, assume this
+    direction. (Defaults to 'n'.)
+    :param default_ew: If E/W is not specified for the Twp, assume this
+    direction. (Defaults to 'w'.)
+    :param preprocess: A bool, whether to preprocess the text before
+    searching for Twp/Rge's. (Defaults to `False`)
     """
 
-    # search the PLSS description for all T&R's
-    twprge_mo_iter = twprge_regex.finditer(text)
-    tr_list = []
+    if preprocess:
+        text = PLSSPreprocessor(text, default_ns, default_ew).text
 
-    # For each match, compile a clean T&R and append it.
-    for twprge_mo in twprge_mo_iter:
-        twprge = PLSSParser._compile_twprge_mo(twprge_mo, default_ns, default_ew)
-        tr_list.append(twprge)
+    # Search the PLSS description for all T&R's, and for each match,
+    # compile a clean T&R
+    tr_list = [
+        PLSSParser._compile_twprge_mo(mo, default_ns, default_ew)
+        for mo in twprge_regex.finditer(text)
+    ]
     return tr_list
+
+
+def trs_to_dict(trs) -> dict:
+    """
+    Take a compiled Twp/Rge/Sec (in the standard pyTRS format) and break
+    it into a dict of 7 elements, keyed as follows:
+        "twp"       -> Twp number + direction (a str or None)
+        "twp_num"   -> Twp number (an int or None);
+        "twp_ns"    -> Twp direction ('n', 's', or None);
+        "rge"       -> Rge number + direction (a str or None)
+        "rge_num"   -> Rge num (an int or None);
+        "rge_ew"    -> Rge direction ('e', 'w', or None)
+        "sec_num"   -> Sec number (an int or None)
+    :param trs: The TRS (in the pyTRS format) to be broken apart.
+    :return: A dict with the various elements.
+    """
+    twp, rge, sec = break_trs(trs)
+
+    try:
+        twp_ns = twp[-1]
+        twp_num = int(twp[:-1])
+    except (ValueError, TypeError):
+        twp = twp_ns = twp_num = None
+
+    try:
+        rge_ew = rge[-1]
+        rge_num = int(rge[:-1])
+    except (ValueError, TypeError):
+        rge = rge_ew = rge_num = None
+
+    try:
+        sec = int(sec)
+    except (ValueError, TypeError):
+        sec = None
+
+    dct = {
+        "twp": twp,
+        "twp_num": twp_num,
+        "twp_ns": twp_ns,
+        "rge": rge,
+        "rge_num": rge_num,
+        "rge_ew": rge_ew,
+        "sec_num": sec
+    }
+    return dct
 
 
 def decompile_twprge(twprge) -> tuple:
@@ -5262,14 +5316,15 @@ def decompile_twprge(twprge) -> tuple:
         NOTE: If Twp and Rge are each 'TRerr', will return
             ('TRerr', None, 'TRerr', None).
         ex: '154n97w'   -> ('154', 'n', '97', 'w')
-        ex: 'TRerr'     -> ('TRerr', None, 'TRerr', None)"""
+        ex: 'TRerr'     -> ('TRerr', None, 'TRerr', None)
+    """
     twp, rge, _ = break_trs(twprge)
     twp_dir = None
     rge_dir = None
-    if twp != 'TRerr':
+    if twp != _ERR_TWPRGE:
         twp_dir = twp[-1]
         twp = twp[:-1]
-    if rge != 'TRerr':
+    if rge != _ERR_TWPRGE:
         rge_dir = rge[-1]
         rge = rge[:-1]
 
@@ -5289,8 +5344,8 @@ def find_sec(text):
     for sec_mo in sec_mo_list:
         # This generates a clean list of every identified section,
         # formatted as 2 digits.
-        newSec = sec_mo[2][-2:].rjust(2, '0')
-        sec_list.append(newSec)
+        new_sec = sec_mo[2][-2:].rjust(2, '0')
+        sec_list.append(new_sec)
     return sec_list
 
 
@@ -5542,6 +5597,7 @@ __all__ = [
     IMPLEMENTED_LAYOUTS,
     IMPLEMENTED_LAYOUT_EXAMPLES,
     decompile_twprge,
+    trs_to_dict,
     break_trs,
     find_twprge,
     find_sec,
