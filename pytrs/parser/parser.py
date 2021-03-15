@@ -1024,6 +1024,8 @@ class Tract:
             self.sec = _ERR_SEC
         self.twprge = self.twp + self.rge
 
+        self.trs_dict = trs_to_dict(trs)
+
         # Whether fatal flaws were identified during the parsing of the
         # parent PLSSDesc object, if any
         self.desc_is_flawed = desc_is_flawed
@@ -1480,6 +1482,194 @@ class TractList(list):
             "TractList\nTotal Tracts: {0}\n"
             "Tracts: {1}").format(
                 len(self), self.snapshot_inside())
+
+    def tract_sort(self, key: str='i,s,r,t'):
+        """
+        Sort the Tract objects stored in this TractList, in-situ.
+        key options:
+
+        'i' -> Sort by ``.orig_index`` (i.e. the original order they
+            were parsed -- WARNING: will not be reliable if this
+            TractList contains Tract objects from multiple parses).
+
+        't' -> Sort by Township.
+               'num'    --> Sort by raw number, ignoring N/S. (default)
+               'ns'     --> Sort from north-to-south
+               'sn'     --> Sort from south-to-north
+
+        'r' -> Sort by Range.
+               'num'    --> Sort by raw number, ignoring E/W. (default)
+               'ew'     --> Sort from east-to-west **
+               'we'     --> Sort from west-to-east **
+        (** NOTE: These do not account for Principal Meridians.)
+
+        's' -> Sort by Section number.
+
+        Reverse any or all of the keys by adding '.reverse' (or '.rev')
+        at the end of it.
+
+        Use as many sort keys as you want. They will be applied in order
+        from left-to-right, so place the highest 'priority' sort last.
+
+        Construct all keys as a single string, separated by comma
+        (spaces are optional). The components of each key should be
+        separated by a period.
+
+        Example keys:
+
+            's.reverse,r.ew,t.ns'
+                ->  Sort by section number (reversed, so largest-to-
+                        smallest);
+                    then sort by Range (east-to-west);
+                    then sort by Township (north-to-south)
+
+            'i,s,r,t'  (this is the default)
+                ->  Sort by original parse order;
+                    then sort by Section (smallest-to-largest);
+                    then sort by Range (smallest-to-largest);
+                    ten sort by Township (smallest-to-largest)
+
+        :param key: A str, specifying which sort(s) should be done.
+        :return: None. (TractList is sorted in-situ.)
+        """
+
+        def get_max(var):
+            """
+            Get the largest value of the matching var in the `.trs_dict`
+            of any Tract in this TractList. If there are no valid ints,
+            return 0.
+            """
+            nums = [t.trs_dict[var] for t in self if t.trs_dict[var] is not None]
+            if nums:
+                return max(nums)
+            return 0
+
+        default_twp = get_max("twp_num") + 1
+        default_rge = get_max("rge_num") + 1
+        default_sec = get_max("sec_num") + 1
+
+        illegal_key_error = ValueError(f"Could not interpret sort key {key!r}.")
+
+        # The regex pattern for a valid key component.
+        pat = r"(?P<var>[itrs])(\.(?P<method>ns|sn|ew|we|num))?(\.(?P<rev>rev(erse)?))?"
+
+        legal_methods = {
+            "i": ("num", None),
+            "t": ("ns", "sn", "num", None),
+            "r": ("ew", "we", "num", None),
+            "s": ("num", None)
+        }
+
+        def extract_safe_num(tract, var):
+            assume = {
+                "twp_num": default_twp,
+                "rge_num": default_rge,
+                "sec_num": default_sec
+            }
+
+            val = tract.trs_dict[var]
+            if val is None:
+                val = assume[var]
+            return val
+
+        sort_defs = {
+            'i.num': lambda x: x.orig_index,
+            't.num': lambda x: extract_safe_num(x, "twp_num"),
+            't.ns': lambda x: n_to_s(x),
+            't.sn': lambda x: n_to_s(x, reverse=True),
+            'r.num': lambda x: extract_safe_num(x, "rge_num"),
+            'r.we': lambda x: w_to_e(x),
+            'r.ew': lambda x: w_to_e(x, reverse=True),
+            's.num': lambda x: extract_safe_num(x, "sec_num")
+        }
+
+        def n_to_s(tract, reverse=False):
+            """
+            Convert Twp number and direction to a positive or negative
+            int, depending on direction. North townships are negative;
+            South are positive (in order to leverage the default default
+            behavior of ``list.sort()`` -- i.e. smallest to largest).
+            ``reverse=True`` to inverse the positive and negative.
+            """
+            num = tract.trs_dict["twp_num"]
+            ns = tract.trs_dict["twp_ns"]
+
+            multiplier = 1
+            if num is None:
+                num = default_twp
+            if ns is None:
+                multiplier = 1
+            if ns == 's':
+                multiplier = 1
+            elif ns == 'n':
+                multiplier = -1
+            if reverse:
+                multiplier *= -1
+            # TODO: How do we handle `ns == None` (error TwpRge)? Is it this: ??
+            # if ns is None:
+            #     multiplier *= -1
+            return multiplier * num
+
+        def w_to_e(tract, reverse=False):
+            """
+            Convert Rge number and direction to a positive or negative
+            int, depending on direction. West townships are positive;
+            East are negative (in order to leverage the default default
+            behavior of ``list.sort()`` -- i.e. smallest to largest).
+            ``reverse=True`` to inverse the positive and negative.
+            """
+            num = tract.trs_dict["rge_num"]
+            ew = tract.trs_dict["rge_ew"]
+
+            multiplier = 1
+            if num is None:
+                return default_rge
+            if ew == 'e':
+                multiplier = 1
+            elif ew == 'w':
+                multiplier = -1
+            if reverse:
+                multiplier *= -1
+            # TODO: How do we handle `ew == None` (error TwpRge)? Is it this: ??
+            # if ew is None:
+            #     multiplier *= -1
+            return multiplier * num
+
+        def parse_key(k):
+            k = k.lower()
+            mo = re.search(pat, k)
+            if not mo:
+                raise illegal_key_error
+            if len(mo.group(0)) != len(k):
+                import warnings
+                warnings.warn(SyntaxWarning(
+                    f"Sort key {k!r} may not have been fully interpreted. "
+                    f"Check to make sure you are using the correct syntax."
+                ))
+
+            var = mo.group("var")
+            method = mo.group("method")
+
+            if method is None:
+                # default to "num" for all vars.
+                method = "num"
+            # Whether to reverse
+            rev = mo.group("rev") is not None
+
+            # Confirm legal method for this var
+            if method not in legal_methods[var]:
+                raise ValueError(f"invalid sort method: {k!r}")
+
+            var_method = f"{var}.{method}"
+            return var_method, rev
+
+        key = key.lower()
+        key = re.sub(r"\s", "", key)
+        key = re.sub(r"reverse", "rev", key)
+        keys = key.split(',')
+        for k in keys:
+            sk, reverse = parse_key(k)
+            self.sort(key=sort_defs[sk], reverse=reverse)
 
     def check_illegal(self):
         """
