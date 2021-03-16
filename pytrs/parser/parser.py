@@ -861,6 +861,67 @@ class PLSSDesc:
         self.parsed_tracts.print_data(attributes)
         return
 
+    def sort_tracts(self, key: str = 'i,s,r,t'):
+        """
+        Sort the Tract objects stored in the ``.parse_tracts``
+        attributes, in-situ.
+
+        key options:
+
+        'i' -> Sort by ``.orig_index`` (i.e. the original order they
+            were parsed -- WARNING: will not be reliable if the
+            TractList contains Tract objects from multiple parses, which
+            shouldn't happen inside a PLSSDesc object unless they are
+            manually added).
+
+        't' -> Sort by Township.
+               'num'    --> Sort by raw number, ignoring N/S. (default)
+               'ns'     --> Sort from north-to-south
+               'sn'     --> Sort from south-to-north
+
+        'r' -> Sort by Range.
+               'num'    --> Sort by raw number, ignoring E/W. (default)
+               'ew'     --> Sort from east-to-west **
+               'we'     --> Sort from west-to-east **
+        (** NOTE: These do not account for Principal Meridians.)
+
+        's' -> Sort by Section number.
+
+        Reverse any or all of the keys by adding '.reverse' (or '.rev')
+        at the end of it.
+
+        Use as many sort keys as you want. They will be applied in order
+        from left-to-right, so place the highest 'priority' sort last.
+
+        Construct all keys as a single string, separated by comma
+        (spaces are optional). The components of each key should be
+        separated by a period.
+
+        Example keys:
+
+            's.reverse,r.ew,t.ns'
+                ->  Sort by section number (reversed, so largest-to-
+                        smallest);
+                    then sort by Range (east-to-west);
+                    then sort by Township (north-to-south)
+
+            'i,s,r,t'  (this is the default)
+                ->  Sort by original parse order;
+                    then sort by Section (smallest-to-largest);
+                    then sort by Range (smallest-to-largest);
+                    ten sort by Township (smallest-to-largest)
+
+            'i'
+                -> Return to the original order as parsed in this
+                    PLSSDesc object.
+
+        :param key: A str, specifying which sort(s) should be done.
+        :return: None. (TractList is sorted in-situ.)
+        """
+        # This functionality is handled by TractList method.
+        self.parsed_tracts.sort_tracts(key=key)
+        return None
+
 
 class Tract:
     """
@@ -996,9 +1057,26 @@ class Tract:
         if not isinstance(trs, str) and trs is not None:
             raise TypeError("`trs` must be a string or None")
 
-        # a string containing the TRS (Township Range and Section),
-        # stored in the format 000n000w00 (or fewer digits for Twp/Rge).
-        self.trs = trs
+        # These attributes are populated by ``.set_trs()`` shortly.
+        self.trs = None
+        self.twp = None
+        self.rge = None
+        self.twprge = None
+        self.sec = None
+
+        # A dict storing the component parts (numbers / directions, as
+        # applicable) of the Twp/Rge/Sec. Keys:
+        #   "twp"       -> Twp number + direction (a str or None)
+        #   "twp_num"   -> Twp number (an int or None);
+        #   "twp_ns"    -> Twp direction ('n', 's', or None);
+        #   "rge"       -> Rge number + direction (a str or None)
+        #   "rge_num"   -> Rge num (an int or None);
+        #   "rge_ew"    -> Rge direction ('e', 'w', or None)
+        #   "sec_num"   -> Sec number (an int or None)
+        self.trs_dict = None
+
+        # Populate the above attributes.
+        self.set_trs(trs)
 
         # a string containing the description block.
         self.desc = desc
@@ -1016,15 +1094,6 @@ class Tract:
 
         # Whether we have parsed this Tract and committed the results
         self.parse_complete = False
-
-        # If the TRS has been specified (i.e. is in the '000n000w00'
-        # format), _unpack it into the component parts
-        self.twp, self.rge, self.sec = break_trs(trs)
-        if self.sec is None:
-            self.sec = _ERR_SEC
-        self.twprge = self.twp + self.rge
-
-        self.trs_dict = trs_to_dict(trs)
 
         # Whether fatal flaws were identified during the parsing of the
         # parent PLSSDesc object, if any
@@ -1094,7 +1163,7 @@ class Tract:
 
         # Whether to iron out common OCR artifacts. Defaults to `False`.
         # NOTE: Currently only has effect if Tract object is created via
-        # `.from_twprgesec()`   ...  May have more effect in a later version.
+        # `.from_twprgesec()`.  May have more effect in a later version.
         self.ocr_scrub = False
 
         # Apply settings from kwarg `config=`
@@ -1125,8 +1194,7 @@ class Tract:
         return (
             "Tract ({0})\n"
             "{1}\n"
-            "Total QQs: {2}\n"
-            "Total Lots: {3}").format(
+            "Total Lots, QQs: {3}, {2}\n").format(
                 "Parsed" if self.parse_complete else "Unparsed",
                 self.quick_desc() if self.trs not in ("", None) else self.desc,
                 len(self.qqs) if self.parse_complete else "n/a",
@@ -1142,20 +1210,21 @@ class Tract:
         rather than joined TRS. All parameters are the same as
         __init__(), except that `trs=` is replaced with `twp=`, `rge`,
         and `sec`. (If N/S or E/W are not specified, will pull defaults
-        from config parameters.)
+        from `default_ns` and `default_ew` -- or failing that, from
+        `config` parameters. If not specified in any of those places,
+        will default to `'n'` and `'w'`, respectively.)
 
         WARNING: This method has fewer guardrails on what gets set to
         `.twp`, `.rge`, `.sec`, and `.trs` in the resulting Tract; so it
         may be wise to preprocess those data before passing as args.
 
         :param twp: Township. Pass as a string (i.e. '154n'). If passed
-        as an integer, the N/S will be pulled from `config` parameters,
-        or defaulted to 'n' if not specified.
+        as an int, the N/S will be pulled from `default_ew` or `config`
+        parameters, or defaulted to 'n' if not specified.
         :param rge: Range. Pass as a string (i.e. '97w'). If passed as
-        an integer, the E/W will be pulled from `config` parameters, or
-        defaulted to 'w' if not specified.
-        :param sec: Section. Pass as a string or an integer (up to 2
-        digits).
+        an int, the E/W will be pulled from `default_ew` or `config`
+        parameters, or defaulted to 'w' if not specified.
+        :param sec: Section. Pass as a str or an int (up to 2 digits).
         """
 
         # Compile the `config=` data into a Config object (or use the
@@ -1240,6 +1309,28 @@ class Tract:
         new_tract.rge = rge
         new_tract.sec = sec
         return new_tract
+
+    def set_trs(self, trs):
+        """
+        Set the ``.trs`` attribute (and related attributes) for this
+        Tract, and fill out the ``.trs_dict`` attribute accordingly.
+        :param trs: A Twp/Rge/Sec in the standard pyTRS format.
+        :return: None.
+        """
+        self.trs = trs
+
+        trs_dict = trs_to_dict(trs)
+        self.trs_dict = trs_dict
+        self.twp = trs_dict["twp"]
+        self.rge = trs_dict["rge"]
+        self.twp = str(trs_dict["sec_num"]).rjust(2, '0')
+        self.twprge = f"{self.twp}{self.rge}"
+
+        if None in (trs_dict['twp_num'], trs_dict['rge_num']):
+            self.twp = self.rge = self.twprge = _ERR_TWPRGE
+
+        if trs_dict['sec_num'] is None:
+            self.sec = _ERR_SEC
 
     def set_config(self, config):
         """
@@ -1483,7 +1574,36 @@ class TractList(list):
             "Tracts: {1}").format(
                 len(self), self.snapshot_inside())
 
-    def tract_sort(self, key: str='i,s,r,t'):
+    def drop_errors(self, twprge=True, sec=True):
+        """
+        Drop from this TractList all Tract objects that were parsed with
+        an error. Specifically drop Twp/Rge errors with `twprge=True`
+        (on by default); and drop Sec errors with `sec=True` (on by
+        default).
+
+        Returns a new TractList of all Tract objects that were dropped.
+
+        :param twprge: A bool, whether to drop Twp/Rge errors. (Defaults
+        to `True`)
+        :param sec: A bool, whether to drop Sec errors. (Defaults to
+        `True`)
+        :return: A new TractList containing all of the dropped Tract
+        objects.
+        """
+        drop = []
+        dropped = TractList()
+        for i, tract in enumerate(self):
+            if twprge and tract.trs_dict["twp"] is None:
+                drop.append(i)
+            elif sec and tract.trs_dict["sec_num"] is None:
+                drop.append(i)
+        drop.reverse()
+        for i in drop:
+            dropped.append(self.pop(i))
+        dropped.reverse()
+        return dropped
+
+    def sort_tracts(self, key: str = 'i,s,r,t'):
         """
         Sort the Tract objects stored in this TractList, in-situ.
         key options:
@@ -1511,6 +1631,14 @@ class TractList(list):
         Use as many sort keys as you want. They will be applied in order
         from left-to-right, so place the highest 'priority' sort last.
 
+        Twp/Rge's that are errors (i.e. 'TRerr') will be sorted to the
+        end of the list when sorting on Twp and/or Rge (whether by
+        number, north-to-south, south-to-north, east-to-west, or west-
+        to-east).  Similarly, error Sections (i.e. 'secError') will be
+        sorted to the end of the list when sorting on section.  (The
+        exception is if the sort is reversed, in which case, they come
+        first.)
+
         Construct all keys as a single string, separated by comma
         (spaces are optional). The components of each key should be
         separated by a period.
@@ -1529,7 +1657,8 @@ class TractList(list):
                     then sort by Range (smallest-to-largest);
                     ten sort by Township (smallest-to-largest)
 
-        :param key: A str, specifying which sort(s) should be done.
+        :param key: A str, specifying which sort(s) should be done, and
+        in which order.
         :return: None. (TractList is sorted in-situ.)
         """
 
@@ -1548,6 +1677,12 @@ class TractList(list):
         default_rge = get_max("rge_num") + 1
         default_sec = get_max("sec_num") + 1
 
+        assume = {
+            "twp_num": default_twp,
+            "rge_num": default_rge,
+            "sec_num": default_sec
+        }
+
         illegal_key_error = ValueError(f"Could not interpret sort key {key!r}.")
 
         # The regex pattern for a valid key component.
@@ -1561,11 +1696,6 @@ class TractList(list):
         }
 
         def extract_safe_num(tract, var):
-            assume = {
-                "twp_num": default_twp,
-                "rge_num": default_rge,
-                "sec_num": default_sec
-            }
 
             val = tract.trs_dict[var]
             if val is None:
@@ -1587,7 +1717,7 @@ class TractList(list):
             """
             Convert Twp number and direction to a positive or negative
             int, depending on direction. North townships are negative;
-            South are positive (in order to leverage the default default
+            South are positive (in order to leverage the default
             behavior of ``list.sort()`` -- i.e. smallest to largest).
             ``reverse=True`` to inverse the positive and negative.
             """
@@ -1605,17 +1735,17 @@ class TractList(list):
                 multiplier = -1
             if reverse:
                 multiplier *= -1
-            # TODO: How do we handle `ns == None` (error TwpRge)? Is it this: ??
-            # if ns is None:
-            #     multiplier *= -1
+            if ns is None:
+                # Always put _TRR_ERROR parses at the end.
+                multiplier *= -1 if reverse else 1
             return multiplier * num
 
         def w_to_e(tract, reverse=False):
             """
             Convert Rge number and direction to a positive or negative
-            int, depending on direction. West townships are positive;
-            East are negative (in order to leverage the default default
-            behavior of ``list.sort()`` -- i.e. smallest to largest).
+            int, depending on direction. East townships are positive;
+            West are negative (in order to leverage the default behavior
+            of ``list.sort()`` -- i.e. smallest to largest).
             ``reverse=True`` to inverse the positive and negative.
             """
             num = tract.trs_dict["rge_num"]
@@ -1623,16 +1753,16 @@ class TractList(list):
 
             multiplier = 1
             if num is None:
-                return default_rge
+                num = default_rge
             if ew == 'e':
                 multiplier = 1
             elif ew == 'w':
                 multiplier = -1
             if reverse:
                 multiplier *= -1
-            # TODO: How do we handle `ew == None` (error TwpRge)? Is it this: ??
-            # if ew is None:
-            #     multiplier *= -1
+            if ew is None:
+                # Always put _TRR_ERROR parses at the end.
+                multiplier *= -1 if reverse else 1
             return multiplier * num
 
         def parse_key(k):
