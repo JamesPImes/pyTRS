@@ -120,11 +120,13 @@ class DefaultEWError(ValueError):
 _DEFAULT_COLON = 'default_colon'
 _SECOND_PASS = 'second_pass'
 
-_ERR_SEC = 'secError'
-_ERR_TWPRGE = 'TRerr'
+_ERR_SEC = 'XX'
+_ERR_TWP = 'XXXz'
+_ERR_RGE = _ERR_TWP
+_ERR_TWPRGE = f"{_ERR_TWP}{_ERR_RGE}"
 
-_E_FLAG_SECERR = 'secError'
-_E_FLAG_TWPRGE_ERR = 'TRerr'
+_E_FLAG_SECERR = 'SecERROR'
+_E_FLAG_TWPRGE_ERR = 'TwpRgeERROR'
 
 
 class PLSSDesc:
@@ -775,15 +777,15 @@ class PLSSDesc:
         Example returns a multi-line string that looks like this when
         printed:
 
-            Tract #1
-            trs    : 154n97w14
-            desc   : NE/4
-            qqs : NENE, NWNE, SENE, SWNE
+            Tract 1 / 2
+            trs  : 154n97w14
+            desc : NE/4
+            qqs  : NENE, NWNE, SENE, SWNE
 
-            Tract #2
-            trs    : 154n97w15
-            desc   : Northwest Quarter, North Half South West Quarter
-            qqs : NENW, NWNW, SENW, SWNW, NESW, NWSW
+            Tract 2 / 2
+            trs  : 154n97w15
+            desc : Northwest Quarter, North Half South West Quarter
+            qqs  : NENW, NWNW, SENW, SWNW, NESW, NWSW
         """
 
         # This functionality is handled by TractList method.
@@ -951,8 +953,8 @@ class Tract:
             Ex: Sec 1, T154N-R97W -> '154n97w01'
                 Sec 14, T1S-R9E -> '1s9e14'
     NOTE: If there was a flawed parse where Twp/Rge and/or Sec could not
-        be successfully identified, .trs may contain 'TRerr' and/or
-        'secError'.
+        be successfully identified, ``.trs`` may contain 'XXXzXXXz' (for
+        Twp/Rge) and/or 'XX' (for Section).
     .twp -- The Twp portion of .trs, a string (ex: '154n')
     .rge -- The Rge portion of .trs, a string (ex: '97w')
     .twprge -- The Twp/Rge portion of .trs, a string (ex: '154n97w')
@@ -966,7 +968,8 @@ class Tract:
         Ex:     Lot 1, North Half of Lot 2 -> ['L1', 'N2 of L2']
         NOTE: Divisions of lots can be suppressed with config parameter
             'include_lot_divs.False' (i.e. ['L1', 'L2'] in this example).
-    .lots_qqs -- A joined list of identified lots and QQ's.
+    .lots_qqs -- A joined list of identified lots and QQ's. (Technically
+        a property)
         Ex:     ['L1', 'N2 of L2', 'NENE', 'NWNE', 'NENW', 'NWNW']
     .lot_acres -- A dict of lot names and their apparent gross acreages,
     as stated in the original description.
@@ -991,6 +994,10 @@ class Tract:
         preprocessing and/or parsing.
     .e_flag_lines -- a list of 2-tuples, each being an error flag and the
         line or context from the description that caused the error.
+    .flags -- a combined list of warning and error flags. (Technically a
+        property)
+    .flag_lines -- a combined list of warning and error flag_lines.
+        (Technically a property)
     .desc_is_flawed -- a bool, whether or not an apparently fatal flaw was
         discovered during parsing of the parent PLSSDesc object, if any.
         (Tract objects themselves are agnostic to fatal flaws.)
@@ -1011,15 +1018,19 @@ class Tract:
         'sec': 'Section',
         'qqs': 'Aliquots',
         'lots': 'Lots',
-        'lots_qqs': 'Lots & Aliquots',
         'orig_desc': 'Original Description',
         'pp_desc': 'Cleaned-Up Description',
         'desc_is_flawed': 'Fatal Parsing Errors Identified',
         'w_flags': 'Warning Flags',
-        'w_flag_lines': 'Warning Flags & Context',
+        'w_flag_lines': 'Warning Flags with Context',
         'e_flags': 'Error Flags',
-        'e_flag_lines': 'Error Flags & Context',
-        'lot_acres': 'Lot Acreages'
+        'e_flag_lines': 'Error Flags with Context',
+        'lot_acres': 'Lot Acreages',
+
+        # These are technically properties:
+        'lots_qqs': 'Lots & Aliquots',
+        'flags': 'Warning & Error Flags',
+        'flag_lines': 'Warning & Error Flags with Context',
     }
 
     def __init__(
@@ -1122,9 +1133,6 @@ class Tract:
         # A list of standard lots, ['L1', 'L2', 'N2 of L5', ...]:
         self.lots = []
 
-        # A combined list of lots + QQs:
-        self.lots_qqs = []
-
         # A dict of lot acreages, keyed by 'L1', 'L2', etc.
         self.lot_acres = {}
 
@@ -1199,6 +1207,19 @@ class Tract:
                 self.quick_desc() if self.trs not in ("", None) else self.desc,
                 len(self.qqs) if self.parse_complete else "n/a",
                 len(self.lots) if self.parse_complete else "n/a")
+
+    @property
+    def lots_qqs(self):
+        """A combined list of lots + QQs."""
+        return self.lots + self.qqs
+
+    @property
+    def flags(self):
+        return self.e_flags + self.w_flags
+
+    @property
+    def flag_lines(self):
+        return self.e_flag_lines + self.w_flag_lines
 
     @staticmethod
     def from_twprgesec(
@@ -1323,11 +1344,11 @@ class Tract:
         self.trs_dict = trs_dict
         self.twp = trs_dict["twp"]
         self.rge = trs_dict["rge"]
-        self.twp = str(trs_dict["sec_num"]).rjust(2, '0')
+        self.sec = str(trs_dict["sec_num"]).rjust(2, '0')
         self.twprge = f"{self.twp}{self.rge}"
 
         if None in (trs_dict['twp_num'], trs_dict['rge_num']):
-            self.twp = self.rge = self.twprge = _ERR_TWPRGE
+            self.twp, self.rge, self.twprge = _ERR_TWP, _ERR_RGE, _ERR_TWPRGE
 
         if trs_dict['sec_num'] is None:
             self.sec = _ERR_SEC
@@ -1397,8 +1418,7 @@ class Tract:
         :param break_halves: Whether to break halves into quarters,
         even if we're beyond the qq_depth_min. (False by default, but can
         be configured at init.)
-        :return: Returns the a single list of identified lots and QQ's
-        (equivalent to what would be stored in `.lots_qqs`).
+        :return: Returns the a single list of identified lots and QQ's.
         """
 
         # --------------------------------------------------------------
@@ -1468,7 +1488,7 @@ class Tract:
             # Pull the preprocessed text from the parser.
             self.pp_desc = parser.text
 
-        return parser.lots_qqs
+        return parser.lots + parser.qqs
 
     def preprocess(self, clean_qq=None, commit=False) -> str:
         """
@@ -1593,9 +1613,9 @@ class TractList(list):
         drop = []
         dropped = TractList()
         for i, tract in enumerate(self):
-            if twprge and tract.trs_dict["twp"] is None:
-                drop.append(i)
-            elif sec and tract.trs_dict["sec_num"] is None:
+            if (
+                    (twprge and tract.trs_dict["twp"] is None)
+                    or (sec and tract.trs_dict["sec_num"] is None)):
                 drop.append(i)
         drop.reverse()
         for i in drop:
@@ -1631,10 +1651,10 @@ class TractList(list):
         Use as many sort keys as you want. They will be applied in order
         from left-to-right, so place the highest 'priority' sort last.
 
-        Twp/Rge's that are errors (i.e. 'TRerr') will be sorted to the
-        end of the list when sorting on Twp and/or Rge (whether by
+        Twp/Rge's that are errors (i.e. 'XXXzXXXz') will be sorted to
+        the end of the list when sorting on Twp and/or Rge (whether by
         number, north-to-south, south-to-north, east-to-west, or west-
-        to-east).  Similarly, error Sections (i.e. 'secError') will be
+        to-east).  Similarly, error Sections (i.e. 'XX') will be
         sorted to the end of the list when sorting on section.  (The
         exception is if the sort is reversed, in which case, they come
         first.)
@@ -1909,12 +1929,12 @@ class TractList(list):
         Example returns a multi-line string that looks like this when
         printed:
 
-            Tract #1
+            Tract 1 / 2
             trs  : 154n97w14
             desc : NE/4
             qqs  : NENE, NWNE, SENE, SWNE
 
-            Tract #2
+            Tract 2 / 2
             trs  : 154n97w15
             desc : Northwest Quarter, North Half South West Quarter
             qqs  : NENW, NWNW, SENW, SWNW, NESW, NWSW
@@ -1926,21 +1946,22 @@ class TractList(list):
         attributes = _clean_attributes(attributes)
 
         # How far to justify the attribute names in the output str:
-        longest = max([len(att) for att in attributes])
+        jst = max([len(att) for att in attributes]) + 1
 
+        total_tracts = len(self)
         all_tract_data = ""
         for i, t_dct in enumerate(self.tracts_to_dict(attributes), start=1):
-            tract_data = f"\n\nTract #{i}"
+            tract_data = f"\n\nTract {i} / {total_tracts}"
             if i == 1:
-                tract_data = f"Tract #{i}"
+                tract_data = f"Tract {i} / {total_tracts}"
             for att_name, v in t_dct.items():
                 # Flatten lists/tuples, but leave everything else as-is
                 if isinstance(v, (list, tuple)):
                     v = ", ".join(flatten(v))
                 # Justify attribute name and report its value
-                tract_data = tract_data + f"\n{att_name.ljust(longest, ' ')} : {v}"
+                tract_data = f"{tract_data}\n{att_name.ljust(jst, ' ')}: {v}"
 
-            all_tract_data = all_tract_data + tract_data
+            all_tract_data = f"{all_tract_data}{tract_data}"
 
         return all_tract_data
 
@@ -2143,7 +2164,7 @@ class Config:
         'break_halves'
     )
 
-    def __init__(self, config_text='', config_name=''):
+    def __init__(self, config_text=None, config_name=''):
         """
         Compile a Config object from a string `config_text=`, with
         optional kwarg `config_name=` that does not affect parsing.
@@ -2194,8 +2215,21 @@ class Config:
         self.config_name = config_name
 
         # Default all other attributes to `None`:
-        for attrib in Config._CONFIG_ATTRIBUTES:
-            setattr(self, attrib, None)
+        self.default_ns = None
+        self.default_ew = None
+        self.init_preprocess = None
+        self.layout = None
+        self.init_parse = None
+        self.init_parse_qq = None
+        self.clean_qq = None
+        self.require_colon = None
+        self.include_lot_divs = None
+        self.ocr_scrub = None
+        self.segment = None
+        self.qq_depth = None
+        self.qq_depth_min = None
+        self.qq_depth_max = None
+        self.break_halves = None
 
         # Remove all spaces from config_text:
         config_text = config_text.replace(' ', '')
@@ -4159,7 +4193,7 @@ class PLSSParser:
         return multisec_mo.group(12) is None and multisec_mo.group(5) is not None
 
     @staticmethod
-    def _get_last_sec(multisec_mo) -> str:
+    def _get_last_sec(multisec_mo) -> (str, None):
         """
         INTERNAL USE:
         Extract the right-most section in a multiSec_regex match object.
@@ -4696,7 +4730,6 @@ class TractParser:
     UNPACKABLES = (
         "lots",
         "qqs",
-        "lots_qqs",
         "lot_acres",
         "w_flags",
         "w_flag_lines",
@@ -4734,7 +4767,6 @@ class TractParser:
         # These attributes will be populated during the parse.
         self.lots = []
         self.qqs = []
-        self.lots_qqs = []
         self.lot_acres = {}
         self.w_flags = []
         self.e_flags = []
@@ -4879,7 +4911,6 @@ class TractParser:
                 break_halves)
 
         lots_qqs = self.lots + self.qqs
-        self.lots_qqs = lots_qqs
 
         self.gen_flags()
 
@@ -5464,11 +5495,14 @@ class TractParser:
             return None
 
     @staticmethod
-    def _start_of_last_lot(lots_mo) -> int:
+    def _start_of_last_lot(lots_mo):
         """
         INTERNAL USE:
         Return an int of the starting position of the right-most lot in a
         lot_regex match object. Returns None if none found.
+
+        :return: An int for the index of the start of the right-most lot
+        (or None if not found).
         """
         try:
             if TractParser._is_multi_lot(lots_mo):
@@ -5480,10 +5514,11 @@ class TractParser:
             return None
 
     @staticmethod
-    def _get_lot_acres(lots_mo) -> str:
+    def _get_lot_acres(lots_mo):
         """
         INTERNAL USE:
-        Return the string of the lot_acres for the right-most lot,
+
+        :return: The string of the lot_acres for the right-most lot,
         without parentheses. If no match, then returns None.
         """
         try:
@@ -5514,11 +5549,13 @@ class TractParser:
             return None
 
     @staticmethod
-    def _first_lot_is_plural(lots_mo) -> bool:
+    def _first_lot_is_plural(lots_mo):
         """
         INTERNAL USE:
-        Return a bool, whether the first instance of the word 'lot' in a
-        lots_regex match object is pluralized.
+
+        :return: A bool, whether the first instance of the word 'lot' in
+        a lots_regex match object is pluralized. If no match or
+        incorrect match object is passed, return None.
         """
         try:
             return lots_mo.group(9).lower() == 'lots'
@@ -5530,11 +5567,12 @@ class TractParser:
     ####################################################################
 
     @staticmethod
-    def _has_leading_aliquot(mo) -> bool:
+    def _has_leading_aliquot(mo):
         """
         INTERNAL USE:
-        Return a bool, whether this lot_with_aliquot_regex match object
-        has a leading aliquot. Returns None if no match found.
+
+        :return: A bool, whether this lot_with_aliquot_regex match
+        object has a leading aliquot. Returns None if no match found.
         """
         try:
             return mo.group(1) is None
@@ -5542,10 +5580,11 @@ class TractParser:
             return None
 
     @staticmethod
-    def _get_leading_aliquot(mo) -> str:
+    def _get_leading_aliquot(mo):
         """
         INTERNAL USE:
-        Return the string of the leading aliquot component from a
+
+        :return: The string of the leading aliquot component from a
         lot_with_aliquot_regex match object. Returns None if no match.
         """
         try:
@@ -5652,22 +5691,23 @@ def decompile_twprge(twprge) -> tuple:
     Take a compiled T&R (format '000n000w', or fewer digits) and break
     it into four elements, returned as a 4-tuple:
     (Twp number, Twp direction, Rge number, Rge direction)
-        NOTE: If Twp and Rge are each 'TRerr', will return
-            ('TRerr', None, 'TRerr', None).
+        NOTE: If Twp and Rge cannot be matched, will return the error
+        versions of Twp/Rge:
+            ('XXXz', None, 'XXXz', None).
         ex: '154n97w'   -> ('154', 'n', '97', 'w')
-        ex: 'TRerr'     -> ('TRerr', None, 'TRerr', None)
+        ex: 'XXXzXXXz   -> ('XXXz', None, 'XXXz', None)
     """
     twp, rge, _ = break_trs(twprge)
     twp_dir = None
     rge_dir = None
-    if twp != _ERR_TWPRGE:
+    if twp != _ERR_TWP:
         twp_dir = twp[-1]
         twp = twp[:-1]
-    if rge != _ERR_TWPRGE:
+    if rge != _ERR_RGE:
         rge_dir = rge[-1]
         rge = rge[:-1]
 
-    return (twp, twp_dir, rge, rge_dir)
+    return twp, twp_dir, rge, rge_dir
 
 
 def find_sec(text):
@@ -5745,11 +5785,11 @@ def break_trs(trs: str) -> tuple:
 
         ex:  '154n97w14' -> ('154n', '97w', '14')
         ex:  '154n97w' -> ('154n', '97w', None)
-        ex:  '154n97wsecError' -> ('154n', '97w', 'secError')
-        ex:  'TRerr14' -> ('TRerr', 'TRerr', '14')
-        ex:  'asdf' -> ('TRerr', 'TRerr', 'secError')"""
+        ex:  '154n97wXX' -> ('154n', '97w', 'XX')
+        ex:  'XXXzXXXz14' -> ('XXXz', 'XXXz', '14')
+        ex:  'asdf' -> ('XXXz', 'XXXz', 'XX')"""
 
-    default_errors = (_ERR_TWPRGE, _ERR_TWPRGE, _ERR_SEC)
+    default_errors = (_ERR_TWP, _ERR_RGE, _ERR_SEC)
 
     mo = TRS_unpacker_regex.search(trs)
     if not mo:
@@ -5763,11 +5803,11 @@ def break_trs(trs: str) -> tuple:
         twp, rge, _ = default_errors
 
     # mo.group(5) may be a 2-digit numerical string (e.g., '14' from
-    # '154n97w14'); or a string 'secError' (from '154n97wsecError'); or
+    # '154n97w14'); or an error string 'XX' (from '154n97wXX'); or
     # None (from '154n97w')
     sec = mo[5]
 
-    return (twp, rge, sec)
+    return twp, rge, sec
 
 
 def _ocr_scrub_alpha_to_num(text):

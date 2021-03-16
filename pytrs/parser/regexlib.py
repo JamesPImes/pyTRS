@@ -282,8 +282,8 @@ lots_context_regex = re.compile(r'Lo?ts?|Lo?s?t', re.IGNORECASE)
 # For unpacking TRS into its component parts -- break into twp, rge, sec
 # with break_trs():
 TRS_unpacker_regex = re.compile(
-    r"""((\d{1,3}[ns])(\d{1,3}[we])|(TRerr)_?)
-    ((\d{1,2})|(secError))?""", re.VERBOSE | re.IGNORECASE)
+    r"""((\d{1,3}[ns])(\d{1,3}[we])|(XXXzXXXz))
+    ((\d{1,2})|(XX))?""", re.VERBOSE | re.IGNORECASE)
 
 
 ########################################################################
