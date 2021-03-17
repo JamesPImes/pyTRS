@@ -330,14 +330,14 @@ class PLSSDesc:
 
         # If a T&R is identified without 'North/South' specified, or without
         # 'East/West' specified, fall back on default_ns and default_ew,
-        # respectively. Each will be filled in with set_config (if applicable),
-        # or defaulted to 'n' and 'w' soon.
+        # respectively. Each will be filled in when `.config` is set
+        # (if applicable), or defaulted to 'n' and 'w' soon.
         self.default_ns = None
         self.default_ew = None
 
         ###############################################################
-        # NOTE: the following default bools will be changed in
-        # set_config(), as applicable.
+        # NOTE: the following default bools will be changed when
+        # `.config` is set, as applicable.
         ###############################################################
 
         # Whether we should preprocess the text at initialization:
@@ -366,7 +366,7 @@ class PLSSDesc:
 
         # Whether to iron out common OCR artifacts.
         # NOTE: Currently only has effect of cleaning up T&R's during
-        # `.preprocess()`.  May have more effect in a later version.
+        # the preprocessing.  May have more effect in a later version.
         self.ocr_scrub = False
 
         # Whether to segment the text during parsing (can /potentially/
@@ -382,7 +382,7 @@ class PLSSDesc:
         self.break_halves = False
 
         # Apply settings from `config=`.
-        self.set_config(config)
+        self.config = config
 
         # If `default_ns` has not yet been specified, default to 'n'
         if self.default_ns is None:
@@ -422,10 +422,6 @@ class PLSSDesc:
 
         # If layout was specified as kwarg, use that:
         self.layout = layout
-
-        # Compile and store the final Config file (for passing down to
-        # Tract objects)
-        self.config = Config.from_parent(self)
 
         # Optionally can run the parse when the object is initiated
         # (off by default).
@@ -476,7 +472,12 @@ class PLSSDesc:
         """
         return self.parsed_tracts.__getitem__(item)
 
-    def set_config(self, config):
+    @property
+    def config(self):
+        return self.__config
+
+    @config.setter
+    def config(self, new_config):
         """
         Apply the relevant settings from a Config object to this object;
         takes either a string (i.e. config text) or a Config object.
@@ -485,15 +486,17 @@ class PLSSDesc:
         config parameters. (See pytrs.Config documentation for optional
         parameters.)
         """
-        if isinstance(config, str) or config is None:
-            config = Config(config)
-        if not isinstance(config, Config):
-            raise ConfigError(config)
+        if isinstance(new_config, str) or new_config is None:
+            new_config = Config(new_config)
+        if not isinstance(new_config, Config):
+            raise ConfigError(new_config)
 
         for attrib in Config._PLSSDESC_ATTRIBUTES:
-            value = getattr(config, attrib)
+            value = getattr(new_config, attrib)
             if value is not None:
                 setattr(self, attrib, value)
+
+        self.__config = new_config
 
     def parse(
             self, layout=None, clean_up=None, init_parse_qq=None,
@@ -603,7 +606,7 @@ class PLSSDesc:
             clean_qq = self.clean_qq
 
         # Config object for passing down to Tract objects.
-        handed_down_config = self.config
+        handed_down_config = self.config.decompile_to_text()
 
         if segment is None:
             segment = self.segment
@@ -1176,19 +1179,20 @@ class Tract:
         # Configure how the Tract should be parsed:
 
         # If a T&R is identified without 'North/South' specified, fall
-        # back on this. Will be filled in with set_config() (if
+        # back on this. Will be filled in when `.config` is set (if
         # applicable) or defaulted to 'n' shortly.
         # NOTE: only applicable for using .from_twprgesec()
         self.default_ns = None
 
         # If a T&R is identified without 'East/West' specified, fall
-        # back on this. Will be filled in with set_config() (if
+        # back on this. Will be filled in when `.config` is set (if
         # applicable) or defaulted to 'w' shortly.
         # NOTE: only applicable for using .from_twprgesec()
         self.default_ew = None
 
         # NOTE: `init_preprocess`, `init_parse_qq`, `clean_qq`, &
-        # `include_lot_divs` will be changed in set_config(), if needed.
+        # `include_lot_divs` will be changed when `.config` is set, if
+        # needed
 
         # Whether we should preprocess the text at initialization:
         self.init_preprocess = True
@@ -1211,7 +1215,7 @@ class Tract:
         self.ocr_scrub = False
 
         # Apply settings from kwarg `config=`
-        self.set_config(config)
+        self.config = config
 
         # If `default_ns` has not yet been specified, default to 'n' :
         if self.default_ns is None:
@@ -1251,6 +1255,36 @@ class Tract:
     @trs.setter
     def trs(self, new_trs):
         self.__trs = TRS(new_trs)
+
+    def set_twprgesec(
+            self, twp=None, rge=None, sec=None, default_ns=None, default_ew=None):
+        """
+        Set the Twp/Rge/Sec of this Tract from the component parts, and
+        populate the corresponding properties for this Tract object.
+        Returns the compiled Twp/Rge/Sec (in the pyTRS format).
+
+        :param twp: Township (a str or int).
+        :param rge: Range (a str or int).
+        :param sec: Section (a str or int)
+        :param default_ns: (Optional) If `twp` wasn't specified as N or
+        S, assume `default_ns` (pass as 'n' or 's'). If not specified,
+        will fall back to PLSSDesc.MASTER_DEFAULT_NS (which is 'n'
+        unless configured otherwise).
+        :param default_ew: (Optional) If `rge` wasn't specified as E or
+        W, assume `default_ew` (pass as 'e' or 'w'). If not specified,
+        will fall back to PLSSDesc.MASTER_DEFAULT_EW (which is 'w'
+        unless configured otherwise).
+        :return: The compiled Twp/Rge/Sec in the pyTRS format.
+        """
+        if not default_ns:
+            default_ns = self.default_ns
+
+        if not default_ew:
+            default_ew = self.default_ew
+
+        trs = TRS._construct_trs(twp, rge, sec, default_ns, default_ew)
+        self.trs = trs
+        return trs
 
     @property
     def twp(self):
@@ -1425,7 +1459,12 @@ class Tract:
             init_parse_qq=init_parse_qq)
         return new_tract
 
-    def set_config(self, config):
+    @property
+    def config(self):
+        return self.__config
+
+    @config.setter
+    def config(self, new_config):
         """
         Apply the relevant settings from a Config object to this object;
         takes either a string (i.e. config text) or a Config object.
@@ -1434,15 +1473,17 @@ class Tract:
         config parameters. (See pytrs.Config documentation for optional
         parameters.)
         """
-        if isinstance(config, str) or config is None:
-            config = Config(config)
-        if not isinstance(config, Config):
-            raise ConfigError(config)
+        if isinstance(new_config, str) or new_config is None:
+            new_config = Config(new_config)
+        if not isinstance(new_config, Config):
+            raise ConfigError(new_config)
 
         for attrib in Config._TRACT_ATTRIBUTES:
-            value = getattr(config, attrib)
+            value = getattr(new_config, attrib)
             if value is not None:
                 setattr(self, attrib, value)
+
+        self.__config = new_config
 
     def parse(
             self,
@@ -3064,7 +3105,7 @@ class PLSSParser:
 
         # If `clean_qq` was specified, convert it to a string, and set
         # it to the `handed_down_config`. (We use the setter method to
-        # prevent illegal values for a given attribute.) 
+        # prevent illegal values for a given attribute.)
         handed_down_config = Config(handed_down_config)
         if isinstance(clean_qq, bool):
             handed_down_config._set_str_to_values(f"clean_qq.{clean_qq}")
@@ -5979,6 +6020,9 @@ class TRS:
         unless configured otherwise).
         :return: The compiled Twp/Rge/Sec in the pyTRS format.
         """
+        # TODO: Implement ocr_scrub on `twp`, `rge`, and `sec`, but
+        #  don't overwrite the direction, if it's in there.
+
         if not default_ns:
             default_ns = PLSSDesc.MASTER_DEFAULT_NS
         if not default_ew:
