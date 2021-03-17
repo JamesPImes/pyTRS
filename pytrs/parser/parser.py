@@ -423,7 +423,7 @@ class PLSSDesc:
         # If layout was specified as kwarg, use that:
         self.layout = layout
 
-        # Optionally can run the parse when the object is initiated
+        # Optionally can run the parse when the object is initialized
         # (off by default).
         if self.init_parse or self.init_parse_qq:
             self.parse(commit=True)
@@ -482,7 +482,7 @@ class PLSSDesc:
         Apply the relevant settings from a Config object to this object;
         takes either a string (i.e. config text) or a Config object.
 
-        :param config: Either a pytrs.Config object, or equivalent
+        :param new_config: Either a pytrs.Config object, or equivalent
         config parameters. (See pytrs.Config documentation for optional
         parameters.)
         """
@@ -925,7 +925,7 @@ class PLSSDesc:
                'num'    --> Sort by raw number, ignoring E/W. (default)
                'ew'     --> Sort from east-to-west **
                'we'     --> Sort from west-to-east **
-        (** NOTE: These do not account for Principal Meridians.)
+                (** NOTE: These do not account for Principal Meridians.)
 
         's' -> Sort by Section number.
 
@@ -982,23 +982,33 @@ class Tract:
     point after init. Alternatively, trigger the parse at init in one of
     two ways:
     -- Use init parameter `init_parse_qq=True`
-    -- Include 'init_parse_qq' in the config parameters that are passed in
-        `config=` at init.
+    -- Include 'init_parse_qq' in the config parameters that are passed
+        in `config=` at init.
 
-    ____ IMPORTANT INSTANCE VARIABLES AFTER PARSING ____
-    .trs -- The Twp/Rge/Sec combo. Formatted such that Twp and Rge are
-        1 to 3 digits + direction, and section is 2 digits, and
-        North/South and East/West are represented with the lowercase
-        first letter.
+    ____ IMPORTANT INSTANCE VARIABLES & PROPERTIES AFTER PARSING ____
+    .trs -- The Twp/Rge/Sec combination in the standard pyTRS format.
             Ex: Sec 1, T154N-R97W -> '154n97w01'
                 Sec 14, T1S-R9E -> '1s9e14'
     NOTE: If there was a flawed parse where Twp/Rge and/or Sec could not
         be successfully identified, ``.trs`` may contain 'XXXzXXXz' (for
-        Twp/Rge) and/or 'XX' (for Section).
+        Twp/Rge) and/or 'XX' (for Section) -- i.e. 'XXXzXXXzXX' for the
+        entire Twp/Rge/Sec. Similarly, Tract objects created without
+        specifying any Twp/Rge/Sec would appear as '___z___z__'.
+    NOTE ALSO: Setting a Tract object's ``.trs`` attribute at any time
+        (using the standard pyTRS format, e.g., '154n97w14' or '1s9e01')
+        will populate all of the corresponding properties (``.twp``,
+        ``.rge``, etc.). Alternatively, when the Twp/Rge/Sec components
+        have not yet been compiled into the pyTRS format, you can set it
+        with the ``.set_twprgesec()`` method.
     .twp -- The Twp portion of .trs, a string (ex: '154n')
+    .twp_num -- The Twp portion of .trs, as an int or None (ex: 154)
+    .twp_ns -- The N/S portion of .trs, as a str or None (ex: 'n')
     .rge -- The Rge portion of .trs, a string (ex: '97w')
+    .rge_num -- The Twp portion of .trs, as an int or None (ex: 97)
+    .rge_ew -- The E/W portion of .trs, as a str or None (ex: 'w')
     .twprge -- The Twp/Rge portion of .trs, a string (ex: '154n97w')
     .sec -- The Sec portion of .trs, a string (ex: '01')
+    .sec_num -- The Sec portion of .trs, as an int or None (ex: 1)
     .desc -- The description block within this TRS.
     .qqs -- A list of identified QQ's (or smaller) formatted as 4
     characters (or more, if there are further divisions).
@@ -1469,7 +1479,7 @@ class Tract:
         Apply the relevant settings from a Config object to this object;
         takes either a string (i.e. config text) or a Config object.
 
-        :param config: Either a pytrs.Config object, or equivalent
+        :param new_config: Either a pytrs.Config object, or equivalent
         config parameters. (See pytrs.Config documentation for optional
         parameters.)
         """
@@ -2371,8 +2381,8 @@ class Config:
         # Separate config parameters with ','  or  ';'
         config_lines = re.split(r'[;,]', config_text)
 
+        # Parse each 'attrib.val' pair and commit to this Config object.
         for line in config_lines:
-            # Parse each 'attrib.val' pair, and commit to the configObj
 
             if line == '':
                 continue
@@ -2395,7 +2405,7 @@ class Config:
                 # (there's nothing else it can mean in config context.)
                 self.layout = line
             else:
-                # For anything else, set it with `._set_str_to_values()`.
+                # This method handles any other parameter.
                 self._set_str_to_values(line)
 
     def __str__(self):
@@ -6253,6 +6263,8 @@ def break_trs(trs: str) -> tuple:
         ex:  'asdf' -> ('XXXz', 'XXXz', 'XX')"""
 
     default_errors = (_ERR_TWP, _ERR_RGE, _ERR_SEC)
+
+    # TODO: This should leverage TRS class functionality...
 
     mo = TRS_unpacker_regex.search(trs)
     if not mo:
