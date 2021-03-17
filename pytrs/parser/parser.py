@@ -87,6 +87,55 @@ IMPLEMENTED_LAYOUT_EXAMPLES = (
 )
 
 
+_DEFAULT_COLON = 'default_colon'
+_SECOND_PASS = 'second_pass'
+
+# Error Twp/Rge/Sec
+_ERR_SEC = 'XX'
+_ERR_TWP = 'XXXz'
+_ERR_RGE = _ERR_TWP
+_ERR_TWPRGE = f"{_ERR_TWP}{_ERR_RGE}"
+_ERR_TRS = f"{_ERR_TWPRGE}{_ERR_SEC}"
+
+# Undefined Twp/Rge/Sec
+_UNDEF_SEC = '__'
+_UNDEF_TWP = '___z'
+_UNDEF_RGE = _UNDEF_TWP
+_UNDEF_TWPRGE = f"{_UNDEF_TWP}{_UNDEF_RGE}"
+_UNDEF_TRS = f"{_UNDEF_TWPRGE}{_UNDEF_SEC}"
+
+# Regex patterns for unpacking Twp/Rge/Sec
+_TWP_RGX = r"((?P<twp_num>\d{1,3})(?P<ns>[nsNS]))"
+_RGE_RGX = r"((?P<rge_num>\d{1,3})(?P<ew>[ewEW]))"
+_SEC_RGX = r"\d{2}"
+
+_E_FLAG_SECERR = 'SecERROR'
+_E_FLAG_TWPRGE_ERR = 'TwpRgeERROR'
+
+
+def _compile_trs_unpacker_regex():
+    """
+    INTERNAL USE:
+
+    Compile the constants for Twp/Rge/Sec into a regex for unpacking
+    strings in the pyTRS 'TRS' format.
+    :return: A re.Pattern that will match pyTRS 'TRS' strings, including
+    undefined and error Twp/Rge/Sections.
+    """
+    # TODO: Check for and handle regex special chars in the various
+    #  constants, in case those constants are adjusted by user.
+    pattern = (
+        rf"(?P<twp>{_TWP_RGX}"
+        rf"|{_ERR_TWP}|{_UNDEF_TWP})"
+        rf"(?P<rge>{_RGE_RGX}"
+        rf"|{_ERR_RGE}|{_UNDEF_RGE})"
+        rf"(?P<sec>{_SEC_RGX}"
+        rf"|{_ERR_SEC}|{_UNDEF_SEC})?"
+    )
+    rgx = re.compile(pattern, re.VERBOSE)
+    return rgx
+
+
 class ConfigError(TypeError):
     """
     Wrong type of object was passed to `config=` argument or when
@@ -115,18 +164,6 @@ class DefaultEWError(ValueError):
         if obj is not None:
             msg = f"{msg} Passed {obj!r}."
         super().__init__(msg)
-
-
-_DEFAULT_COLON = 'default_colon'
-_SECOND_PASS = 'second_pass'
-
-_ERR_SEC = 'XX'
-_ERR_TWP = 'XXXz'
-_ERR_RGE = _ERR_TWP
-_ERR_TWPRGE = f"{_ERR_TWP}{_ERR_RGE}"
-
-_E_FLAG_SECERR = 'SecERROR'
-_E_FLAG_TWPRGE_ERR = 'TwpRgeERROR'
 
 
 class PLSSDesc:
@@ -1011,11 +1048,6 @@ class Tract:
 
     # Tract instance variables and a "header"-like definition of each
     ATTRIBUTES = {
-        'trs': 'Twp/Rge/Sec',
-        'twp': 'Township',
-        'rge': 'Range',
-        'twprge': 'Twp & Rge',
-        'sec': 'Section',
         'qqs': 'Aliquots',
         'lots': 'Lots',
         'orig_desc': 'Original Description',
@@ -1028,6 +1060,16 @@ class Tract:
         'lot_acres': 'Lot Acreages',
 
         # These are technically properties:
+        'trs': 'Twp/Rge/Sec',
+        'twp': 'Township',
+        'twp_num': 'Twp Number',
+        'twp_ns': 'Twp Direction',
+        'rge': 'Range',
+        'rge_num': 'Rge Number',
+        'rge_ew': 'Rge Direction',
+        'twprge': 'Twp & Rge',
+        'sec': 'Section',
+        'sec_num': 'Section',
         'lots_qqs': 'Lots & Aliquots',
         'flags': 'Warning & Error Flags',
         'flag_lines': 'Warning & Error Flags with Context',
@@ -1065,15 +1107,12 @@ class Tract:
         init. (Defaults to False)
         """
 
-        if not isinstance(trs, str) and trs is not None:
-            raise TypeError("`trs` must be a string or None")
+        if not isinstance(trs, (str, TRS)) and trs is not None:
+            raise TypeError("`trs` must be a str, None, or a TRS object")
 
-        # These attributes are populated by ``.set_trs()`` shortly.
-        self.trs = None
-        self.twp = None
-        self.rge = None
-        self.twprge = None
-        self.sec = None
+        # Note that setting `.trs` populates a TRS object in the
+        # protected `.__trs` attribute.
+        self.trs = trs
 
         # A dict storing the component parts (numbers / directions, as
         # applicable) of the Twp/Rge/Sec. Keys:
@@ -1085,9 +1124,6 @@ class Tract:
         #   "rge_ew"    -> Rge direction ('e', 'w', or None)
         #   "sec_num"   -> Sec number (an int or None)
         self.trs_dict = None
-
-        # Populate the above attributes.
-        self.set_trs(trs)
 
         # a string containing the description block.
         self.desc = desc
@@ -1209,6 +1245,66 @@ class Tract:
                 len(self.lots) if self.parse_complete else "n/a")
 
     @property
+    def trs(self):
+        return self.__trs.trs
+
+    @trs.setter
+    def trs(self, new_trs):
+        self.__trs = TRS(new_trs)
+
+    @property
+    def twp(self):
+        return self.__trs.twp
+
+    @property
+    def twp_num(self):
+        return self.__trs.twp_num
+
+    @property
+    def twp_ns(self):
+        return self.__trs.twp_ns
+
+    ns = twp_ns
+
+    @property
+    def rge(self):
+        return self.__trs.rge
+
+    @property
+    def rge_num(self):
+        return self.__trs.rge_num
+
+    @property
+    def rge_ew(self):
+        return self.__trs.rge_ew
+
+    ew = rge_ew
+
+    @property
+    def twprge(self):
+        return self.__trs.twprge
+
+    @property
+    def sec(self):
+        return self.__trs.sec
+
+    @property
+    def sec_num(self):
+        return self.__trs.sec_num
+
+    @property
+    def twp_undef(self):
+        return self.__trs.twp_undef
+
+    @property
+    def rge_undef(self):
+        return self.__trs.rge_undef
+
+    @property
+    def sec_undef(self):
+        return self.__trs.sec_undef
+
+    @property
     def lots_qqs(self):
         """A combined list of lots + QQs."""
         return self.lots + self.qqs
@@ -1319,39 +1415,15 @@ class Tract:
             pass
 
         # compile a TRS, and see if it matches our known format
-        trs = f'{twp}{rge}{sec}'
+        # TODO: Simplify the code above to rely on `TRS._construct_trs()`
+        trs = TRS._construct_trs(twp, rge, sec, default_ns, default_ew)
 
         # Create a new Tract object and return it
         new_tract = Tract(
             desc=desc, trs=trs, source=source, orig_desc=orig_desc,
             orig_index=orig_index, desc_is_flawed=desc_is_flawed, config=config,
             init_parse_qq=init_parse_qq)
-        new_tract.twp = twp
-        new_tract.rge = rge
-        new_tract.sec = sec
         return new_tract
-
-    def set_trs(self, trs):
-        """
-        Set the ``.trs`` attribute (and related attributes) for this
-        Tract, and fill out the ``.trs_dict`` attribute accordingly.
-        :param trs: A Twp/Rge/Sec in the standard pyTRS format.
-        :return: None.
-        """
-        self.trs = trs
-
-        trs_dict = trs_to_dict(trs)
-        self.trs_dict = trs_dict
-        self.twp = trs_dict["twp"]
-        self.rge = trs_dict["rge"]
-        self.sec = str(trs_dict["sec_num"]).rjust(2, '0')
-        self.twprge = f"{self.twp}{self.rge}"
-
-        if None in (trs_dict['twp_num'], trs_dict['rge_num']):
-            self.twp, self.rge, self.twprge = _ERR_TWP, _ERR_RGE, _ERR_TWPRGE
-
-        if trs_dict['sec_num'] is None:
-            self.sec = _ERR_SEC
 
     def set_config(self, config):
         """
@@ -1594,7 +1666,7 @@ class TractList(list):
             "Tracts: {1}").format(
                 len(self), self.snapshot_inside())
 
-    def drop_errors(self, twprge=True, sec=True):
+    def drop_errors(self, twprge=True, sec=True, undef=True):
         """
         Drop from this TractList all Tract objects that were parsed with
         an error. Specifically drop Twp/Rge errors with `twprge=True`
@@ -1607,15 +1679,34 @@ class TractList(list):
         to `True`)
         :param sec: A bool, whether to drop Sec errors. (Defaults to
         `True`)
+        :param undef: A bool, whether to drop undefined Twps, Rges, or
+        Sections (in addition to error Twp/Rge/Sections).
         :return: A new TractList containing all of the dropped Tract
         objects.
         """
+
+        def delete_by(tract_obj, controller, var, undef_var):
+            # Note: `undef_var` is the Tract attribute (or rather,
+            # property) that says whether the corresponding `var` was
+            # undefined. If it is False, then that means that particular
+            # `var` was defined but ended up being an error.
+            # For example, `delete_by("twp_num", "twp_undef")`...
+
+            bad = getattr(tract_obj, var) is None
+            if bad:
+                # The `undef` parameter means cull any `None` values,
+                # regardless of whether it was undefined or an error.
+                # Either way, cull the var that was NOT undefined (i.e.
+                # was an error.)
+                bad = undef or not getattr(tract_obj, undef_var)
+            return bad and controller
+
         drop = []
         dropped = TractList()
         for i, tract in enumerate(self):
-            if (
-                    (twprge and tract.trs_dict["twp"] is None)
-                    or (sec and tract.trs_dict["sec_num"] is None)):
+            if (delete_by(tract, twprge, "twp_num", "twp_undef")
+                    or delete_by(tract, twprge, "rge_num", "rge_undef")
+                    or delete_by(tract, sec, "sec_num", "sec_undef")):
                 drop.append(i)
         drop.reverse()
         for i in drop:
@@ -1688,10 +1779,12 @@ class TractList(list):
             of any Tract in this TractList. If there are no valid ints,
             return 0.
             """
-            nums = [t.trs_dict[var] for t in self if t.trs_dict[var] is not None]
+            nums = [getattr(t, var) for t in self if getattr(t, var) is not None]
             if nums:
                 return max(nums)
             return 0
+
+        # TODO: Sort undefined Twp/Rge/Sec before error Twp/Rge/Sec.
 
         default_twp = get_max("twp_num") + 1
         default_rge = get_max("rge_num") + 1
@@ -1717,7 +1810,7 @@ class TractList(list):
 
         def extract_safe_num(tract, var):
 
-            val = tract.trs_dict[var]
+            val = getattr(tract, var)
             if val is None:
                 val = assume[var]
             return val
@@ -1741,8 +1834,8 @@ class TractList(list):
             behavior of ``list.sort()`` -- i.e. smallest to largest).
             ``reverse=True`` to inverse the positive and negative.
             """
-            num = tract.trs_dict["twp_num"]
-            ns = tract.trs_dict["twp_ns"]
+            num = tract.twp_num
+            ns = tract.twp_ns
 
             multiplier = 1
             if num is None:
@@ -1768,8 +1861,8 @@ class TractList(list):
             of ``list.sort()`` -- i.e. smallest to largest).
             ``reverse=True`` to inverse the positive and negative.
             """
-            num = tract.trs_dict["rge_num"]
-            ew = tract.trs_dict["rge_ew"]
+            num = tract.rge_num
+            ew = tract.rge_ew
 
             multiplier = 1
             if num is None:
@@ -4492,8 +4585,11 @@ class PLSSPreprocessor:
         if tr_mo.group().startswith(('\n', '\t', ' ')):
             first = tr_mo.group()[0]
 
-        twp = _ocr_scrub_alpha_to_num(twp)  # twp number
-        rge = _ocr_scrub_alpha_to_num(rge)  # rge number
+        # TODO: I broke ocr_scrub... Turning this on raises this error:
+        #   <AttributeError: 'int' object has no attribute 'replace'>
+        #   ...So I need to re-implement ocr_scrub.
+        # twp = _ocr_scrub_alpha_to_num(twp)  # twp number
+        # rge = _ocr_scrub_alpha_to_num(rge)  # rge number
 
         # Maintain the last character, if it's a whitespace.
         last = ''
@@ -5644,46 +5740,360 @@ def find_twprge(text, default_ns=None, default_ew=None, preprocess=False):
 def trs_to_dict(trs) -> dict:
     """
     Take a compiled Twp/Rge/Sec (in the standard pyTRS format) and break
-    it into a dict of 7 elements, keyed as follows:
+    it into a dict, keyed as follows:
         "twp"       -> Twp number + direction (a str or None)
         "twp_num"   -> Twp number (an int or None);
         "twp_ns"    -> Twp direction ('n', 's', or None);
+        "twp_undef" -> A bool, whether the Twp was undefined. **
         "rge"       -> Rge number + direction (a str or None)
         "rge_num"   -> Rge num (an int or None);
         "rge_ew"    -> Rge direction ('e', 'w', or None)
+        "rge_undef" -> A bool, whether the Rge was undefined. **
         "sec_num"   -> Sec number (an int or None)
-    :param trs: The TRS (in the pyTRS format) to be broken apart.
+        "sec_undef" -> A bool, whether the Sec was undefined. **
+
+    ** Note that error parses do NOT qualify as 'undefined'. Undefined
+    and error values are both stored as None. 'twp_undef', 'rge_undef',
+    and 'sec_undef' are included to differentiate between error vs.
+    undefined, in case that distinction is needed.
+
+    :param trs: The Twp/Rge/Sec (in the pyTRS format) to be broken
+    apart.
     :return: A dict with the various elements.
     """
-    twp, rge, sec = break_trs(trs)
+    return TRS.trs_to_dict(trs)
 
-    try:
-        twp_ns = twp[-1]
-        twp_num = int(twp[:-1])
-    except (ValueError, TypeError):
-        twp = twp_ns = twp_num = None
 
-    try:
-        rge_ew = rge[-1]
-        rge_num = int(rge[:-1])
-    except (ValueError, TypeError):
-        rge = rge_ew = rge_num = None
+class TRS:
+    """
+    A container for Twp/Rge/Section in the standard pyTRS format.
+    Automatically breaks the TRS down into its component parts, which
+    can be accessed as properties:
+        .trs        -> The full Twp/Rge/Sec combination. *
+        .twp        -> Twp number + direction (a str or None)
+        .twp_num    -> Twp number (an int or None)
+        .twp_ns     -> Twp direction ('n', 's', or None)
+        .ns         -> same as `.twp_ns`
+        .twp_undef  -> A bool, whether the Twp was undefined. **
+        .rge        -> Rge number + direction (a str or None)
+        .rge_num    -> Rge num (an int or None)
+        .rge_ew     -> Rge direction ('e', 'w', or None)
+        .ew         -> same as `.rge_ew`
+        .rge_undef  -> A bool, whether the Rge was undefined. **
+        .sec_num    -> Sec number (an int or None)
+        .sec_undef  -> A bool, whether the Sec was undefined. **
 
-    try:
-        sec = int(sec)
-    except (ValueError, TypeError):
-        sec = None
+    * Note that setting `.trs` will cause the other properties to be
+    recalculated. (Optionally set the `.trs` using the separate
+    Twp/Rge/Sec components with the `.set_twprgesec()` method.)
 
-    dct = {
-        "twp": twp,
-        "twp_num": twp_num,
-        "twp_ns": twp_ns,
-        "rge": rge,
-        "rge_num": rge_num,
-        "rge_ew": rge_ew,
-        "sec_num": sec
-    }
-    return dct
+    ** Note that error parses do NOT qualify as 'undefined'.
+    Undefined and error values are both stored as None. 'twp_undef',
+    'rge_undef', and 'sec_undef' are included to differentiate between
+    error vs. undefined, in case that distinction is needed.
+    """
+
+    _TRS_UNPACKER_REGEX = _compile_trs_unpacker_regex()
+
+    def __init__(self, trs=None):
+        if trs in ["", None]:
+            trs = _UNDEF_TRS
+        self.__trs_dict = None
+
+        # Setting `.trs` attribute populates `.__trs_dict`, from which
+        # twp, rge, twprge, sec, twp_num, twp_ns, rge_num, rge_ew, and
+        # sec_num can be pulled (as properties)
+        self.trs = trs
+
+    def __str__(self):
+        return self.trs
+
+    @property
+    def trs(self):
+        return self.__trs_dict["trs"]
+
+    @trs.setter
+    def trs(self, new_trs):
+        self.__trs_dict = TRS.trs_to_dict(new_trs)
+
+    @property
+    def twp(self):
+        return self.__trs_dict["twp"]
+
+    @property
+    def twp_num(self):
+        return self.__trs_dict["twp_num"]
+
+    @property
+    def twp_ns(self):
+        return self.__trs_dict["twp_ns"]
+
+    ns = twp_ns
+
+    @property
+    def rge(self):
+        return self.__trs_dict["rge"]
+
+    @property
+    def rge_num(self):
+        return self.__trs_dict["rge_num"]
+
+    @property
+    def rge_ew(self):
+        return self.__trs_dict["rge_ew"]
+
+    ew = rge_ew
+
+    @property
+    def twprge(self):
+        return f"{self.__trs_dict['twp']}{self.__trs_dict['rge']}"
+
+    def pretty_twprge(
+            self, t="T", delim="-", r="R", n=None, s=None, e=None, w=None,
+            undef="---X"):
+        """
+        Convert the Twp/Rge info into a clean str. By default, will
+        return in the format 'T154N-R97W', but control the output with
+        the various optional parameters.
+
+        :param t: How "Township" should appear. ('T' by default)
+        :param delim: How Twp should be separated from Rge. ('-' by
+        default)
+        :param r: How "Range" should appear. ("R" by default)
+        :param n: How "North" (if found) should appear.
+        :param s: How "South" (if found) should appear.
+        :param e: How "East" (if found) should appear.
+        :param w: How "West" (if found) should appear.
+        :param undef: How undefined (or error) Twp or Rge should be
+        represented, including the direction. ('---X' by default)
+        :return: A str of the clean Twp/Rge.
+        """
+        twp_num = self.twp_num
+        rge_num = self.rge_num
+        ns = self.ns
+        ew = self.ew
+        if not ns:
+            ns = ""
+        if not ew:
+            ew = ""
+        if twp_num is None:
+            twp_num = undef
+        if rge_num is None:
+            rge_num = undef
+
+        ns = ns.upper()
+        ew = ew.upper()
+
+        if n and ns.lower().startswith('n'):
+            ns = n
+        if s and ns.lower().startswith('s'):
+            ns = s
+        if e and ew.lower().startswith('e'):
+            ew = e
+        if w and ew.lower().startswith('w'):
+            ew = w
+
+        return f"{t}{twp_num}{ns}{delim}{r}{rge_num}{ew}"
+
+    @property
+    def sec(self):
+        return self.__trs_dict["sec"]
+
+    @property
+    def sec_num(self):
+        return self.__trs_dict["sec_num"]
+
+    @property
+    def twp_undef(self):
+        return self.__trs_dict["twp_undef"]
+
+    @property
+    def rge_undef(self):
+        return self.__trs_dict["rge_undef"]
+
+    @property
+    def sec_undef(self):
+        return self.__trs_dict["sec_undef"]
+
+    def set_twprgesec(self, twp, rge, sec, default_ns=None, default_ew=None):
+        """
+        Set the Twp/Rge/Sec of this TRS object by its component parts.
+        Returns the compiled `trs` string after setting the various
+        components to the appropriate attributes.
+
+        :param twp: Township (a str or int).
+        :param rge: Range (a str or int).
+        :param sec: Section (a str or int)
+        :param default_ns: (Optional) If `twp` wasn't specified as N or
+        S, assume `default_ns` (pass as 'n' or 's'). If not specified,
+        will fall back to PLSSDesc.MASTER_DEFAULT_NS (which is 'n'
+        unless configured otherwise).
+        :param default_ew: (Optional) If `rge` wasn't specified as E or
+        W, assume `default_ew` (pass as 'e' or 'w'). If not specified,
+        will fall back to PLSSDesc.MASTER_DEFAULT_EW (which is 'w'
+        unless configured otherwise).
+        :return: The compiled Twp/Rge/Sec in the pyTRS format.
+        """
+        trs = TRS._construct_trs(twp, rge, sec, default_ns, default_ew)
+        self.trs = trs
+        return trs
+
+    @staticmethod
+    def from_twprgesec(
+            twp=None, rge=None, sec=None, default_ns=None, default_ew=None):
+        """
+        Create and return a new TRS object by defining its Twp/Rge/Sec
+        from its component parts.
+
+        :param twp: Township (a str or int).
+        :param rge: Range (a str or int).
+        :param sec: Section (a str or int)
+        :param default_ns: (Optional) If `twp` wasn't specified as N or
+        S, assume `default_ns` (pass as 'n' or 's'). If not specified,
+        will fall back to PLSSDesc.MASTER_DEFAULT_NS (which is 'n'
+        unless configured otherwise).
+        :param default_ew: (Optional) If `rge` wasn't specified as E or
+        W, assume `default_ew` (pass as 'e' or 'w'). If not specified,
+        will fall back to PLSSDesc.MASTER_DEFAULT_EW (which is 'w'
+        unless configured otherwise).
+        :return: The new pyTRS.TRS object.
+        """
+        trs = TRS._construct_trs(twp, rge, sec, default_ns, default_ew)
+        return TRS(trs)
+
+    @staticmethod
+    def _construct_trs(twp, rge, sec, default_ns=None, default_ew=None):
+        """
+        Build a Twp/Rge/Sec in the pyTRS format from component parts.
+
+        :param twp: Township (a str or int).
+        :param rge: Range (a str or int).
+        :param sec: Section (a str or int)
+        :param default_ns: (Optional) If `twp` wasn't specified as N or
+        S, assume `default_ns` (pass as 'n' or 's'). If not specified,
+        will fall back to PLSSDesc.MASTER_DEFAULT_NS (which is 'n'
+        unless configured otherwise).
+        :param default_ew: (Optional) If `rge` wasn't specified as E or
+        W, assume `default_ew` (pass as 'e' or 'w'). If not specified,
+        will fall back to PLSSDesc.MASTER_DEFAULT_EW (which is 'w'
+        unless configured otherwise).
+        :return: The compiled Twp/Rge/Sec in the pyTRS format.
+        """
+        if not default_ns:
+            default_ns = PLSSDesc.MASTER_DEFAULT_NS
+        if not default_ew:
+            default_ew = PLSSDesc.MASTER_DEFAULT_EW
+
+        if twp is None:
+            twp = _UNDEF_TWP
+        elif isinstance(twp, int):
+            twp = f"{twp}{default_ns}"
+        if twp != _UNDEF_TWP and re.search(_TWP_RGX, twp) is None:
+            twp = _ERR_TWP
+
+        if rge is None:
+            rge = _UNDEF_RGE
+        elif isinstance(rge, int):
+            rge = f"{rge}{default_ew}"
+        if rge != _UNDEF_RGE and re.search(_RGE_RGX, rge) is None:
+            rge = _ERR_RGE
+
+        if sec is None:
+            sec = _UNDEF_SEC
+        else:
+            sec = str(sec).rjust(2, '0')
+        if sec != _UNDEF_SEC and re.search(_SEC_RGX, sec) is None:
+            sec = _ERR_SEC
+
+        return f"{twp}{rge}{sec}"
+
+    @staticmethod
+    def trs_to_dict(trs) -> dict:
+        """
+        Take a compiled Twp/Rge/Sec (in the standard pyTRS format) and
+        break it into a dict, keyed as follows:
+            "twp"       -> Twp number + direction (a str or None)
+            "twp_num"   -> Twp number (an int or None);
+            "twp_ns"    -> Twp direction ('n', 's', or None);
+            "twp_undef" -> A bool, whether the Twp was undefined. **
+            "rge"       -> Rge number + direction (a str or None)
+            "rge_num"   -> Rge num (an int or None);
+            "rge_ew"    -> Rge direction ('e', 'w', or None)
+            "rge_undef" -> A bool, whether the Rge was undefined. **
+            "sec_num"   -> Sec number (an int or None)
+            "sec_undef" -> A bool, whether the Sec was undefined. **
+
+        ** Note that error parses do NOT qualify as 'undefined'.
+        Undefined and error values are both stored as None. 'twp_undef',
+        'rge_undef', and 'sec_undef' are included to differentiate
+        between error vs. undefined, in case that distinction is needed.
+
+        :param trs: The Twp/Rge/Sec (in the pyTRS format) to be broken
+        apart.
+        :return: A dict with the various elements.
+        """
+
+        if isinstance(trs, TRS):
+            trs = trs.trs
+
+        dct = {
+            "trs": _ERR_TRS,
+            "twp": _ERR_TWP,
+            "twp_num": None,
+            "twp_ns": None,
+            "twp_undef": False,
+            "rge": _ERR_RGE,
+            "rge_num": None,
+            "rge_ew": None,
+            "rge_undef": False,
+            "sec": _ERR_SEC,
+            "sec_num": None,
+            "sec_undef": False
+        }
+
+        # Default empty TRS to the undefined version (as opposed to an
+        # error version, which would result otherwise).
+        if trs in ["", None]:
+            trs = _UNDEF_TRS
+
+        mo = TRS._TRS_UNPACKER_REGEX.search(trs)
+        if not mo:
+            return dct
+
+        # Break down Twp
+        if mo.group("twp_num") and mo.group("ns"):
+            dct["twp"] = mo.group("twp")
+            dct["twp_num"] = int(mo.group("twp_num"))
+            dct["twp_ns"] = mo.group("ns")
+        elif mo.group("twp") == _UNDEF_TWP:
+            dct["twp"] = mo.group("twp")
+            dct["twp_undef"] = True
+
+        # Break down Rge
+        if mo.group("rge_num") and mo.group("ew"):
+            dct["rge"] = mo.group("rge")
+            dct["rge_num"] = int(mo.group("rge_num"))
+            dct["rge_ew"] = mo.group("ew")
+        elif mo.group("rge") == _UNDEF_RGE:
+            dct["rge"] = mo.group("rge")
+            dct["rge_undef"] = True
+
+        # Break down Sec
+        sec = mo.group("sec")
+        try:
+            dct["sec_num"] = int(sec)
+        except (ValueError, TypeError):
+            if sec == _UNDEF_SEC:
+                dct["sec_undef"] = True
+            else:
+                sec = _ERR_SEC
+        finally:
+            dct["sec"] = sec
+
+        # Reconstruct TRS
+        dct["trs"] = f"{dct['twp']}{dct['rge']}{dct['sec']}"
+
+        return dct
 
 
 def decompile_twprge(twprge) -> tuple:
@@ -5697,17 +6107,26 @@ def decompile_twprge(twprge) -> tuple:
         ex: '154n97w'   -> ('154', 'n', '97', 'w')
         ex: 'XXXzXXXz   -> ('XXXz', None, 'XXXz', None)
     """
-    twp, rge, _ = break_trs(twprge)
-    twp_dir = None
-    rge_dir = None
-    if twp != _ERR_TWP:
-        twp_dir = twp[-1]
-        twp = twp[:-1]
-    if rge != _ERR_RGE:
-        rge_dir = rge[-1]
-        rge = rge[:-1]
+    # twp, rge, _ = break_trs(twprge)
+    # twp_dir = None
+    # rge_dir = None
+    # if twp != _ERR_TWP:
+    #     twp_dir = twp[-1]
+    #     twp = twp[:-1]
+    # if rge != _ERR_RGE:
+    #     rge_dir = rge[-1]
+    #     rge = rge[:-1]
 
-    return twp, twp_dir, rge, rge_dir
+    trs = TRS(twprge)
+    twp_num = trs.twp_num
+    if not trs.twp_num:
+        twp_num = trs.twp
+
+    rge_num = trs.rge_num
+    if not trs.rge_num:
+        rge_num = trs.rge
+
+    return twp_num, trs.twp_ns, rge_num, trs.rge_ew
 
 
 def find_sec(text):
