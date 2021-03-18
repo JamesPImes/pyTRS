@@ -969,6 +969,24 @@ class PLSSDesc:
         self.parsed_tracts.sort_tracts(key=key)
         return None
 
+    def filter(self, by_attribute="twprge"):
+        """
+        Filter the Tract objects in the ``.parsed_tracts`` into a dict
+        of TractLists, keyed by unique values of `by_attribute`. By
+        default, will filter into groups of Tracts that share Twp/Rge
+        (i.e. `'twprge'`).
+
+        :param by_attribute: The str name of an attribute of Tract
+        objects. (Defaults to `'twprge'`). NOTE: Must be a hashable
+        type!
+        :return: A dict of new TractList objects, each containing the
+        Tracts with matching values of the `by_attribute`.
+        """
+        return self.parsed_tracts.filter(by_attribute)
+
+    # Alias to mirror `sort_tracts`.
+    filter_tracts = filter
+
 
 class Tract:
     """
@@ -2019,6 +2037,30 @@ class TractList(list):
         for k in keys:
             sk, reverse = parse_key(k)
             self.sort(key=sort_defs[sk], reverse=reverse)
+
+    def filter(self, by_attribute="twprge"):
+        """
+        Filter the Tract objects in this TractList into a dict of
+        TractLists, keyed by unique values of `by_attribute`. By
+        default, will filter into groups of Tracts that share Twp/Rge
+        (i.e. `'twprge'`).
+
+        :param by_attribute: The str name of an attribute of Tract
+        objects. (Defaults to `'twprge'`). NOTE: Must be a hashable
+        type!
+        :return: A dict of new TractList objects, each containing the
+        Tracts with matching values of the `by_attribute`.
+        """
+        self.check_illegal()
+        dct = {}
+        for t in self:
+            val = getattr(t, by_attribute)
+            dct.setdefault(val, TractList())
+            dct[val].append(t)
+        return dct
+
+    # Alias to mirror `sort_tracts`
+    filter_tracts = filter
 
     def check_illegal(self):
         """
@@ -6477,6 +6519,30 @@ def break_trs(trs: str) -> tuple:
         sec = None
 
     return trs.twp, trs.rge, sec
+
+
+def filter_tracts(to_filter, by_attribute="twprge", into: dict = None):
+    tl = TractList()
+    for obj in to_filter:
+        if isinstance(obj, PLSSDesc):
+            tl.extend(obj.parsed_tracts)
+        elif isinstance(obj, Tract):
+            tl.append(obj)
+        else:
+            # Assume it's a TractList or other list-like object. No
+            # error handling done here.
+            tl.extend(obj)
+
+    dct = tl.filter(by_attribute)
+
+    if not into:
+        return dct
+
+    for k, tractlist in dct.items():
+        into.setdefault(k, TractList())
+        into[k].extend(tractlist)
+
+    return into
 
 
 def _ocr_scrub_alpha_to_num(text):
