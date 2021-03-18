@@ -1373,6 +1373,28 @@ class Tract:
     def twprge(self):
         return self.__trs.twprge
 
+    def pretty_twprge(
+            self, t="T", delim="-", r="R", n=None, s=None, e=None, w=None,
+            undef="---X"):
+        """
+        Convert the Twp/Rge info into a clean str. By default, will
+        return in the format 'T154N-R97W', but control the output with
+        the various optional parameters.
+
+        :param t: How "Township" should appear. ('T' by default)
+        :param delim: How Twp should be separated from Rge. ('-' by
+        default)
+        :param r: How "Range" should appear. ("R" by default)
+        :param n: How "North" (if found) should appear.
+        :param s: How "South" (if found) should appear.
+        :param e: How "East" (if found) should appear.
+        :param w: How "West" (if found) should appear.
+        :param undef: How undefined (or error) Twp or Rge should be
+        represented, including the direction. ('---X' by default)
+        :return: A str of the clean Twp/Rge.
+        """
+        return self.__trs.pretty_twprge(t, delim, r, n, s, e, w, undef)
+
     @property
     def sec(self):
         return self.__trs.sec
@@ -5989,13 +6011,13 @@ class TRS:
         ns = ns.upper()
         ew = ew.upper()
 
-        if n and ns.lower().startswith('n'):
+        if n is not None and ns.lower().startswith('n'):
             ns = n
-        if s and ns.lower().startswith('s'):
+        if s is not None and ns.lower().startswith('s'):
             ns = s
-        if e and ew.lower().startswith('e'):
+        if e is not None and ew.lower().startswith('e'):
             ew = e
-        if w and ew.lower().startswith('w'):
+        if w is not None and ew.lower().startswith('w'):
             ew = w
 
         return f"{t}{twp_num}{ns}{delim}{r}{rge_num}{ew}"
