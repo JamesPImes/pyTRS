@@ -6272,16 +6272,6 @@ def decompile_twprge(twprge) -> tuple:
         ex: '154n97w'   -> ('154', 'n', '97', 'w')
         ex: 'XXXzXXXz   -> ('XXXz', None, 'XXXz', None)
     """
-    # twp, rge, _ = break_trs(twprge)
-    # twp_dir = None
-    # rge_dir = None
-    # if twp != _ERR_TWP:
-    #     twp_dir = twp[-1]
-    #     twp = twp[:-1]
-    # if rge != _ERR_RGE:
-    #     rge_dir = rge[-1]
-    #     rge = rge[:-1]
-
     trs = TRS(twprge)
     twp_num = trs.twp_num
     if not trs.twp_num:
