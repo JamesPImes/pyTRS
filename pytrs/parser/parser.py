@@ -5,6 +5,7 @@ The main parsing package. Primary classes:
 > PLSSDesc objects parse PLSS description text (full descriptions) into
     Tract objects (one TRS + description per Tract), stored as TractList
 > Tract objects parse tract text into lots and aliquots.
+> TRS objects break a Twp/Rge/Sec into its components.
 > TractList objects contain a list of Tracts, and can compile that Tract
     data into broadly useful formats (i.e. into list, dict, string).
 > Config objects configure parsing parameters for Tract and PLSSDesc.
@@ -142,7 +143,7 @@ class ConfigError(TypeError):
     initializing a Config() object.
     """
     def __init__(self, obj=None):
-        msg = "`config` must be a str, None, or another pytrs.Config object."
+        msg = "`config` must be a str, None, or a pytrs.Config object."
         if obj is not None:
             msg = f"{msg} Passed type {type(obj)!r}."
         super().__init__(msg)
@@ -2836,7 +2837,7 @@ class PLSSParser:
         if segment:
             # Segment text into blocks, based on T&Rs that match our
             # layout requirements
-            twprge_txt_blox, discard_txt_blox = self._segment_by_tr(
+            twprge_txt_blocks, discard_txt_blox = self._segment_by_tr(
                 text, layout=layout, twprge_first=None)
 
             # Append any discard text to the w_flags
@@ -2849,11 +2850,11 @@ class PLSSParser:
             # If not segmented parse, pack entire text into list, with
             # a leading empty str (to mirror the output of the
             # _segment_by_tr() function)
-            twprge_txt_blox = [('', text)]
+            twprge_txt_blocks = [('', text)]
 
         # ----------------------------------------
         # Parse each segment into Tracts.
-        for txt_block in twprge_txt_blox:
+        for txt_block in twprge_txt_blocks:
             use_layout = layout
             if segment and layout != COPY_ALL:
                 # Let the segment parser deduce layout for each text_block.
@@ -2896,7 +2897,7 @@ class PLSSParser:
         # apply to which Tracts. (This is an ambiguity that often exists
         # in the data, even when humans read it.) So for robust data, we
         # apply flags from the whole PLSSDesc to each Tract.
-        # It will only _unpack the flags and flaglines, because that's
+        # It will only unpack the flags and flag_lines, because that's
         # all that is relevant to a Tract. Also apply tract_num (i.e.
         # orig_index).
         # We also take any wFlags and eFlags from the PLSSDesc object
@@ -3845,7 +3846,7 @@ class PLSSParser:
             # that we want. Determine which it is, and append it to the respective
             # list:
             if PLSSParser._is_multisec(sec_mo):
-                # If it's a multiSec, _unpack it, and append it to
+                # If it's a multiSec, unpack it, and append it to
                 # all_multisec_matches.  (We stage flags to temp list so that
                 # we maintain the intended order of flags: i.e. so that
                 # 'multisec_found' comes before any specific issues with
@@ -3999,7 +4000,7 @@ class PLSSParser:
                 # The 'sections' list is being filled in reverse by this
                 # algorithm, starting at the end of the search string
                 # and running backwards. Thus, this particular loop,
-                # which is attempting to _unpack "Sections 3 - 9", will
+                # which is attempting to unpack "Sections 3 - 9", will
                 # be fed into the sections list as [08, 07, 06, 05, 04,
                 # 03]. (09 should already be in the list from the
                 # previous loop.)  'start_of_list' refers to the
@@ -5495,7 +5496,7 @@ class TractParser:
                 # The 'lots' list is being filled in reverse by this
                 # algorithm, starting at the end of the search string
                 # and running backwards. Thus, this particular loop,
-                # which is attempting to _unpack "Lots 3 - 9", will be
+                # which is attempting to unpack "Lots 3 - 9", will be
                 # fed into the lots list as [L8, L7, L6, L5, L4, L3].
                 # (L9 should already be in the list from the previous
                 # loop.)
@@ -6298,29 +6299,18 @@ def break_trs(trs: str) -> tuple:
         ex:  '154n97w' -> ('154n', '97w', None)
         ex:  '154n97wXX' -> ('154n', '97w', 'XX')
         ex:  'XXXzXXXz14' -> ('XXXz', 'XXXz', '14')
-        ex:  'asdf' -> ('XXXz', 'XXXz', 'XX')"""
+        ex:  'asdf' -> ('XXXz', 'XXXz', 'XX')
 
-    default_errors = (_ERR_TWP, _ERR_RGE, _ERR_SEC)
+    NOTE: This function is being deprecated. Better to use ``pytrs.TRS``
+    objects instead.
+    """
 
-    # TODO: This should leverage TRS class functionality...
+    trs = TRS(trs)
+    sec = trs.sec
+    if not trs.sec_num:
+        sec = None
 
-    mo = TRS_unpacker_regex.search(trs)
-    if not mo:
-        return default_errors
-
-    if mo[2] is not None:
-        twp = mo[2].lower()
-        rge = mo[3].lower()
-    else:
-        # Pull twp, rge from default_errors; discard the val for section error
-        twp, rge, _ = default_errors
-
-    # mo.group(5) may be a 2-digit numerical string (e.g., '14' from
-    # '154n97w14'); or an error string 'XX' (from '154n97wXX'); or
-    # None (from '154n97w')
-    sec = mo[5]
-
-    return twp, rge, sec
+    return trs.twp, trs.rge, sec
 
 
 def _ocr_scrub_alpha_to_num(text):
@@ -6485,6 +6475,7 @@ __all__ = [
     PLSSDesc,
     Tract,
     TractList,
+    TRS,
     Config,
     IMPLEMENTED_LAYOUTS,
     IMPLEMENTED_LAYOUT_EXAMPLES,
