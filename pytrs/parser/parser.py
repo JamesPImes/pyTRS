@@ -147,7 +147,9 @@ class ConfigError(TypeError):
 class DefaultNSError(ValueError):
     """Illegal value for `default_ns`."""
     def __init__(self, obj=None):
-        msg = "`default_ns` must be either 'n' or 's'."
+        legal = "', '".join(PLSSDesc._LEGAL_NS)
+        legal = f"['{legal}']"
+        msg = f"`default_ns` must be one of {legal}."
         if obj is not None:
             msg = f"{msg} Passed {obj!r}."
         super().__init__(msg)
@@ -156,7 +158,9 @@ class DefaultNSError(ValueError):
 class DefaultEWError(ValueError):
     """Illegal value for `default_ew`."""
     def __init__(self, obj=None):
-        msg = "`default_ew` must be either 'e' or 'w'."
+        legal = "', '".join(PLSSDesc._LEGAL_EW)
+        legal = f"['{legal}']"
+        msg = f"`default_ew` must be one of {legal}."
         if obj is not None:
             msg = f"{msg} Passed {obj!r}."
         super().__init__(msg)
@@ -271,8 +275,13 @@ class PLSSDesc:
     EAST = 'e'
     WEST = 'w'
 
+    # Control all unspecified default_ns and default_ew
     MASTER_DEFAULT_NS = NORTH
     MASTER_DEFAULT_EW = WEST
+
+    # Legal settings for N/S/E/W
+    _LEGAL_NS = ('n', 's', 'N', 'S')
+    _LEGAL_EW = ('e', 'w', 'E', 'W')
 
     def __init__(
             self, orig_desc: str, source='', layout=None, config=None,
@@ -6129,9 +6138,9 @@ class TRS:
             default_ew = PLSSDesc.MASTER_DEFAULT_EW
 
         # Ensure legal N/S and E/W values.
-        if default_ns.lower() not in ['n', 's']:
+        if default_ns.lower() not in PLSSDesc._LEGAL_NS:
             raise DefaultNSError(default_ns)
-        if default_ew.lower() not in ['w', 'e']:
+        if default_ew.lower() not in PLSSDesc._LEGAL_EW:
             raise DefaultEWError(default_ew)
 
         def scrub(twp_rge_or_section, ns_ew_sec):
@@ -6152,11 +6161,11 @@ class TRS:
             # Determine whether we're running Twp, Rge, or Section.
             # Default to Twp.
             direction = default_ns
-            direction_options = ('n', 's')
+            direction_options = PLSSDesc._LEGAL_NS
             if ns_ew_sec == "ew":
                 # Rge.
                 direction = default_ew
-                direction_options = ('e', 'w')
+                direction_options = PLSSDesc._LEGAL_EW
             elif ns_ew_sec is None:
                 # Sec.
                 direction = None
