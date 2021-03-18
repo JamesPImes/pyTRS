@@ -103,6 +103,7 @@ def _compile_trs_unpacker_regex(
 
     Compile the constants for Twp/Rge/Sec into a regex for unpacking
     strings in the pyTRS 'TRS' format.
+
     :return: A re.Pattern that will match pyTRS 'TRS' strings, including
     undefined and error Twp/Rge/Sections.
 
@@ -1052,12 +1053,76 @@ class Tract:
     .quick_desc() -- Returns a string of the TRS + description.
     .to_dict() -- Compile the requested attributes into a dict.
     .to_list() -- Compile the requested attributes into a list.
+
+    ____ SETTING TOWNSHIP / RANGE / SECTION ____
+    Twp/Rge/Sec will be set automatically if a Tract is created by a
+    parsed PLSSDesc. However, it can also be manually set in one of four
+    ways.
+
+    At init, in the ``trs=`` kwarg (taking the standard pyTRS format):
+        Ex: ``some_tract = Tract(desc='NE/4', trs='154n97w14')
+
+    At init, but using Twp/Rge/Sec components, using the
+    ``.from_twprgesec()`` method:
+        Ex:
+            ```
+            some_tract = Tract.from_twprgesec(
+                desc='NE/4', twp=154, rge=97, sec=14, default_ns='n',
+                default_ew='w')
+            ```
+
+    Once the Tract has already been created, we can set the Twp/Rge/Sec
+    by assigning the ``.trs`` attribute a string value in the standard
+    pyTRS format.
+        Ex: ``some_tract.trs = '154n97w14'``
+            ``some_tract.trs = '1s87e01'``
+
+    Alternatively, set Twp/Rge/Sec from the uncompiled components, with
+    the ``.set_twprgesec()`` method:
+        Ex:
+            ```
+            some_tract.set_twprgesec(
+                154, 97, 14, default_ns='n', default_ew='w')
+            ```
+
+    Setting Twp/Rge/Sec by any of the above methods will break down the
+    Twp/Rge/Sec into various data:
+            .trs        -> The full Twp/Rge/Sec combination.
+            .twp        -> Twp number + direction (a str or None)
+            .twp_num    -> Twp number (an int or None)
+            .twp_ns     -> Twp direction ('n', 's', or None)
+            .ns         -> same as `.twp_ns`
+            .twp_undef  -> A bool, whether the Twp was undefined. **
+            .rge        -> Rge number + direction (a str or None)
+            .rge_num    -> Rge num (an int or None)
+            .rge_ew     -> Rge direction ('e', 'w', or None)
+            .ew         -> same as `.rge_ew`
+            .rge_undef  -> A bool, whether the Rge was undefined. **
+            .sec_num    -> Sec number (an int or None)
+            .sec_undef  -> A bool, whether the Sec was undefined. **
+
+    ** Note that error parses do NOT qualify as 'undefined', but
+    undefined and error values are both stored as None. 'twp_undef',
+    'rge_undef', and 'sec_undef' are included to differentiate between
+    error vs. undefined, in case that distinction is needed.
     """
 
-    # Tract instance variables and a "header"-like definition of each
+    # Tract instance variables and a "header"-like definition of each.
+    # (Attributes that are technically properties are marked with **)
     ATTRIBUTES = {
+        'trs': 'Twp/Rge/Sec',  # **
+        'twp': 'Township',  # **
+        'twp_num': 'Twp Number',  # **
+        'twp_ns': 'Twp Direction',  # **
+        'rge': 'Range',  # **
+        'rge_num': 'Rge Number',  # **
+        'rge_ew': 'Rge Direction',  # **
+        'twprge': 'Twp & Rge',  # **
+        'sec': 'Section',  # **
+        'sec_num': 'Section',  # **
         'qqs': 'Aliquots',
         'lots': 'Lots',
+        'lots_qqs': 'Lots & Aliquots',  # **
         'orig_desc': 'Original Description',
         'pp_desc': 'Cleaned-Up Description',
         'desc_is_flawed': 'Fatal Parsing Errors Identified',
@@ -1065,26 +1130,13 @@ class Tract:
         'w_flag_lines': 'Warning Flags with Context',
         'e_flags': 'Error Flags',
         'e_flag_lines': 'Error Flags with Context',
+        'flags': 'Warning & Error Flags',  # **
+        'flag_lines': 'Warning & Error Flags with Context',  # **
         'lot_acres': 'Lot Acreages',
-
-        # These are technically properties:
-        'trs': 'Twp/Rge/Sec',
-        'twp': 'Township',
-        'twp_num': 'Twp Number',
-        'twp_ns': 'Twp Direction',
-        'rge': 'Range',
-        'rge_num': 'Rge Number',
-        'rge_ew': 'Rge Direction',
-        'twprge': 'Twp & Rge',
-        'sec': 'Section',
-        'sec_num': 'Section',
-        'lots_qqs': 'Lots & Aliquots',
-        'flags': 'Warning & Error Flags',
-        'flag_lines': 'Warning & Error Flags with Context',
     }
 
     def __init__(
-            self, desc='', trs='', source='', orig_desc='', orig_index=0,
+            self, desc='', trs=None, source='', orig_desc='', orig_index=0,
             desc_is_flawed=False, config=None, init_parse_qq=None):
         """
         :param desc: The description block within this TRS. (What will
@@ -1121,17 +1173,6 @@ class Tract:
         # Note that setting `.trs` populates a TRS object in the
         # protected `.__trs` attribute.
         self.trs = trs
-
-        # A dict storing the component parts (numbers / directions, as
-        # applicable) of the Twp/Rge/Sec. Keys:
-        #   "twp"       -> Twp number + direction (a str or None)
-        #   "twp_num"   -> Twp number (an int or None);
-        #   "twp_ns"    -> Twp direction ('n', 's', or None);
-        #   "rge"       -> Rge number + direction (a str or None)
-        #   "rge_num"   -> Rge num (an int or None);
-        #   "rge_ew"    -> Rge direction ('e', 'w', or None)
-        #   "sec_num"   -> Sec number (an int or None)
-        self.trs_dict = None
 
         # a string containing the description block.
         self.desc = desc
@@ -1262,7 +1303,8 @@ class Tract:
         self.__trs = TRS(new_trs)
 
     def set_twprgesec(
-            self, twp=None, rge=None, sec=None, default_ns=None, default_ew=None):
+            self, twp=None, rge=None, sec=None, default_ns=None,
+            default_ew=None, ocr_scrub=None):
         """
         Set the Twp/Rge/Sec of this Tract from the component parts, and
         populate the corresponding properties for this Tract object.
@@ -1279,6 +1321,10 @@ class Tract:
         W, assume `default_ew` (pass as 'e' or 'w'). If not specified,
         will fall back to PLSSDesc.MASTER_DEFAULT_EW (which is 'w'
         unless configured otherwise).
+        :param ocr_scrub: A bool, whether to try to scrub common OCR
+        artifacts from the Twp, Rge, and Sec -- if any of them are
+        passed as a str. (Defaults to whatever was set in ``.config``,
+        which is ``False`` unless configured otherwise.)
         :return: The compiled Twp/Rge/Sec in the pyTRS format.
         """
         if not default_ns:
@@ -1287,7 +1333,11 @@ class Tract:
         if not default_ew:
             default_ew = self.default_ew
 
-        trs = TRS._construct_trs(twp, rge, sec, default_ns, default_ew)
+        if ocr_scrub is None:
+            ocr_scrub = self.ocr_scrub
+
+        trs = TRS._construct_trs(
+            twp, rge, sec, default_ns, default_ew, ocr_scrub)
         self.trs = trs
         return trs
 
@@ -1425,65 +1475,14 @@ class Tract:
             default_ns = PLSSDesc.MASTER_DEFAULT_NS
         if default_ew is None:
             default_ew = PLSSDesc.MASTER_DEFAULT_EW
-        # Ensure legal N/S and E/W values.
-        if default_ns.lower() not in ['n', 's']:
-            raise DefaultNSError(default_ns)
-        if default_ew.lower() not in ['w', 'e']:
-            raise DefaultEWError(default_ew)
 
         # Whether to scrub twp, rge, and sec strings for OCR artifacts
         ocr_scrub = False
         if config.ocr_scrub is not None:
             ocr_scrub = config.ocr_scrub
 
-        def scrub(twp_rge_or_section, ns_ew_sec):
-            """
-            Scrub the `twp`, `rge`, and `sec` from input into the
-            component parts. (Use `ocr_scrub` if appropriate.) Run
-            separately for twp, rge, and section.
-
-            :param twp_rge_or_section: A candidate `twp` or `rge`
-            :param ns_ew_sec: "ns" (if running Twp), "ew" (if running
-            Rge), or None (if running Sec)
-            :return: 2-tuple: (scrubbed Twp/Rge/Sec number, direction).
-            Note that direction will always be evaluated to None when
-            running this for Section.
-            """
-            twprgesec_num = twp_rge_or_section
-
-            # Determine whether we're running Twp, Rge, or Section.
-            # Default to Twp.
-            direction = default_ns
-            direction_options = ('n', 's')
-            if ns_ew_sec == "ew":
-                # Rge.
-                direction = default_ew
-                direction_options = ('e', 'w')
-            elif ns_ew_sec is None:
-                # Sec.
-                direction = None
-
-            # If it's not a string, we don't need to ocr_scrub it.
-            if not isinstance(twp_rge_or_section, str):
-                return twprgesec_num, None
-
-            if (direction is not None
-                    and twp_rge_or_section.lower().endswith(direction_options)):
-                # Running Twp or Rge.
-                twprgesec_num = twp_rge_or_section[:-1]
-                direction = twp_rge_or_section[-1].lower()
-
-            if ocr_scrub:
-                twprgesec_num = _ocr_scrub_alpha_to_num(twprgesec_num)
-
-            return twprgesec_num, direction
-
-        twp_num, ns = scrub(twp, "ns")
-        rge_num, ew = scrub(rge, "ew")
-        sec, _ = scrub(sec, None)
-
         # Compile the Twp/Rge/Sec into `trs`
-        trs = TRS._construct_trs(twp_num, rge_num, sec, default_ns=ns, default_ew=ew)
+        trs = TRS._construct_trs(twp, rge, sec, default_ns, default_ew, ocr_scrub=ocr_scrub)
 
         # Create a new Tract object and return it
         new_tract = Tract(
@@ -1740,7 +1739,7 @@ class TractList(list):
             "Tracts: {1}").format(
                 len(self), self.snapshot_inside())
 
-    def drop_errors(self, twprge=True, sec=True, undef=True):
+    def drop_errors(self, twprge=True, sec=True, undef=False):
         """
         Drop from this TractList all Tract objects that were parsed with
         an error. Specifically drop Twp/Rge errors with `twprge=True`
@@ -1754,7 +1753,8 @@ class TractList(list):
         :param sec: A bool, whether to drop Sec errors. (Defaults to
         `True`)
         :param undef: A bool, whether to drop undefined Twps, Rges, or
-        Sections (in addition to error Twp/Rge/Sections).
+        Sections (in addition to error Twp/Rge/Sections). (Defaults to
+        `False`)
         :return: A new TractList containing all of the dropped Tract
         objects.
         """
@@ -1849,9 +1849,9 @@ class TractList(list):
 
         def get_max(var):
             """
-            Get the largest value of the matching var in the `.trs_dict`
-            of any Tract in this TractList. If there are no valid ints,
-            return 0.
+            Get the largest value of the matching var in the of any
+            Tract in this TractList. If there are no valid ints, return
+            0.
             """
             nums = [getattr(t, var) for t in self if getattr(t, var) is not None]
             if nums:
@@ -6020,7 +6020,9 @@ class TRS:
     def sec_undef(self):
         return self.__trs_dict["sec_undef"]
 
-    def set_twprgesec(self, twp, rge, sec, default_ns=None, default_ew=None):
+    def set_twprgesec(
+            self, twp, rge, sec, default_ns=None, default_ew=None,
+            ocr_scrub=False):
         """
         Set the Twp/Rge/Sec of this TRS object by its component parts.
         Returns the compiled `trs` string after setting the various
@@ -6037,15 +6039,20 @@ class TRS:
         W, assume `default_ew` (pass as 'e' or 'w'). If not specified,
         will fall back to PLSSDesc.MASTER_DEFAULT_EW (which is 'w'
         unless configured otherwise).
+        :param ocr_scrub: A bool, whether to try to scrub common OCR
+        artifacts from the Twp, Rge, and Sec -- if any of them are
+        passed as a str. (Defaults to ``False``.)
         :return: The compiled Twp/Rge/Sec in the pyTRS format.
         """
-        trs = TRS._construct_trs(twp, rge, sec, default_ns, default_ew)
+        trs = TRS._construct_trs(
+            twp, rge, sec, default_ns, default_ew, ocr_scrub)
         self.trs = trs
         return trs
 
     @staticmethod
     def from_twprgesec(
-            twp=None, rge=None, sec=None, default_ns=None, default_ew=None):
+            twp=None, rge=None, sec=None, default_ns=None, default_ew=None,
+            ocr_scrub=False):
         """
         Create and return a new TRS object by defining its Twp/Rge/Sec
         from its component parts.
@@ -6061,15 +6068,21 @@ class TRS:
         W, assume `default_ew` (pass as 'e' or 'w'). If not specified,
         will fall back to PLSSDesc.MASTER_DEFAULT_EW (which is 'w'
         unless configured otherwise).
+        :param ocr_scrub: A bool, whether to try to scrub common OCR
+        artifacts from the Twp, Rge, and Sec -- if any of them are
+        passed as a str. (Defaults to ``False``.)
         :return: The new pyTRS.TRS object.
         """
-        trs = TRS._construct_trs(twp, rge, sec, default_ns, default_ew)
+        trs = TRS._construct_trs(
+            twp, rge, sec, default_ns, default_ew, ocr_scrub)
         return TRS(trs)
 
     @staticmethod
-    def _construct_trs(twp, rge, sec, default_ns=None, default_ew=None):
+    def _construct_trs(
+            twp, rge, sec, default_ns=None, default_ew=None, ocr_scrub=False):
         """
         Build a Twp/Rge/Sec in the pyTRS format from component parts.
+        Get back a string of that Twp/Rge/Sec.
 
         :param twp: Township (a str or int -- ``'154n'`` or ``154``).
         :param rge: Range (a str or int -- ``'97w'`` or ``97``).
@@ -6082,17 +6095,75 @@ class TRS:
         W, assume `default_ew` (pass as 'e' or 'w'). If not specified,
         will fall back to PLSSDesc.MASTER_DEFAULT_EW (which is 'w'
         unless configured otherwise).
+        :param ocr_scrub: A bool, whether to try to scrub common OCR
+        artifacts from the Twp, Rge, and Sec -- if any of them are
+        passed as a str. (Defaults to ``False``.)
         :return: The compiled Twp/Rge/Sec in the pyTRS format.
         """
-        # TODO: Implement ocr_scrub on `twp`, `rge`, and `sec`, but
-        #  don't overwrite the direction, if it's in there.
 
-        if not default_ns:
+        if default_ns is None:
             default_ns = PLSSDesc.MASTER_DEFAULT_NS
-        if not default_ew:
+        if default_ew is None:
             default_ew = PLSSDesc.MASTER_DEFAULT_EW
 
-        if twp is None:
+        # Ensure legal N/S and E/W values.
+        if default_ns.lower() not in ['n', 's']:
+            raise DefaultNSError(default_ns)
+        if default_ew.lower() not in ['w', 'e']:
+            raise DefaultEWError(default_ew)
+
+        def scrub(twp_rge_or_section, ns_ew_sec):
+            """
+            Scrub the `twp`, `rge`, and `sec` from input into the
+            component parts. (Use `ocr_scrub` if appropriate.) Run
+            separately for twp, rge, and section.
+
+            :param twp_rge_or_section: A candidate `twp` or `rge`
+            :param ns_ew_sec: "ns" (if running Twp), "ew" (if running
+            Rge), or None (if running Sec)
+            :return: 2-tuple: (scrubbed Twp/Rge/Sec number, direction).
+            Note that direction will always be evaluated to None when
+            running this for Section.
+            """
+            twprgesec_num = twp_rge_or_section
+
+            # Determine whether we're running Twp, Rge, or Section.
+            # Default to Twp.
+            direction = default_ns
+            direction_options = ('n', 's')
+            if ns_ew_sec == "ew":
+                # Rge.
+                direction = default_ew
+                direction_options = ('e', 'w')
+            elif ns_ew_sec is None:
+                # Sec.
+                direction = None
+
+            # If it's not a string, we don't need to ocr_scrub it.
+            if not isinstance(twp_rge_or_section, str):
+                return twprgesec_num, None
+
+            if (direction is not None
+                    and twp_rge_or_section.lower().endswith(direction_options)):
+                # Running Twp or Rge.
+                twprgesec_num = twp_rge_or_section[:-1]
+                direction = twp_rge_or_section[-1].lower()
+
+            if ocr_scrub:
+                twprgesec_num = _ocr_scrub_alpha_to_num(twprgesec_num)
+
+            return twprgesec_num, direction
+
+        twp, ns = scrub(twp, "ns")
+        rge, ew = scrub(rge, "ew")
+        sec, _ = scrub(sec, None)
+
+        if ns is None:
+            ns = default_ns
+        if ew is None:
+            ew = default_ew
+
+        if twp in [None, ""]:
             twp = TRS._UNDEF_TWP
         try:
             twp = int(twp)
@@ -6100,11 +6171,12 @@ class TRS:
             # Str has encoded N/S data, or is an error or undefined Twp.
             pass
         if isinstance(twp, int):
-            twp = f"{twp}{default_ns}"
-        if twp != TRS._UNDEF_TWP and re.search(TRS._TWP_RGX, twp) is None:
+            twp = f"{twp}{ns.lower()}"
+        if twp != TRS._UNDEF_TWP and re.search(rf"\b{TRS._TWP_RGX}\b", twp) is None:
+            # Couch the pattern in '\b' to ensure we match the entire str.
             twp = TRS._ERR_TWP
 
-        if rge is None:
+        if rge is [None, ""]:
             rge = TRS._UNDEF_RGE
         try:
             rge = int(rge)
@@ -6112,18 +6184,19 @@ class TRS:
             # Str has encoded E/W data, or is an error or undefined Rge.
             pass
         if isinstance(rge, int):
-            rge = f"{rge}{default_ew}"
-        if rge != TRS._UNDEF_RGE and re.search(TRS._RGE_RGX, rge) is None:
+            rge = f"{rge}{ew.lower()}"
+        if rge != TRS._UNDEF_RGE and re.search(rf"\b{TRS._RGE_RGX}\b", rge) is None:
             rge = TRS._ERR_RGE
 
         if sec is None:
             sec = TRS._UNDEF_SEC
         else:
             sec = str(sec).rjust(2, '0')
-        if sec != TRS._UNDEF_SEC and re.search(TRS._SEC_RGX, sec) is None:
+        if sec != TRS._UNDEF_SEC and re.search(rf"\b{TRS._SEC_RGX}\b", sec) is None:
             sec = TRS._ERR_SEC
 
         return f"{twp}{rge}{sec}"
+
 
     @staticmethod
     def trs_to_dict(trs) -> dict:
@@ -6223,6 +6296,12 @@ class TRS:
         ``TRS._UNDEF_TWP``, etc.) then the unpacker regex needs to be
         recompiled to account for these.
 
+        Also recompiles and stores these class attributes:
+            TRS._ERR_TWPRGE
+            TRS._ERR_TRS
+            TRS._UNDEF_TWPRGE
+            TRS._UNDEF_TRS
+
         WARNING: This functionality is not supported.  Many pieces of
         this module rely on these attributes.  Thus, changing them is
         liable to introduce bugs in other functionality.  However, with
@@ -6230,12 +6309,6 @@ class TRS:
         defaults for error/undefined Twp/Rge/Sec. (You would be well
         advised to avoid using any characters that have any special
         meaning in regex patterns, generally.)
-
-        Also recompiles and stores these class attributes:
-            TRS._ERR_TWPRGE
-            TRS._ERR_TRS
-            TRS._UNDEF_TWPRGE
-            TRS._UNDEF_TRS
 
         :return: The newly compiled re.Pattern object (which will also
         have been set to the ``TRS._TRS_UNPACKER_REGEX`` class
