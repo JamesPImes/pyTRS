@@ -91,30 +91,13 @@ IMPLEMENTED_LAYOUT_EXAMPLES = (
 _DEFAULT_COLON = 'default_colon'
 _SECOND_PASS = 'second_pass'
 
-# Error Twp/Rge/Sec
-_ERR_SEC = 'XX'
-_ERR_TWP = 'XXXz'
-_ERR_RGE = _ERR_TWP
-_ERR_TWPRGE = f"{_ERR_TWP}{_ERR_RGE}"
-_ERR_TRS = f"{_ERR_TWPRGE}{_ERR_SEC}"
-
-# Undefined Twp/Rge/Sec
-_UNDEF_SEC = '__'
-_UNDEF_TWP = '___z'
-_UNDEF_RGE = _UNDEF_TWP
-_UNDEF_TWPRGE = f"{_UNDEF_TWP}{_UNDEF_RGE}"
-_UNDEF_TRS = f"{_UNDEF_TWPRGE}{_UNDEF_SEC}"
-
-# Regex patterns for unpacking Twp/Rge/Sec
-_TWP_RGX = r"((?P<twp_num>\d{1,3})(?P<ns>[nsNS]))"
-_RGE_RGX = r"((?P<rge_num>\d{1,3})(?P<ew>[ewEW]))"
-_SEC_RGX = r"\d{2}"
-
 _E_FLAG_SECERR = 'SecERROR'
 _E_FLAG_TWPRGE_ERR = 'TwpRgeERROR'
 
 
-def _compile_trs_unpacker_regex():
+def _compile_trs_unpacker_regex(
+        twp_rgx, err_twp, undef_twp, rge_rgx, err_rge, undef_rge,
+        sec_rgx, err_sec, undef_sec):
     """
     INTERNAL USE:
 
@@ -122,16 +105,27 @@ def _compile_trs_unpacker_regex():
     strings in the pyTRS 'TRS' format.
     :return: A re.Pattern that will match pyTRS 'TRS' strings, including
     undefined and error Twp/Rge/Sections.
+
+    :param twp_rgx: TRS._TWP_RGX
+    :param err_twp: TRS._ERR_TWP
+    :param undef_twp: TRS._UNDEF_TWP
+    :param rge_rgx: TRS._RGE_RGX
+    :param err_rge: TRS._ERR_RGE
+    :param undef_rge: TRS._UNDEF_RGE
+    :param sec_rgx: TRS._SEC_RGX
+    :param err_sec: TRS._ERR_SEC
+    :param undef_sec: TRS._UNDEF_SEC
+    :return: The compiled re.Pattern object.
     """
     # TODO: Check for and handle regex special chars in the various
     #  constants, in case those constants are adjusted by user.
     pattern = (
-        rf"(?P<twp>{_TWP_RGX}"
-        rf"|{_ERR_TWP}|{_UNDEF_TWP})"
-        rf"(?P<rge>{_RGE_RGX}"
-        rf"|{_ERR_RGE}|{_UNDEF_RGE})"
-        rf"(?P<sec>{_SEC_RGX}"
-        rf"|{_ERR_SEC}|{_UNDEF_SEC})?"
+        rf"(?P<twp>{twp_rgx}"
+        rf"|{err_twp}|{undef_twp})"
+        rf"(?P<rge>{rge_rgx}"
+        rf"|{err_rge}|{undef_rge})"
+        rf"(?P<sec>{sec_rgx}"
+        rf"|{err_sec}|{undef_sec})?"
     )
     rgx = re.compile(pattern, re.VERBOSE)
     return rgx
@@ -2877,12 +2871,12 @@ class PLSSParser:
             self.desc_is_flawed = True
 
         for tract in self.parsed_tracts:
-            if tract.trs.startswith(_ERR_TWPRGE):
+            if tract.trs.startswith(TRS._ERR_TWPRGE):
                 self.e_flags.append(_E_FLAG_TWPRGE_ERR)
                 self.e_flag_lines.append(
                     (_E_FLAG_TWPRGE_ERR, f"{tract.trs}:{tract.desc}"))
                 self.desc_is_flawed = True
-            if tract.trs.endswith(_ERR_SEC):
+            if tract.trs.endswith(TRS._ERR_SEC):
                 self.e_flags.append(_E_FLAG_SECERR)
                 self.e_flag_lines.append(
                     (_E_FLAG_SECERR, f"{tract.trs}:{tract.desc}"))
@@ -3327,7 +3321,7 @@ class PLSSParser:
         # initial TR is the only difference.
 
         # Defaults to a T&R error.
-        working_twprge = _ERR_TWPRGE
+        working_twprge = TRS._ERR_TWPRGE
         # For TR_DESC_S, will pop the working_twprge when we encounter the
         # first TR. However, for DESC_STR, need to preset our working_twprge
         # (if one is available):
@@ -3336,11 +3330,11 @@ class PLSSParser:
 
         # Description block comes before section in these layouts, so we
         # pre-set the working_sec and working_multisec (if any are available):
-        working_sec = _ERR_SEC
+        working_sec = TRS._ERR_SEC
         if len(working_sec_list) > 0:
             working_sec = working_sec_list.pop(0)
 
-        working_multisec = [_ERR_SEC]
+        working_multisec = [TRS._ERR_SEC]
         if len(working_multisec_list) > 0:
             working_multisec = working_multisec_list.pop(0)
 
@@ -3397,7 +3391,7 @@ class PLSSParser:
             if marker_type == PLSSParser.TR_START:  # Pull the next T&R in our list
                 if len(working_twprge_list) == 0:
                     # Will cause a TR error if another TRS+Desc is created:
-                    working_twprge = _ERR_TWPRGE
+                    working_twprge = TRS._ERR_TWPRGE
                 else:
                     working_twprge = working_twprge_list.pop(0)
                 continue
@@ -3451,7 +3445,7 @@ class PLSSParser:
                 # to make a flawed Tract object with that secError.
                 tract_identified = {
                     "desc": text_block[sec_err_write_back_to_pos:markers_list[i + 1]].strip(),
-                    "sec": _ERR_SEC,
+                    "sec": TRS._ERR_SEC,
                     "twprge": working_twprge
                 }
                 new_tract_components.append(tract_identified)
@@ -3459,14 +3453,14 @@ class PLSSParser:
             elif marker_type == PLSSParser.SEC_START:
                 if len(working_sec_list) == 0:
                     # Will cause a section error if another TRS+Desc is created
-                    working_sec = _ERR_SEC
+                    working_sec = TRS._ERR_SEC
                 else:
                     working_sec = working_sec_list.pop(0)
 
             elif marker_type == PLSSParser.MULTISEC_START:
                 if len(working_multisec_list) == 0:
                     # Will cause a section error if another TRS+Desc is created
-                    working_multisec = [_ERR_SEC]
+                    working_multisec = [TRS._ERR_SEC]
                 else:
                     working_multisec = working_multisec_list.pop(0)
 
@@ -3539,9 +3533,9 @@ class PLSSParser:
         markers_dict = self.parse_cache["markers_dict"]
 
         # Default to errors for T/R and Sec.
-        working_twprge = _ERR_TWPRGE
-        working_sec = _ERR_SEC
-        working_multisec = [_ERR_SEC]
+        working_twprge = TRS._ERR_TWPRGE
+        working_sec = TRS._ERR_SEC
+        working_multisec = [TRS._ERR_SEC]
 
         if len(working_twprge_list) > 0 and layout == S_DESC_TR:
             working_twprge = working_twprge_list.pop(0)
@@ -3590,14 +3584,14 @@ class PLSSParser:
             if marker_type == PLSSParser.SEC_START:
                 if len(working_sec_list) == 0:
                     # Will cause a section error if another TRS+Desc is created
-                    working_sec = _ERR_SEC
+                    working_sec = TRS._ERR_SEC
                 else:
                     working_sec = working_sec_list.pop(0)
 
             elif marker_type == PLSSParser.MULTISEC_START:
                 if len(working_multisec_list) == 0:
                     # Will cause a section error if another TRS+Desc is created
-                    working_multisec = [_ERR_SEC]
+                    working_multisec = [TRS._ERR_SEC]
                 else:
                     working_multisec = working_multisec_list.pop(0)
 
@@ -3633,7 +3627,7 @@ class PLSSParser:
             elif marker_type == PLSSParser.TR_START:  # Pull the next T&R in our list
                 if len(working_twprge_list) == 0:
                     # Will cause a TR error if another TRS+Desc is created:
-                    working_twprge = _ERR_TWPRGE
+                    working_twprge = TRS._ERR_TWPRGE
                 else:
                     working_twprge = working_twprge_list.pop(0)
 
@@ -3677,16 +3671,16 @@ class PLSSParser:
         unused_with_context = []
 
         # Defaults to a T&R error if no T&R's were identified
-        working_twprge = _ERR_TWPRGE
+        working_twprge = TRS._ERR_TWPRGE
         if len(working_twprge_list) > 0:
             working_twprge = working_twprge_list.pop(0)
 
-        working_sec = _ERR_SEC
+        working_sec = TRS._ERR_SEC
         if len(working_sec_list) > 0:
             working_sec = working_sec_list.pop(0)
 
         # If no solo section was found, check for a multiSec we can pull from
-        if working_sec == _ERR_SEC and len(working_multisec_list) > 0:
+        if working_sec == TRS._ERR_SEC and len(working_multisec_list) > 0:
             # Just pull the first section in the first multiSec.
             working_sec = working_multisec_list.pop(0)[0]
 
@@ -5867,17 +5861,48 @@ class TRS:
     recalculated. (Optionally set the `.trs` using the separate
     Twp/Rge/Sec components with the `.set_twprgesec()` method.)
 
-    ** Note that error parses do NOT qualify as 'undefined'.
-    Undefined and error values are both stored as None. 'twp_undef',
+    ** Note that error parses do NOT qualify as 'undefined', but
+    undefined and error values are both stored as None. 'twp_undef',
     'rge_undef', and 'sec_undef' are included to differentiate between
     error vs. undefined, in case that distinction is needed.
     """
 
-    _TRS_UNPACKER_REGEX = _compile_trs_unpacker_regex()
+    # Str representations of error Twp/Rge/Sec
+    _ERR_SEC = 'XX'
+    _ERR_TWP = 'XXXz'
+    _ERR_RGE = _ERR_TWP
+    _ERR_TWPRGE = f"{_ERR_TWP}{_ERR_RGE}"
+    _ERR_TRS = f"{_ERR_TWPRGE}{_ERR_SEC}"
+
+    # Str representations of undefined Twp/Rge/Sec
+    _UNDEF_SEC = '__'
+    _UNDEF_TWP = '___z'
+    _UNDEF_RGE = _UNDEF_TWP
+    _UNDEF_TWPRGE = f"{_UNDEF_TWP}{_UNDEF_RGE}"
+    _UNDEF_TRS = f"{_UNDEF_TWPRGE}{_UNDEF_SEC}"
+
+    # Regex patterns for unpacking Twp/Rge/Sec
+    _TWP_RGX = r"((?P<twp_num>\d{1,3})(?P<ns>[nsNS]))"
+    _RGE_RGX = r"((?P<rge_num>\d{1,3})(?P<ew>[ewEW]))"
+    _SEC_RGX = r"\d{2}"
+
+    # Based on the above, compile the regex pattern for unpacking
+    # Twp/Rge/Sec in this module.
+    _TRS_UNPACKER_REGEX = _compile_trs_unpacker_regex(
+        twp_rgx=_TWP_RGX,
+        err_twp=_ERR_TWP,
+        undef_twp=_UNDEF_TWP,
+        rge_rgx=_RGE_RGX,
+        err_rge=_ERR_RGE,
+        undef_rge=_UNDEF_RGE,
+        sec_rgx=_SEC_RGX,
+        err_sec=_ERR_SEC,
+        undef_sec=_UNDEF_SEC
+    )
 
     def __init__(self, trs=None):
         if trs in ["", None]:
-            trs = _UNDEF_TRS
+            trs = TRS._UNDEF_TRS
         self.__trs_dict = None
 
         # Setting `.trs` attribute populates `.__trs_dict`, from which
@@ -6068,7 +6093,7 @@ class TRS:
             default_ew = PLSSDesc.MASTER_DEFAULT_EW
 
         if twp is None:
-            twp = _UNDEF_TWP
+            twp = TRS._UNDEF_TWP
         try:
             twp = int(twp)
         except ValueError:
@@ -6076,11 +6101,11 @@ class TRS:
             pass
         if isinstance(twp, int):
             twp = f"{twp}{default_ns}"
-        if twp != _UNDEF_TWP and re.search(_TWP_RGX, twp) is None:
-            twp = _ERR_TWP
+        if twp != TRS._UNDEF_TWP and re.search(TRS._TWP_RGX, twp) is None:
+            twp = TRS._ERR_TWP
 
         if rge is None:
-            rge = _UNDEF_RGE
+            rge = TRS._UNDEF_RGE
         try:
             rge = int(rge)
         except ValueError:
@@ -6088,15 +6113,15 @@ class TRS:
             pass
         if isinstance(rge, int):
             rge = f"{rge}{default_ew}"
-        if rge != _UNDEF_RGE and re.search(_RGE_RGX, rge) is None:
-            rge = _ERR_RGE
+        if rge != TRS._UNDEF_RGE and re.search(TRS._RGE_RGX, rge) is None:
+            rge = TRS._ERR_RGE
 
         if sec is None:
-            sec = _UNDEF_SEC
+            sec = TRS._UNDEF_SEC
         else:
             sec = str(sec).rjust(2, '0')
-        if sec != _UNDEF_SEC and re.search(_SEC_RGX, sec) is None:
-            sec = _ERR_SEC
+        if sec != TRS._UNDEF_SEC and re.search(TRS._SEC_RGX, sec) is None:
+            sec = TRS._ERR_SEC
 
         return f"{twp}{rge}{sec}"
 
@@ -6130,16 +6155,16 @@ class TRS:
             trs = trs.trs
 
         dct = {
-            "trs": _ERR_TRS,
-            "twp": _ERR_TWP,
+            "trs": TRS._ERR_TRS,
+            "twp": TRS._ERR_TWP,
             "twp_num": None,
             "twp_ns": None,
             "twp_undef": False,
-            "rge": _ERR_RGE,
+            "rge": TRS._ERR_RGE,
             "rge_num": None,
             "rge_ew": None,
             "rge_undef": False,
-            "sec": _ERR_SEC,
+            "sec": TRS._ERR_SEC,
             "sec_num": None,
             "sec_undef": False
         }
@@ -6147,7 +6172,7 @@ class TRS:
         # Default empty TRS to the undefined version (as opposed to an
         # error version, which would result otherwise).
         if trs in ["", None]:
-            trs = _UNDEF_TRS
+            trs = TRS._UNDEF_TRS
 
         mo = TRS._TRS_UNPACKER_REGEX.search(trs)
         if not mo:
@@ -6158,7 +6183,7 @@ class TRS:
             dct["twp"] = mo.group("twp")
             dct["twp_num"] = int(mo.group("twp_num"))
             dct["twp_ns"] = mo.group("ns")
-        elif mo.group("twp") == _UNDEF_TWP:
+        elif mo.group("twp") == TRS._UNDEF_TWP:
             dct["twp"] = mo.group("twp")
             dct["twp_undef"] = True
 
@@ -6167,7 +6192,7 @@ class TRS:
             dct["rge"] = mo.group("rge")
             dct["rge_num"] = int(mo.group("rge_num"))
             dct["rge_ew"] = mo.group("ew")
-        elif mo.group("rge") == _UNDEF_RGE:
+        elif mo.group("rge") == TRS._UNDEF_RGE:
             dct["rge"] = mo.group("rge")
             dct["rge_undef"] = True
 
@@ -6176,10 +6201,10 @@ class TRS:
         try:
             dct["sec_num"] = int(sec)
         except (ValueError, TypeError):
-            if sec == _UNDEF_SEC:
+            if sec == TRS._UNDEF_SEC:
                 dct["sec_undef"] = True
             else:
-                sec = _ERR_SEC
+                sec = TRS._ERR_SEC
         finally:
             dct["sec"] = sec
 
@@ -6187,6 +6212,53 @@ class TRS:
         dct["trs"] = f"{dct['twp']}{dct['rge']}{dct['sec']}"
 
         return dct
+
+    @classmethod
+    def _recompile_unpacker_regex(cls):
+        """
+        EXPERIMENTAL
+
+        If any of the class attributes for error/undefined Township,
+        Range, and/or Section have changed (``TRS._ERR_TWP``,
+        ``TRS._UNDEF_TWP``, etc.) then the unpacker regex needs to be
+        recompiled to account for these.
+
+        WARNING: This functionality is not supported.  Many pieces of
+        this module rely on these attributes.  Thus, changing them is
+        liable to introduce bugs in other functionality.  However, with
+        care (and some limitations), it may be possible to change the
+        defaults for error/undefined Twp/Rge/Sec. (You would be well
+        advised to avoid using any characters that have any special
+        meaning in regex patterns, generally.)
+
+        Also recompiles and stores these class attributes:
+            TRS._ERR_TWPRGE
+            TRS._ERR_TRS
+            TRS._UNDEF_TWPRGE
+            TRS._UNDEF_TRS
+
+        :return: The newly compiled re.Pattern object (which will also
+        have been set to the ``TRS._TRS_UNPACKER_REGEX`` class
+        attribute).
+        """
+        new_rgx = _compile_trs_unpacker_regex(
+            twp_rgx=TRS._TWP_RGX,
+            err_twp=TRS._ERR_TWP,
+            undef_twp=TRS._UNDEF_TWP,
+            rge_rgx=TRS._RGE_RGX,
+            err_rge=TRS._ERR_RGE,
+            undef_rge=TRS._UNDEF_RGE,
+            sec_rgx=TRS._SEC_RGX,
+            err_sec=TRS._ERR_SEC,
+            undef_sec=TRS._UNDEF_SEC)
+        cls._TRS_UNPACKER_REGEX = new_rgx
+
+        cls._ERR_TWPRGE = f"{cls._ERR_TWP}{cls._ERR_RGE}"
+        cls._ERR_TRS = f"{cls._ERR_TWPRGE}{cls._ERR_SEC}"
+        cls._UNDEF_TWPRGE = f"{cls._UNDEF_TWP}{cls._UNDEF_RGE}"
+        cls._UNDEF_TRS = f"{cls._UNDEF_TWPRGE}{cls._UNDEF_SEC}"
+
+        return new_rgx
 
 
 def decompile_twprge(twprge) -> tuple:
