@@ -16,6 +16,7 @@ from .parser import (
     PLSSDesc,
     Tract,
     TractList,
+    TRS,
     Config,
 
     # Misc. functions for examining / handling descriptions
