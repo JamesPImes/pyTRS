@@ -1092,14 +1092,14 @@ class Tract:
             .twp_num    -> Twp number (an int or None)
             .twp_ns     -> Twp direction ('n', 's', or None)
             .ns         -> same as `.twp_ns`
-            .twp_undef  -> A bool, whether the Twp was undefined. **
+            .twp_undef  -> whether the Twp was undefined. **
             .rge        -> Rge number + direction (a str or None)
             .rge_num    -> Rge num (an int or None)
             .rge_ew     -> Rge direction ('e', 'w', or None)
             .ew         -> same as `.rge_ew`
-            .rge_undef  -> A bool, whether the Rge was undefined. **
+            .rge_undef  -> whether the Rge was undefined. **
             .sec_num    -> Sec number (an int or None)
-            .sec_undef  -> A bool, whether the Sec was undefined. **
+            .sec_undef  -> whether the Sec was undefined. **
 
     ** Note that error parses do NOT qualify as 'undefined', but
     undefined and error values are both stored as None. 'twp_undef',
@@ -1336,7 +1336,7 @@ class Tract:
         if ocr_scrub is None:
             ocr_scrub = self.ocr_scrub
 
-        trs = TRS._construct_trs(
+        trs = TRS.construct_trs(
             twp, rge, sec, default_ns, default_ew, ocr_scrub)
         self.trs = trs
         return trs
@@ -1504,7 +1504,7 @@ class Tract:
             ocr_scrub = config.ocr_scrub
 
         # Compile the Twp/Rge/Sec into `trs`
-        trs = TRS._construct_trs(twp, rge, sec, default_ns, default_ew, ocr_scrub=ocr_scrub)
+        trs = TRS.construct_trs(twp, rge, sec, default_ns, default_ew, ocr_scrub=ocr_scrub)
 
         # Create a new Tract object and return it
         new_tract = Tract(
@@ -5840,13 +5840,13 @@ def trs_to_dict(trs) -> dict:
         "twp"       -> Twp number + direction (a str or None)
         "twp_num"   -> Twp number (an int or None);
         "twp_ns"    -> Twp direction ('n', 's', or None);
-        "twp_undef" -> A bool, whether the Twp was undefined. **
+        "twp_undef" -> whether the Twp was undefined. **
         "rge"       -> Rge number + direction (a str or None)
         "rge_num"   -> Rge num (an int or None);
         "rge_ew"    -> Rge direction ('e', 'w', or None)
-        "rge_undef" -> A bool, whether the Rge was undefined. **
+        "rge_undef" -> whether the Rge was undefined. **
         "sec_num"   -> Sec number (an int or None)
-        "sec_undef" -> A bool, whether the Sec was undefined. **
+        "sec_undef" -> whether the Sec was undefined. **
 
     ** Note that error parses do NOT qualify as 'undefined'. Undefined
     and error values are both stored as None. 'twp_undef', 'rge_undef',
@@ -5870,14 +5870,14 @@ class TRS:
         .twp_num    -> Twp number (an int or None)
         .twp_ns     -> Twp direction ('n', 's', or None)
         .ns         -> same as `.twp_ns`
-        .twp_undef  -> A bool, whether the Twp was undefined. **
+        .twp_undef  -> whether the Twp was undefined. **
         .rge        -> Rge number + direction (a str or None)
         .rge_num    -> Rge num (an int or None)
         .rge_ew     -> Rge direction ('e', 'w', or None)
         .ew         -> same as `.rge_ew`
-        .rge_undef  -> A bool, whether the Rge was undefined. **
+        .rge_undef  -> whether the Rge was undefined. **
         .sec_num    -> Sec number (an int or None)
-        .sec_undef  -> A bool, whether the Sec was undefined. **
+        .sec_undef  -> whether the Sec was undefined. **
 
     * Note that setting `.trs` will cause the other properties to be
     recalculated. (Optionally set the `.trs` using the separate
@@ -6066,7 +6066,7 @@ class TRS:
         passed as a str. (Defaults to ``False``.)
         :return: The compiled Twp/Rge/Sec in the pyTRS format.
         """
-        trs = TRS._construct_trs(
+        trs = TRS.construct_trs(
             twp, rge, sec, default_ns, default_ew, ocr_scrub)
         self.trs = trs
         return trs
@@ -6095,12 +6095,12 @@ class TRS:
         passed as a str. (Defaults to ``False``.)
         :return: The new pyTRS.TRS object.
         """
-        trs = TRS._construct_trs(
+        trs = TRS.construct_trs(
             twp, rge, sec, default_ns, default_ew, ocr_scrub)
         return TRS(trs)
 
     @staticmethod
-    def _construct_trs(
+    def construct_trs(
             twp, rge, sec, default_ns=None, default_ew=None, ocr_scrub=False):
         """
         Build a Twp/Rge/Sec in the pyTRS format from component parts.
@@ -6219,7 +6219,6 @@ class TRS:
 
         return f"{twp}{rge}{sec}"
 
-
     @staticmethod
     def trs_to_dict(trs) -> dict:
         """
@@ -6228,13 +6227,13 @@ class TRS:
             "twp"       -> Twp number + direction (a str or None)
             "twp_num"   -> Twp number (an int or None);
             "twp_ns"    -> Twp direction ('n', 's', or None);
-            "twp_undef" -> A bool, whether the Twp was undefined. **
+            "twp_undef" -> whether the Twp was undefined. **
             "rge"       -> Rge number + direction (a str or None)
             "rge_num"   -> Rge num (an int or None);
             "rge_ew"    -> Rge direction ('e', 'w', or None)
-            "rge_undef" -> A bool, whether the Rge was undefined. **
+            "rge_undef" -> whether the Rge was undefined. **
             "sec_num"   -> Sec number (an int or None)
-            "sec_undef" -> A bool, whether the Sec was undefined. **
+            "sec_undef" -> whether the Sec was undefined. **
 
         ** Note that error parses do NOT qualify as 'undefined'.
         Undefined and error values are both stored as None. 'twp_undef',
@@ -6309,7 +6308,7 @@ class TRS:
         return dct
 
     @classmethod
-    def _recompile_unpacker_regex(cls):
+    def _recompile(cls):
         """
         EXPERIMENTAL
 
