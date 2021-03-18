@@ -1443,10 +1443,10 @@ class Tract:
             twp=None,
             rge=None,
             sec=None,
-            source='',
-            orig_desc='',
             default_ns=None,
             default_ew=None,
+            source='',
+            orig_desc='',
             orig_index=0,
             desc_is_flawed=False,
             config=None,
@@ -1468,8 +1468,6 @@ class Tract:
         an int, the E/W will be pulled from `default_ew` or `config`
         parameters, or defaulted to 'w' if not specified.
         :param sec: Section. Pass as a str or an int (up to 2 digits).
-        :param source: Same as when initializing a Tract object.
-        :param orig_desc: Same as when initializing a Tract object.
         :param default_ns: How to interpret townships for which direction
         was not specified -- i.e. either 'n' or 's'. (Defaults to what
         is specified in the ``config=`` parameters, if any; and if not
@@ -1480,6 +1478,8 @@ class Tract:
         is specified in the ``config=`` parameters, if any; and if not
         there, then to ``PLSSDesc.MASTER_DEFAULT_EW``, which is 'w'
         unless otherwise specified.)
+        :param source: Same as when initializing a Tract object.
+        :param orig_desc: Same as when initializing a Tract object.
         :param orig_index: Same as when initializing a Tract object.
         :param desc_is_flawed: Same as when initializing a Tract object.
         :param config: Same as when initializing a Tract object.
@@ -1513,7 +1513,8 @@ class Tract:
             ocr_scrub = config.ocr_scrub
 
         # Compile the Twp/Rge/Sec into `trs`
-        trs = TRS.construct_trs(twp, rge, sec, default_ns, default_ew, ocr_scrub=ocr_scrub)
+        trs = TRS.construct_trs(
+            twp, rge, sec, default_ns, default_ew, ocr_scrub=ocr_scrub)
 
         # Create a new Tract object and return it
         new_tract = Tract(
