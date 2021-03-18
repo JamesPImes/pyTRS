@@ -1363,22 +1363,28 @@ class Tract:
 
     @staticmethod
     def from_twprgesec(
-            desc='', twp='0', rge='0', sec='0', source='', orig_desc='',
-            default_ns=None, default_ew=None, orig_index=0, desc_is_flawed=False,
-            config=None, init_parse_qq=None):
+            desc='',
+            twp=None,
+            rge=None,
+            sec=None,
+            source='',
+            orig_desc='',
+            default_ns=None,
+            default_ew=None,
+            orig_index=0,
+            desc_is_flawed=False,
+            config=None,
+            init_parse_qq=None):
         """
         Create a Tract object from separate Twp, Rge, and Sec components
-        rather than joined TRS. All parameters are the same as
-        __init__(), except that `trs=` is replaced with `twp=`, `rge`,
-        and `sec`. (If N/S or E/W are not specified, will pull defaults
+        rather than joined Twp/Rge/Sec. All parameters are the same as
+        __init__(), except that `trs=` is replaced with `twp=`, `rge=`,
+        and `sec=`. (If N/S or E/W are not specified, will pull defaults
         from `default_ns` and `default_ew` -- or failing that, from
         `config` parameters. If not specified in any of those places,
         will default to `'n'` and `'w'`, respectively.)
 
-        WARNING: This method has fewer guardrails on what gets set to
-        `.twp`, `.rge`, `.sec`, and `.trs` in the resulting Tract; so it
-        may be wise to preprocess those data before passing as args.
-
+        :param desc: Same as initializing a Tract object.
         :param twp: Township. Pass as a string (i.e. '154n'). If passed
         as an int, the N/S will be pulled from `default_ew` or `config`
         parameters, or defaulted to 'n' if not specified.
@@ -1386,6 +1392,23 @@ class Tract:
         an int, the E/W will be pulled from `default_ew` or `config`
         parameters, or defaulted to 'w' if not specified.
         :param sec: Section. Pass as a str or an int (up to 2 digits).
+        :param source: Same as when initializing a Tract object.
+        :param orig_desc: Same as when initializing a Tract object.
+        :param default_ns: How to interpret townships for which direction
+        was not specified -- i.e. either 'n' or 's'. (Defaults to what
+        is specified in the ``config=`` parameters, if any; and if not
+        there, then to ``PLSSDesc.MASTER_DEFAULT_NS``, which is 'n'
+        unless otherwise specified.)
+        :param default_ew: How to interpret ranges for which direction
+        was not specified -- i.e. either 'e' or 'w'. (Defaults to what
+        is specified in the ``config=`` parameters, if any; and if not
+        there, then to ``PLSSDesc.MASTER_DEFAULT_EW``, which is 'w'
+        unless otherwise specified.)
+        :param orig_index: Same as when initializing a Tract object.
+        :param desc_is_flawed: Same as when initializing a Tract object.
+        :param config: Same as when initializing a Tract object.
+        :param init_parse_qq: Same as when initializing a Tract object.
+        :return: The new Tract object, with the ``.trs`` compiled here.
         """
 
         # Compile the `config=` data into a Config object (or use the
@@ -1408,9 +1431,9 @@ class Tract:
         if default_ew is None:
             default_ew = PLSSDesc.MASTER_DEFAULT_EW
         # Ensure legal N/S and E/W values.
-        if default_ns.lower() not in ['n', 'north', 's', 'south']:
+        if default_ns.lower() not in ['n', 's']:
             raise DefaultNSError(default_ns)
-        if default_ew.lower() not in ['w', 'west', 'e', 'east']:
+        if default_ew.lower() not in ['w', 'e']:
             raise DefaultEWError(default_ew)
 
         # Whether to scrub twp, rge, and sec strings for OCR artifacts
@@ -1418,49 +1441,54 @@ class Tract:
         if config.ocr_scrub is not None:
             ocr_scrub = config.ocr_scrub
 
-        # Get twp in a standardized format, if we can
-        if not isinstance(twp, (int, str)):
-            twp = ''
-        elif isinstance(twp, int):
-            twp = f'{str(twp)}{default_ns}'
-        elif isinstance(twp, str):
-            if twp[-1].lower() not in ['n', 's']:
-                # If the final character is not 'n' or 's', apply our default_ns
-                twp = twp + default_ns
-            if ocr_scrub:
-                # If configured so, OCR-scrub all but the final character
-                twp = _ocr_scrub_alpha_to_num(twp[:-1]) + twp[-1]
-            twp = twp.lower()
+        def scrub(twp_rge_or_section, ns_ew_sec):
+            """
+            Scrub the `twp`, `rge`, and `sec` from input into the
+            component parts. (Use `ocr_scrub` if appropriate.) Run
+            separately for twp, rge, and section.
 
-        # Get rge in a standardized format, if we can
-        if not isinstance(rge, (int, str)):
-            rge = ''
-        elif isinstance(rge, int):
-            rge = f'{str(rge)}{default_ew}'
-        elif isinstance(rge, str):
-            if rge[-1].lower() not in ['e', 'w']:
-                # If the final character is not 'e' or 'w', apply our default_ew
-                rge = rge + default_ew
-            if ocr_scrub:
-                # If configured so, OCR-scrub all but the final character
-                rge = _ocr_scrub_alpha_to_num(rge[:-1]) + rge[-1]
-            rge = rge.lower()
+            :param twp_rge_or_section: A candidate `twp` or `rge`
+            :param ns_ew_sec: "ns" (if running Twp), "ew" (if running
+            Rge), or None (if running Sec)
+            :return: 2-tuple: (scrubbed Twp/Rge/Sec number, direction).
+            Note that direction will always be evaluated to None when
+            running this for Section.
+            """
+            twprgesec_num = twp_rge_or_section
 
-        # Get sec in a standardized format, if we can
-        if not isinstance(sec, (int, str)):
-            raise TypeError("`sec` must be an int or str.")
-        sec = str(sec)
-        try:
-            sec = str(int(sec)).rjust(2, '0')
-            if ocr_scrub:
-                # If configured so, OCR-scrub all characters
-                sec = _ocr_scrub_alpha_to_num(sec)
-        except ValueError:
-            pass
+            # Determine whether we're running Twp, Rge, or Section.
+            # Default to Twp.
+            direction = default_ns
+            direction_options = ('n', 's')
+            if ns_ew_sec == "ew":
+                # Rge.
+                direction = default_ew
+                direction_options = ('e', 'w')
+            elif ns_ew_sec is None:
+                # Sec.
+                direction = None
 
-        # compile a TRS, and see if it matches our known format
-        # TODO: Simplify the code above to rely on `TRS._construct_trs()`
-        trs = TRS._construct_trs(twp, rge, sec, default_ns, default_ew)
+            # If it's not a string, we don't need to ocr_scrub it.
+            if not isinstance(twp_rge_or_section, str):
+                return twprgesec_num, None
+
+            if (direction is not None
+                    and twp_rge_or_section.lower().endswith(direction_options)):
+                # Running Twp or Rge.
+                twprgesec_num = twp_rge_or_section[:-1]
+                direction = twp_rge_or_section[-1].lower()
+
+            if ocr_scrub:
+                twprgesec_num = _ocr_scrub_alpha_to_num(twprgesec_num)
+
+            return twprgesec_num, direction
+
+        twp_num, ns = scrub(twp, "ns")
+        rge_num, ew = scrub(rge, "ew")
+        sec, _ = scrub(sec, None)
+
+        # Compile the Twp/Rge/Sec into `trs`
+        trs = TRS._construct_trs(twp_num, rge_num, sec, default_ns=ns, default_ew=ew)
 
         # Create a new Tract object and return it
         new_tract = Tract(
@@ -6017,9 +6045,9 @@ class TRS:
         """
         Build a Twp/Rge/Sec in the pyTRS format from component parts.
 
-        :param twp: Township (a str or int).
-        :param rge: Range (a str or int).
-        :param sec: Section (a str or int)
+        :param twp: Township (a str or int -- ``'154n'`` or ``154``).
+        :param rge: Range (a str or int -- ``'97w'`` or ``97``).
+        :param sec: Section (a str or int -- ``'14'`` or ``14``).
         :param default_ns: (Optional) If `twp` wasn't specified as N or
         S, assume `default_ns` (pass as 'n' or 's'). If not specified,
         will fall back to PLSSDesc.MASTER_DEFAULT_NS (which is 'n'
@@ -6040,14 +6068,24 @@ class TRS:
 
         if twp is None:
             twp = _UNDEF_TWP
-        elif isinstance(twp, int):
+        try:
+            twp = int(twp)
+        except ValueError:
+            # Str has encoded N/S data, or is an error or undefined Twp.
+            pass
+        if isinstance(twp, int):
             twp = f"{twp}{default_ns}"
         if twp != _UNDEF_TWP and re.search(_TWP_RGX, twp) is None:
             twp = _ERR_TWP
 
         if rge is None:
             rge = _UNDEF_RGE
-        elif isinstance(rge, int):
+        try:
+            rge = int(rge)
+        except ValueError:
+            # Str has encoded E/W data, or is an error or undefined Rge.
+            pass
+        if isinstance(rge, int):
             rge = f"{rge}{default_ew}"
         if rge != _UNDEF_RGE and re.search(_RGE_RGX, rge) is None:
             rge = _ERR_RGE
