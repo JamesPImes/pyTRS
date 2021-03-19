@@ -8,8 +8,8 @@ The main parsing package. Primary classes:
 > TRS objects break a Twp/Rge/Sec into its components.
 > TractList objects contain a list of Tracts, and can compile that Tract
     data into broadly useful formats (i.e. into list, dict, string), as
-    well as custom methods for sorting, grouping, and filtering based on
-    the Tract data.
+    well as custom methods for sorting, grouping, and filtering the
+    Tract objects themselves.
 > Config objects configure parsing parameters for Tract and PLSSDesc.
 """
 
@@ -253,35 +253,53 @@ class PLSSDesc:
         description (controls how the parsing algorithm interprets the
         text).
 
-    ____ STREAMLINED OUTPUT OF THE PARSED DATA ____
+
+    ____ STREAMLINED OUTPUT OF THE PARSED TRACT DATA ____
     See the notable instance variables listed in the pytrs.Tract object
     documentation. Those variables can be compiled with these PLSSDesc
     methods:
+
     .quick_desc() -- Returns a string of the entire parsed description.
+
     .print_desc() -- Does the same thing, but prints to console.
+
     .tracts_to_dict() -- Compile the requested attributes for each Tract
         into a dict, and returns a list of those dicts (i.e. the list is
         equal in length to `.parsed_tracts` TractList).
+
     .tracts_to_list() -- Compile the requested attributes for each Tract
         into a list, and returns a nested list of those list (i.e. the
         top-level list is equal in length to `.parsed_tracts` TractList).
+
     .tracts_to_str() -- Compile the requested attributes for each Tract
         into a string-based table, and return a single string of all
         tables.
+
     .list_trs() -- Return a list of all twp/rge/sec combinations in the
         `.parsed_tracts` TractList, optionally removing duplicates.
+
     .print_data() -- Equivalent to `.tracts_to_dict()`, but the data
         is formatted as a table and printed to console.
 
-    ____ OTHER NOTABLE METHODS ____
-    These methods are used before or during the parse, and are typically
-    called automatically:
-    .deduce_layout() -- Deduces the layout of the description, if it was
-        not dictated at init, or otherwise.
-    .preprocess() -- Attempt to scrub the original description of common
-        flaws, typos, etc. into a format more consistently understood by
-        the parser. (Will be done automatically when the text gets
-        parsed.)
+
+    ____ SORTING / GROUPING / FILTERING TRACTS BY ATTRIBUTE VALUES ____
+    These methods will sort, group, or filter the Tract objects
+    contained in the ``.parsed_tracts`` attribute:
+
+    .sort_tracts() -- Custom sorting based on the Twp/Rge/Sec or
+    original parse order of each Tract. Can also take parameters from
+    the built-in ``list.sort()`` method.
+
+    .group() -- Group Tract objects into a dict of TractList objects,
+    based on their shared attribute values (e.g., by Twp/Rge), and
+    optionally sort them.
+
+    .filter() -- Get a new TractList of Tract objects that match some
+    condition, and optionally remove them from the original TractList.
+
+    .filter_errors() -- Get a new TractList of Tract objects whose Twp,
+    Rge, and/or Section were an error or undefined, and optionally
+    remove them from the original ``.parsed_tracts``.
     """
 
     NORTH = 'n'
@@ -1004,6 +1022,55 @@ class PLSSDesc:
 
     # Alias to mirror `sort_tracts`.
     group_tracts = group
+
+    def filter(self, key, drop=False):
+        """
+        Extract from ``.parsed_tracts`` all Tract objects that match the
+        `key` (a lambda function that returns a bool or bool-like
+        value when applied to each Tract object).
+
+        Returns a new TractList of all of the selected Tract objects.
+
+        :param key: a lambda function that returns a bool or bool-like
+        value when applied to a Tract object in ``.parsed_tracts``.
+        (True or True-like returned values will result in the inclusion
+        of that Tract).
+        :param drop: Whether to drop the matching Tracts from the
+        original ``.parsed_tracts``. (Defaults to ``False``)
+        :return: A new TractList of the selected Tract objects. (The
+        original ``.parsed_tracts`` will still hold all other Tract
+        objects, unless ``drop=True`` was passed.)
+        """
+        return self.parsed_tracts.filter(key, drop)
+
+    # Alias to mirror `sort_tracts`.
+    filter_tracts = filter
+
+    def filter_errors(self, twprge=True, sec=True, undef=False, drop=False):
+        """
+        Extract from ``.parsed_tracts`` all Tract objects that were
+        parsed with an error. Specifically extract Twp/Rge errors with
+        ``twprge=True`` (on by default); and get Sec errors with
+        ``sec=True`` (on by default).
+
+        Returns a new TractList of all of the selected Tract objects.
+
+        :param twprge: A bool, whether to get Twp/Rge errors. (Defaults
+        to ``True``)
+        :param sec: A bool, whether to get Sec errors. (Defaults to
+        ``True``)
+        :param undef: A bool, whether to get undefined Twps, Rges, or
+        Sections (in addition to error Twp/Rge/Sections). (Defaults to
+        ``False``)
+        :param drop: Whether to drop the selected Tracts from the
+        original ``.parsed_tracts``. (Defaults to ``False``)
+        :return: A new TractList containing all of the selected Tract
+        objects.
+        """
+        return self.parsed_tracts.filter_errors(twprge, sec, undef, drop)
+
+    # Alias to mirror `sort_tracts`
+    filter_error_tracts = filter_errors
 
 
 class Tract:
@@ -1788,26 +1855,35 @@ class TractList(list):
 
     ____ STREAMLINED OUTPUT OF THE PARSED TRACT DATA ____
     These methods have the same effect as in PLSSDesc objects.
+
     .quick_desc() -- Returns a string of the entire parsed description.
+
     .tracts_to_dict() -- Compile the requested attributes for each Tract
         into a dict, and returns a list of those dicts.
+
     .tracts_to_list() -- Compile the requested attributes for each Tract
         into a list, and returns a nested list of those list.
+
     .tracts_to_str() -- Compile the requested attributes for each Tract
         into a string-based table, and return a single string of all
         tables.
+
     .list_trs() -- Return a list of all twp/rge/sec combinations,
         optionally removing duplicates.
+
 
     ____ SORTING / GROUPING / FILTERING TRACTS BY ATTRIBUTE VALUES ____
     .sort_tracts() -- Custom sorting based on the Twp/Rge/Sec or
     original parse order of each Tract. Can also take parameters from
     the built-in ``list.sort()`` method.
+
     .group() -- Group Tract objects into a dict of TractList objects,
     based on their shared attribute values (e.g., by Twp/Rge), and
     optionally sort them.
+
     .filter() -- Get a new TractList of Tract objects that match some
     condition, and optionally remove them from the original TractList.
+
     .filter_errors() -- Get a new TractList of Tract objects whose Twp,
     Rge, and/or Section were an error or undefined, and optionally
     remove them from the original TractList.
@@ -1866,7 +1942,7 @@ class TractList(list):
         """
         Extract from this TractList all Tract objects that match the
         `key` (a lambda function that returns a bool or bool-like
-        value).
+        value when applied to each Tract object).
 
         Returns a new TractList of all of the selected Tract objects.
 
@@ -6802,10 +6878,8 @@ def flatten(list_or_tuple=None) -> list:
     """
     Unpack the elements in a nested list or tuple into a flattened list.
     """
-
     if list_or_tuple is None:
         return []
-
     if not isinstance(list_or_tuple, (list, tuple)):
         return [list_or_tuple]
     else:
@@ -6967,19 +7041,15 @@ def _clean_attributes(*attributes) -> list:
     Returns a flattened list of strings.
     """
     attributes = flatten(attributes)
-
     if len(attributes) == 0:
         return []
-
     clean = []
     for att in attributes:
         if not isinstance(att, str):
             raise TypeError(
                 'Attributes must be specified as strings (or list of strings).')
-
         else:
             clean.append(att)
-
     return clean
 
 
