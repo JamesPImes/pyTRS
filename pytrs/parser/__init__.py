@@ -7,7 +7,9 @@ The main parsing package. Primary classes:
 > Tract objects parse tract text into lots and aliquots.
 > TRS objects break a Twp/Rge/Sec into its components.
 > TractList objects contain a list of Tracts, and can compile that Tract
-    data into broadly useful formats (i.e. into list, dict, string).
+    data into broadly useful formats (i.e. into list, dict, string), as
+    well as custom methods for sorting, grouping, and filtering the
+    Tract objects themselves.
 > Config objects configure parsing parameters for Tract and PLSSDesc.
 """
 
@@ -29,6 +31,10 @@ from .parser import (
 
     # For outputting parsed data to csv files
     output_to_csv,
+
+    # For grouping / sorting Tract objects
+    group_tracts,
+    sort_grouped_tracts,
 
     # A tuple of currently implemented layouts
     IMPLEMENTED_LAYOUTS,
