@@ -49,6 +49,10 @@ from pytrs.parser import (
     # For outputting parsed data to csv files
     output_to_csv,
 
+    # For grouping / sorting Tract objects
+    group_tracts,
+    sort_grouped_tracts,
+
     # A tuple of currently implemented layouts
     IMPLEMENTED_LAYOUTS,
 
