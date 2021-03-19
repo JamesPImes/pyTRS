@@ -168,6 +168,18 @@ class DefaultEWError(ValueError):
         super().__init__(msg)
 
 
+class TractListTypeError(TypeError):
+    """Illegal object added to TractList."""
+    def __init__(self, additional_msg=None):
+        msg = (
+            "Only Tract objects (or unpacked PLSSDesc objects) "
+            "may be added to TractList."
+        )
+        if additional_msg:
+            msg = f"{msg} {additional_msg}"
+        super().__init__(msg)
+
+
 class PLSSDesc:
     """
     Each object of this class is a full PLSS description, taking the raw
@@ -1769,10 +1781,12 @@ class Tract:
 
 class TractList(list):
     """
-    A standard `list` that contains Tract objects, with added methods
-    for compiling and manipulating the data in the contained Tract objs.
+    A specialized ``list`` for Tract objects, with added methods for
+    compiling and manipulating the data inside the contained Tract
+    objects, and for sorting, grouping, and filtering the Tract objects
+    themselves.
 
-    ____ STREAMLINED OUTPUT OF THE PARSED DATA ____
+    ____ STREAMLINED OUTPUT OF THE PARSED TRACT DATA ____
     These methods have the same effect as in PLSSDesc objects.
     .quick_desc() -- Returns a string of the entire parsed description.
     .tracts_to_dict() -- Compile the requested attributes for each Tract
@@ -1799,14 +1813,54 @@ class TractList(list):
     remove them from the original TractList.
     """
 
-    def __init__(self, *args, **kwargs):
-        list.__init__(self, *args, **kwargs)
+    def __init__(self, iterable=()):
+        list.__init__(self, TractList._verify_iterable(iterable))
+
+    @staticmethod
+    def _verify_iterable(iterable):
+        """Type-check the contents of an iterable, and unpack the
+        ``.parsed_tracts`` attribute of a PLSSDesc object (if found)."""
+        if isinstance(iterable, TractList):
+            return iterable
+        tmp = []
+        for elem in iterable:
+            if isinstance(elem, Tract):
+                tmp.append(elem)
+            elif isinstance(elem, PLSSDesc):
+                tmp.extend(elem.parsed_tracts)
+            else:
+                raise TractListTypeError(
+                    f"Iterable contained {type(elem)!r}.")
+        return tmp
+
+    @staticmethod
+    def _verify_type(obj):
+        """Type-check a single object."""
+        if not isinstance(obj, Tract):
+            raise TractListTypeError(
+                f"Cannot accept {type(obj)!r}.")
+        return obj
 
     def __str__(self):
         return (
             "TractList\nTotal Tracts: {0}\n"
             "Tracts: {1}").format(
                 len(self), self.snapshot_inside())
+
+    def __setitem__(self, index, value):
+        list.__setitem__(self, index, TractList._verify_type(value))
+
+    def extend(self, iterable):
+        list.extend(self, TractList._verify_iterable(iterable))
+
+    def append(self, object):
+        if isinstance(object, PLSSDesc):
+            self.extend(object.parsed_tracts)
+        else:
+            list.append(self, TractList._verify_type(object))
+
+    def __iadd__(self, other):
+        list.__iadd__(self, TractList._verify_iterable(other))
 
     def filter(self, key, drop=False):
         """
@@ -2303,7 +2357,6 @@ class TractList(list):
         with matching values of the `by_attribute`.  (Will NOT be a
         nested dict.)
         """
-        tractlist.check_illegal()
         dct = {}
         for t in tractlist:
             val = getattr(t, by_attribute)
@@ -2353,14 +2406,6 @@ class TractList(list):
                 v.sort_tracts(key=sort_key, reverse=reverse)
         return tracts_dict
 
-    def check_illegal(self):
-        """
-        Ensure every element is a Tract object, or raise TypeError.
-        """
-        if not all(isinstance(t, Tract) for t in self):
-            raise TypeError(
-                'Only pytrs.Tract objects should be appended to TractList')
-
     def tracts_to_dict(self, *attributes) -> list:
         """
         Compile the data for each Tract object into a dict containing
@@ -2393,9 +2438,6 @@ class TractList(list):
             'qqs': ['NENW', 'NWNW', 'SENW', 'SWNW', 'NESW', 'NWSW']}
             ]
         """
-
-        # Ensure all elements are legal.
-        self.check_illegal()
 
         attributes = _clean_attributes(attributes)
 
@@ -2433,9 +2475,6 @@ class TractList(list):
             ]
         """
 
-        # Ensure all elements are legal.
-        self.check_illegal()
-
         attributes = _clean_attributes(attributes)
 
         return [t.to_list(attributes) for t in self]
@@ -2471,9 +2510,6 @@ class TractList(list):
             desc : Northwest Quarter, North Half South West Quarter
             qqs  : NENW, NWNW, SENW, SWNW, NESW, NWSW
         """
-
-        # Ensure all elements are legal.
-        self.check_illegal()
 
         attributes = _clean_attributes(attributes)
 
@@ -2521,9 +2557,6 @@ class TractList(list):
             154n97w14: NE/4
             154n97w15: Northwest Quarter, North Half South West Quarter
         """
-
-        # Ensure all elements are legal.
-        self.check_illegal()
 
         dlist = [
             t.quick_desc(delim=delim) for t in self
