@@ -6707,11 +6707,10 @@ class TRS:
 
     @trs.setter
     def trs(self, new_trs):
-        if new_trs in TRS.__CACHE:
-            # If we've already broken down this trs into a dict, just
-            # reuse it.
-            self.__trs_dict = TRS.__CACHE[new_trs]
-        else:
+        # If we've already broken down this trs into a dict, just
+        # reuse it.
+        self.__trs_dict = TRS.__CACHE.get(new_trs, None)
+        if not self.__trs_dict:
             self.__trs_dict = TRS._cache_trs_to_dict(new_trs)
 
     @property
@@ -7407,7 +7406,6 @@ __all__ = [
     find_twprge,
     find_sec,
     find_multisec,
-    output_to_csv,
     group_tracts,
     sort_grouped_tracts
 ]
