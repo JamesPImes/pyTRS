@@ -961,6 +961,26 @@ class PLSSDesc:
         # This functionality is handled by TractList method.
         return self.parsed_tracts.tracts_to_str(attributes)
 
+    def tracts_to_csv(
+            self, attributes, fp, open_mode="w", nice_headers=False):
+        """
+        Write Tract data to a .csv file.
+
+        :param attributes: a list of names (strings) of whichever
+        attributes should be included (see documentation on
+        `pytrs.Tract` objects for the names of relevant attributes).
+        :param fp: The filepath of the .csv file to write to.
+        :param open_mode: The `mode` in which to open the file we're
+        writing to. Either 'w' (new file) or 'a' (continue a file).
+        Defaults to 'w' (new file). (Mode 'r' will cause an error.)
+        :param nice_headers: a bool, whether to use the values in the
+        ``Tract.ATTRIBUTES`` dict for headers. Defaults to ``False``
+        (i.e. just use the attribute names themselves).
+        :return: None
+        """
+        self.parsed_tracts.tracts_to_csv(
+            attributes, fp, open_mode, nice_headers)
+
     def quick_desc(self, delim=': ', newline='\n') -> str:
         """
         Returns the entire .parsed_tracts list as a single string.
@@ -974,7 +994,7 @@ class PLSSDesc:
         txt = '''154N-97W
         Sec 14: NE/4
         Sec 15: Northwest Quarter, North Half South West Quarter'''
-        d_obj = pytrs.PLSSDesc(txt, parse_qq=True)
+        d_obj = pytrs.PLSSDesc(txt)
         d_obj.quick_desc()
 
         Example returns a multi-line string that looks like this when
@@ -1361,11 +1381,12 @@ class Tract:
         'rge_ew': 'Rge Direction',  # **
         'twprge': 'Twp & Rge',  # **
         'sec': 'Section',  # **
-        'sec_num': 'Section',  # **
+        'sec_num': 'Section Number',  # **
         'qqs': 'Aliquots',
         'lots': 'Lots',
         'lots_qqs': 'Lots & Aliquots',  # **
-        'orig_desc': 'Original Description',
+        'desc': 'Description',
+        'orig_desc': 'Original (full) PLSS Description',
         'pp_desc': 'Cleaned-Up Description',
         'desc_is_flawed': 'Fatal Parsing Errors Identified',
         'w_flags': 'Warning Flags',
@@ -1375,10 +1396,11 @@ class Tract:
         'flags': 'Warning & Error Flags',  # **
         'flag_lines': 'Warning & Error Flags with Context',  # **
         'lot_acres': 'Lot Acreages',
+        'source': 'Source'
     }
 
     def __init__(
-            self, desc='', trs=None, source='', orig_desc='', orig_index=0,
+            self, desc, trs=None, source=None, orig_desc=None, orig_index=0,
             desc_is_flawed=False, config=None, parse_qq=None):
         """
         :param desc: The description block within this TRS. (What will
@@ -1687,7 +1709,7 @@ class Tract:
             default_ns=None,
             default_ew=None,
             source=None,
-            orig_desc='',
+            orig_desc=None,
             orig_index=0,
             desc_is_flawed=False,
             config=None,
@@ -2804,6 +2826,61 @@ class TractList(list):
 
         return all_tract_data
 
+    def tracts_to_csv(
+            self, attributes, fp, open_mode="w", nice_headers=False):
+        """
+        Write Tract data to a .csv file.
+
+        :param attributes: a list of names (strings) of whichever
+        attributes should be included (see documentation on
+        `pytrs.Tract` objects for the names of relevant attributes).
+        :param fp: The filepath of the .csv file to write to.
+        :param open_mode: The `mode` in which to open the file we're
+        writing to. Either 'w' (new file) or 'a' (continue a file).
+        Defaults to 'w' (new file). (Mode 'r' will cause an error.)
+        :param nice_headers: a bool, whether to use the values in the
+        ``Tract.ATTRIBUTES`` dict for headers. Defaults to ``False``
+        (i.e. just use the attribute names themselves).
+        :return: None
+        """
+        if not fp:
+            raise ValueError("`fp` must be a filepath")
+
+        from pathlib import Path
+        fp = Path(fp)
+        headers = True
+        if fp.exists() and open_mode == "a":
+            headers = False
+
+        import csv
+        attributes = _clean_attributes(attributes)
+
+        def scrub_row(data):
+            """Convert lists/dicts in a row to strings."""
+            scrubbed = []
+            for elem in data:
+                if isinstance(elem, dict):
+                    elem = ','.join([f"{k}:{v}" for k, v in elem.items()])
+                elif isinstance(elem, (list, tuple)):
+                    elem = ', '.join(elem)
+                scrubbed.append(elem)
+            return scrubbed
+
+        with open(fp, mode=open_mode, newline="") as file:
+            writer = csv.writer(file)
+            header_row = attributes
+            if nice_headers:
+                header_row = [
+                    Tract.ATTRIBUTES.get(att, att) for att in attributes
+                ]
+            if headers:
+                writer.writerow(header_row)
+            for tract in self:
+                row = tract.to_list(attributes)
+                row = scrub_row(row)
+                writer.writerow(row)
+        return None
+
     def quick_desc(self, delim=': ', newline='\n') -> str:
         """
         Returns the description of all Tract objects (`.trs` + `.desc`)
@@ -2971,12 +3048,6 @@ class Config:
 
     For a guide to using Config objects general, printed to console:
         `pytrs.utils.config_help()`
-
-    Save Config object's set parameters to .txt file:
-        `Config.save_to_file()`
-
-    Import saved config parameters from .txt file:
-        `Config.from_file()`
 
     All possible parameters (call `pytrs.utils.config_parameters()` for
     definitions) -- any unspecified parameters will fall back to
@@ -3162,61 +3233,6 @@ class Config:
 
     def __str__(self):
         return self.decompile_to_text()
-
-    def save_to_file(self, filepath):
-        """
-        Save this Config object to .txt file.
-        """
-
-        if filepath[-4:].lower() != '.txt':
-            raise ValueError('Error: filename must be .txt file')
-
-        file = open(filepath, 'w')
-
-        atts_to_write = ['config_name'] + list(Config._CONFIG_ATTRIBUTES)
-
-        file.write(f"<Contains config data for parsing PLSSDesc "
-                   f"and/or Tract objects with the pytrs library.>\n")
-        file.write(f"<config_text: '{self.decompile_to_text()}'>\n")
-
-        def attrib_text(att):
-            """
-            Get the output text for the attribute from `self`
-            """
-            if hasattr(self, att):
-                text = f'{att}.{getattr(self, att)}\n'
-            else:
-                text = ''
-            return text
-
-        for att in atts_to_write:
-            file.write(attrib_text(att))
-
-        file.close()
-
-    @staticmethod
-    def from_file(filepath):
-        """
-        Compile and return a Config object from .txt file.
-        """
-
-        if filepath[-4:].lower() != '.txt':
-            raise ValueError('Error: filename must be .txt file')
-
-        with open(filepath, 'r') as file:
-            config_lines = file.readlines()
-
-        config = Config()
-
-        for line in config_lines:
-            # Ignore data stored in angle brackets
-            if line[0] == '<':
-                continue
-
-            # For each line, parse the 'attrib.val' pair, and commit to
-            # the config, using ._set_str_to_values()
-            config._set_str_to_values(line.strip('\n'))
-        return config
 
     @staticmethod
     def from_parent(parent, config_name='', suppress_layout=False):
@@ -6633,9 +6649,9 @@ class TRS:
     # will reuse the same dict for the same key in the `.__trs_dict`
     # attribute each TRS object, and not bother breaking it down again.
     # Note that the contents of a TRS object's ``.__trs_dict`` attribute
-    # are only ever accessed by attributes (e.g., ``Tract.twp``,
-    # ``TRS.twprge``, etc.) -- so in theory, somebody would really have
-    # to want to mess things up in order to do so.
+    # are only ever accessed by properties that protect them (e.g.,
+    # ``Tract.twp``, ``TRS.twprge``, etc.) -- so in theory, somebody
+    # would really have to want to mess things up in order to do so.
     _USE_CACHE = True
     __CACHE = {}
 
