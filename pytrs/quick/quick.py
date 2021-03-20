@@ -1,4 +1,4 @@
-# Copyright (c) 2020, James P. Imes, All rights reserved.
+# Copyright (c) 2020-2021, James P. Imes, All rights reserved.
 
 """
 Quick functions for simple parsing operations, without storing
@@ -35,7 +35,7 @@ def quick_parse_list(
     # Compile the config string:
     config = ','.join([f'{layout},{default_ns},{default_ew}', config])
 
-    d = PLSSDesc(text, layout=layout, config=config, init_parse=True)
+    d = PLSSDesc(text, layout=layout, config=config)
     return d.tracts_to_list('trs', 'desc')
 
 
@@ -64,7 +64,7 @@ def quick_flags(text) -> list:
     """
     from pytrs.parser import PLSSDesc
 
-    d = PLSSDesc(text, init_parse_qq=True)
+    d = PLSSDesc(text, parse_qq=True)
 
     return d.e_flags + d.w_flags
 
@@ -77,7 +77,7 @@ def quick_flag_lines(text) -> list:
     """
     from pytrs.parser import PLSSDesc
 
-    d = PLSSDesc(text, init_parse_qq=True)
+    d = PLSSDesc(text, parse_qq=True)
 
     return d.e_flag_lines + d.w_flag_lines
 
@@ -92,5 +92,5 @@ def quick_lots_qqs(text, clean_qq=False) -> list:
     etc.). Defaults to False.
     """
     from pytrs.parser import Tract
-    t = Tract(desc=text, config="clean_qq" * clean_qq, init_parse_qq=True)
+    t = Tract(desc=text, config="clean_qq" * clean_qq, parse_qq=True)
     return t.lots_qqs
