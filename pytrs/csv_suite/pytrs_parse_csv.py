@@ -76,7 +76,8 @@ def parse_csv(
     """
 
     from pytrs.parser import PLSSDesc, Tract
-    import os, csv
+    import os
+    import csv
     from pytrs.utils import flatten, alpha_to_num, num_to_alpha
 
     if out_file is None:
@@ -124,20 +125,20 @@ def parse_csv(
         write_headers = False
 
     # Default to opening in `write` mode (create new file). However...
-    openMode = 'w'
+    open_mode = 'w'
     if resume:
         # If we don't want to create a new file, will open in `append`
         # mode instead.
-        openMode = 'a'
+        open_mode = 'a'
 
-    write_file = open(out_file, openMode, newline='')
+    write_file = open(out_file, open_mode, newline='')
     writer = csv.writer(write_file)
 
     # If a .csv of number of rows has been requested, create and open
-    # that .csv file, using the same openMode as for `writer`
+    # that .csv file, using the same open_mode as for `writer`
     if num_tracts:
         num_out_file = f"{out_file[:-4]}_numTracts.csv"
-        num_write_file = open(num_out_file, openMode, newline='')
+        num_write_file = open(num_out_file, open_mode, newline='')
         num_writer = csv.writer(num_write_file)
         if not resume and write_headers:
             num_writer.writerow(['Rows_written_in_output'])
@@ -190,7 +191,7 @@ def parse_csv(
         # kwarg `config` (preference given to config_col)
         try:
             config = row[config_col-1]
-        except:
+        except TypeError:
             pass
         if config is None:
             config = ''
@@ -199,33 +200,37 @@ def parse_csv(
         # the end of the `config` string.
         try:
             config = f"{config},{row[layout_col-1]}"
-        except:
+        except TypeError:
             pass
 
         # Get text of description from row.
         try:
             desc_text = row[desc_col-1]
-        except IndexError:
+        except IndexError as error:
             print(
                 f"Warning: Could not access PLSS description at row {cur_row}, "
-                f"column {desc_col}.")
-            desc_text = ''
+                f"column {desc_col}.\n"
+                f"Check parameters and rerun.")
+            print("Error message:")
+            print(error)
+            input("Program will now close.")
+            raise error
 
         # Parse the description.
         if tract_level:
             # If we're parsing lots/QQ's in an already-parsed Tract (or
             # equivalent), do it, and pack the attributes into a nested list:
-            t = Tract(desc=desc_text, trs='', config=config, init_parse_qq=True)
-            all_Tract_data = [t.to_list(attribs)]
+            t = Tract(desc=desc_text, config=config, parse_qq=True)
+            all_tract_data = [t.to_list(attribs)]
         else:
             # Otherwise, parsing a full PLSS description, and the
             # `.tracts_to_list()` method outputs an already-nested list:
-            d = PLSSDesc(desc_text, config=config, init_parse_qq=True)
-            all_Tract_data = d.tracts_to_list(attribs)
+            d = PLSSDesc(desc_text, config=config, parse_qq=True)
+            all_tract_data = d.tracts_to_list(attribs)
 
         # We will write a row for each Tract object, but if none were found,
         # we want to write a minimum of 1 row.
-        num_rows_to_write = len(all_Tract_data)
+        num_rows_to_write = len(all_tract_data)
         if num_rows_to_write == 0:
             num_rows_to_write = 1
 
@@ -248,7 +253,7 @@ def parse_csv(
 
             try:
                 # Add the parsed Tract Data
-                for val in all_Tract_data[i]:
+                for val in all_tract_data[i]:
                     if isinstance(val, (list, tuple)) and unpack:
                         # If requested, `unpack` and join lists/tuples
                         # before writing:
