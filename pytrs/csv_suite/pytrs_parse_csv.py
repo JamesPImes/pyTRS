@@ -7,6 +7,8 @@ that there is one Tract per row; saves to a new .csv file.
 Built on the pyTRS library.
 """
 
+from pytrs.utils import gen_uid
+
 
 def parse_csv(
         in_file: str, desc_col: int, first_row=1, last_row=-1, header_row=-1,
@@ -244,11 +246,7 @@ def parse_csv(
 
             if include_uid:
                 # Generate UID in the format '0032.a-j':
-                uid = (
-                    f"{str(parse_num).rjust(4, '0')}"
-                    f".{num_to_alpha(i + 1).lower()}"
-                    f"-{num_to_alpha(num_rows_to_write).lower()}"
-                )
+                uid = gen_uid(num=parse_num, sub=i + 1, total_sub=num_rows_to_write)
                 to_write.append(uid)
 
             try:
@@ -260,7 +258,7 @@ def parse_csv(
                         to_write.append(', '.join(flatten(val)))
                     else:
                         to_write.append(val)
-            except:
+            except IndexError:
                 # If no data for this Tract (e.g., no tracts identified
                 # in the PLSSDesc object), fill with dummy data.
                 to_write.extend([f"{attrib}: n/a" for attrib in attribs])
