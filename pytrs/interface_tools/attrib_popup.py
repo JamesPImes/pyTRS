@@ -10,9 +10,11 @@ the user makes their choices, and then continue when it returns.
 import tkinter as tk
 from tkinter import messagebox
 from tkinter.ttk import Checkbutton
+from pytrs import Tract
+
 
 def prompt_attrib(
-        attribs='all', header='Desired Tract Attributes', show_ok=True,
+        attribs='standard', header='Desired Tract Attributes', show_ok=True,
         show_cancel=True, ok_button_text='Confirm Attributes',
         cancel_button_text='Cancel', confirm_cancel_prompt=None,
         prompt_after_ok=None):
@@ -28,7 +30,7 @@ def prompt_attrib(
 
     :param attribs: Which attributes to allow the user to select
     from; may be passed as a list, or as a string with attributes
-    separated by commas (defaults to 'all')
+    separated by commas (defaults to 'standard')
     :param header: Text to be placed above the attribute options.
     :param show_ok: Include the OK button.
     :param ok_button_text: A string, for custom text for the OK
@@ -66,27 +68,55 @@ class PromptAttrib(tk.Frame):
     returned from parsed PLSSDesc and/or Tract objects.
     """
 
-    # A dict of standard Tract object attributes that can be requested by
-    # the user -- keyed by attribute name, with values of a list containing
-    # [0] short description, and [1] default value.
-    STOCK_ATTRIBS = {
-        'trs': ["TRS (Township-Range-Section joined)", 1],
-        'twp': ['Township', 0],
-        'rge': ['Range', 0],
-        'sec': ['Section', 0],
-        'desc': ['Description Block', 1],
-        'pp_desc': ['Preprocessed (cleaner) description block', 0],
-        'lots': ['Lots', 0],
-        'qqs': ['Aliquot quarter-quarters (QQs)', 0],
-        'lots_qqs': ['Lots and Aliquot quarter-quarters (QQs)', 1],
-        'w_flags': ['Warning flags', 1],
-        'w_flag_lines': ['Warning flag lines', 0],
-        'e_flags': ['Error flags', 1],
-        'e_flag_lines': ['Error flag lines', 0]
+    # These will be options in the prompt.
+    STANDARD_OPTIONS = [
+        'trs',
+        'twp',
+        'rge',
+        'twprge',
+        'sec',
+        'desc',
+        'pp_desc',
+        'lots',
+        'qqs',
+        'lots_qqs',
+        'w_flags',
+        'w_flag_lines',
+        'e_flags',
+        'e_flag_lines',
+        'flags',
+        'flag_lines',
+    ]
+
+    # These attributes will be turned on by default.
+    DEFAULT_ON = [
+        'trs',
+        'desc',
+        'lots_qqs',
+        'flags'
+    ]
+
+    # Construct a dict of standard Tract object attributes that can be
+    # requested by the user -- keyed by attribute name, with values of a
+    # list containing [0] short description, and [1] default value.
+    # Use the 'header-like' values from the Tract.ATTRIBUTES dict as the
+    # short description.
+    STANDARD_ATTRIBUTES = {
+        att: [Tract.ATTRIBUTES[att], 0] for att in STANDARD_OPTIONS
     }
 
+    # And one for ALL of the attributes. (Turned on with `attribs='all'`)
+    ALL_ATTRIBUTES = {
+        att: [val, 0] for att, val in Tract.ATTRIBUTES.items()
+    }
+
+    # Turn on these attributes by default.
+    for att in DEFAULT_ON:
+        STANDARD_ATTRIBUTES[att][1] = 1
+        ALL_ATTRIBUTES[att][1] = 1
+
     def __init__(
-            self, master=None, attribs='all', target_attrib_var=None,
+            self, master=None, attribs='standard', target_attrib_var=None,
             header='Desired Tract Attributes', show_ok=True,
             show_cancel=True, ok_button_text='Confirm Attributes',
             cancel_button_text='Cancel', confirm_cancel_prompt=None,
@@ -100,7 +130,7 @@ class PromptAttrib(tk.Frame):
         a comma and no spaces.
         :param attribs: Which attributes to allow the user to select
         from; may be passed as a list, or as a string with attributes
-        separated by commas (defaults to 'all')
+        separated by commas (defaults to 'standard')
         :param header: Text to be placed above the attribute options.
         :param show_ok: Include the OK button.
         :param ok_button_text: A string, for custom text for the OK
@@ -150,8 +180,10 @@ class PromptAttrib(tk.Frame):
         self.exit_after_ok = exit_after_ok
         self.confirm_cancel_prompt = confirm_cancel_prompt
 
-        if attribs.lower() == 'all':
-            attribs = list(PromptAttrib.STOCK_ATTRIBS.keys())
+        if attribs.lower() == 'standard':
+            attribs = PromptAttrib.STANDARD_OPTIONS
+        elif attribs.lower() == 'all':
+            attribs = PromptAttrib.ALL_ATTRIBUTES.keys()
 
         if isinstance(attribs, str):
             attribs = attribs.replace(' ', '').split(',')
@@ -164,8 +196,8 @@ class PromptAttrib(tk.Frame):
             hdr.grid(row=0, column=0, sticky='n')
 
         # Generate a new IntVar for each available attribute option, set
-        # its value to the default value per STOCK_ATTRIBS, store it as
-        # an instance variable, and also set it to the attrib_dict.
+        # its value to the default value per STANDARD_ATTRIBUTES, store
+        # it as an instance variable, and also set it to the attrib_dict.
         # Finally, create a checkbutton for that attribute.
         # So for attribute 'qqs':
         #   -> self.QQListVar --> a tk.IntVar with initial value 0
@@ -175,11 +207,11 @@ class PromptAttrib(tk.Frame):
         cur_row = 5
         for att in attribs:
             new_var = tk.IntVar()
-            new_var.set(PromptAttrib.STOCK_ATTRIBS[att][1])
+            new_var.set(PromptAttrib.ALL_ATTRIBUTES[att][1])
             setattr(self, att + 'Var', new_var)
             self.attrib_dict[att] = new_var
             cb = Checkbutton(
-                self, text=PromptAttrib.STOCK_ATTRIBS[att][0],
+                self, text=PromptAttrib.ALL_ATTRIBUTES[att][0],
                 var=self.attrib_dict[att])
             cb.grid(row=cur_row, column=0, sticky='w', pady=2)
             cur_row += 1
