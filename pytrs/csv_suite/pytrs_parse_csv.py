@@ -72,7 +72,7 @@ def parse_csv(
     :param num_tracts: INTERNAL USE. Write a separate .csv file with
     each row containing the number of how many rows were written for the
     corresponding row in the main .csv. (Probably don't use it.)
-    :return: Returns 0 on success.
+    :return: Returns the filepath of the output file.
     """
 
     from pytrs.parser import PLSSDesc, Tract
@@ -276,4 +276,4 @@ def parse_csv(
         f"Done. Results written to '{out_file}'. "
         f"Be sure to examine results for fidelity."
     )
-    return 0
+    return out_file
