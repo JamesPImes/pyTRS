@@ -5012,7 +5012,7 @@ class PLSSParser:
         return twprge_text_blocks, discard_text_blocks
 
     @staticmethod
-    def _compile_twprge_mo(mo, default_ns=None, default_ew=None):
+    def _compile_twprge_mo(mo, default_ns=None, default_ew=None, ocr_scrub=False):
         """
         INTERNAL USE:
         Take a match object (`mo`) of an identified T&R, and return a string
@@ -5027,6 +5027,8 @@ class PLSSParser:
             default_ew = PLSSDesc.MASTER_DEFAULT_EW
 
         twp_num = mo[2]
+        if ocr_scrub:
+            twp_num = _ocr_scrub_alpha_to_num(twp_num)
         # Clean up any leading '0's in twp_num.
         # (Try/except is used to handle twprge_ocr_scrub_regex mo's, which
         # can contain alpha characters in `twp_num`.)
@@ -5057,6 +5059,8 @@ class PLSSParser:
         # Clean up any leading '0's in rge_num.
         # (Try/except is used to handle twprge_ocr_scrub_regex mo's, which
         # can contain alpha characters in `rge_num`.)
+        if ocr_scrub:
+            rge_num = _ocr_scrub_alpha_to_num(rge_num)
         try:
             rge_num = str(int(rge_num))
         except ValueError:
@@ -5362,7 +5366,8 @@ class PLSSPreprocessor:
                         continue
 
                 clean_twprge = PLSSPreprocessor._preprocess_twprge_mo(
-                    tr_mo, default_ns=default_ns, default_ew=default_ew)
+                    tr_mo, default_ns=default_ns, default_ew=default_ew,
+                    ocr_scrub=ocr_scrub)
 
                 # Add to the w_pp_desc all of the text since the last
                 # `i`, up to the identified tr_mo, and add the
@@ -5410,7 +5415,8 @@ class PLSSPreprocessor:
         return text
 
     @staticmethod
-    def _preprocess_twprge_mo(tr_mo, default_ns=None, default_ew=None) -> str:
+    def _preprocess_twprge_mo(
+            tr_mo, default_ns=None, default_ew=None, ocr_scrub=False) -> str:
         """
         INTERNAL USE:
         Take a T&R match object (tr_mo) and check for missing 'T', 'R',
@@ -5429,26 +5435,21 @@ class PLSSPreprocessor:
             default_ew = PLSSDesc.MASTER_DEFAULT_EW
 
         clean_tr = PLSSParser._compile_twprge_mo(
-            tr_mo, default_ns=default_ns, default_ew=default_ew)
-        twp, ns, rge, ew = decompile_twprge(clean_tr)
+            tr_mo, default_ns=default_ns, default_ew=default_ew,
+            ocr_scrub=ocr_scrub)
+        twprge = TRS(clean_tr)
 
         # Maintain the first character, if it's a whitespace.
         first = ''
         if tr_mo.group().startswith(('\n', '\t', ' ')):
             first = tr_mo.group()[0]
 
-        # TODO: I broke ocr_scrub... Turning this on raises this error:
-        #   <AttributeError: 'int' object has no attribute 'replace'>
-        #   ...So I need to re-implement ocr_scrub.
-        # twp = _ocr_scrub_alpha_to_num(twp)  # twp number
-        # rge = _ocr_scrub_alpha_to_num(rge)  # rge number
-
         # Maintain the last character, if it's a whitespace.
         last = ''
         if tr_mo.group().endswith(('\n', '\t', ' ')):
             last = tr_mo.group()[-1]
 
-        return f"{first}T{twp}{ns.upper()}-R{rge}{ew.upper()}{last}"
+        return f"{first}{twprge.pretty_twprge()}{last}"
 
     @staticmethod
     def static_preprocess(
@@ -6563,7 +6564,9 @@ class TractParser:
 # Misc. tools
 ########################################################################
 
-def find_twprge(text, default_ns=None, default_ew=None, preprocess=False):
+def find_twprge(
+        text, default_ns=None, default_ew=None, preprocess=False,
+        ocr_scrub=False):
     """
     Returns a list of all T&R's in the text (formatted as '000n000w',
     or with fewer digits as needed).
@@ -6576,9 +6579,11 @@ def find_twprge(text, default_ns=None, default_ew=None, preprocess=False):
     :param preprocess: A bool, whether to preprocess the text before
     searching for Twp/Rge's. (Defaults to `False`)
     """
+    if ocr_scrub:
+        preprocess = True
 
     if preprocess:
-        text = PLSSPreprocessor(text, default_ns, default_ew).text
+        text = PLSSPreprocessor(text, default_ns, default_ew, ocr_scrub).text
 
     # Search the PLSS description for all T&R's, and for each match,
     # compile a clean T&R
@@ -7168,9 +7173,15 @@ def decompile_twprge(twprge) -> tuple:
     (Twp number, Twp direction, Rge number, Rge direction)
         NOTE: If Twp and Rge cannot be matched, will return the error
         versions of Twp/Rge:
-            ('XXXz', None, 'XXXz', None).
+            ('XXXz', None, 'XXXz', None)
+        ... or the undefined versions:
+            ('___z', None, '___z', None)
         ex: '154n97w'   -> ('154', 'n', '97', 'w')
-        ex: 'XXXzXXXz   -> ('XXXz', None, 'XXXz', None)
+        ex: 'asdf'      -> ('XXXz', None, 'XXXz', None)
+        ex: ''          -> ('___z', None, '___z', None)
+
+    NOTE: This function is being deprecated. Better to use ``pytrs.TRS``
+    objects instead.
     """
     trs = TRS(twprge)
     twp_num = trs.twp_num
@@ -7181,7 +7192,7 @@ def decompile_twprge(twprge) -> tuple:
     if not trs.rge_num:
         rge_num = trs.rge
 
-    return twp_num, trs.twp_ns, rge_num, trs.rge_ew
+    return str(twp_num), trs.twp_ns, str(rge_num), trs.rge_ew
 
 
 def find_sec(text):
