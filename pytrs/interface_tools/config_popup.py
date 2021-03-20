@@ -2,8 +2,8 @@
 
 """
 A GUI app for choosing Config parameters for pyTRS parsing;
-results can be saved to .txt file or returned as text parameters (a
-string) or as a compiled pytrs.Config object.
+results can be returned as text parameters (a string) or as a compiled
+pytrs.Config object.
 A PromptConfig object can be used directly in a tkinter application; or
 the prompt_config() function can be used to hold up the program while
 the user makes their choices, and then continue when it returns.
@@ -24,7 +24,7 @@ from pytrs import parser
 
 
 def prompt_config(
-        parameters='all', show_ok=True, show_cancel=False, show_save=True,
+        parameters='all', show_ok=True, show_cancel=False,
         prompt_after_ok=None, ok_button_text='Confirm Config Parameters',
         cancel_button_text='Cancel', confirm_cancel_prompt=None):
     """
@@ -41,7 +41,6 @@ def prompt_config(
     :param parameters:
     :param show_ok:
     :param show_cancel:
-    :param show_save:
     :param prompt_after_ok:
     :param ok_button_text:
     :param cancel_button_text:
@@ -53,7 +52,7 @@ def prompt_config(
 
     popup = PromptConfig(
         master=None, target_config_var=None, parameters=parameters,
-        show_ok=show_ok, show_cancel=show_cancel, show_save=show_save,
+        show_ok=show_ok, show_cancel=show_cancel,
         prompt_after_ok=prompt_after_ok, cancel_button_text=cancel_button_text,
         ok_button_text=ok_button_text, exit_after_ok=True,
         external_target_var=config_holder,
@@ -69,7 +68,7 @@ class PromptConfig(tk.Frame):
     # Parameters that are set via radiobuttons:
     RB_PARAMS = [
         'clean_qq', 'include_lot_divs', 'require_colon', 'ocr_scrub', 'segment',
-        'init_preprocess', 'init_parse', 'init_parse_qq', 'break_halves'
+        'init_preprocess', 'wait_to_parse', 'parse_qq', 'break_halves'
     ]
 
     # Parameters that are set to a number and control how deeply to
@@ -80,7 +79,7 @@ class PromptConfig(tk.Frame):
 
     def __init__(
             self, master=None, target_config_var=None, parameters='all',
-            show_ok=True, show_cancel=False, show_save=True,
+            show_ok=True, show_cancel=False,
             prompt_after_ok=None, exit_after_ok=True, external_target_var=None,
             ok_button_text='Confirm Config Parameters',
             cancel_button_text='Cancel', confirm_cancel_prompt=None, **kw):
@@ -110,7 +109,6 @@ class PromptConfig(tk.Frame):
         :param show_cancel: Include the Cancel button.
         IMPORTANT: If the Cancel button is clicked, it will set the
         `target_config_var` to the string 'CANCEL' and close the window.
-        :param show_save: Include the Save button.
         :param confirm_cancel_prompt: A string to display in a
         yes/no messagebox when the Cancel button is clicked. Defaults
         to None.
@@ -154,7 +152,6 @@ class PromptConfig(tk.Frame):
 
         self.show_ok = show_ok
         self.show_cancel = show_cancel
-        self.show_save = show_save
         self.prompt_after_ok = prompt_after_ok
         self.exit_after_ok = exit_after_ok
         self.ok_button_text = ok_button_text
@@ -165,126 +162,120 @@ class PromptConfig(tk.Frame):
         # respective variable and help text (variables are set later)
         self.CONFIG_DEF = {
             'default_ns':
-                {'help':
-                     "If the dataset contains a Township whose N/S "
-                     "direction was not specified, the program will assume "
-                     "this specified direction."
-                 },
+                {'help': (
+                    "If the dataset contains a Township whose N/S "
+                    "direction was not specified, the program will assume "
+                    "this specified direction. (And if not specified here, "
+                    "will assumed North.)"
+                )},
 
             'default_ew':
-                {'help':
-                     "If the dataset contains a Range whose E/W direction "
-                     "was not specified, the program will assume this "
-                     "specified direction."
-                 },
+                {'help': (
+                    "If the dataset contains a Range whose E/W direction "
+                    "was not specified, the program will assume this "
+                    "specified direction. (And if not specified here, "
+                    "will assumed West.)"
+                )},
 
             'layout':
-                {'help':
-                     "If you know that the dataset is all laid out in the "
-                     "same format, you may get more accurate results if "
-                     "you force parsing according to one of these formats. "
-                     "However, if there are multiple layouts, or unknown "
-                     "layouts, it is probably wise to let the program "
-                     "deduce the layout for each.\n\n"
-                     "Below are examples of the possible layouts:\n\n"
-                     f"{parser.IMPLEMENTED_LAYOUT_EXAMPLES}"
-                 },
+                {'help': (
+                    "If you know that the dataset is all laid out in the "
+                    "same format, you may get more accurate results if "
+                    "you force parsing according to one of these formats. "
+                    "However, if there are multiple layouts, or unknown "
+                    "layouts, it is probably wise to let the program "
+                    "deduce the layout for each.\n\n"
+                    "Below are examples of the possible layouts:\n\n"
+                    f"{parser.IMPLEMENTED_LAYOUT_EXAMPLES}"
+                )},
 
             'clean_qq':
-                {'help':
-                     "Dataset contains only clean aliquots and lots; no "
-                     "metes-and-bounds, exceptions, or limitations. "
-                     "Anything that resembles an aliquot may be captured "
-                     "as such. For example, 'NE' will be captured as 'NE¼'."
-                     "\n\nThis may allow for broader parsing of lots and "
-                     "QQ's, but it can also result in numerous false "
-                     "matches, if the dataset is not simple and clean. For "
-                     "example, 'Northernmost one hundred feet of the NW/4' "
-                     "would match as 'Northernmost oNE¼ hundred feet of "
-                     "the NW¼'.\n\n"
-                     "Default: off (`False`)"
-                 },
+                {'help': (
+                    "Dataset contains only clean aliquots and lots; no "
+                    "metes-and-bounds, exceptions, or limitations. "
+                    "Anything that resembles an aliquot may be captured "
+                    "as such. For example, 'NE' will be captured as 'NE¼'."
+                    "\n\nThis may allow for broader parsing of lots and "
+                    "QQ's, but it can also result in numerous false "
+                    "matches, if the dataset is not simple and clean. For "
+                    "example, 'Northernmost one hundred feet of the NW/4' "
+                    "would match as 'Northernmost oNE¼ hundred feet of "
+                    "the NW¼'.\n\n"
+                    "Default: off (`False`)"
+                )},
 
             'include_lot_divs':
-                {'help':
-                     "If parsing lots, report any divisions of lots. For "
-                     "example, if True, 'N/2 of Lot 1' would be reported "
-                     "as 'N2 of L1'. If this is turned off, it would be "
-                     "reported as 'L1'.\n\n"
-                     "Default: on (`True`)"
-                 },
+                {'help': (
+                    "If parsing lots, report any divisions of lots. For "
+                    "example, if True, 'N/2 of Lot 1' would be reported "
+                    "as 'N2 of L1'. If this is turned off, it would be "
+                    "reported as 'L1'.\n\n"
+                    "Default: on (`True`)"
+                )},
 
             'require_colon':
-                {
-                    'help': (
-                        "Instruct a PLSSDesc object (whose layout is "
-                        "`TRS_desc` or `S_desc_TR`) to require a colon "
-                        "between the section number and the following "
-                        "description -- i.e. 'Section 14 NE/4' would NOT be "
-                        "picked up if 'require_colon' is on (`True`).  If "
-                        "turned off (`False`), then 'Section 14 NE/4' would "
-                        "be captured. However, this may result in false "
-                        "matches, depending on the dataset.\n\n"
-                        "(Note that the default parsing method is to first "
-                        "pass over instances that do not have a colon. If no "
-                        "sections are matched, it will make a second pass, "
-                        "this time allowing section numbers that are NOT "
-                        "followed by colon. If not set here, the potentially "
-                        "two-pass method will be used by default.)\n\n"
-                        "If set to on (`True`) here, that second-pass method "
-                        "will be prevented. If set to off (`False`) here, it "
-                        "will broadly capture all such instances, and the "
-                        "second-pass method will not be needed. (Again, "
-                        "beware false matches.)"
-                )
-                 },
+                {'help': (
+                    "Instruct a PLSSDesc object (whose layout is "
+                    "`TRS_desc` or `S_desc_TR`) to require a colon "
+                    "between the section number and the following "
+                    "description -- i.e. 'Section 14 NE/4' would NOT be "
+                    "picked up if 'require_colon' is on (`True`).  If "
+                    "turned off (`False`), then 'Section 14 NE/4' would "
+                    "be captured. However, this may result in false "
+                    "matches, depending on the dataset.\n\n"
+                    "(Note that the default parsing method is to first "
+                    "pass over instances that do not have a colon. If no "
+                    "sections are matched, it will make a second pass, "
+                    "this time allowing section numbers that are NOT "
+                    "followed by colon. If not set here, the potentially "
+                    "two-pass method will be used by default.)\n\n"
+                    "If set to on (`True`) here, that second-pass method "
+                    "will be prevented. If set to off (`False`) here, it "
+                    "will broadly capture all such instances, and the "
+                    "second-pass method will not be needed. (Again, "
+                    "beware false matches.)"
+                )},
 
             'ocr_scrub':
-                {
-                    'help': (
-                        "Attempt to iron out common OCR artifacts in a "
-                        "PLSSDesc object or Tract object (e.g., 'TIS4N-R97W' "
-                        "that should have been 'T154N-R97W'). (WARNING: may "
-                        "cause other issues.)\n\n"
-                        "Default: off (`False`)."
-                    )
-                 },
+                {'help': (
+                    "Attempt to iron out common OCR artifacts in a "
+                    "PLSSDesc object or Tract object (e.g., 'TIS4N-R97W' "
+                    "that should have been 'T154N-R97W'). (WARNING: may "
+                    "cause other issues.)\n\n"
+                    "Default: off (`False`)."
+                )},
 
             'segment':
-                {
-                    'help': (
-                        "While parsing, segment each description by T&R "
-                        "before identifying tracts, which MIGHT capture SOME "
-                        "descriptions whose layout changes partway through. "
-                        "(However, this cannot capture ALL changes in "
-                        "layouts.)\n\n"
-                        "Default: off (`False`)"
-                    )
-                 },
+                {'help': (
+                    "While parsing, segment each description by T&R "
+                    "before identifying tracts, which MIGHT capture SOME "
+                    "descriptions whose layout changes partway through. "
+                    "(However, this cannot capture ALL changes in "
+                    "layouts.)\n\n"
+                    "Default: off (`False`)"
+                )},
 
             'init_preprocess':
-                {'help':
-                     "Preprocess PLSS descriptions and Tracts upon "
-                     "initialization.\n\n"
-                     "Default: on (`True`)"
-                 },
+                {'help': (
+                    "Preprocess PLSS descriptions and Tracts upon "
+                    "initialization.\n\n"
+                    "Default: on (`True`)"
+                )},
 
-            'init_parse':
-                {'help':
-                     "Parse PLSS descriptions upon initialization (roughly "
-                     "equivalent to initializing a PLSSDesc object with "
-                     "`init_parse=True`).\n\n"
-                     "Default: off (`False`)"
-                 },
+            'wait_to_parse':
+                {'help': (
+                    "Wait to parse PLSS descriptions upon initialization, "
+                    "rather than doing it automatically.\n\n"
+                    "Default: off (`False` -- i.e. do parse by default)"
+                )},
 
-            'init_parse_qq':
-                {'help':
-                     "Parse PLSS descriptions AND Tracts (i.e. lots and "
-                     "QQ's) upon initialization (roughly equivalent to "
-                     "initializing an PLSSDesc or Tract object with "
-                     "`init_parse_qq=True`).\n\n"
-                     "Default: off (`False`)"
-                 },
+            'parse_qq':
+                {'help': (
+                    "Parse Tracts into lots and QQ's upon initialization. "
+                    "(If used with a PLSS description, its resulting Tracts "
+                    "will be parsed into lots/QQs.)\n\n"
+                    "Default: off (`False`)"
+                )},
 
             'qq_depth_min':
                 {
@@ -313,8 +304,8 @@ class PromptConfig(tk.Frame):
                          "Default: 2 (i.e. QQs)"
                     ),
                     'options': (
-                        "[Default: 2 -> QQ's]", '1 (quarter sections)', '2 (QQs)',
-                        '3', '4', '5'
+                        "[Default: 2 -> QQ's]", '1 (quarter sections)',
+                        '2 (QQs)', '3', '4', '5'
                     ),
                     'default_index': 1
                  },
@@ -415,8 +406,8 @@ class PromptConfig(tk.Frame):
         defaultNShbtn = tk.Button(
             combo_frame, text='?', padx=5,
             command=lambda: self.cf_help_clicked('default_ns'))
-        self.defaultNScombo = Combobox(combo_frame, width=8)
-        self.defaultNScombo['values'] = ('North', 'South')
+        self.defaultNScombo = Combobox(combo_frame, width=16)
+        self.defaultNScombo['values'] = ('[default: North]', 'North', 'South')
         defaultNSPrompt.grid(column=1, row=combo_frame_row, sticky='e')
         defaultNShbtn.grid(column=2, row=combo_frame_row)
         self.defaultNScombo.grid(column=3, row=combo_frame_row, sticky='w')
@@ -431,8 +422,8 @@ class PromptConfig(tk.Frame):
             combo_frame, text='?', padx=5,
             command=lambda: self.cf_help_clicked('default_ew'))
         defaultEWhbtn.grid(column=2, row=combo_frame_row)
-        self.defaultEWcombo = Combobox(combo_frame, width=8)
-        self.defaultEWcombo['values'] = ('West', 'East')
+        self.defaultEWcombo = Combobox(combo_frame, width=16)
+        self.defaultEWcombo['values'] = ('[default: West]', 'West', 'East')
         self.defaultEWcombo.grid(column=3, row=combo_frame_row, sticky='w')
         self.combos.append(self.defaultEWcombo)
         combo_frame_row += 1
@@ -477,7 +468,6 @@ class PromptConfig(tk.Frame):
             setattr(self, var_name + 'Var', new_var)
             self.CONFIG_DEF[var_name]['var'] = new_var
 
-
         # Prompt for qq_depth_min
         qq_depth_minPrompt = tk.Label(
             combo_frame, text="MINIMUM depth to parse QQs")
@@ -493,7 +483,6 @@ class PromptConfig(tk.Frame):
             qq_depth_minhbtn.grid(column=2, row=combo_frame_row)
             self.qq_depth_mincombo.grid(column=3, row=combo_frame_row, sticky='w')
             combo_frame_row += 1
-
 
         # Prompt for qq_depth_max
         qq_depth_maxPrompt = tk.Label(
@@ -568,15 +557,6 @@ class PromptConfig(tk.Frame):
                 command=self.cancel_clicked,
                 padx=CTRL_BTN_INNER_PADX, pady=CTRL_BTN_INNER_PADY)
             cancelButton.grid(
-                column=ctrl_col, row=0, padx=CTRL_COL_PADX, pady=CTRL_PADY)
-            ctrl_col += 1
-
-        if show_save:
-            saveButton = tk.Button(
-                control_frame, text='Save config as...',
-                command=self.save_clicked,
-                padx=CTRL_BTN_INNER_PADX, pady=CTRL_BTN_INNER_PADY)
-            saveButton.grid(
                 column=ctrl_col, row=0, padx=CTRL_COL_PADX, pady=CTRL_PADY)
             ctrl_col += 1
 
@@ -666,8 +646,12 @@ class PromptConfig(tk.Frame):
         """
         param_vals = []
         
-        param_vals.append(self.defaultNScombo.get()[0].lower())
-        param_vals.append(self.defaultEWcombo.get()[0].lower())
+        ns = self.defaultNScombo.get()[0].lower()
+        ew = self.defaultEWcombo.get()[0].lower()
+        if ns in ['n', 's']:
+            param_vals.append(ns)
+        if ew in ['e', 'w']:
+            param_vals.append(ew)
 
         # Setting qq_depth or qq_depth_min to larger than this will prompt
         # a warning.
@@ -747,53 +731,8 @@ class PromptConfig(tk.Frame):
             self.external_target_var['config_text'] = 'CANCEL'
             self.master.destroy()
 
-    def save_clicked(self):
-        """Call the config text compiler, and then save the results to a
-         user-specified filepath."""
-        config_text = self.compile_config_text()
-        if config_text is None:
-            return None
-
-        # The user will specify the output filename:
-        from tkinter import filedialog
-        output_file = filedialog.asksaveasfilename(
-            initialdir='/', initialfile='pytrs_config_data.txt',
-            filetypes=(("Text File", "*.txt"), ("All Files", "*.*")),
-            title="Save as...")
-        if output_file in ['', None]:
-            return 2
-        if not output_file.lower().endswith('.txt'):
-            messagebox.showerror('ERROR', 'Filename must end in .txt!')
-            return 1
-
-        self.do_save(config_text, output_file)
-
-    @staticmethod
-    def do_save(config_text, output_file):
-        """
-        Save the config_text (or compiled Config object data) to file.
-        Also pops a messagebox showing success or failure to save.
-        Returns nothing.
-        """
-
-        try:
-            # Compile config_text into a pytrs.Config object, and use
-            # Config.saveToFile()
-            parser.Config(config_text).save_to_file(output_file)
-            messagebox.showinfo(
-                'Saved!',
-                f"Successfully saved to '{output_file}'."
-            )
-        except:
-            messagebox.showerror(
-                'ERROR',
-                f"Could not save to '{output_file}'. Check read/write access, "
-                "and ensure '.txt' file extension."
-            )
-
 
 if __name__ == '__main__':
-    # If run on its own, can serve as a utility to generate Config data
-    # .txt files, used with pytrs.Config.fromFile()
-    pc = PromptConfig(show_save=True, show_ok=False, show_cancel=False)
+    # If run on its own, won't serve much purpose, but...
+    pc = PromptConfig(show_ok=True, show_cancel=True)
     pc.master.mainloop()
