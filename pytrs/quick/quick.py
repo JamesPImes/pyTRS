@@ -87,6 +87,7 @@ def quick_lots_qqs(text, clean_qq=False) -> list:
     Parses the text as though it were a Tract, and returns a single list
     of resulting lots and QQ's, without storing a `Tract` object.
 
+    :param text: The text to check.
     :param clean_qq: Whether to expect only clean lots and QQ's (i.e.
     no metes-and-bounds, exceptions, complicated descriptions,
     etc.). Defaults to False.
