@@ -29,9 +29,6 @@ from .parser import (
     break_trs,
     trs_to_dict,
 
-    # For outputting parsed data to csv files
-    output_to_csv,
-
     # For grouping / sorting Tract objects
     group_tracts,
     sort_grouped_tracts,
