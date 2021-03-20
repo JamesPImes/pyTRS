@@ -197,8 +197,8 @@ class PLSSDesc:
     NOTE: If direction for Township (N/S) or Range (E/W) is not provided
     in the text being parsed, it will be assumed. Specify ``default_ns``
     and ``default_ew`` for each ``PLSSDesc`` object to control how these
-    should be assumed (either as a ``config=`` parameter at init, or as
-    an argument in the appropriate method). Alternatively, we can change
+    should be assumed (as a ``config=`` parameter at init, or as an
+    argument in the appropriate method). Alternatively, we can change
     ``PLSSDesc.MASTER_DEFAULT_NS`` and ``PLSSDesc.MASTER_DEFAULT_EW``
     (class variables) to control all unspecified ``default_ns`` and
     ``default_ew`` for (these class variables will control for both
@@ -220,12 +220,12 @@ class PLSSDesc:
     -- Use init parameter `init_parse=True` (parses the PLSSDesc object
         into Tract objects, which are NOT yet parsed into lots and
         QQ's).
-    -- Use init parameter `init_parse_qq=True` (parses the PLSSDesc object
+    -- Use init parameter `parse_qq=True` (parses the PLSSDesc object
         into Tract objects, which ARE then immediately parsed into lots
         and QQ's)
-    -- Include string 'init_parse' and/or 'init_parse_qq' among the config
+    -- Include string 'init_parse' and/or 'parse_qq' among the config
         parameters that are passed in `config=` at init.
-    (NOTE: init_parse_qq entails init_parse, but not vice-versa.)
+    (NOTE: parse_qq entails init_parse, but not vice-versa.)
 
     ____ IMPORTANT INSTANCE VARIABLES AFTER PARSING ____
     .orig_desc -- The original text. (Gets set from the first positional
@@ -316,17 +316,19 @@ class PLSSDesc:
     _LEGAL_EW = ('e', 'w', 'E', 'W')
 
     def __init__(
-            self, orig_desc: str, source='', layout=None, config=None,
-            init_parse=None, init_parse_qq=None):
+            self,
+            orig_desc: str,
+            layout=None,
+            config=None,
+            parse_qq=None,
+            source=None,
+            wait_to_parse=False):
         """
         A 'raw' PLSS description of land. Will be parsed into one or
         more Tract objects, which are stored in the `.parsed_tracts`
         instance variable (a list).
 
         :param orig_desc: The text of the description to be parsed.
-        :param source: (Optional) A string specifying where the
-        description came from. (Useful if parsing multiple descriptions
-        and need to internally keep track where they came from.)
         :param layout: The pyTRS layout. If not specified, will be
         deduced when initialized, and/or when parsed. See available
         options in `pytrs.IMPLEMENTED_LAYOUTS` and examples in
@@ -335,17 +337,17 @@ class PLSSDesc:
         parameters to configure how the PLSSDesc object should be
         parsed. (See documentation on pytrs.Config objects for optional
         config parameters.)
-        :param init_parse: Whether to parse this PLSSDesc object when
-        initialized.
-        NOTE: If `init_parse` is specified as a kwarg at init, and also
-        specified in the `config` (i.e. config='init_parse'), then the
-        kwarg `init_parse=<bool>` will control.
-        :param init_parse_qq: Whether to parse this PLSSDesc object and
-        each resulting Tract object (into lots and QQs) when
-        initialized.
-        NOTE: If `init_parse_qq` is specified as a kwarg at init, and also
-        specified in the `config` (i.e. config='init_parse_qq'), then the
-        kwarg `init_parse_qq=<bool>` will control.
+        :param parse_qq: Whether to parse the Tract objects that result
+        from parsing this PLSSDesc into lots and QQs.
+        NOTE: If `parse_qq` is specified as a kwarg at init, and also
+        specified in the `config` (i.e. config='parse_qq'), then the
+        kwarg `parse_qq=<bool>` will control.
+        :param source: (Optional) Essentially any value (e.g., a unique
+        identifier number or document id) specifying where the
+        description came from. (Useful if parsing multiple descriptions
+        and need to internally keep track where they came from.)
+        :param wait_to_parse: A bool, whether to wait to parse at init.
+        (Defaults to ``False`` -- i.e., parse at init.)
         """
 
         # The original input of the PLSS description:
@@ -380,13 +382,12 @@ class PLSSDesc:
         # Whether we should preprocess the text at initialization:
         self.init_preprocess = False
 
-        # Whether we should parse the text at initialization:
-        self.init_parse = False
+        # Whether we should parse the text at initialization, or wait:
+        self.wait_to_parse = None
 
-        # Whether we should parse lots and aliquots in each Tract when created.
-        # NOTE: In effect, `init_parse_qq==True` also entails
-        # `self.init_parse==True` -- but NOT vice-versa
-        self.init_parse_qq = False
+        # Whether we should parse lots and aliquots in each Tract when
+        # it is created.
+        self.parse_qq = False
 
         # Whether tract descriptions are expected to have `clean_qq` (i.e.
         # nothing but clean aliquots and lots, with no typos, exceptions,
@@ -442,17 +443,15 @@ class PLSSDesc:
         # list of 2-tuples that caused error flags (error flag, text string)
         self.e_flag_lines = []
 
-        # If init_parse_qq specified as init parameter, it will override
+        # If parse_qq specified as init parameter, it will override
         # `config` parameter.
-        #    ex:   config='n,w,init_parse_qq', init_parse_qq=False   ...
-        #       -> Will NOT parse lots/QQs at init.
-        if init_parse_qq:
-            self.init_parse_qq = True
+        #    ex:   config='n,w,parse_qq.False', parse_qq=True   ...
+        #       -> WILL set parse_qq to True.
+        if parse_qq is not None:
+            self.parse_qq = parse_qq
 
-        # If kwarg-specified init_parse, that will override config input
-        #   (similar to init_parse_qq)
-        if init_parse:
-            self.init_parse = True
+        if wait_to_parse is not None:
+            self.wait_to_parse = wait_to_parse
 
         # Preprocessed description set to .orig_desc until parsed.
         self.pp_desc = self.orig_desc
@@ -461,10 +460,9 @@ class PLSSDesc:
         self.layout = layout
 
         # Optionally can run the parse when the object is initialized
-        # (off by default).
-        if self.init_parse or self.init_parse_qq:
+        # (on by default).
+        if not self.wait_to_parse:
             self.parse(commit=True)
-
         elif self.init_preprocess:
             self.preprocess(commit=True)
 
@@ -536,9 +534,20 @@ class PLSSDesc:
         self.__config = new_config
 
     def parse(
-            self, layout=None, clean_up=None, init_parse_qq=None,
-            clean_qq=None, require_colon=None, segment=None,
-            commit=True, qq_depth_min=None, qq_depth_max=None, qq_depth=None,
+            self,
+            layout=None,
+            default_ns=None,
+            default_ew=None,
+            clean_up=None,
+            parse_qq=None,
+            clean_qq=None,
+            require_colon=None,
+            segment=None,
+            ocr_scrub=None,
+            commit=True,
+            qq_depth_min=None,
+            qq_depth_max=None,
+            qq_depth=None,
             break_halves=None):
         """
         Parse the description. If parameter ``commit=True`` (default),
@@ -548,15 +557,30 @@ class PLSSDesc:
         ``TractList`` object containing the parsed ``Tract`` objects
         (i.e. what would be stored to ``.parsed_tracts``).
 
+        NOTE: Any parameters passed here will override the corresponding
+        ``.config`` settings, but any unspecified parameters will defer
+        to ``.config``.
+
         :param layout: The layout to be assumed. If not specified,
         defaults to whatever is in `self.layout`; and if not specified
         there, will be automatically deduced.
+        :param default_ns: How to interpret townships for which
+        direction was not specified -- i.e. either 'n' or 's'. (Defaults
+        to `self.default_ns` (if configured) or to
+        ``PLSSDesc.MASTER_DEFAULT_NS`` which is 'n' unless otherwise
+        configured.)
+        :param default_ew: How to interpret ranges for which direction
+        was not specified -- i.e. either 'e' or 'w'. (Defaults to
+        `self.default_ew` (if configured) or to
+        ``PLSSDesc.MASTER_DEFAULT_EW`` which is 'w' unless otherwise
+        configured.)
         :param clean_up: Whether to clean up common 'artefacts' from
         parsing. If not specified, defaults to False for parsing the
         'copy_all' layout, and `True` for all others.
-        :param init_parse_qq: Whether to parse each resulting Tract object
+        :param parse_qq: Whether to parse each resulting Tract object
         into lots and QQs when initialized. If not specified, defaults
-        to whatever is specified in `self.init_parse_qq`.
+        to whatever is specified in `self.parse_qq` (which is ``True``
+        unless otherwise configured).
         :param clean_qq: Whether to expect only clean lots and QQ's (i.e.
         no metes-and-bounds, exceptions, complicated descriptions,
         etc.). Defaults to whatever is specified in `self.clean_qq`
@@ -584,6 +608,10 @@ class PLSSDesc:
         descriptions whose layout changes partway through, but can also
         cause appropriate warning/error flags to be missed. If not
         specified here, defaults to whatever is set in `self.segment`.
+        :param ocr_scrub: Whether to try to iron out common OCR
+        'artifacts'. May cause unintended changes. (Defaults to
+        `.ocr_scrub` attribute, which is `False` unless otherwise
+        configured.)
         :param commit: Whether to commit the results to the appropriate
         instance attributes. Defaults to `True`.
         :param qq_depth_min: (Optional, and only relevant if parsing
@@ -631,13 +659,22 @@ class PLSSDesc:
         if require_colon is None:
             require_colon = self.require_colon
 
+        if not default_ns:
+            default_ns = self.default_ns
+
+        if not default_ew:
+            default_ew = self.default_ew
+
+        if ocr_scrub is None:
+            ocr_scrub = self.ocr_scrub
+
         # NOTE: If layout was specified at init or when calling
         # `.parse(layout=<string>)`, PLSSParser._parse_segment() will be
         # prevented from from deducing it.  Leave as None to allow the
         # parser to deduce.
 
-        if init_parse_qq is None:
-            init_parse_qq = self.init_parse_qq
+        if parse_qq is None:
+            parse_qq = self.parse_qq
 
         if clean_qq is None:
             clean_qq = self.clean_qq
@@ -666,26 +703,31 @@ class PLSSDesc:
         if qq_depth_max is None:
             qq_depth_max = self.qq_depth_max
 
+        # Parameters for `PLSSParser.parse()`.
+        config_params = {
+            "default_ns": default_ns,
+            "default_ew": default_ew,
+            "ocr_scrub": ocr_scrub,
+            "clean_up": clean_up,
+            "parse_qq": parse_qq,
+            "clean_qq": clean_qq,
+            "require_colon": require_colon,
+            "segment": segment,
+            "qq_depth_min": qq_depth_min,
+            "qq_depth_max": qq_depth_max,
+            "qq_depth": qq_depth,
+            "break_halves": break_halves,
+            "handed_down_config": handed_down_config,
+        }
+
         # ----------------------------------------
         # Parse it.
 
         parser = PLSSParser(
             text=self.orig_desc,
             mandated_layout=layout,
-            default_ns=self.default_ns,
-            default_ew=self.default_ew,
-            ocr_scrub=self.ocr_scrub,
-            clean_up=clean_up,
-            init_parse_qq=init_parse_qq,
-            clean_qq=clean_qq,
-            require_colon=require_colon,
-            segment=segment,
-            qq_depth_min=qq_depth_min,
-            qq_depth_max=qq_depth_max,
-            qq_depth=qq_depth,
-            break_halves=break_halves,
-            handed_down_config=handed_down_config,
-            parent=self
+            parent=self,
+            **config_params
         )
 
         if commit:
@@ -707,6 +749,61 @@ class PLSSDesc:
 
         return parser.parsed_tracts
 
+    def config_tracts(self, config):
+        """
+        Reconfigure all of the Tract objects in ``.parsed_tracts``
+        (without reconfiguring this PLSSDesc object).
+
+        :param config: Either a pytrs.Config object, or a string of
+        parameters to configure how the Tract object should be parsed.
+        (See documentation on pytrs.Config objects for optional config
+        parameters.)
+        :return: None
+        """
+        return self.parsed_tracts.config_tracts(config)
+
+    def parse_tracts(
+            self,
+            config=None,
+            clean_qq=None,
+            include_lot_divs=None,
+            qq_depth_min=None,
+            qq_depth_max=None,
+            qq_depth=None,
+            break_halves=None):
+        """
+        Parse (or re-parse) all of the Tract objects in
+        ``.parsed_tracts`` into lots/QQ's using the specified
+        parameters. Will NOT pull from this PLSSDesc object's
+        ``.config`` or other attributes, but WILL pull from each Tract
+        object's own ``.config`` (unless otherwise configured here).
+        Optionally reconfigure each Tract object prior to parsing into
+        lots/QQs by using the ``config=`` parameter here, or other
+        kwargs.  (The named kwargs will take priority over ``config``,
+        if there is a conflict.)
+
+        The parsed data will be committed to the Tract objects'
+        attributes, overwriting data from a prior parse.
+
+        :param config: (Optional) New Config parameters to apply to each
+        Tract before parsing. (If there is a conflict
+        :param clean_qq: Same as in ``Tract.parse()`` method.
+        :param include_lot_divs: Same as in ``Tract.parse()`` method.
+        :param qq_depth_min: Same as in ``Tract.parse()`` method.
+        :param qq_depth_max: Same as in ``Tract.parse()`` method.
+        :param qq_depth: Same as in ``Tract.parse()`` method.
+        :param break_halves: Same as in ``Tract.parse()`` method.
+        :return: None
+        """
+        return self.parsed_tracts.parse_tracts(
+                config=config,
+                clean_qq=clean_qq,
+                include_lot_divs=include_lot_divs,
+                qq_depth_min=qq_depth_min,
+                qq_depth_max=qq_depth_max,
+                qq_depth=qq_depth,
+                break_halves=break_halves)
+
     def deduce_layout(self, candidates=None):
         """
         Deduce the layout of the description.
@@ -722,7 +819,6 @@ class PLSSDesc:
         :return: Returns the algorithm's best guess at the layout (i.e.
         a string).
         """
-
         text = PLSSPreprocessor(self.orig_desc, ocr_scrub=self.ocr_scrub)
         return PLSSParser.deduce_layout(text, candidates=candidates)
 
@@ -780,7 +876,7 @@ class PLSSDesc:
         txt = '''154N-97W
         Sec 14: NE/4
         Sec 15: Northwest Quarter, North Half South West Quarter'''
-        d_obj = pytrs.PLSSDesc(txt, init_parse_qq=True)
+        d_obj = pytrs.PLSSDesc(txt, parse_qq=True)
         d_obj.tracts_to_dict('trs', 'desc', 'qqs')
 
         Example returns a list of two dicts:
@@ -795,7 +891,6 @@ class PLSSDesc:
             'qqs': ['NENW', 'NWNW', 'SENW', 'SWNW', 'NESW', 'NWSW']}
             ]
         """
-
         # This functionality is handled by TractList method.
         return self.parsed_tracts.tracts_to_dict(attributes)
 
@@ -815,7 +910,7 @@ class PLSSDesc:
         txt = '''154N-97W
         Sec 14: NE/4
         Sec 15: Northwest Quarter, North Half South West Quarter'''
-        d_obj = pytrs.PLSSDesc(txt, init_parse_qq=True)
+        d_obj = pytrs.PLSSDesc(txt, parse_qq=True)
         d_obj.tracts_to_list('trs', 'desc', 'qqs')
 
         Example returns a nested list:
@@ -829,7 +924,6 @@ class PLSSDesc:
                 ['NENW', 'NWNW', 'SENW', 'SWNW', 'NESW', 'NWSW']]
             ]
         """
-
         # This functionality is handled by TractList method.
         return self.parsed_tracts.tracts_to_list(attributes)
 
@@ -848,7 +942,7 @@ class PLSSDesc:
         txt = '''154N-97W
         Sec 14: NE/4
         Sec 15: Northwest Quarter, North Half South West Quarter'''
-        d_obj = pytrs.PLSSDesc(txt, init_parse_qq=True)
+        d_obj = pytrs.PLSSDesc(txt, parse_qq=True)
         d_obj.tracts_to_str('trs', 'desc', 'qqs')
 
         Example returns a multi-line string that looks like this when
@@ -864,7 +958,6 @@ class PLSSDesc:
             desc : Northwest Quarter, North Half South West Quarter
             qqs  : NENW, NWNW, SENW, SWNW, NESW, NWSW
         """
-
         # This functionality is handled by TractList method.
         return self.parsed_tracts.tracts_to_str(attributes)
 
@@ -881,7 +974,7 @@ class PLSSDesc:
         txt = '''154N-97W
         Sec 14: NE/4
         Sec 15: Northwest Quarter, North Half South West Quarter'''
-        d_obj = pytrs.PLSSDesc(txt, init_parse_qq=True)
+        d_obj = pytrs.PLSSDesc(txt, parse_qq=True)
         d_obj.quick_desc()
 
         Example returns a multi-line string that looks like this when
@@ -890,7 +983,6 @@ class PLSSDesc:
             154n97w14: NE/4
             154n97w15: Northwest Quarter, North Half South West Quarter
         """
-
         # This functionality is handled by TractList method.
         return self.parsed_tracts.quick_desc(delim=delim, newline=newline)
 
@@ -914,7 +1006,6 @@ class PLSSDesc:
         Return a list all the TRS's in .parsed_tracts list. Optionally
         remove duplicates with remove_duplicates=True.
         """
-
         # This functionality is handled by TractList method.
         return self.parsed_tracts.list_trs(remove_duplicates=remove_duplicates)
 
@@ -927,9 +1018,48 @@ class PLSSDesc:
         :param newline: Specify what separates Tracts from one another.
         (defaults to '\n').
         """
-
         # This functionality is handled by TractList method.
         self.parsed_tracts.print_desc(delim=delim, newline=newline)
+
+    def pretty_desc(self, word_sec='Sec ', justify_linebreaks=None):
+        """
+        Get a neatened-up description of all of the Tract objects in
+        ``.parsed_tracts``. (Does not access this PLSSDesc object's
+        description. Instead, compiles a cleaned-up description from the
+        Tract objects.)
+
+        Groups Tracts by Twp/Rge, but only to the extent possible while
+        maintaining the current sort order.
+
+        :param word_sec: How the word 'Section' should appear, INCLUDING
+        the following white space (if any). (Defaults to ``'Sec '``).
+        :param justify_linebreaks: (Optional) A string specifying how to
+        justify new lines after a linebreak (e.g., ``'\t'`` for a tab).
+        If not specified, will align new lines with the line above. To
+        use no justification at all, pass an empty string.
+        :return: a str of the compiled description.
+        """
+        return self.parsed_tracts.pretty_desc(word_sec, justify_linebreaks)
+
+    def pretty_print_desc(self, word_sec='Sec ', justify_linebreaks=None):
+        """
+        Print a neatened-up description of all of the Tract objects in
+        ``.parsed_tracts``. (Does not access this PLSSDesc object's
+        description. Instead, compiles a cleaned-up description from the
+        Tract objects.)
+
+        Groups Tracts by Twp/Rge, but only to the extent possible while
+        maintaining the current sort order.
+
+        :param word_sec: How the word 'Section' should appear, INCLUDING
+        the following white space (if any). (Defaults to ``'Sec '``).
+        :param justify_linebreaks: (Optional) A string specifying how to
+        justify new lines after a linebreak (e.g., ``'\t'`` for a tab).
+        If not specified, will align new lines with the line above. To
+        use no justification at all, pass an empty string.
+        :return: None (prints to console).
+        """
+        self.parsed_tracts.pretty_print_desc(word_sec, justify_linebreaks)
 
     def print_data(self, *attributes) -> None:
         """
@@ -1089,9 +1219,9 @@ class Tract:
     Parse the text into lots/QQs with the `.parse()` method at some
     point after init. Alternatively, trigger the parse at init in one of
     two ways:
-    -- Use init parameter `init_parse_qq=True`
-    -- Include 'init_parse_qq' in the config parameters that are passed
-        in `config=` at init.
+    -- Use init parameter `parse_qq=True`
+    -- Include 'parse_qq' in the config parameters that are passed in
+        `config=` at init.
 
     ____ IMPORTANT INSTANCE VARIABLES & PROPERTIES AFTER PARSING ____
     .trs -- The Twp/Rge/Sec combination in the standard pyTRS format.
@@ -1249,7 +1379,7 @@ class Tract:
 
     def __init__(
             self, desc='', trs=None, source='', orig_desc='', orig_index=0,
-            desc_is_flawed=False, config=None, init_parse_qq=None):
+            desc_is_flawed=False, config=None, parse_qq=None):
         """
         :param desc: The description block within this TRS. (What will
         be processed if this Tract object gets parsed into lots/QQs.)
@@ -1275,7 +1405,7 @@ class Tract:
         parameters to configure how the Tract object should be parsed.
         (See documentation on pytrs.Config objects for optional config
         parameters.)
-        :param init_parse_qq: Whether to parse the `desc` into lots/QQs at
+        :param parse_qq: Whether to parse the `desc` into lots/QQs at
         init. (Defaults to False)
         """
 
@@ -1339,16 +1469,18 @@ class Tract:
         # If a T&R is identified without 'North/South' specified, fall
         # back on this. Will be filled in when `.config` is set (if
         # applicable) or defaulted to 'n' shortly.
-        # NOTE: only applicable for using .from_twprgesec()
+        # NOTE: only applicable for using .from_twprgesec() or
+        # `.set_twprgesec()`
         self.default_ns = None
 
         # If a T&R is identified without 'East/West' specified, fall
         # back on this. Will be filled in when `.config` is set (if
         # applicable) or defaulted to 'w' shortly.
-        # NOTE: only applicable for using .from_twprgesec()
+        # NOTE: only applicable for using .from_twprgesec() or
+        # `.set_twprgesec()`
         self.default_ew = None
 
-        # NOTE: `init_preprocess`, `init_parse_qq`, `clean_qq`, &
+        # NOTE: `init_preprocess`, `parse_qq`, `clean_qq`, &
         # `include_lot_divs` will be changed when `.config` is set, if
         # needed
 
@@ -1356,7 +1488,7 @@ class Tract:
         self.init_preprocess = True
 
         # Whether we should parse lots and aliquots at init.
-        self.init_parse_qq = False
+        self.parse_qq = False
 
         # Whether the user expects tract descriptions to have `clean_qq` (i.e.
         # nothing but clean aliquots and lots, with no typos, exceptions,
@@ -1375,22 +1507,14 @@ class Tract:
         # Apply settings from kwarg `config=`
         self.config = config
 
-        # If `default_ns` has not yet been specified, default to 'n' :
-        if self.default_ns is None:
-            self.default_ns = PLSSDesc.MASTER_DEFAULT_NS
-
-        # If `default_ew` has not yet been specified, default to 'w' :
-        if self.default_ew is None:
-            self.default_ew = PLSSDesc.MASTER_DEFAULT_EW
-
-        # If kwarg-specified init_parse_qq, that will override config input
-        if isinstance(init_parse_qq, bool):
-            self.init_parse_qq = init_parse_qq
+        # If kwarg-specified parse_qq, that will override config input
+        if parse_qq is not None:
+            self.parse_qq = parse_qq
 
         self.pp_desc = self.desc
 
         # If config settings require calling parse() at init, do it now.
-        if self.init_parse_qq:
+        if self.parse_qq:
             self.parse(commit=True)
 
         elif self.init_preprocess:
@@ -1408,10 +1532,24 @@ class Tract:
 
     @property
     def trs(self):
+        """
+        Accessing the ``.trs`` property actually pulls the ``.trs``
+        attribute (a str) of the protected ``TRS`` object stored in
+        ``.__trs``. This contrasts with SETTING the ``.trs`` attribute,
+        which populates a new ``TRS`` object in ``.__trs`` instead.
+        :return:
+        """
         return self.__trs.trs
 
     @trs.setter
     def trs(self, new_trs):
+        """
+        Setting the ``.trs`` attribute populates all of the associated
+        properties via a pytrs.TRS objects.
+        :param new_trs: A Twp/Rge/Sec in the standard pyTRS format.
+        """
+        if isinstance(new_trs, TRS):
+            new_trs = new_trs.trs
         self.__trs = TRS(new_trs)
 
     def set_twprgesec(
@@ -1548,12 +1686,12 @@ class Tract:
             sec=None,
             default_ns=None,
             default_ew=None,
-            source='',
+            source=None,
             orig_desc='',
             orig_index=0,
             desc_is_flawed=False,
             config=None,
-            init_parse_qq=None):
+            parse_qq=None):
         """
         Create a Tract object from separate Twp, Rge, and Sec components
         rather than joined Twp/Rge/Sec. All parameters are the same as
@@ -1561,7 +1699,9 @@ class Tract:
         and `sec=`. (If N/S or E/W are not specified, will pull defaults
         from `default_ns` and `default_ew` -- or failing that, from
         `config` parameters. If not specified in any of those places,
-        will default to `'n'` and `'w'`, respectively.)
+        will default to ``PLSSDesc.MASTER_DEFAULT_NS`` and
+        ``PLSSDesc.MASTER_DEFAULT_EW``, which are `'n'` and `'w'`,
+        respectively, unless configured otherwise.)
 
         :param desc: Same as initializing a Tract object.
         :param twp: Township. Pass as a string (i.e. '154n'). If passed
@@ -1586,7 +1726,7 @@ class Tract:
         :param orig_index: Same as when initializing a Tract object.
         :param desc_is_flawed: Same as when initializing a Tract object.
         :param config: Same as when initializing a Tract object.
-        :param init_parse_qq: Same as when initializing a Tract object.
+        :param parse_qq: Same as when initializing a Tract object.
         :return: The new Tract object, with the ``.trs`` compiled here.
         """
 
@@ -1603,12 +1743,6 @@ class Tract:
             default_ns = config.default_ns
         if default_ew is None:
             default_ew = config.default_ew
-        # If still not specified (i.e. neither set in kwarg, nor in config),
-        # default to 'n' and 'w', respectively.
-        if default_ns is None:
-            default_ns = PLSSDesc.MASTER_DEFAULT_NS
-        if default_ew is None:
-            default_ew = PLSSDesc.MASTER_DEFAULT_EW
 
         # Whether to scrub twp, rge, and sec strings for OCR artifacts
         ocr_scrub = False
@@ -1623,7 +1757,7 @@ class Tract:
         new_tract = Tract(
             desc=desc, trs=trs, source=source, orig_desc=orig_desc,
             orig_index=orig_index, desc_is_flawed=desc_is_flawed, config=config,
-            init_parse_qq=init_parse_qq)
+            parse_qq=parse_qq)
         return new_tract
 
     @property
@@ -1937,6 +2071,63 @@ class TractList(list):
 
     def __iadd__(self, other):
         list.__iadd__(self, TractList._verify_iterable(other))
+
+    def config_tracts(self, config):
+        """
+        Reconfigure all of the Tract objects in this TractList.
+
+        :param config: Either a pytrs.Config object, or a string of
+        parameters to configure how the Tract object should be parsed.
+        (See documentation on pytrs.Config objects for optional config
+        parameters.)
+        :return: None
+        """
+        for tract in self:
+            tract.config = config
+        return None
+
+    def parse_tracts(
+            self,
+            config=None,
+            clean_qq=None,
+            include_lot_divs=None,
+            qq_depth_min=None,
+            qq_depth_max=None,
+            qq_depth=None,
+            break_halves=None):
+        """
+        Parse (or re-parse) all of the Tract objects in this TractList
+        into lots/QQ's using the specified parameters. Will pull parsing
+        parameters from each Tract object's own ``.config`` (unless
+        otherwise configured here).  Optionally reconfigure each Tract
+        object prior to parsing into lots/QQs by using the ``config=``
+        parameter here, or other kwargs.  (The named kwargs will take
+        priority over ``config``, if there is a conflict.)
+
+        The parsed data will be committed to the Tract objects'
+        attributes, overwriting data from a prior parse.
+
+        :param config: (Optional) New Config parameters to apply to each
+        Tract before parsing. (If there is a conflict
+        :param clean_qq: Same as in ``Tract.parse()`` method.
+        :param include_lot_divs: Same as in ``Tract.parse()`` method.
+        :param qq_depth_min: Same as in ``Tract.parse()`` method.
+        :param qq_depth_max: Same as in ``Tract.parse()`` method.
+        :param qq_depth: Same as in ``Tract.parse()`` method.
+        :param break_halves: Same as in ``Tract.parse()`` method.
+        :return: None
+        """
+        if config:
+            self.config_tracts(config)
+        for t in self:
+            t.parse(
+                clean_qq=clean_qq,
+                include_lot_divs=include_lot_divs,
+                qq_depth_min=qq_depth_min,
+                qq_depth_max=qq_depth_max,
+                qq_depth=qq_depth,
+                break_halves=break_halves)
+        return None
 
     def filter(self, key, drop=False):
         """
@@ -2499,7 +2690,7 @@ class TractList(list):
         Sec 14: NE/4
         Sec 15: Northwest Quarter, North Half South West Quarter'''
         d_obj = PLSSDesc(txt)
-        tl_obj = d_obj.parse(init_parse_qq=True, commit=False)
+        tl_obj = d_obj.parse(parse_qq=True, commit=False)
         tl_obj.tracts_to_dict('trs', 'desc', 'qqs')
 
         Example returns a list of two dicts:
@@ -2536,7 +2727,7 @@ class TractList(list):
         Sec 14: NE/4
         Sec 15: Northwest Quarter, North Half South West Quarter'''
         d_obj = PLSSDesc(txt)
-        tl_obj = d_obj.parse(init_parse_qq=True, commit=False)
+        tl_obj = d_obj.parse(parse_qq=True, commit=False)
         tl_obj.tracts_to_list('trs', 'desc', 'qqs')
 
         Example returns a nested list:
@@ -2570,7 +2761,7 @@ class TractList(list):
         Sec 14: NE/4
         Sec 15: Northwest Quarter, North Half South West Quarter'''
         d_obj = PLSSDesc(txt)
-        tl_obj = d_obj.parse(init_parse_qq=True, commit=False)
+        tl_obj = d_obj.parse(parse_qq=True, commit=False)
         tl_obj.tracts_to_str('trs', 'desc', 'qqs')
 
         Example returns a multi-line string that looks like this when
@@ -2592,6 +2783,9 @@ class TractList(list):
         # How far to justify the attribute names in the output str:
         jst = max([len(att) for att in attributes]) + 1
 
+        # For justifying linebreaks within a value.
+        jst_linebreak = f"\n{' ' * (jst + 2)}"
+
         total_tracts = len(self)
         all_tract_data = ""
         for i, t_dct in enumerate(self.tracts_to_dict(attributes), start=1):
@@ -2602,6 +2796,7 @@ class TractList(list):
                 # Flatten lists/tuples, but leave everything else as-is
                 if isinstance(v, (list, tuple)):
                     v = ", ".join(flatten(v))
+                v = v.replace("\n", jst_linebreak)
                 # Justify attribute name and report its value
                 tract_data = f"{tract_data}\n{att_name.ljust(jst, ' ')}: {v}"
 
@@ -2624,7 +2819,7 @@ class TractList(list):
         Sec 14: NE/4
         Sec 15: Northwest Quarter, North Half South West Quarter'''
         d_obj = PLSSDesc(txt)
-        tl_obj = d_obj.parse(init_parse_qq=True, commit=False)
+        tl_obj = d_obj.parse(parse_qq=True, commit=False)
         tl_obj.quick_desc()
 
         Example returns a multi-line string that looks like this when
@@ -2679,6 +2874,66 @@ class TractList(list):
 
         print(self.quick_desc(delim=delim, newline=newline))
 
+    def pretty_desc(self, word_sec="Sec ", justify_linebreaks=None):
+        """
+        Get a neatened-up description of all of the Tract objects in
+        this TractList.
+
+        Groups Tracts by Twp/Rge, but only to the extent possible while
+        maintaining the current sort order.
+
+        :param word_sec: How the word 'Section' should appear, INCLUDING
+        the following white space (if any). (Defaults to ``'Sec '``).
+        :param justify_linebreaks: (Optional) A string specifying how to
+        justify new lines after a linebreak (e.g., ``'\t'`` for a tab).
+        If not specified, will align new lines with the line above. To
+        use no justification at all, pass an empty string.
+        :return: a str of the compiled description.
+        """
+        jst = " " * (len(word_sec) + 4)
+        if justify_linebreaks:
+            jst = justify_linebreaks
+        if len(self) == 0:
+            return None
+        to_print = []
+        cur_twprge = self[0].twprge
+        cur_group = []
+        for t in self:
+            if t.twprge == cur_twprge:
+                cur_group.append(t)
+            else:
+                to_print.append((cur_twprge, cur_group))
+                cur_twprge = t.twprge
+                cur_group = [t]
+        # Append the final group.
+        to_print.append((cur_twprge, cur_group))
+        dsc = ""
+        for twprge, group in to_print:
+            dsc = f"{dsc}\n{TRS(twprge).pretty_twprge()}"
+            for tract in group:
+                dsc = f"{dsc}\n{word_sec}{tract.sec}: "
+                tdesc = tract.desc.replace("\n", f"\n{jst}")
+                dsc = f"{dsc}{tdesc}"
+        return dsc.strip()
+
+    def pretty_print_desc(self, word_sec="Sec ", justify_linebreaks=None):
+        """
+        Print a neatened-up description of all of the Tract objects in
+        this TractList.
+
+        Groups Tracts by Twp/Rge, but only to the extent possible while
+        maintaining the current sort order.
+
+        :param word_sec: How the word 'Section' should appear, INCLUDING
+        the following white space (if any). (Defaults to ``'Sec '``).
+        :param justify_linebreaks: (Optional) A string specifying how to
+        justify new lines after a linebreak (e.g., ``'\t'`` for a tab).
+        If not specified, will align new lines with the line above. To
+        use no justification at all, pass an empty string.
+        :return: None (prints to console).
+        """
+        print(self.pretty_desc(word_sec, justify_linebreaks))
+
     def print_data(self, *attributes) -> None:
         """
         Simple printing of the arg-specified attributes for each Tract
@@ -2729,7 +2984,7 @@ class Config:
         -- 'n'  <or>  'default_ns.n'  vs.  's'  <or>  'default_ns.s'
         -- 'e'  <or>  'default_ew.e'  vs.  'w'  <or>  'default_ew.w'
         -- 'init_parse'  vs.  'init_parse.False'
-        -- 'init_parse_qq'  vs.  'init_parse_qq.False'
+        -- 'parse_qq'  vs.  'parse_qq.False'
         -- 'init_preprocess'  vs.  'init_preprocess.False'
         -- 'clean_qq'  vs.  'clean_qq.False'
         -- 'require_colon'  vs.  'require_colon.False'
@@ -2755,8 +3010,8 @@ class Config:
         'default_ew',
         'init_preprocess',
         'layout',
-        'init_parse',
-        'init_parse_qq',
+        'wait_to_parse',
+        'parse_qq',
         'clean_qq',
         'require_colon',
         'include_lot_divs',
@@ -2770,8 +3025,8 @@ class Config:
 
     # A list of attribute names whose values should be a bool:
     _BOOL_TYPE_ATTRIBUTES = (
-        'init_parse',
-        'init_parse_qq',
+        'wait_to_parse',
+        'parse_qq',
         'clean_qq',
         'include_lot_divs',
         'init_preprocess',
@@ -2795,7 +3050,7 @@ class Config:
         'default_ns',
         'default_ew',
         'init_preprocess',
-        'init_parse_qq',
+        'parse_qq',
         'clean_qq',
         'include_lot_divs',
         'ocr_scrub',
@@ -2819,8 +3074,8 @@ class Config:
         default parsing behavior:
         -- 'n'  <or>  'default_ns.n'  vs.  's'  <or>  'default_ns.s'
         -- 'e'  <or>  'default_ew.e'  vs.  'w'  <or>  'default_ew.w'
-        -- 'init_parse'  vs.  'init_parse.False'
-        -- 'init_parse_qq'  vs.  'init_parse_qq.False'
+        -- 'wait_to_parse'  vs.  'wait_to_parse.False'
+        -- 'parse_qq'  vs.  'parse_qq.False'
         -- 'init_preprocess'  vs.  'init_preprocess.False'
         -- 'clean_qq'  vs.  'clean_qq.False'
         -- 'require_colon'  vs.  'require_colon.False'
@@ -2860,8 +3115,8 @@ class Config:
         self.default_ew = None
         self.init_preprocess = None
         self.layout = None
-        self.init_parse = None
-        self.init_parse_qq = None
+        self.wait_to_parse = None
+        self.parse_qq = None
         self.clean_qq = None
         self.require_colon = None
         self.include_lot_divs = None
@@ -2889,14 +3144,14 @@ class Config:
                 # as a bool, default to `True` (but will be overruled in
                 # _set_str_to_values() if specified otherwise):
                 self._set_str_to_values(line, default_bool=True)
-            elif line.lower() in ['n', 's', 'north', 'south']:
+            elif line in PLSSDesc._LEGAL_NS:
                 # Specifying N/S can be done with just a string (there's
                 # nothing else it can mean in config context.)
-                self.default_ns = line[0].lower()
-            elif line.lower() in ['e', 'w', 'east', 'west']:
+                self.default_ns = line
+            elif line in PLSSDesc._LEGAL_EW:
                 # Specifying E/W can be done with just a string (there's
                 # nothing else it can mean in config context.)
-                self.default_ew = line[0].lower()
+                self.default_ew = line
             elif line in _IMPLEMENTED_LAYOUTS:
                 # Specifying layout can be done with just a string
                 # (there's nothing else it can mean in config context.)
@@ -2985,7 +3240,7 @@ class Config:
         else:
             config.layout = None
         config.init_parse = parent.init_parse
-        config.init_parse_qq = parent.init_parse_qq
+        config.parse_qq = parent.parse_qq
         config.clean_qq = parent.clean_qq
         config.default_ns = parent.default_ns
         config.default_ew = parent.default_ew
@@ -3160,7 +3415,7 @@ class PLSSParser:
             default_ew=PLSSDesc.MASTER_DEFAULT_EW,
             ocr_scrub=False,
             clean_up=None,
-            init_parse_qq=False,
+            parse_qq=False,
             clean_qq=False,
             require_colon=_DEFAULT_COLON,
             segment=False,
@@ -3183,7 +3438,7 @@ class PLSSParser:
         self.text = self.preprocessor.text
         self.current_layout = None
         self.clean_up = clean_up
-        self.init_parse_qq = init_parse_qq
+        self.parse_qq = parse_qq
         self.clean_qq = clean_qq
         self.require_colon = require_colon
         self.segment = segment
@@ -3254,7 +3509,7 @@ class PLSSParser:
         text = self.text
         layout = self.safe_deduce_layout(text)
         clean_up = self.clean_up
-        init_parse_qq = self.init_parse_qq
+        parse_qq = self.parse_qq
         clean_qq = self.clean_qq
         require_colon = self.require_colon
         segment = self.segment
@@ -3382,7 +3637,7 @@ class PLSSParser:
 
             # If we wanted to parse to lots/QQ's, we do it now for all
             # generated Tracts.
-            if init_parse_qq:
+            if parse_qq:
                 tract.parse()
 
             # Swap flags.
@@ -3625,9 +3880,9 @@ class PLSSParser:
         if qq_depth is not None:
             handed_down_config._set_str_to_values(f"qq_depth.{qq_depth}")
 
-        # We want to handle init_parse_qq all at once in this PLSSParser,
+        # We want to handle parse_qq all at once in this PLSSParser,
         # so mandate that it be False for now.
-        handed_down_config.init_parse_qq = False
+        handed_down_config.parse_qq = False
 
         if clean_up is None:
             # If clean_up has not been specified as a bool, then use
@@ -6374,6 +6629,16 @@ class TRS:
         undef_sec=_UNDEF_SEC
     )
 
+    # Whether to cache Twp/Rge/Sec dicts in TRS.__CACHE. If used, it
+    # will reuse the same dict for the same key in the `.__trs_dict`
+    # attribute each TRS object, and not bother breaking it down again.
+    # Note that the contents of a TRS object's ``.__trs_dict`` attribute
+    # are only ever accessed by attributes (e.g., ``Tract.twp``,
+    # ``TRS.twprge``, etc.) -- so in theory, somebody would really have
+    # to want to mess things up in order to do so.
+    _USE_CACHE = True
+    __CACHE = {}
+
     def __init__(self, trs=None):
         if trs in ["", None]:
             trs = TRS._UNDEF_TRS
@@ -6393,7 +6658,12 @@ class TRS:
 
     @trs.setter
     def trs(self, new_trs):
-        self.__trs_dict = TRS.trs_to_dict(new_trs)
+        if new_trs in TRS.__CACHE:
+            # If we've already broken down this trs into a dict, just
+            # reuse it.
+            self.__trs_dict = TRS.__CACHE[new_trs]
+        else:
+            self.__trs_dict = TRS._cache_trs_to_dict(new_trs)
 
     @property
     def twp(self):
@@ -6672,6 +6942,28 @@ class TRS:
         return f"{twp}{rge}{sec}"
 
     @staticmethod
+    def _cache_trs_to_dict(trs) -> dict:
+        """
+        INTERNAL USE:
+        Identical to `TRS.trs_to_dict()`, but will also add the
+        resulting dict to the `TRS.__CACHE` (if `TRS._USE_CACHE` is
+        turned on).
+        """
+        # We do not add dicts to the cache when calling the public-
+        # facing method, in order to avoid changes to those dicts
+        # impacting TRS objects. This non-public method is only called
+        # by other non-public methods.
+        # Note that dicts in the cache are only ever accessed via
+        # protected attributes (e.g,. ``Tract.twp``, ``TRS.twprge``,
+        # etc.) -- although the cache itself could be accessed and
+        # modified.
+        dct = TRS.trs_to_dict(trs)
+        if TRS._USE_CACHE:
+            TRS.__CACHE[trs] = dct
+        return dct
+
+
+    @staticmethod
     def trs_to_dict(trs) -> dict:
         """
         Take a compiled Twp/Rge/Sec (in the standard pyTRS format) and
@@ -6760,6 +7052,16 @@ class TRS:
         return dct
 
     @classmethod
+    def _clear_cache(cls):
+        """
+        INTERNAL USE:
+        Clear the ``TRS.__CACHE`` dict.
+        :return:
+        """
+        cls.__CACHE = {}
+        return None
+
+    @classmethod
     def _recompile(cls):
         """
         EXPERIMENTAL
@@ -6803,6 +7105,10 @@ class TRS:
         cls._ERR_TRS = f"{cls._ERR_TWPRGE}{cls._ERR_SEC}"
         cls._UNDEF_TWPRGE = f"{cls._UNDEF_TWP}{cls._UNDEF_RGE}"
         cls._UNDEF_TRS = f"{cls._UNDEF_TWPRGE}{cls._UNDEF_SEC}"
+
+        # Clear the cache, because the same string would not necessarily
+        # result in the same output dict anymore.
+        cls._clear_cache()
 
         return new_rgx
 
