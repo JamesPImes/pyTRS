@@ -2094,6 +2094,9 @@ class TractList(list):
     def __iadd__(self, other):
         list.__iadd__(self, TractList._verify_iterable(other))
 
+    def copy(self):
+        return TractList(list.copy(self))
+
     def config_tracts(self, config):
         """
         Reconfigure all of the Tract objects in this TractList.
@@ -3033,6 +3036,36 @@ class TractList(list):
         if remove_duplicates:
             return unique_trs
         return all_trs
+
+    @staticmethod
+    def from_multiple(objects):
+        """
+        Create a TractList from multiple elements, which may be any
+        number and combination of Tract, PLSSDesc, and TractList
+        objects.
+
+        (If a single TractList is passed, it will return the original
+        TractList.)
+        """
+        if isinstance(objects, TractList):
+            return objects
+        tl = TractList()
+        try:
+            for obj in objects:
+                if isinstance(obj, PLSSDesc):
+                    tl.extend(obj.parsed_tracts)
+                elif isinstance(obj, Tract):
+                    tl.append(obj)
+                else:
+                    # Assume it's a TractList or other list-like object.
+                    tl.extend(obj)
+        except TypeError:
+            if isinstance(objects, PLSSDesc):
+                tl.extend(objects.parsed_tracts)
+            else:
+                tl.append(objects)
+
+        return tl
 
 
 class Config:
@@ -7296,22 +7329,7 @@ def group_tracts(
     was passed as a list of attribute names, then this will return as a
     nested dict, with TractList objects being the deepest values.)
     """
-    tl = TractList()
-    try:
-        for obj in to_group:
-            if isinstance(obj, PLSSDesc):
-                tl.extend(obj.parsed_tracts)
-            elif isinstance(obj, Tract):
-                tl.append(obj)
-            else:
-                # Assume it's a TractList or other list-like object.
-                tl.extend(obj)
-    except TypeError:
-        if isinstance(to_group, PLSSDesc):
-            tl.extend(to_group.parsed_tracts)
-        else:
-            tl.append(to_group)
-
+    tl = TractList.from_multiple(to_group)
     return tl.group(by_attribute, into, sort_key, sort_reverse)
 
 
@@ -7373,121 +7391,6 @@ def _clean_attributes(*attributes) -> list:
         else:
             clean.append(att)
     return clean
-
-
-########################################################################
-# Output results to CSV file
-########################################################################
-
-def output_to_csv(
-        filepath, to_output: list, attributes: list, include_source=True,
-        resume=True, include_headers=True, unpack_lists=False):
-    """
-    Write the requested Tract data to a .csv file. Each Tract will be on
-    its own row--with multiple rows per PLSSDesc object, as necessary.
-
-    :param filepath: Path to the output .csv file.
-    :param to_output: A list of parsed PLSSDesc, Tract, and/or TractList
-    objects.
-    :param attributes: A list of the Tract attributes to extract and
-    write.  ex: ['trs', 'desc', 'w_flags']
-    :param include_source: Whether to include the `.source` attribute of
-    each written Tract object as the first column. (Defaults to True)
-    :param resume: Whether to overwrite an existing file if found
-    (i.e. `resume=False`) or to continue writing at the end of it
-    (`resume=True`). Defaults to True.
-    NOTE: If no existing file is found, this will create a new file
-    regardless of `resume`.
-    NOTE ALSO: If resuming a previous output, but with different
-    attributes (or differently ordered) than before, the columns will be
-    misaligned.
-    :param include_headers: Whether to write headers. Defaults to True.
-    :param unpack_lists: Whether to try to flatten and join lists, or
-    simply write them as they appear. (Defaults to `False`)
-    :return: None.
-    """
-
-    ACCEPTABLE_TYPES = (PLSSDesc, Tract, TractList)
-    ACCEPTABLE_TYPES_PLUS = (PLSSDesc, Tract, TractList, list)
-
-    import csv
-    import os
-    from pathlib import Path
-
-    filepath = Path(filepath)
-
-    if filepath.suffix.lower() != '.csv':
-        raise ValueError('Error: filename must be .csv file')
-
-    # If the file already exists and we're not writing a new file, turn
-    # off headers
-    if os.path.isfile(filepath) and resume:
-        include_headers = False
-
-    # Default to opening in `write` mode (create new file). However...
-    open_mode = 'w'
-    # If we don't want to create a new file, will open in `append` mode instead.
-    if resume:
-        open_mode = 'a'
-
-    csv_file = open(filepath, open_mode, newline='')
-    output_writer = csv.writer(csv_file)
-
-    if not isinstance(to_output, ACCEPTABLE_TYPES_PLUS):
-        # If not the correct type, abort before writing any more.
-        raise TypeError(
-            f"to_output must be passed as one of: {ACCEPTABLE_TYPES_PLUS}; "
-            f"passed as '{type(to_output)}'.")
-    to_output = flatten(to_output)
-
-    attributes = flatten(attributes)
-    # Ensure the type of each attribute is a str
-    attributes = [
-        att if isinstance(att, str) else 'Attribute TypeError' for att in attributes
-    ]
-    if include_source:
-        # Mandate the inclusion of attribute 'source', unless overruled
-        # with `include_source=False`
-        attributes.insert(0, 'source')
-
-    if include_headers:
-        # Write the attribute names as headers:
-        output_writer.writerow(attributes)
-
-    for obj in to_output:
-        if not isinstance(obj, ACCEPTABLE_TYPES):
-            raise TypeError(
-                f"Can only write types: {ACCEPTABLE_TYPES}; tried to write "
-                f"type '{type(obj)}'.")
-        elif isinstance(obj, (PLSSDesc, TractList)):
-            # Note that both PLSSDesc and TractList have equivalent
-            # `.tracts_to_list()` methods, so both types are handled here
-            all_tract_data = obj.tracts_to_list(attributes)
-        else:
-            # i.e. `obj` is a `Tract` object.
-            # Get the Tract object's attr values in a list, and nest
-            # that list as the only element in all_tract_data list:
-            all_tract_data = [obj.to_list(attributes)]
-
-        for tract_data in all_tract_data:
-            data_to_write = []
-            for data in tract_data:
-                if isinstance(data, (list, tuple)) and unpack_lists:
-                    # If this data is a list / tuple, flatten & join its
-                    # elements with ',' and then append:
-                    try:
-                        data_to_write.append(','.join(flatten(data)))
-                    except:
-                        # Cannot .join() non-string elements, so handle
-                        # with try/except.
-                        # TODO: Write a more robust joiner function.
-                        data_to_write.append(data)
-                else:
-                    # If this data is NOT a list / tuple, just append:
-                    data_to_write.append(data)
-            output_writer.writerow(data_to_write)
-
-    csv_file.close()
 
 
 __all__ = [
