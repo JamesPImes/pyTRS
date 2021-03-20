@@ -235,3 +235,24 @@ def config_parameters():
         "(Spaces are optional and have no effect.)\n\n"
         "The string should be the first positional argument of a Config object, or the "
         "init parameter `config=` when creating PLSSDesc and/or Tract objects.")
+
+
+def gen_uid(num, sub, total_sub, just=4):
+    """
+    Generate a unique ID string in the format:  "0001.a-d"
+
+    :example:  ``gen_uid(1, 1, 4)`` --> "0001.a-d"
+    :example:  ``gen_uid(234, 3, 11)`` --> "0001.c-k"
+
+    :param num: The number to appear left of the period.
+    :param sub: An int, indicating which entry this is for ``num``.
+    :param total_sub: An int, being how many total entries there will be
+    for this ``num``.
+    :param just: How many places to justify (defaults to 4).
+    :return: The UID string.
+    """
+    return (
+        f"{str(num).rjust(just, '0')}"
+        f".{num_to_alpha(sub).lower()}"
+        f"-{num_to_alpha(total_sub).lower()}"
+    )
