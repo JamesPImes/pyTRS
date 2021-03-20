@@ -12,7 +12,7 @@ from pytrs import version as pytrs_version
 from pytrs import _constants as pytrs_constants
 
 
-__version__ = '0.3.0'
+__version__ = '0.3.1'
 __versionDate__ = '9/24/2020'
 __author__ = 'James P. Imes'
 __email__ = 'jamesimes@gmail.com'
@@ -50,10 +50,13 @@ class AppWindow(tk.Tk):
     def __init__(self):
         tk.Tk.__init__(self)
         self.title('pyTRS CSV Parser')
-        
+
         self.config_text = tk.StringVar()
         self.config_text.set('')
-        
+
+        # What will be a PromptConfig window.
+        self.config_popup_tk = None
+
         self.in_file = tk.StringVar()
         self.in_file.set('')
 
@@ -204,7 +207,7 @@ class AppWindow(tk.Tk):
             return
         try:
             first_row = int(first_row)
-        except:
+        except (TypeError, ValueError):
             messagebox.showerror(
                 'Error!',
                 'Enter a number for the first row containing descriptions to '
@@ -215,7 +218,7 @@ class AppWindow(tk.Tk):
         if last_row:
             try:
                 last_row = int(last_row)
-            except:
+            except (TypeError, ValueError):
                 messagebox.showerror(
                     'Error!',
                     'If you only want to parse some rows, enter a number for '
@@ -228,7 +231,7 @@ class AppWindow(tk.Tk):
         if header_row:
             try:
                 header_row = int(header_row)
-            except:
+            except (TypeError, ValueError):
                 messagebox.showerror(
                     'Error!',
                     'To specify the row containing headers in the input '
@@ -238,7 +241,6 @@ class AppWindow(tk.Tk):
             header_row = None
 
         # Run the parser
-        success_check = 1  # Set to 0 on success.
         success_check = parse_csv(
             in_file=in_file, desc_col=desc_col, attribs=attribs,
             out_file=out_file, first_row=first_row, last_row=last_row,
@@ -247,23 +249,8 @@ class AppWindow(tk.Tk):
             copy_data=copy_data, tract_level=tract_level,
             include_uid=include_uid, num_tracts=False,
             include_unparsed=include_unparsed)
-        # try:
-        #     success_check = parse_csv(
-        #         in_file=in_file, desc_col=desc_col, attribs=attribs,
-        #         out_file=out_file, first_row=first_row, last_row=last_row,
-        #         header_row=header_row, config=config_text,
-        #         write_headers=write_headers, unpack=unpack,
-        #         copy_data=copy_data, tract_level=tract_level,
-        #         include_uid=include_uid, num_tracts=False,
-        #         include_unparsed=include_unparsed)
-        # except:
-        #     messagebox.showerror(
-        #         'Error!',
-        #         f"Unknown error. Possibly could not open file at '{in_file}' "
-        #         f"or could not save to '{out_file}'. Ensure you have "
-        #         f"read/write access to the directory and try again.")
 
-        if success_check == 0:
+        if success_check:
             if messagebox.askyesno(
                     'Success!',
                     f"File successfully parsed and saved to:\n'{out_file}'\n\n"
@@ -291,16 +278,18 @@ class AppWindow(tk.Tk):
         """
         try:
             self.config_popup_tk.destroy()
-        except:
+        except AttributeError:
             pass
 
         self.config_popup_tk = tk.Toplevel()
         self.config_popup_tk.title('Set pyTRS Config Parameters')
         pc = PromptConfig(
             master=self.config_popup_tk, target_config_var=self.config_text,
-            parameters=['clean_qq', 'include_lot_divs', 'require_colon', 'ocr_scrub',
-                        'segment', 'layout'],
-            show_save=False, show_cancel=False, exit_after_ok=True)
+            parameters=[
+                'clean_qq', 'include_lot_divs', 'require_colon', 'ocr_scrub',
+                'segment', 'layout', 'qq_depth_min', 'qq_depth_max', 'qq_depth'
+            ],
+            show_cancel=False, exit_after_ok=True)
         pc.pack(padx=20, pady=10)
 
     def deduce_desc_column(self, in_file):
@@ -310,12 +299,7 @@ class AppWindow(tk.Tk):
 
         import csv
         from pytrs.parser import find_sec, find_twprge
-        try:
-            csv_file = open(in_file, 'r')
-        except:
-            messagebox.showerror(
-                'Error!', f"Could not open file:\n '{in_file}'")
-            return
+        csv_file = open(in_file, 'r')
 
         reader = csv.reader(csv_file)
         rowsToTry = 10
