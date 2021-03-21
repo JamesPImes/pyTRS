@@ -3,6 +3,8 @@
 
 A `PLSSDesc` object takes the raw text of a full PLSS land description and parse it into one or more `Tract` objects, each of which represents the land lying within a single, specific Twp/Rge/Section.
 
+`# TODO: Table of contents with links`
+
 ## Creating a `PLSSDesc` object
 
 A `PLSSDesc` object takes raw text and immediately parses it into `Tract` objects.
@@ -16,8 +18,8 @@ parsed_plssdesc = pytrs.PLSSDesc(raw_description)
 
 ### Optional init parameters are:
 
-|Parameter              |Explanation                                                           |Footnote |
-|-----------------------|:---------------------------------------------------------------------|:-------:|
+|Parameter              | Explanation                                                          |Footnote |
+|:----------------------|:---------------------------------------------------------------------|:-------:|
 |`layout=<str>`         | Force the parser to assume some specific order for Twp/Rge/Sec/desc  | 1       |
 |`config=<str>`         | Configure the parser with a number of options                        | 2       |
 |`parse_qq=<bool>`      | Parse the resulting `Tract` objects into lots/aliquots               |         |
@@ -158,12 +160,12 @@ The list stored to variable `all_tract_data` contains a nested list for each `Tr
 
 Use this to write data to a .csv file (one row per `Tract`).
 
-|Parameter              |Explanation                                                           |Footnote |
-|-----------------------|:---------------------------------------------------------------------|:-------:|
-|`attributes`| a list of names of the `Tract` attributes to include|
+|Parameter              | Explanation                                                          |Footnote |
+|:----------------------|:---------------------------------------------------------------------|:-------:|
+|`attributes=<list>`| a list of names of the `Tract` attributes to include|
 |`fp=<path>`| The filepath of the .csv file to write to.|
 |`mode=<'w' or 'a'>`| The mode to open the file in (either `'w'` or `'a'`)| 1|
-|`nice_headers=<bool>`| Whether to use the values in the `Tract.ATTRIBUTES` dict for headers.| 2 |
+|`nice_headers=<bool>`| Whether to use the values in the `Tract.ATTRIBUTES` dict for headers| 2 |
 
 1) `mode` serves the same purpose as it does in the builtin `open()` function. Here, it defaults to `'w'` (a new file, and overwriting any file already at that path). Use mode `'a'` to add this data to an existing .csv file.
 2) `nice_headers` defaults to `False` (i.e. just use the attribute names themselves as headers).
@@ -180,3 +182,42 @@ all_tract_data = parsed_plssdesc.tracts_to_csv(
     mode='w',
     nice_headers=True)
 ```
+
+
+## `layout` (syntax of Twp/Rge/Sec/Desc)
+
+The PLSS itself does not place many strict limitations on the syntax of Township, Range, Section, and 'description block' -- i.e., they can appear in essentially any order (except that Township pretty much always comes before Range). Below are the different permutations (called `layout`) that can be handled by pyTRS:
+
+| layout      | Order of components    | Example                        | Footnotes |
+|:------------|:-----------------------|:-------------------------------|:---------:|
+|`'TRS_desc'` | Twp - Rge - Sec - Desc | T154N-R97W <br> Sec 14: NE/4   | 1         |
+|`'desc_STR'` | Desc - Sec - Twp - Rge | NE/4 of Sec 14, T154N-R97W     |           |
+|`'s_desc_TR'`| Sec - Desc - Twp - Rge | Sec 14: NE/4, T154N-R97W       | 3         |
+|`'TR_desc_S'`| Twp - Rge - Desc - Sec | T154N-R97W <br> NE/4 of Sec 14 | 1         |
+|`'copy_all'` | n/a                    | n/a                            | 2         |
+
+Footnotes:
+1) None of these layouts are required to be one one line or on multiple lines. However, in real world data, `TRS_desc` and `TR_desc_S` (i.e., when Twp/Rge come first) layouts are often broken out onto multiple lines.
+
+2) `'copy_all'` is a stopgap layout used by pyTRS to ensure that the text is maintained in the event that the layout cannot be successfully deduced (perhaps due to an omission or unrecognizable misspelling of section, township, or range).
+
+3) *If you're writing land descriptions like this, please just stop doing that.*
+
+Because the components can appear in varying order, a PLSS description will be parsed differently, which is why the concept of `layout` exists in this library at all.
+
+In general, the parsing algorithm is capable of deducing the `layout` of the input data. However, the `layout` can also be dictated by the user ([via `config=` init parameter](https://github.com/JamesPImes/pyTRS/blob/master/documentation/quickstart.md#config-objects-and-config-parameters)); although doing so is not recommended, unless you reliably know the layout of your dataset and want to capture errors very strictly.
+
+##### Known `layout` limitations
+You will notice that the above `layout` table does *__not__* account for descriptions where the Section is couched *__within__* the description block itself, like so:
+```
+T154N-R97W
+That part of the NE/4 of Section 14 lying north of the River
+```
+...or...
+```
+That part of the NE/4 of Section 14 lying north of the River, in T154N-R97W
+```
+
+That's a target area for improvement in future versions.
+
+(*These two examples would both be interpreted as `"154n97w14: That part of the NE/4"`, assuming the parser is allowed to deduce the layout.*)
