@@ -3,7 +3,7 @@
 
 The parsing of `PLSSDesc` and `Tract` objects is configured with `Config` objects (or equivalent `config=` parameters).
 
-To configure a `PLSSDesc` or `Tract` object, encode all of the desired parameters into a single string, separated by comma (spaces are optional with no effect).
+To do so, encode all of the desired parameters into a single string, separated by comma (spaces are optional with no effect), and pass that string to `config=` when creating a `PLSSDesc` or `Tract` object.
 
 ```
 chosen_config_options = 'n, w, segment, clean_qq, parse_qq'
@@ -19,14 +19,6 @@ some_tract = pytrs.Tract(
     trs='154n97w14',
     config=chosen_config_options)
 ```
-
-### `config=` parameters vs. equivalent parsing method parameters
-
-Essentially all config parameters have corresponding parameters in the `PLSSDesc.parse()` and/or `Tract.parse()` methods (or associated methods). For example, `'clean_qq'` can be one of the `config=` parameters, and/or specified as `clean_qq=True` when calling either `PLSSDesc.parse()` or `Tract.parse()`.
-
-*__Wherever `config=` parameters (passed at init) are later in conflict with a parameter in a `.parse()` method, the method's parameter will control.__*
-
-On the other hand, calling `PLSSDesc.parse()` without specifying `clean_qq=` will cause it to look to however the object was configured via `config=` when it was created.
 
 
 ### Reconfiguring a `PLSSDesc` or `Tract` later
@@ -48,6 +40,15 @@ some_tract = pytrs.Tract('NE/4', trs='154n97w14')
 some_tract.config = chosen_config_options
 some_tract.parse()
 ```
+
+
+### `config=` parameters vs. equivalent parsing method parameters
+
+Essentially all config parameters have corresponding parameters in the `PLSSDesc.parse()` and/or `Tract.parse()` methods (or associated methods). For example, `'clean_qq'` can be one of the `config=` parameters, and/or specified as `clean_qq=True` when calling either `PLSSDesc.parse()` or `Tract.parse()`.
+
+*__Wherever `config=` parameters (passed at init) are later in conflict with a parameter in a `.parse()` method, the method's parameter will control.__*
+
+On the other hand, calling `PLSSDesc.parse()` without specifying `clean_qq=<bool>` will cause it to look to however the object was configured via `config=` (if at all).
 
 
 ## `Config` parameter table
