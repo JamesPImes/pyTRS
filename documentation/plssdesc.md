@@ -48,7 +48,24 @@ desc : W/2
 3) `source` does not affect the behavior of the parse in any way. Instead, it is meant as an internal record of where the description originally came from. It will be passed down to any `Tract` objects created by this `PLSSDesc`.(For example, if it came from a particular report, or a specific row in a spreadsheet, etc.) This can be useful for parsing numerous land descriptions (e.g., processing a large spreadsheet). It gets stored to the `.source` attribute (in both `PLSSDesc` and `Tract` objects).
 
 
-### Parsing a `PLSSDesc` into `Tract` objects
+#### `Tract` objects are stored in the `.parsed_tracts` attribute
+
+A `PLSSDesc` object stores `Tract` objects it created in the `.parsed_tracts` attribute (specifically, a `pytrs.TractList` object that holds the tracts, a subclass of the standard `list`).
+
+```
+raw_description = """T154N-R97W
+Sec 14: NE/4
+Sec 15: W/2"""
+
+a_plssdesc = pytrs.PLSSDesc(raw_description)
+
+len(a_plssdesc.parsed_tracts)   # -> 2  (we found 2 Tracts)
+```
+
+Any unspecified parameters in `.parse()` will default to the corresponding values configured when the `PLSSDesc` was created (or reconfigured since).
+
+
+## Parsing a `PLSSDesc` into `Tract` objects
 
 ##### Parse automatically when created.
 
@@ -74,24 +91,7 @@ new_parsed_tracts = dsc1.parse(
 ``` 
 
 
-#### `Tract` objects are stored in the `.parsed_tracts` attribute
-
-A `PLSSDesc` object stores `Tract` objects it created in the `.parsed_tracts` attribute (specifically, a `pytrs.TractList` object that holds the tracts, a subclass of the standard `list`).
-
-```
-raw_description = """T154N-R97W
-Sec 14: NE/4
-Sec 15: W/2"""
-
-a_plssdesc = pytrs.PLSSDesc(raw_description)
-
-len(a_plssdesc.parsed_tracts)   # -> 2  (we found 2 Tracts)
-```
-
-Any unspecified parameters in `.parse()` will default to the corresponding values configured when the `PLSSDesc` was created (or reconfigured since).
-
-
-#### Populate lots/aliquots in the subordinate `Tract` objects
+## Populate lots/aliquots in the subordinate `Tract` objects
 
 The parameter `parse_qq=True` at init, or in `.parse()` will cause the resulting `Tract` objects to also populate their lots/aliquots (i.e. their `.lots`, `.qqs`, `.lots_qqs`, and `.lot_acres` attributes).
 
@@ -124,11 +124,18 @@ The PLSS itself does not place many strict limitations on the syntax of Township
 
 | layout      | Order of components    | Example                        | Footnotes |
 |:------------|:-----------------------|:-------------------------------|:---------:|
-|`'TRS_desc'` | Twp - Rge - Sec - Desc | T154N-R97W <br> Sec 14: NE/4   | 1         |
-|`'desc_STR'` | Desc - Sec - Twp - Rge | NE/4 of Sec 14, T154N-R97W     |           |
-|`'s_desc_TR'`| Sec - Desc - Twp - Rge | Sec 14: NE/4, T154N-R97W       | 3         |
-|`'TR_desc_S'`| Twp - Rge - Desc - Sec | T154N-R97W <br> NE/4 of Sec 14 | 1         |
+|`'TRS_desc'` | Twp - Rge - Sec - desc | T154N-R97W <br> Sec 14: NE/4   | 1         |
+|`'TR_desc_S'`| Twp - Rge - desc - Sec | T154N-R97W <br> NE/4 of Sec 14 | 1         |
+|`'desc_STR'` | desc - Sec - Twp - Rge | NE/4 of Sec 14, T154N-R97W     |           |
+|`'s_desc_TR'`| Sec - desc - Twp - Rge | Sec 14: NE/4, T154N-R97W       | 3         |
 |`'copy_all'` | n/a                    | n/a                            | 2         |
+
+Because the components can appear in varying order, a PLSS description will be parsed differently, which is why the concept of `layout` exists in this library at all.
+
+In general, the parsing algorithm is capable of deducing the `layout` of the input data. However, the `layout` can also be dictated by the user ([via `config=` init parameter] [#TODO : LINK TO CONFIG]); although doing so is not recommended, unless you reliably know the layout of your dataset and want to capture errors very strictly.
+
+Get a tuple of all currently implemented `layout` options in `pytrs.IMPLEMENTED_LAYOUTS`. Get a string containing examples of each in `pytrs.IMPLEMENTED_LAYOUT_EXAMPLES`
+
 
 Footnotes:
 1) None of these layouts are required to be one one line or on multiple lines. However, in real world data, `TRS_desc` and `TR_desc_S` (i.e., when Twp/Rge come first) layouts are often broken out onto multiple lines.
@@ -137,11 +144,8 @@ Footnotes:
 
 3) *If you're writing land descriptions like this, please just stop doing that.*
 
-Because the components can appear in varying order, a PLSS description will be parsed differently, which is why the concept of `layout` exists in this library at all.
 
-In general, the parsing algorithm is capable of deducing the `layout` of the input data. However, the `layout` can also be dictated by the user ([via `config=` init parameter](https://github.com/JamesPImes/pyTRS/blob/master/documentation/quickstart.md#config-objects-and-config-parameters)); although doing so is not recommended, unless you reliably know the layout of your dataset and want to capture errors very strictly.
-
-##### Known `layout` limitations
+#### Known `layout` limitations
 You will notice that the above `layout` table does *__not__* account for descriptions where the Section is couched *__within__* the description block itself, like so:
 ```
 T154N-R97W
