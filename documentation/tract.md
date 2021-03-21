@@ -41,7 +41,69 @@ Footnotes:
 
 4) `Tract` objects will not create a `desc_is_flawed` status, but may inherit it from parent `PLSSDesc` (if any).
 
-5) *Setting* the `.trs` attribute of a `Tract` object will populate the other associated attributes accordingly (`.twp`, `.rge`, `.sec`, etc.):
+5) *Setting* the `.trs` attribute of a `Tract` object will populate the other associated attributes accordingly (`.twp`, `.rge`, `.sec`, etc. -- which cannot be set directly).  [# TODO: LINK TO THIS SECTION OF TRACT.MD]
+
+
+
+## `Tract` objects created from parsing a `PLSSDesc`
+
+When a `PLSSDesc` object is populated, it automatically creates `Tract` objects, stored in the `.parsed_tracts` attribute (specifically, a `pytrs.TractList` object that holds the tracts).
+
+```
+parsed_plssdesc = pytrs.PLSSDesc("T154N-R97W Sec 14: NE/4")
+
+# The resulting Tract objects are stored in `.parsed_tracts` of the PLSSDesc.
+for tract in parsed_plssdesc.parsed_tracts:
+    print(tract.trs)
+```
+
+### Populate lots/aliquots at init with `parse_qq=True` parameter
+
+If we want to populate the `lots`, `qqs`, `lots_qqs`, and `lot_acres` attributes of the resulting `Tract` objects, we need to specify `parse_qq=True` (or `config='parse_qq').
+```
+parsed_plssdesc = pytrs.PLSSDesc("T154N-R97W Sec 14: NE/4", parse_qq=True)
+
+for tract in parsed_plssdesc.parsed_tracts:
+    print(tract.lots_qqs)
+```
+
+### Populate lots/aliquots later with `.parse_tracts()` method
+
+Alternatively, we can first parse a `PLSSDesc` without populating `lots` etc., and change our minds later.
+```
+parsed_plssdesc = pytrs.PLSSDesc("T154N-R97W Sec 14: NE/4")
+parsed_plssdesc.parse_tracts()
+
+for tract in parsed_plssdesc.parsed_tracts:
+    print(tract.lots_qqs)
+```
+
+## Creating `Tract` objects directly
+
+When creating a `Tract` object directly, specifying the `trs` is optional; and populating `lots`, `qqs`, `lots_qqs`, and `lot_acres` attributes is also optional (turned on with `parse_qq=True`).
+```
+# Optional parameter `parse_qq=True`.
+tract_object = pytrs.Tract("NE/4", trs="154n97w14", parse_qq=True)
+
+# ...or an equivalent Tract object, specifying Twp/Rge/Sec with components.
+tract_object = pytrs.Tract.from_twprgesec(
+    "NE/4", twp=154, rge=97, sec=14, parse_qq=True, config='n,w')
+```
+
+### Populate lots/aliquots with `.parse()`
+To populate (or re-populate) the `lots`, `qqs`, `lots_qqs`, and `lot_acres` attributes later on, use the `.parse()` method.
+```
+tract_object = pytrs.Tract("Lots 1 - 3, NE/4")
+tract_object.parse()
+
+# `.lots_qqs` etc. are now populated.
+for aliquot in tract_object.qqs:
+    print(aliquot)
+```
+
+### Setting Twp/Rge/Sec (`.trs` attribute, etc.)
+
+Setting the `.trs` attribute of a `Tract` object will populate the other associated attributes accordingly (`.twp`, `.rge`, `.sec`, etc.) -- either assigned directly (`a_tract.trs = '154n97w14'`) or with the `.set_twprgesec()` method:
 
 ```
 a_tract = pytrs.Tract("NE/4")
@@ -63,4 +125,46 @@ a_tract.twp         # -> '154n'
 a_tract.twp_num     # -> 154 (an int)
 a_tract.rge_ew      # -> 'w'
 # etc.
+```
+
+Other Twp/Rge/Sec attributes cannot be assigned directly. They may *__only__* be populated via one of the two methods above.
+
+## Extracting data from individual `Tract` objects
+
+To extract data from *__multiple__* `Tract` objects, look into the `.tracts_to_dict()`, `.tracts_to_list()`, or `.tracts_to_csv()` methods in both `PLSSDesc` classes and `TractList` classes.
+
+However, to extract data from individual `Tract` objects, use these methods:
+
+### Extract to a dict with `.to_dict()`
+
+Pass a list of the names of attributes we want to collect in a dict:
+```
+tract = pytrs.Tract("Lots 1 - 3, NE/4", trs="154n97w14", parse_qq=True)
+tract_data = tract.to_dict(['trs', 'desc', 'lots', 'qqs'])
+```
+The dict stored to variable `tract_data` contains these values:
+```
+{
+    'trs': '154n97w14',
+    'desc': 'Lots 1 - 3, NE/4',
+    'lots': ['L1', 'L2', 'L3'],
+    'qqs': ['NENE', 'NWNE', 'SENE', 'SWNE']
+}
+```
+
+### Extract to a list with `.to_list()`
+
+Pass a list of the names of attributes we want to collect in a list:
+```
+tract = pytrs.Tract("Lots 1 - 3, NE/4", trs="154n97w14", parse_qq=True)
+tract_data = tract.to_list(['trs', 'desc', 'lots', 'qqs'])
+```
+The list stored to variable `tract_data` contains these values:
+```
+[
+    '154n97w14',
+    'Lots 1 - 3, NE/4',
+    ['L1', 'L2', 'L3'],
+    ['NENE', 'NWNE', 'SENE', 'SWNE']
+]
 ```
