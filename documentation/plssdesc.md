@@ -15,14 +15,29 @@ Sec 15: W/2"""
 
 parsed_plssdesc = pytrs.PLSSDesc(raw_description)
 ```
+Just to demonstrate that we have created some `Tract` objects, we'll print some of their basic data to console:
 
-### Optional init parameters are:
+```
+parsed_plssdesc.print_data(['trs', 'desc'])
+```
+... which prints:
+```
+Tract 1 / 2
+trs  : 154n97w14
+desc : NE/4
+
+Tract 2 / 2
+trs  : 154n97w15
+desc : W/2
+```
+
+### Optional init parameters:
 
 |Parameter              | Explanation                                                          |Footnote |
 |:----------------------|:---------------------------------------------------------------------|:-------:|
 |`layout=<str>`         | Force the parser to assume some specific order for Twp/Rge/Sec/desc  | 1       |
 |`config=<str>`         | Configure the parser with a number of options                        | 2       |
-|`parse_qq=<bool>`      | Parse the resulting `Tract` objects into lots/aliquots               |         |
+|`parse_qq=<bool>`      | Whether the resulting `Tract` objects should also parse into lots/aliquots               |         |
 |`source=<any>`         | Specify where this description came from.                            | 3       |
 |`wait_to_parse=<bool>` | Do not parse at init.                                                |         |
 
@@ -35,7 +50,9 @@ parsed_plssdesc = pytrs.PLSSDesc(raw_description)
 
 ### Parsing a `PLSSDesc` into `Tract` objects
 
-Parsing is done automatically when a `PLSSDesc` object is created:
+##### Parse automatically when created.
+
+By default, parsing is done automatically when a `PLSSDesc` object is created:
 ```
 raw_description = """T154N-R97W
 Sec 14: NE/4
@@ -43,6 +60,19 @@ Sec 15: W/2"""
 
 parsed_plssdesc = pytrs.PLSSDesc(raw_description)
 ```
+
+##### Re-parse the original description with the `.parse()` method.
+
+If we want to try parsing with different parameters, we can use the `.parse()` method, which returns a `pytrs.TractList` object containing all of the created `Tract` objects. If `commit=True` (on by default), the returned `TractList` will also be stored to the `.parsed_tracts` attribute of the `PLSSDesc`.
+
+```
+raw_description = "T154N-R97W Sec 14: NE/4"
+dsc1 = pytrs.PLSSDesc(raw_description)
+
+new_parsed_tracts = dsc1.parse(
+    commit=False, segment=True, clean_qq=True, parse_qq=True)
+``` 
+
 
 #### `Tract` objects are stored in the `.parsed_tracts` attribute
 
@@ -55,22 +85,11 @@ Sec 15: W/2"""
 
 a_plssdesc = pytrs.PLSSDesc(raw_description)
 
-len(a_plssdesc.parsed_tracts)  # -> 2  (we found 2 Tracts)
+len(a_plssdesc.parsed_tracts)   # -> 2  (we found 2 Tracts)
 ```
-
-#### (Re)parse the original description with the `.parse()` method.
-
-If we want to try parsing with different parameters, we can use the `.parse()` method, which returns a `pytrs.TractList` object containing all of the created `Tract` objects. If `commit=True` (on by default), the returned `TractList` will also be stored to the `.parsed_tracts` attribute of the `PLSSDesc`.
-
-```
-raw_description = "T154N-R97W Sec 14: NE/4"
-dsc1 = pytrs.PLSSDesc(raw_description)
-
-new_parsed_tracts = dsc1.parse(
-    commit=False, segment=True, clean_qq=True, parse_qq=True)
-``` 
 
 Any unspecified parameters in `.parse()` will default to the corresponding values configured when the `PLSSDesc` was created (or reconfigured since).
+
 
 #### Populate lots/aliquots in the subordinate `Tract` objects
 
@@ -93,95 +112,10 @@ dsc1 = pytrs.PLSSDesc(raw_description)
 dsc1.parse_tracts()
 ```
 
-## Extracting data from the parsed `Tract` objects
 
-`Tract` objects themselves have methods for extracting parsed data from themselves individually. [# TODO: LINK TO TRACT.MD]
+## Extracting data from the parsed `Tract` objects in bulk
 
-But `PLSSDesc` objects (and `TractList` objects) contain methods to extract data from multiple `Tract` objects in bulk. This can be useful for compiling a spreadsheet, or for finding / grouping / filtering the tracts that match specific conditions.
-
-(For a guide to the various useful `Tract` attributes, see this table.)  [# TODO: LINK TO TRACT.MD ATTRIBUTE TABLE]
-
-### Compile `Tract` attributes to dicts with `.tracts_to_dict()`
-
-Use this to get a list of dicts (one dict per `Tract`). Pass a list of the names of attributes we want to collect in each dict.
-
-```
-raw_description = """T154N-R97W
-Sec 14: NE/4
-Sec 15: Lots 1 - 3, S/2SW/4"""
-
-parsed_plssdesc = pytrs.PLSSDesc(raw_description, parse_qq=True)
-all_tract_data = parsed_plssdesc.tracts_to_dict(["trs", "desc", "lots", "qqs"])
-```
-
-The list stored to variable `all_tract_data` contains a dict for each `Tract`:
-```
-[
-    {
-        'trs': '154n97w14',
-        'desc': 'NE/4',
-        'lots': [],
-        'qqs': ['NENE', 'NWNE', 'SENE', 'SWNE']
-    },
-
-    {
-        'trs': '154n97w15',
-        'desc': 'Lots 1 - 3, S/2SW/4',
-        'lots': ['L1', 'L2', 'L3'],
-        'qqs': ['SESW', 'SWSW']
-    }
-]
-```
-
-### Compile `Tract` attributes to a list of lists with `.tracts_to_list()`
-
-Use this to get a nested list of lists (one list per `Tract`). Pass a list of the names of attributes we want to collect.
-
-```
-raw_description = """T154N-R97W
-Sec 14: NE/4
-Sec 15: Lots 1 - 3, S/2SW/4"""
-
-parsed_plssdesc = pytrs.PLSSDesc(raw_description, parse_qq=True)
-all_tract_data = parsed_plssdesc.tracts_to_list(["trs", "desc", "lots", "qqs"])
-```
-
-The list stored to variable `all_tract_data` contains a nested list for each `Tract`:
-```
-[
-    ['154n97w14', 'NE/4', [], ['NENE', 'NWNE', 'SENE', 'SWNE']],
-    ['154n97w15', 'Lots 1 - 3, S/2SW/4', ['L1', 'L2', 'L3'], ['SESW', 'SWSW']]
-]
-```
-
-### Write `Tract` attributes to a .csv file with `.tracts_to_csv()`
-
-*(Note: A more robust csv writer class is included as `pytrs.tractwriter.TractWriter`. But this method is simpler, if we just need to dump the data to a csv.)*
-
-Use this to write data to a .csv file (one row per `Tract`).
-
-|Parameter              | Explanation                                                          |Footnote |
-|:----------------------|:---------------------------------------------------------------------|:-------:|
-|`attributes=<list>`| a list of names of the `Tract` attributes to include|
-|`fp=<path>`| The filepath of the .csv file to write to.|
-|`mode=<'w' or 'a'>`| The mode to open the file in (either `'w'` or `'a'`)| 1|
-|`nice_headers=<bool>`| Whether to use the values in the `Tract.ATTRIBUTES` dict for headers| 2 |
-
-1) `mode` serves the same purpose as it does in the builtin `open()` function. Here, it defaults to `'w'` (a new file, and overwriting any file already at that path). Use mode `'a'` to add this data to an existing .csv file.
-2) `nice_headers` defaults to `False` (i.e. just use the attribute names themselves as headers).
-
-```
-raw_description = """T154N-R97W
-Sec 14: NE/4
-Sec 15: Lots 1 - 3, S/2SW/4"""
-
-parsed_plssdesc = pytrs.PLSSDesc(raw_description, parse_qq=True)
-all_tract_data = parsed_plssdesc.tracts_to_csv(
-    attributes=["trs", "desc", "lots", "qqs"],
-    fp=<some path>,
-    mode='w',
-    nice_headers=True)
-```
+[See the guide on extracting Tract data]  [#TODO: Link]
 
 
 ## `layout` (syntax of Twp/Rge/Sec/Desc)
@@ -211,11 +145,11 @@ In general, the parsing algorithm is capable of deducing the `layout` of the inp
 You will notice that the above `layout` table does *__not__* account for descriptions where the Section is couched *__within__* the description block itself, like so:
 ```
 T154N-R97W
-That part of the NE/4 of Section 14 lying north of the River
+That part of the NE/4 of Section 14 lying north of the river
 ```
 ...or...
 ```
-That part of the NE/4 of Section 14 lying north of the River, in T154N-R97W
+That part of the NE/4 of Section 14 lying north of the river, in T154N-R97W
 ```
 
 That's a target area for improvement in future versions.
