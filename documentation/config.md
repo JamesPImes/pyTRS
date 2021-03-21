@@ -102,32 +102,8 @@ Note: Including a parameter that affects only `PLSSDesc` objects in the `config=
 7) `require_colon` only impacts `'TRS_desc'` and `'S_desc_TR'` layouts -- i.e. layouts where description block follows the section number.
 
 
+### Some specific parameters
 
-
-
-
-```
-# init with `clean_qq` setting turned on
-d_obj = pytrs.PLSSDesc('T154N-R97W Sec 14: NE/4', config='clean_qq')
-
-# allow the init config to have effect
-d_obj.parse()
-
-# or, override the init config
-d_obj.parse(clean_qq=False)
-
-
-# similarly:
-
-# init with `clean_qq` setting turned on
-t_obj = pytrs.Tract('NE/4', trs='154n97w14', config='clean_qq')
-
-# allow the init config to have effect
-t_obj.parse()
-
-# or, override the init config
-t_obj.parse(clean_qq=False)
-```
 
 #### `clean_qq` for expanded aliquot parsing
 If you know you have a very clean dataset, with nothing but simple aliquots and lots (i.e. no metes-and-bounds descriptions, exceptions, etc.) then we can use `'clean_qq'`.
@@ -171,8 +147,8 @@ By default, aliquots will be parsed into quarter-quarters ('QQs', or traditional
 
 ```
 >>> tract_demo_default = pytrs.Tract(
-        desc="SE/4NW/4, E/2NE/4NW/4",
-        trs="154n97w14")
+        desc='SE/4NW/4, E/2NE/4NW/4',
+        trs='154n97w14')
 >>> tract_demo_default.parse()
 >>> print(tract_demo_default.qqs)
 ['SENW', 'E2NENW']
@@ -181,26 +157,18 @@ By default, aliquots will be parsed into quarter-quarters ('QQs', or traditional
 
 ##### `qq_depth_min`
 
-If we want to *__force__* divisions smaller than 40 acres, we can set the config parameter `'qq_depth_min.<number>'`, where `<number>` specifies how many times to divide the section by 4. That is, the section will be divided into a number of pieces equal to `4^(depth)`.
+If we want to *__force__* divisions smaller than 40 acres, we can set the config parameter `'qq_depth_min.<number>'`, where `<number>` specifies how many times to divide the section by 4. That is, the section will be divided (on a grid) into a number of pieces equal to `4^(depth)`.
 
 The default is `'qq_depth_min.2'` (i.e. 16 quarter-quarters). But we can break it into 64 pieces (each 10-acres, assuming a 'perfect' section) with `qq_depth_min.3`, thus: 
 
 ```
 >>> tract_demo_min = pytrs.Tract(
-        desc="SE/4NW/4, E/2NE/4NW/4",
-        trs="154n97w14",
-        config="qq_depth_min.3")
->>> tract_demo_min.parse()
+        desc='SE/4NW/4, E/2NE/4NW/4',
+        trs='154n97w14',
+        parse_qq=True,
+        config='qq_depth_min.3')
 >>> print(tract_demo_min.qqs)
 ['NESENW', 'NWSENW', 'SESENW', 'SWSENW', 'NENENW', 'SENENW']
-```
-
-...Equivalently, as a kwarg in `.parse()` (which would override whatever was specified in `config=`, if any):
-```
->>> tract_demo_min = pytrs.Tract(
-        desc="SE/4NW/4, E/2NE/4NW/4",
-        trs="154n97w14")
->>> tract_demo_min.parse(qq_depth_min=3)
 ```
 
 
@@ -210,23 +178,15 @@ If we want to *__prohibit__* (i.e. discard) divisions smaller than 40 acres, we 
 
 ```
 >>> tract_demo_max = pytrs.Tract(
-        desc="SE/4NW/4, E/2NE/4NW/4",
-        trs="154n97w14",
-        config="qq_depth_max.2")
->>> tract_demo_max.parse()
+        desc='SE/4NW/4, E/2NE/4NW/4',
+        trs='154n97w14',
+        parse_qq=True,
+        config='qq_depth_max.2')
 >>> print(tract_demo_max.qqs)
 ['SENW', 'NENW']
 ```
 
 *__WARNING__: `qq_depth_max` should be equal to or greater than `qq_depth_min`, or there will likely be more parsed QQs than actually exist in the data.*
-
-...Equivalently, as a kwarg in `.parse()` (which would override whatever was specified in `config=`, if any):
-```
->>> tract_demo_max = pytrs.Tract(
-        desc="SE/4NW/4, E/2NE/4NW/4",
-        trs="154n97w14")
->>> tract_demo_min.parse(qq_depth_max=2)
-```
 
 
 ##### `qq_depth` (i.e. exact QQ depth)
@@ -235,20 +195,12 @@ If we want to specify the *__exact__* size of *__every__* element, no bigger and
 
 ```
 >>> tract_demo_exact = pytrs.Tract(
-        desc="SE/4NW/4, E/2NE/4NW/4",
-        trs="154n97w14",
-        config="qq_depth.2")
->>> tract_demo_exact.parse()
+        desc='SE/4NW/4, E/2NE/4NW/4',
+        trs='154n97w14',
+        parse_qq=True,
+        config='qq_depth.2')
 >>> print(tract_demo_exact.qqs)
 ['SENW', 'NENW']
-```
-
-...Equivalently, as a kwarg in `.parse()` (which would override whatever was specified in `config=`, if any):
-```
->>> tract_demo_min = pytrs.Tract(
-        desc="SE/4NW/4, E/2NE/4NW/4",
-        trs="154n97w14")
->>> tract_demo_min.parse(qq_depth=2)
 ```
 
 *__Note__: If specified, `qq_depth` will override `qq_depth_min` and `qq_depth_max`.* 
@@ -258,4 +210,5 @@ If we want to specify the *__exact__* size of *__every__* element, no bigger and
 ##### Warning: Do not set `qq_depth_min` or `qq_depth` too high.
 
 Because we're dealing with powers of 4, setting `qq_depth_min` or `qq_depth` to a value higher than 3 or 4 will quickly become very computationally expensive. `'ALL of Section 14, T154N-R97W'` parsed to a `qq_depth` of 5 will return a list of 1024 aliquot pieces, each 0.625 acres in size. And to a depth of 6 will return a list of 4096 aliquot pieces (each 0.15625 acres in size).
+
 
