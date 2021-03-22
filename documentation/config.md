@@ -60,20 +60,20 @@ Note: Including a parameter that affects only `PLSSDesc` objects in the `config=
 |Config Parameter |Default|PLSSDesc|Tract|Footnote |Link |Effect |
 |-----------------|:-----:|:------:|:---:|:-------:|:---:|:------|
 |`'n'` or `'default_ns.n'`	|x *	|x	|x **	|1 *, 2 **	|	|Assume any missing N/S in a Twp should be 'n'	|
-|`'s'` or `'default_ns.s'`	|	|x	|x **	|1, 2	|	|Assume any missing N/S in a Twp should be 's'	|
+|`'s'` or `'default_ns.s'`	|	|x	|x **	|1, 2 **	|	|Assume any missing N/S in a Twp should be 's'	|
 |`'w'` or `'default_ew.w'`	|x *	|x	|x **	|1 *, 2 **	|	|Assume any missing E/W in a Rge should be 'w'	|
-|`'e'` or `'default_ew.e'`	|	|x	|x **	|1, 2	|	|Assume any missing E/W in a Rge should be 'e'	|
+|`'e'` or `'default_ew.e'`	|	|x	|x **	|1, 2 **	|	|Assume any missing E/W in a Rge should be 'e'	|
 |`'wait_to_parse'`	|	|x	|	|	|	|Hold off on parsing PLSSDesc object at init	|
 |`'parse_qq'`	|	|x	|x	|	|	|Populate lots/aliquots in a `Tract` object (or in a `PLSSDesc` object's subordinate `Tract` objects) when created.	|
 |`'init_preprocess'`	|	|x	|x	|3	|	|Will preprocess description at init	|
 |`'init_preprocess.False'`	|x	|x	|x	|3	|	|Will NOT preprocess description at init	|
 |`'clean_qq'`	|	|	|x	|	|xx	|expect ONLY clean aliquots/lots (no metes-and-bounds, exceptions, etc.)	|
 |`'require_colon'`	|x	|x	|	|7	|	|Require a colon between Section number and its following description block (on a 'first-pass' attempt at a parse only)	|
-|`'require_colon.False'`	|	|x	|7	|	|	|Do not require a colon in that position	|
+|`'require_colon.False'`	|	|x	|	|7	|	|Do not require a colon in that position	|
 |`'include_lot_divs'`	|x	|	|x	|	|	|Report lot divisions (i.e., `'N/2 of Lot 1'` -> `'N2 of L1'`)	|
 |`'include_lot_divs.False`	|	|	|x	|	|	|Do NOT report lot divisions (i.e. just `'L1'`, even if divided further)	|
-|`'ocr_scrub'`	|	|x	|x **	|2	|	|Scrub common OCR artifacts from the text	|
-|`'ocr_scrub.False'`	|x	|x	|x **	|2	|	|Do NOT scrub OCR artifacts from the text	|
+|`'ocr_scrub'`	|	|x	|x **	|2 **	|	|Scrub common OCR artifacts from the text	|
+|`'ocr_scrub.False'`	|x	|x	|x **	|2 **	|	|Do NOT scrub OCR artifacts from the text	|
 |`'segment'`	|	|x	|	|	|	|Segment PLSS description before parsing into `Tract` objects. (MIGHT capture descriptions with multiple layouts.)	|
 |`'segment.False`	|x	|x	|	|	|	|Do NOT segment the description before parsing.	|
 |`'qq_depth_min.<number>`	|x (=`2`)	|	|x 	|4	|xx	|specify the MINIMUM 'depth' to parse aliquots. Value of `2` renders quarter-quarters (QQs).	|
@@ -90,7 +90,7 @@ Note: Including a parameter that affects only `PLSSDesc` objects in the `config=
 
 1) Objects for which `default_ns` or `default_ew` is not specified will fall back to the class attributes `PLSSDesc.MASTER_DEFAULT_NS` and `PLSSDesc.MASTER_DEFAULT_EW` (which are `'n'` and `'w'` unless changed by the user). If your data is from an area where you expect only South townships or East ranges, it may be simpler to set those `PLSSDesc` class attributes instead. 
 
-2) `default_ns`, `default_ew`, and `ocr_scrub` currently only affect `Tract` objects that are created via the `Tract.from_twprgesec()` method.
+2) The effect of `default_ns`, `default_ew`, and `ocr_scrub` on `Tract` objects is currently limited to the `.set_twprgesec()` method or creating a `Tract` object via the `Tract.from_twprgesec()` method. (But these parameters have more use in `PLSSDesc` objects.)
 
 3) Preprocessing is done automatically whenever an object is parsed. Using `init_preprocess` is only relevant if you do not parse at init but want to see the preprocessed description anyway.
 
@@ -129,7 +129,7 @@ Here, in a `Tract`:
 ```
 tract_txt = 'Lots 1 - 3, NE'
 
-tract2 = pytrs.PLSSDesc("NE", parse_qq=True, config='clean_qq')
+tract2 = pytrs.PLSSDesc(tract_txt, parse_qq=True, config='clean_qq')
 tract2.lots_qqs      # -> ['L1', 'L2', 'L3', NENE', 'NWNE', 'SENE', 'SWNE']
 
 # Without specifying 'clean_qq' we won't find the aliquots.
@@ -137,9 +137,13 @@ tract1 = pytrs.Tract(tract_txt, parse_qq=True)
 tract1.lots_qqs      # -> ['L1', 'L2', 'L3']
 ```
 
-`'NE'` as it appears in the text in these examples is __intended__ as the "Northeast Quarter" but can't be recognized as such without `'clean_qq'`. The reason for this is to avoid a ton of unwanted false matches in real-world data. That is, we don't want to interpret `'The west one hundred feet of the SW/4'` as `'The west oNE¼ hundred feet of the SW/4'` (i.e. the SW/4 __and__ the NE/4, which would happen under `'clean_qq'` parsing).
+`'NE'` as it appears in the text in these examples is __intended__ as the "Northeast Quarter" but can't be recognized as such without `'clean_qq'`.
 
-(Aliquot recognition of short but common abbreviations is an area for improvement in future versions.)
+The reason for this is to avoid a ton of unwanted false matches in real-world data. That is, we don't want to interpret `'The west one hundred feet of the SW/4'` as `'The west oNE¼ hundred feet of the SW/4'` (i.e. the SW/4 __and__ the NE/4, which would happen under `'clean_qq'` parsing). Similarly, we don't want to interpret `'...beginning 285 feet due west from the NE corner ...'` as `'... from the NE¼ corner...'`.
+
+On the other hand, `'NE/4'` or `'NE4'` would both match as the "Northeast Quarter" (with or without `'clean_qq'`) due to the context added by the `'/4'` or `'4'`.
+
+*(Aliquot recognition of short but common abbreviations is an area for improvement in future versions.)*
 
 
 #### Control the granularity (or 'depth') of aliquot parsing with `qq_depth`, `qq_depth_min`, and/or `qq_depth_max`
