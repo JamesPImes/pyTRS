@@ -193,3 +193,98 @@ Sec 15: Lots 1 - 3, S/2SW/4"""
 >>> some_tractlist = pytrs.TractList.from_multiple([parsed_plssdesc])
 >>> some_tractlist.print_data(['trs', 'desc', 'lots', 'qqs'])
 ```
+
+## Grouping / Filtering / Sorting `Tract` objects
+
+### `.sort_tracts()`
+
+
+```
+t_list = pytrs.TractList.from_multiple([<some large list of tracts>])
+t_list.sort_tracts(sort_key='r,t')
+```
+
+### `.filter()`
+
+Filter into a new `TractList` those `Tract` objects that meet some condition (passed as a lambda or other function that returns a bool or bool-like value).
+
+```
+t_list = pytrs.TractList.from_multiple([<some large list of tracts>])
+new_list = t_list.filter(key=lambda tract: tract.twprge in ['154n97w', '155n97w'])
+new_list2 = t_list.filter(
+    key=lambda tract: tract.sec_num is not None and tract.sec_num < 16)
+```
+
+Optionally remove the matching `Tract` objects from the original `TractList` with `drop=True`.
+```
+t_list = pytrs.TractList.from_multiple([<some large list of tracts>])
+new_list3 = t_list.filter(key=lambda tract: tract.twp == '154n', drop=True)
+```
+
+### `.group()`
+
+Get a dict of all of the `Tract` objects in the `TractList`, based on some attribute -- e.g., group by Twp/Rge. 
+
+```
+t_list = pytrs.TractList.from_multiple([<some large list of tracts>])
+grouped_tracts = t_list.group(by_attribute='twprge')
+```
+
+It's hard to depict, but the dict stored above to var `grouped_tracts` looks like this, with each key being a unique `twprge` value among the tracts in the original `TractList`:
+```
+{
+    '154n97w': [
+            <pytrs.parser.parser.Tract object at 0x04660B08>,
+            <pytrs.parser.parser.Tract object at 0x04660B80>,
+            <pytrs.parser.parser.Tract object at 0x04660C10>,
+            <pytrs.parser.parser.Tract object at 0x04660C58>
+    ],
+    '155n98w': [
+            <pytrs.parser.parser.Tract object at 0x04660CA0>,
+            <pytrs.parser.parser.Tract object at 0x04660CE8>
+    ],
+    <etc.>
+}
+```
+
+To demonstrate a bit more intuitively, let's print some contents:
+```
+t_list = pytrs.TractList.from_multiple([<some large list of tracts>])
+
+# Group by `.twprge` attribute values.
+grouped_tracts = t_list.group(by_attribute='twprge')
+
+# Get the tracts whose `.twprge` is '154n97w'.
+t_list_154n97w = grouped_tracts['154n97w']
+
+# Show that it's a TractList object and how many tracts are in it.
+type(t_list_154n97w)        # -> <class 'pytrs.parser.parser.TractList'>
+len(t_list_154n97w)         # -> 4  (this TractList holds 4 Tract objects)
+
+# Use the `.print_data()` TractList method to print Tract data to console.
+t_list_154n97w.print_data('trs', 'desc')
+```
+
+For our example, the above prints this to console:
+```
+Tract 1 / 4
+trs  : 154n97w14
+desc : NE/4
+
+Tract 2 / 4
+trs  : 154n97w15
+desc : W/2
+
+Tract 3 / 4
+trs  : 154n97w16
+desc : W/2
+
+Tract 4 / 4
+trs  : 154n97w17
+desc : W/2
+```
+
+#### Nested grouping
+
+Pass `by_attributes=[<list of attribute names>]`.
+
