@@ -287,7 +287,7 @@ class PLSSDesc:
     contained in the ``.parsed_tracts`` attribute:
 
     .sort_tracts() -- Custom sorting based on the Twp/Rge/Sec or
-    original parse order of each Tract. Can also take parameters from
+    original creation order of each Tract. Can also take parameters from
     the built-in ``list.sort()`` method.
 
     .group() -- Group Tract objects into a dict of TractList objects,
@@ -962,7 +962,7 @@ class PLSSDesc:
         return self.parsed_tracts.tracts_to_str(attributes)
 
     def tracts_to_csv(
-            self, attributes, fp, open_mode="w", nice_headers=False):
+            self, attributes, fp, mode="w", nice_headers=False):
         """
         Write Tract data to a .csv file.
 
@@ -970,16 +970,28 @@ class PLSSDesc:
         attributes should be included (see documentation on
         `pytrs.Tract` objects for the names of relevant attributes).
         :param fp: The filepath of the .csv file to write to.
-        :param open_mode: The `mode` in which to open the file we're
+        :param mode: The `mode` in which to open the file we're
         writing to. Either 'w' (new file) or 'a' (continue a file).
         Defaults to 'w' (new file). (Mode 'r' will cause an error.)
-        :param nice_headers: a bool, whether to use the values in the
-        ``Tract.ATTRIBUTES`` dict for headers. Defaults to ``False``
-        (i.e. just use the attribute names themselves).
+        :param nice_headers: By default, this method will use the
+        attribute names as headers. To use custom headers, pass to
+        ``nice_headers=`` any of the following:
+        -- a list of strings to use. (Should be equal in length to the
+        list passed as ``attributes``, but will not raise an error if
+        that's not the case. The resulting column headers will just be
+        fewer than the actual number of columns.)
+        -- a dict, keyed by attribute name, and whose values are the
+        corresponding headers. (Any missing keys will use the attribute
+        name.)
+        -- `True` -> use the values in the ``Tract.ATTRIBUTES`` dict for
+        headers. (WARNING: Any value passed that is not a list or dict
+        and that evaluates to `True` will cause this behavior.)
+        -- If not specified (i.e. None), will just use the attribute
+        names themselves.
         :return: None
         """
         self.parsed_tracts.tracts_to_csv(
-            attributes, fp, open_mode, nice_headers)
+            attributes, fp, mode, nice_headers)
 
     def quick_desc(self, delim=': ', newline='\n') -> str:
         """
@@ -1097,11 +1109,7 @@ class PLSSDesc:
 
         key options:
 
-        'i' -> Sort by ``.orig_index`` (i.e. the original order they
-            were parsed -- WARNING: will not be reliable if the
-            TractList contains Tract objects from multiple parses, which
-            shouldn't happen inside a PLSSDesc object unless they are
-            manually added).
+        'i' -> 'i' -> Sort by the original order they were created.
 
         't' -> Sort by Township.
                'num'    --> Sort by raw number, ignoring N/S. (default)
@@ -1135,10 +1143,10 @@ class PLSSDesc:
                     then sort by Township (north-to-south)
 
             'i,s,r,t'  (this is the default)
-                ->  Sort by original parse order;
+                ->  Sort by original creation order;
                     then sort by Section (smallest-to-largest);
                     then sort by Range (smallest-to-largest);
-                    ten sort by Township (smallest-to-largest)
+                    then sort by Township (smallest-to-largest)
 
             'i'
                 -> Return to the original order as parsed in this
@@ -1151,7 +1159,8 @@ class PLSSDesc:
         self.parsed_tracts.sort_tracts(key=key)
         return None
 
-    def group(self, by_attribute="twprge", into=None):
+    def group(self, by_attribute="twprge", into=None,
+            sort_key=None, sort_reverse=False):
         """
         Filter the Tract objects in the ``.parsed_tracts`` into a dict
         of TractLists, keyed by unique values of `by_attribute`. By
@@ -1161,14 +1170,38 @@ class PLSSDesc:
         :param by_attribute: The str name of an attribute of Tract
         objects. (Defaults to `'twprge'`). NOTE: Must be a hashable
         type!
+
         :param into: (Optional) An existing dict into which to group
         the Tracts. If not specified, will create a new dict. Use this
         arg if you need to continue adding Tracts to an existing
         grouped dict.
+
+        :param sort_key: (Optional) How to sort each grouped TractList
+        in the returned dict. Use a string that works with the
+        ``.sort_tracts(key=<str>)`` method (e.g., 'i, s, r.ew, t.ns') or
+        a lambda function, as you would with the builtin
+        ``list.sort(key=<lambda>)`` method. (Defaults to ``None``, i.e.
+        not sorted.)
+
+        May optionally pass `sort_key` as a list of sort keys, to be
+        applied left-to-right. Here, you may mix and match lambdas and
+        ``.sort_tracts()`` strings.
+
+        :param sort_reverse: (Optional) Whether to reverse the sort.
+        NOTE: Only has an effect if the ``sort_key`` is passed as a
+        lambda -- NOT as a custom string sort key. Defaults to ``False``
+
+        NOTE: If ``sort_key`` was passed as a list, then
+        ``sort_reverse`` must be passed as EITHER a single bool that
+        will apply to all of the (non-string) sorts, OR as a list or
+        tuple of bools that is equal in length to ``sort_key`` (i.e. the
+        values in ``sort_key`` and ``sort_reverse`` will be matched up
+        one-to-one).
+
         :return: A dict of TractList objects, each containing the Tracts
         with matching values of the `by_attribute`.
         """
-        return self.parsed_tracts.group(by_attribute, into)
+        return self.parsed_tracts.group(by_attribute, into, sort_key, sort_reverse)
 
     # Alias to mirror `sort_tracts`.
     group_tracts = group
@@ -1196,7 +1229,7 @@ class PLSSDesc:
     # Alias to mirror `sort_tracts`.
     filter_tracts = filter
 
-    def filter_errors(self, twprge=True, sec=True, undef=False, drop=False):
+    def filter_errors(self, twp=True, rge=True, sec=True, undef=False, drop=False):
         """
         Extract from ``.parsed_tracts`` all Tract objects that were
         parsed with an error. Specifically extract Twp/Rge errors with
@@ -1205,22 +1238,74 @@ class PLSSDesc:
 
         Returns a new TractList of all of the selected Tract objects.
 
-        :param twprge: A bool, whether to get Twp/Rge errors. (Defaults
-        to ``True``)
-        :param sec: A bool, whether to get Sec errors. (Defaults to
+        :param twp: a bool, whether to get Twp errors. (Defaults to
         ``True``)
-        :param undef: A bool, whether to get undefined Twps, Rges, or
-        Sections (in addition to error Twp/Rge/Sections). (Defaults to
-        ``False``)
+        :param rge: a bool, whether to get Rge errors. (Defaults to
+        ``True``)
+        :param sec: a bool, whether to get Sec errors. (Defaults to
+        ``True``)
+        :param undef: a bool, whether to get consider Twps, Rges, or
+        Sections that were UNDEFINED to also be errors. (Defaults to
+        ``False``)  (NOTE: Undefined Twp/Rge/Sec will never occur in a
+        ``PLSSDesc`` object unless a ``Tract`` was manually appended to
+        the ``.parsed_tracts`` attribute.)
         :param drop: Whether to drop the selected Tracts from the
         original ``.parsed_tracts``. (Defaults to ``False``)
         :return: A new TractList containing all of the selected Tract
         objects.
         """
-        return self.parsed_tracts.filter_errors(twprge, sec, undef, drop)
+        return self.parsed_tracts.filter_errors(twp, rge, sec, undef, drop)
 
     # Alias to mirror `sort_tracts`
     filter_error_tracts = filter_errors
+
+    def filter_duplicates(self, method='instance', drop=False):
+        """
+        Find the duplicate Tracts in ``.parsed_tracts``, get a new
+        TractList of those Tract objects that were duplicates, and
+        optionally `drop` the duplicates from the original TractList.
+        (To be clear, if there are THREE identical Tracts in the
+        ``.parsed_tracts``, the returned ``TractList`` will contain only
+        TWO Tracts, and the original ``.parsed_tracts`` will still have
+        one.)
+
+        Control how to assess whether `Tract` objects are duplicates by
+        ONE of the following methods:
+
+        `method='instance'` (the default) -> Whether two objects are
+        actually the same instance -- i.e. literally the same object.
+        (By definition, this will also apply even if one of the other
+        two methods is used.)  (This should never happen in a
+        ``PLSSDesc`` object, unless a Tract was manually appended to
+        ``.parsed_tracts``.)
+
+        `method='lots_qqs'`  -> Whether the `.lots_qqs` attribute
+        contains the same lots/aliquots (after removing duplicates
+        there).  NOTE: Lots/aliquots must have been parsed for a given
+        Tract object, or it will NOT match as a duplicate with this
+        parameter.
+                Ex: Will match these as duplicate tracts, assuming they
+                were parsed with identical `config` settings:
+                    `154n97w14: Lots 1 - 3, S/2NE/4`
+                    `154n97w14: Lot 3, S/2NE/4, Lots 1, 2`
+
+        `method='desc'` -> Whether the `.trs` and `.pp_desc` (i.e.
+        preprocessed description) combine to form an identical tract.
+                Ex: Will match these as duplicate tracts:
+                    `154n97w14: NE/4`
+                    `154n97w14: Northeast Quarter`
+
+        :param method: Specify how to assess whether Tract objects are
+        duplicates (either 'instance', 'lots_qqs', or 'desc'). See above
+        for example behavior of each.
+        :param drop: Whether to remove the identified duplicates from
+        the original list.
+        :return: A new TractList.
+        """
+        return self.parsed_tracts.filter_duplicates(method, drop)
+
+    # Alias to mirror `sort_tracts`
+    filter_duplicate_tracts = filter_duplicates
 
 
 class Tract:
@@ -1262,7 +1347,7 @@ class Tract:
     .twp_num -- The Twp portion of .trs, as an int or None (ex: 154)
     .twp_ns -- The N/S portion of .trs, as a str or None (ex: 'n')
     .rge -- The Rge portion of .trs, a string (ex: '97w')
-    .rge_num -- The Twp portion of .trs, as an int or None (ex: 97)
+    .rge_num -- The Rge portion of .trs, as an int or None (ex: 97)
     .rge_ew -- The E/W portion of .trs, as a str or None (ex: 'w')
     .twprge -- The Twp/Rge portion of .trs, a string (ex: '154n97w')
     .sec -- The Sec portion of .trs, a string (ex: '01')
@@ -1399,9 +1484,19 @@ class Tract:
         'source': 'Source'
     }
 
+    # A unique identifier that increments every time a Tract is created.
+    __UID = 0
+
     def __init__(
-            self, desc, trs=None, source=None, orig_desc=None, orig_index=0,
-            desc_is_flawed=False, config=None, parse_qq=None):
+            self,
+            desc,
+            trs=None,
+            config=None,
+            parse_qq=None,
+            source=None,
+            orig_desc=None,
+            orig_index=0,
+            desc_is_flawed=False):
         """
         :param desc: The description block within this TRS. (What will
         be processed if this Tract object gets parsed into lots/QQs.)
@@ -1411,6 +1506,12 @@ class Tract:
         lowercase first letter.
             Ex: Sec 1, T154N-R97W -> '154n97w01'
                 Sec 14, T1S-R9E -> '1s9e14'
+        :param config: Either a pytrs.Config object, or a string of
+        parameters to configure how the Tract object should be parsed.
+        (See documentation on pytrs.Config objects for optional config
+        parameters.)
+        :param parse_qq: Whether to parse the `desc` into lots/QQs at
+        init. (Defaults to False)
         :param source: (Optional) A string specifying where the
         description came from. Useful if parsing multiple descriptions
         and need to internally keep track where they came from.
@@ -1423,16 +1524,13 @@ class Tract:
         flaw was discovered during parsing of the parent PLSSDesc
         object, if any. (Tract objects themselves are agnostic to fatal
         flaws.)
-        :param config: Either a pytrs.Config object, or a string of
-        parameters to configure how the Tract object should be parsed.
-        (See documentation on pytrs.Config objects for optional config
-        parameters.)
-        :param parse_qq: Whether to parse the `desc` into lots/QQs at
-        init. (Defaults to False)
         """
 
         if not isinstance(trs, (str, TRS)) and trs is not None:
             raise TypeError("`trs` must be a str, None, or a TRS object")
+
+        self.__uid = Tract.__UID
+        Tract.__UID += 1
 
         # Note that setting `.trs` populates a TRS object in the
         # protected `.__trs` attribute.
@@ -1702,18 +1800,18 @@ class Tract:
 
     @staticmethod
     def from_twprgesec(
-            desc='',
+            desc,
             twp=None,
             rge=None,
             sec=None,
             default_ns=None,
             default_ew=None,
+            config=None,
+            parse_qq=None,
             source=None,
             orig_desc=None,
             orig_index=0,
-            desc_is_flawed=False,
-            config=None,
-            parse_qq=None):
+            desc_is_flawed=False):
         """
         Create a Tract object from separate Twp, Rge, and Sec components
         rather than joined Twp/Rge/Sec. All parameters are the same as
@@ -1948,7 +2046,8 @@ class Tract:
             clean_qq = self.clean_qq
         preprocessor = TractPreprocessor(text, clean_qq=clean_qq)
         text = preprocessor.text
-        self.pp_desc = text
+        if commit:
+            self.pp_desc = text
         return text
 
     def to_dict(self, *attributes) -> dict:
@@ -2001,6 +2100,45 @@ class Tract:
             qd = qd[:max_len - 3] + "..."
         return qd
 
+    @staticmethod
+    def get_headers(attributes, nice_headers, plus_cols=None):
+        """
+        Get 'clean' headers for a .csv file for the ``headers``, drawing
+        from ``nice_headers`` (a bool, list, or dict).
+
+        :param attributes: a list of names (strings) of whichever
+        attributes should be included (see documentation on
+        `pytrs.Tract` objects for the names of relevant attributes).
+        :param nice_headers: By default, this method will use the
+        attribute names as headers. To use custom headers, pass to
+        ``nice_headers=`` any of the following:
+        -- a list of strings to use. (Should be equal in length to the
+        list passed as ``attributes``, but will not raise an error if
+        that's not the case. The resulting column headers will just be
+        fewer than the actual number of columns.)
+        -- a dict, keyed by attribute name, and whose values are the
+        corresponding headers. (Any missing keys will use the attribute
+        name.)
+        -- `True` -> use the values in the ``Tract.ATTRIBUTES`` dict for
+        headers. (WARNING: Any value passed that is not a list or dict
+        and that evaluates to `True` will cause this behavior.)
+        -- If not specified (i.e. None), will just use the attribute
+        names themselves.
+        :param plus_cols:  (Optional) a list of additional headers to
+        write that are not covered by the Tract attributes.
+        :return: A new list of header strings.
+        """
+        header_row = attributes.copy()
+        if isinstance(nice_headers, dict):
+            header_row = [nice_headers.get(att, att) for att in attributes]
+        elif isinstance(nice_headers, list):
+            header_row = nice_headers.copy()
+        elif nice_headers:
+            header_row = [Tract.ATTRIBUTES.get(att, att) for att in attributes]
+        if plus_cols:
+            header_row.extend(plus_cols)
+        return header_row
+
 
 class TractList(list):
     """
@@ -2030,7 +2168,7 @@ class TractList(list):
 
     ____ SORTING / GROUPING / FILTERING TRACTS BY ATTRIBUTE VALUES ____
     .sort_tracts() -- Custom sorting based on the Twp/Rge/Sec or
-    original parse order of each Tract. Can also take parameters from
+    original creation order of each Tract. Can also take parameters from
     the built-in ``list.sort()`` method.
 
     .group() -- Group Tract objects into a dict of TractList objects,
@@ -2173,22 +2311,15 @@ class TractList(list):
         unless ``drop=True`` was passed.)
         """
         indexes_to_include = []
-        new_list = TractList()
         for i, tract in enumerate(self):
             if key(tract):
                 indexes_to_include.append(i)
-        indexes_to_include.reverse()
-        for i in indexes_to_include:
-            new_list.append(self[i])
-            if drop:
-                self.pop(i)
-        new_list.reverse()
-        return new_list
+        return self._new_list_from_self(indexes_to_include, drop)
 
     # Alias to mirror `sort_tracts`
     filter_tracts = filter
 
-    def filter_errors(self, twprge=True, sec=True, undef=False, drop=False):
+    def filter_errors(self, twp=True, rge=True, sec=True, undef=False, drop=False):
         """
         Extract from this TractList all Tract objects that were parsed
         with an error. Specifically extract Twp/Rge errors with
@@ -2197,12 +2328,14 @@ class TractList(list):
 
         Returns a new TractList of all of the selected Tract objects.
 
-        :param twprge: A bool, whether to get Twp/Rge errors. (Defaults
-        to ``True``)
-        :param sec: A bool, whether to get Sec errors. (Defaults to
+        :param twp: a bool, whether to get Twp errors. (Defaults to
         ``True``)
-        :param undef: A bool, whether to get undefined Twps, Rges, or
-        Sections (in addition to error Twp/Rge/Sections). (Defaults to
+        :param rge: a bool, whether to get Rge errors. (Defaults to
+        ``True``)
+        :param sec: a bool, whether to get Sec errors. (Defaults to
+        ``True``)
+        :param undef: a bool, whether to get consider Twps, Rges, or
+        Sections that were UNDEFINED to also be errors. (Defaults to
         ``False``)
         :param drop: Whether to drop the selected Tracts from the
         original TractList. (Defaults to ``False``)
@@ -2227,22 +2360,116 @@ class TractList(list):
             return bad and controller
 
         indexes_to_include = []
-        new_list = TractList()
         for i, tract in enumerate(self):
-            if (match_by(tract, twprge, "twp_num", "twp_undef")
-                    or match_by(tract, twprge, "rge_num", "rge_undef")
+            if (match_by(tract, twp, "twp_num", "twp_undef")
+                    or match_by(tract, rge, "rge_num", "rge_undef")
                     or match_by(tract, sec, "sec_num", "sec_undef")):
                 indexes_to_include.append(i)
-        indexes_to_include.reverse()
-        for i in indexes_to_include:
+        return self._new_list_from_self(indexes_to_include, drop)
+
+    # Alias to mirror `sort_tracts`
+    filter_tracts_errors = filter_errors
+
+    def filter_duplicates(self, method='instance', drop=False):
+        """
+        Find the duplicate Tracts from this TractList, get a new
+        TractList of those Tract objects that were duplicates, and
+        optionally `drop` the duplicates from the original TractList.
+        (To be clear, if there are THREE identical Tracts in the
+        ``TractList``, the returned ``TractList`` will contain only TWO
+        Tracts, and the original ``TractList`` will still have one.)
+
+        Control how to assess whether `Tract` objects are duplicates by
+        ONE of the following methods:
+
+        `method='instance'` (the default) -> Whether two objects are
+        actually the same instance -- i.e. literally the same object.
+        (By definition, this will also apply even if one of the other
+        two methods is used.)
+
+        `method='lots_qqs'`  -> Whether the `.lots_qqs` attribute
+        contains the same lots/aliquots (after removing duplicates
+        there).  NOTE: Lots/aliquots must have been parsed for a given
+        Tract object, or it will NOT match as a duplicate with this
+        parameter.
+                Ex: Will match these as duplicate tracts, assuming they
+                were parsed with identical `config` settings:
+                    `154n97w14: Lots 1 - 3, S/2NE/4`
+                    `154n97w14: Lot 3, S/2NE/4, Lots 1, 2`
+
+        `method='desc'` -> Whether the `.trs` and `.pp_desc` (i.e.
+        preprocessed description) combine to form an identical tract.
+                Ex: Will match these as duplicate tracts:
+                    `154n97w14: NE/4`
+                    `154n97w14: Northeast Quarter`
+
+        :param method: Specify how to assess whether Tract objects are
+        duplicates (either 'instance', 'lots_qqs', or 'desc'). See above
+        for example behavior of each.
+        :param drop: Whether to remove the identified duplicates from
+        the original list.
+        :return: A new TractList.
+        """
+        unique = set()
+        indexes_to_include = []
+
+        options = ('instance', 'lots_qqs', 'desc')
+        if method not in options:
+            raise ValueError(f"`method` must be one of {options}")
+        lots_qqs = method == 'lots_qqs'
+        desc = method == 'desc'
+        only_by_instance = not (lots_qqs or desc)
+
+        for i, tract in enumerate(self):
+            # Always find duplicate instances (because not all Tract
+            # objects are parsed into lots/qqs).
+            if tract not in unique:
+                unique.add(tract)
+            else:
+                indexes_to_include.append(i)
+            if only_by_instance:
+                continue
+
+            to_check = tract
+            if lots_qqs:
+                if not tract.parse_complete:
+                    continue
+                lq = sorted(set(tract.lots_qqs))
+                to_check = f"{tract.trs}_{lq}"
+            if desc:
+                to_check = f"{tract.trs}_{tract.pp_desc.strip()}"
+
+            if to_check not in unique:
+                unique.add(to_check)
+            elif i not in indexes_to_include:
+                # Use elif to avoid double-appending i (may have already
+                # been added from the `instance` check).
+                indexes_to_include.append(i)
+
+        return self._new_list_from_self(indexes_to_include, drop)
+
+    def _new_list_from_self(self, indexes: list, drop: bool):
+        """
+        INTERNAL USE:
+
+        Get a new ``TractList`` of the elements at the specified
+        ``indexes``.  Optionally remove them from the original
+        ``TractList`` with ``drop=True``.
+
+        :param indexes: Indexes of the elements to include in the new
+        ``TractList``.
+        :param drop: a bool, whether to drop those Tract objects from
+        the original TractList.
+        :return: The new TractList.
+        """
+        new_list = TractList()
+        indexes.reverse()
+        for i in indexes:
             new_list.append(self[i])
             if drop:
                 self.pop(i)
         new_list.reverse()
         return new_list
-
-    # Alias to mirror `sort_tracts`
-    filter_tracts_errors = filter_errors
 
     def sort_tracts(self, key='i,s,r,t', reverse=False):
         """
@@ -2255,9 +2482,7 @@ class TractList(list):
 
         Customized key options:
 
-        'i' -> Sort by ``.orig_index`` (i.e. the original order they
-            were parsed -- WARNING: will not be reliable if this
-            TractList contains Tract objects from multiple parses).
+        'i' -> Sort by the original order they were created.
 
         't' -> Sort by Township.
                't.num'  --> Sort by raw number, ignoring N/S. (default)
@@ -2299,10 +2524,10 @@ class TractList(list):
                     then sort by Township (north-to-south)
 
             'i,s,r,t'  (this is the default)
-                ->  Sort by original parse order;
+                ->  Sort by original creation order;
                     then sort by Section (smallest-to-largest);
                     then sort by Range (smallest-to-largest);
-                    ten sort by Township (smallest-to-largest)
+                    then sort by Township (smallest-to-largest)
 
         Moreover, we can conduct multiple sorts by passing ``key`` as a
         list of sort keys. We can mix and match string keys above with
@@ -2426,7 +2651,7 @@ class TractList(list):
             return val
 
         sort_defs = {
-            'i.num': lambda x: x.orig_index,
+            'i.num': lambda x: x._Tract__uid,
             't.num': lambda x: extract_safe_num(x, "twp_num"),
             't.ns': lambda x: n_to_s(x),
             't.sn': lambda x: n_to_s(x, reverse=True),
@@ -2558,8 +2783,7 @@ class TractList(list):
 
         :param sort_reverse: (Optional) Whether to reverse the sort.
         NOTE: Only has an effect if the ``sort_key`` is passed as a
-        lambda (i.e. using ``list.sort()``) -- NOT as a string (which
-        uses ``.sort_tracts()``). Defaults to ``False``.
+        lambda -- NOT as a custom string sort key. Defaults to ``False``
 
         NOTE: If ``sort_key`` was passed as a list, then
         ``sort_reverse`` must be passed as EITHER a single bool that
@@ -2830,7 +3054,7 @@ class TractList(list):
         return all_tract_data
 
     def tracts_to_csv(
-            self, attributes, fp, open_mode="w", nice_headers=False):
+            self, attributes, fp, mode="w", nice_headers=False):
         """
         Write Tract data to a .csv file.
 
@@ -2838,12 +3062,24 @@ class TractList(list):
         attributes should be included (see documentation on
         `pytrs.Tract` objects for the names of relevant attributes).
         :param fp: The filepath of the .csv file to write to.
-        :param open_mode: The `mode` in which to open the file we're
+        :param mode: The `mode` in which to open the file we're
         writing to. Either 'w' (new file) or 'a' (continue a file).
         Defaults to 'w' (new file). (Mode 'r' will cause an error.)
-        :param nice_headers: a bool, whether to use the values in the
-        ``Tract.ATTRIBUTES`` dict for headers. Defaults to ``False``
-        (i.e. just use the attribute names themselves).
+        :param nice_headers: By default, this method will use the
+        attribute names as headers. To use custom headers, pass to
+        ``nice_headers=`` any of the following:
+        -- a list of strings to use. (Should be equal in length to the
+        list passed as ``attributes``, but will not raise an error if
+        that's not the case. The resulting column headers will just be
+        fewer than the actual number of columns.)
+        -- a dict, keyed by attribute name, and whose values are the
+        corresponding headers. (Any missing keys will use the attribute
+        name.)
+        -- `True` -> use the values in the ``Tract.ATTRIBUTES`` dict for
+        headers. (WARNING: Any value passed that is not a list or dict
+        and that evaluates to `True` will cause this behavior.)
+        -- If not specified (i.e. None), will just use the attribute
+        names themselves.
         :return: None
         """
         if not fp:
@@ -2852,11 +3088,13 @@ class TractList(list):
         from pathlib import Path
         fp = Path(fp)
         headers = True
-        if fp.exists() and open_mode == "a":
+        if fp.exists() and mode == "a":
             headers = False
 
         import csv
         attributes = _clean_attributes(attributes)
+
+        header_row = Tract.get_headers(attributes, nice_headers)
 
         def scrub_row(data):
             """Convert lists/dicts in a row to strings."""
@@ -2869,13 +3107,9 @@ class TractList(list):
                 scrubbed.append(elem)
             return scrubbed
 
-        with open(fp, mode=open_mode, newline="") as file:
+        with open(fp, mode=mode, newline="") as file:
             writer = csv.writer(file)
-            header_row = attributes
-            if nice_headers:
-                header_row = [
-                    Tract.ATTRIBUTES.get(att, att) for att in attributes
-                ]
+
             if headers:
                 writer.writerow(header_row)
             for tract in self:
@@ -3038,32 +3272,26 @@ class TractList(list):
         return all_trs
 
     @staticmethod
-    def from_multiple(objects):
+    def from_multiple(*objects):
         """
         Create a TractList from multiple elements, which may be any
         number and combination of Tract, PLSSDesc, and TractList
         objects.
 
-        (If a single TractList is passed, it will return the original
-        TractList.)
+        (If a single TractList is passed, it will return a copy of the
+        original TractList.)
         """
         if isinstance(objects, TractList):
-            return objects
+            return objects.copy()
         tl = TractList()
-        try:
-            for obj in objects:
-                if isinstance(obj, PLSSDesc):
-                    tl.extend(obj.parsed_tracts)
-                elif isinstance(obj, Tract):
-                    tl.append(obj)
-                else:
-                    # Assume it's a TractList or other list-like object.
-                    tl.extend(obj)
-        except TypeError:
-            if isinstance(objects, PLSSDesc):
-                tl.extend(objects.parsed_tracts)
+        for obj in objects:
+            if isinstance(obj, PLSSDesc):
+                tl.extend(obj.parsed_tracts)
+            elif isinstance(obj, Tract):
+                tl.append(obj)
             else:
-                tl.append(objects)
+                # Assume it's a TractList or other list-like object.
+                tl.extend(obj)
 
         return tl
 
@@ -7321,8 +7549,7 @@ def group_tracts(
 
     :param sort_reverse: (Optional) Whether to reverse the sort.
     NOTE: Only has an effect if the ``sort_key`` is passed as a
-    lambda (i.e. using ``list.sort()``) -- NOT as a string (which
-    uses ``.sort_tracts()``). Defaults to ``False``.
+    lambda -- NOT as a custom string sort key. Defaults to ``False``.
 
     NOTE: If ``sort_key`` was passed as a list, then
     ``sort_reverse`` must be passed as EITHER a single bool that
