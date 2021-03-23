@@ -23,202 +23,6 @@ from tkinter.ttk import Combobox
 import pytrs
 
 
-HELP_TEXT = {
-    'default_ns': (
-        "If the dataset contains a Township whose N/S "
-        "direction was not specified, the program will assume "
-        "this specified direction. (And if not specified here, "
-        "will assumed North.)"
-    ),
-
-    'default_ew': (
-        "If the dataset contains a Range whose E/W direction "
-        "was not specified, the program will assume this "
-        "specified direction. (And if not specified here, "
-        "will assumed West.)"
-    ),
-
-    'layout': (
-        "If you know that the dataset is all laid out in the "
-        "same format, you may get more accurate results if "
-        "you force parsing according to one of these formats. "
-        "However, if there are multiple layouts, or unknown "
-        "layouts, it is probably wise to let the program "
-        "deduce the layout for each.\n\n"
-        "Below are examples of the possible layouts:\n\n"
-        f"{pytrs.IMPLEMENTED_LAYOUT_EXAMPLES}"
-    ),
-
-    'clean_qq': (
-        "Dataset contains only clean aliquots and lots; no "
-        "metes-and-bounds, exceptions, or limitations. "
-        "Anything that resembles an aliquot may be captured "
-        "as such. For example, 'NE' will be captured as 'NE¼'."
-        "\n\nThis may allow for broader parsing of lots and "
-        "QQ's, but it can also result in numerous false "
-        "matches, if the dataset is not simple and clean. For "
-        "example, 'Northernmost one hundred feet of the NW/4' "
-        "would match as 'Northernmost oNE¼ hundred feet of "
-        "the NW¼'.\n\n"
-        "Default: off (`False`)"
-    ),
-
-    'include_lot_divs': (
-        "If parsing lots, report any divisions of lots. For "
-        "example, if True, 'N/2 of Lot 1' would be reported "
-        "as 'N2 of L1'. If this is turned off, it would be "
-        "reported as 'L1'.\n\n"
-        "Default: on (`True`)"
-    ),
-
-    'require_colon': (
-        "Instruct a PLSSDesc object (whose layout is "
-        "`TRS_desc` or `S_desc_TR`) to require a colon "
-        "between the section number and the following "
-        "description -- i.e. 'Section 14 NE/4' would NOT be "
-        "picked up if 'require_colon' is on (`True`).  If "
-        "turned off (`False`), then 'Section 14 NE/4' would "
-        "be captured. However, this may result in false "
-        "matches, depending on the dataset.\n\n"
-        "(Note that the default parsing method is to first "
-        "pass over instances that do not have a colon. If no "
-        "sections are matched, it will make a second pass, "
-        "this time allowing section numbers that are NOT "
-        "followed by colon. If not set here, the potentially "
-        "two-pass method will be used by default.)\n\n"
-        "If set to on (`True`) here, that second-pass method "
-        "will be prevented. If set to off (`False`) here, it "
-        "will broadly capture all such instances, and the "
-        "second-pass method will not be needed. (Again, "
-        "beware false matches.)"
-    ),
-
-    'ocr_scrub': (
-        "Attempt to iron out common OCR artifacts in a "
-        "PLSSDesc object or Tract object (e.g., 'TIS4N-R97W' "
-        "that should have been 'T154N-R97W'). (WARNING: may "
-        "cause other issues.)\n\n"
-        "Default: off (`False`)."
-    ),
-
-    'segment': (
-        "While parsing, segment each description by T&R "
-        "before identifying tracts, which MIGHT capture SOME "
-        "descriptions whose layout changes partway through. "
-        "(However, this cannot capture ALL changes in "
-        "layouts.)\n\n"
-        "Default: off (`False`)"
-    ),
-
-    'init_preprocess': (
-        "Preprocess PLSS descriptions and Tracts upon "
-        "initialization.\n\n"
-        "Default: on (`True`)"
-    ),
-
-    'wait_to_parse': (
-        "Wait to parse PLSS descriptions upon initialization, "
-        "rather than doing it automatically.\n\n"
-        "Default: off (`False` -- i.e. do parse by default)"
-    ),
-
-    'parse_qq': (
-        "Parse Tracts into lots and QQ's upon initialization. "
-        "(If used with a PLSS description, its resulting Tracts "
-        "will be parsed into lots/QQs.)\n\n"
-        "Default: off (`False`)"
-    ),
-
-    'qq_depth_min': (
-        "Specify the MINIMUM 'depth' to which to parse "
-        "aliquots -- i.e. 2 will result in divisions NO "
-        "LARGER THAN quarter-quarters (QQs, e.g., 'NENE'); "
-        "whereas 1 will result in divisions no larger than "
-        "quarter sections (e.g., 'NE'). Will still include "
-        "smaller divisions if they exist in the data (i.e. "
-        "'E/2NE/4NE/4' would become ['E2NENE'] if this is set "
-        "to 2; or ['NENENE', 'SENENE'] if set to 3).\n\n"
-
-        "Examples (parsing the 'NE/4'):\n\n"
-
-        "1 (quarter sections) -> 'NE'\n\n"
-
-        "2 (QQs) -> 'NENE', 'NWNE', 'SENE', 'SWNE'\n\n"
-        "3 -> 'NENENE', 'NWNENE', 'SENENE', 'SWNENE', "
-        "'NENWNE', 'NWNWNE', 'SENWNE', 'SWNWNE', 'NESENE', "
-        "'NWSENE', 'SESENE', 'SWSENE', 'NESWNE', 'NWSWNE', "
-        "'SESWNE', 'SWSWNE'\n\n"
-
-        "[etc.]\n\n\n"
-
-        "Default: 2 (i.e. QQs)"
-    ),
-
-    'qq_depth_max': (
-        "Specify the MAXIMUM 'depth' to which to parse "
-        "aliquots -- i.e. 2 will result in divisions NO "
-        "SMALLER THAN quarter-quarters (QQs, e.g., 'NENE'); "
-        "whereas 1 will result in divisions no smaller than "
-        "quarters (e.g., 'NE'). Will NOT include smaller"
-        "divisions if they exist in the data (i.e."
-        "'E/2NE/4NE/4' would become ['NENE'] if this is set "
-        "to 2).\n\n"
-        "NOTE: qq_depth_max should be greater than or equal to "
-        "qq_depth_min.\n\n\n"
-
-        "Examples (parsing the 'NE/4'):\n\n"
-
-        "1 (quarter sections) -> 'NE'\n\n"
-
-        "2 (QQs) -> 'NENE', 'NWNE', 'SENE', 'SWNE'\n\n"
-        "3 -> 'NENENE', 'NWNENE', 'SENENE', 'SWNENE', "
-        "'NENWNE', 'NWNWNE', 'SENWNE', 'SWNWNE', 'NESENE', "
-        "'NWSENE', 'SESENE', 'SWSENE', 'NESWNE', 'NWSWNE', "
-        "'SESWNE', 'SWSWNE'\n\n"
-
-        "[etc.]\n\n\n"
-        "Default: None. (Will not cull smaller aliquot "
-        "divisions, unless explicitly told to do so.)"
-    ),
-
-    'qq_depth': (
-        "Specify the EXACT 'depth' to which to parse "
-        "aliquots -- i.e. 2 will result in exactly "
-        "quarter-quarters (QQs, e.g., 'NENE'), even if smaller "
-        "divisions exist in the data. This is equivalent to "
-        "setting qq_depth_min equal to qq_depth_max.\n\n"
-        "NOTE: Using `qq_depth` will override `qq_depth_min` "
-        "and `qq_depth_max`.\n\n\n"
-
-        "Examples (parsing the 'NE/4'):\n\n"
-
-        "1 (quarter sections) -> 'NE'\n\n"
-
-        "2 (QQs) -> 'NENE', 'NWNE', 'SENE', 'SWNE'\n\n"
-        "3 -> 'NENENE', 'NWNENE', 'SENENE', 'SWNENE', "
-        "'NENWNE', 'NWNWNE', 'SENWNE', 'SWNWNE', 'NESENE', "
-        "'NWSENE', 'SESENE', 'SWSENE', 'NESWNE', 'NWSWNE', "
-        "'SESWNE', 'SWSWNE'\n\n"
-
-        "[etc.]\n\n\n"
-        "Default: 2 (i.e. QQs)"
-    ),
-
-    'break_halves': (
-            "Whether to break aliquot halves into quarters, EVEN IF "
-            "we are beyond the `qq_depth_min`.\n\n"
-            "For example, if qq_depth_min is set to 2, intending "
-            "to generate QQ's, but our dataset includes the "
-            "E/2W/2NE/4...\n\n"
-            "...without `break_halves`, this would parse into "
-            "['E2NWNE', 'E2SWNE'].\n\n"
-            "...but with `break_halves` turned on, this would parse into "
-            "['NENWNE', 'SENWNE', 'NESWNE', 'SESWNE'].\n\n"
-            "Default: off (`False`)"
-    ),
-}
-
-
 def prompt_config(
         parameters='all',
         show_ok=True,
@@ -240,13 +44,18 @@ def prompt_config(
     All parameters have the same effect as they do in __init__() for a
     PromptAttrib object, although not all parameters are available in
     this function.
-    :param parameters:
-    :param show_ok:
-    :param show_cancel:
-    :param prompt_after_ok:
-    :param ok_button_text:
-    :param cancel_button_text:
-    :param confirm_cancel_prompt:
+    :param parameters: Which parameters choices to expose to the user.
+    :param show_ok: Whether to show the OK button.
+    :param show_cancel: Whether to show the Cancel button.
+    :param prompt_after_ok: (Optional) The text to display after OK is
+    clicked. If None, there will be no prompt.
+    :param ok_button_text: The text to show inside the OK button.
+    (Defaults to 'Confirm Config Parameters'.)
+    :param cancel_button_text: The text to show inside the Cancel
+    button.
+    :param confirm_cancel_prompt: (Optional) The text to display after
+    Cancel is clicked, allowing the user to change their mind. If None,
+    there will be no confirmation prompt.
     :return: A string of the user's chosen config parameters.
     """
 
@@ -262,15 +71,40 @@ def prompt_config(
         cancel_button_text=cancel_button_text,
         ok_button_text=ok_button_text,
         exit_after_ok=True,
-        external_target_var=config_holder,
+        external_var_dict=config_holder,
         confirm_cancel_prompt=confirm_cancel_prompt)
     popup.master.mainloop()
     return config_holder['config_text']
 
 
 class PromptConfig(tk.Frame):
-    """A tkinter frame for configuring pyTRS parsing parameters (i.e.
-    pytrs.Config objects)."""
+    """
+    A tkinter frame for configuring pyTRS parsing parameters (i.e.
+    pytrs.Config objects).
+
+    NOTE: You can customize the behavior of this class by modifying the
+    class attributes before creating one:
+        .ALL_PARAMETERS
+        .RB_PARAMETERS
+        .QQ_DEPTH_CONTROLS
+        .COMBO_PARAMS
+        .COMBO_WIDTH_NSEW
+        .COMBO_WIDTH_OTHER
+        .COMBO_VALUES
+        .COMBO_LABELS
+        .HELP_TEXT
+
+    ...but depending on what gets changed, it might break the compiler
+    or other functionality. So, that functionality is not officially
+    supported.
+    """
+
+    # Exposing these dicts, etc. as class attributes allows for some
+    # customization without requiring creating a subclass and modifying
+    # __init__().
+
+    # The options that will be populated if `attributes='all'` at init.
+    ALL_PARAMETERS = list(pytrs.Config._CONFIG_ATTRIBUTES)
 
     # Parameters that are set via radiobuttons:
     RB_PARAMS = [
@@ -305,6 +139,247 @@ class PromptConfig(tk.Frame):
     COMBO_WIDTH_NSEW = 16  # default_ns / default_ew
     COMBO_WIDTH_OTHER = 25
 
+    # Values with which to populate the comboboxes.
+    COMBO_VALUES = {
+        'default_ns': (
+            '[default: North]',
+            'North',
+            'South'),
+        'default_ew': (
+            '[default: West]',
+            'West',
+            'East'),
+        'layout': tuple(
+            ['Deduce (RECOMMENDED)'] + list(pytrs.IMPLEMENTED_LAYOUTS)),
+        'qq_depth_min': (
+            "[Default: 2 -> QQ's]",
+            '1 (quarter sections)',
+            '2 (QQs)',
+            '3',
+            '4',
+            '5'),
+        'qq_depth_max': (
+            '[Default - no max]',
+            '1 (quarter sections)',
+            '2 (QQs)',
+            '3',
+            '4',
+            '5'),
+        'qq_depth': (
+            '[Default - use min and max]',
+            '1 (quarter sections)',
+            '2 (QQs)',
+            '3',
+            '4',
+            '5')
+    }
+
+    # Labels for the comboboxes.
+    COMBO_LABELS = {
+        'layout': "Force parsing as a particular layout?",
+        'default_ns': "Default unspecified Townships to [North] or [South]?",
+        'default_ew': "Default unspecified Ranges to [West] or [East]?",
+        'qq_depth_min': "MINIMUM depth to parse QQs",
+        'qq_depth_max': "MAXIMUM depth to parse QQs",
+        'qq_depth': "EXACT depth to parse QQs (override min and max)"
+    }
+
+    # The text to show for each config parameter via its 'Help' button.
+    HELP_TEXT = {
+        'default_ns': (
+            "If the dataset contains a Township whose N/S "
+            "direction was not specified, the program will assume "
+            "this specified direction. (And if not specified here, "
+            "will assumed North.)"
+        ),
+
+        'default_ew': (
+            "If the dataset contains a Range whose E/W direction "
+            "was not specified, the program will assume this "
+            "specified direction. (And if not specified here, "
+            "will assumed West.)"
+        ),
+
+        'layout': (
+            "If you know that the dataset is all laid out in the "
+            "same format, you may get more accurate results if "
+            "you force parsing according to one of these formats. "
+            "However, if there are multiple layouts, or unknown "
+            "layouts, it is probably wise to let the program "
+            "deduce the layout for each.\n\n"
+            "Below are examples of the possible layouts:\n\n"
+            f"{pytrs.IMPLEMENTED_LAYOUT_EXAMPLES}"
+        ),
+
+        'clean_qq': (
+            "Dataset contains only clean aliquots and lots; no "
+            "metes-and-bounds, exceptions, or limitations. "
+            "Anything that resembles an aliquot may be captured "
+            "as such. For example, 'NE' will be captured as 'NE¼'."
+            "\n\nThis may allow for broader parsing of lots and "
+            "QQ's, but it can also result in numerous false "
+            "matches, if the dataset is not simple and clean. For "
+            "example, 'Northernmost one hundred feet of the NW/4' "
+            "would match as 'Northernmost oNE¼ hundred feet of "
+            "the NW¼'.\n\n"
+            "Default: off (`False`)"
+        ),
+
+        'include_lot_divs': (
+            "If parsing lots, report any divisions of lots. For "
+            "example, if True, 'N/2 of Lot 1' would be reported "
+            "as 'N2 of L1'. If this is turned off, it would be "
+            "reported as 'L1'.\n\n"
+            "Default: on (`True`)"
+        ),
+
+        'require_colon': (
+            "Instruct a PLSSDesc object (whose layout is "
+            "`TRS_desc` or `S_desc_TR`) to require a colon "
+            "between the section number and the following "
+            "description -- i.e. 'Section 14 NE/4' would NOT be "
+            "picked up if 'require_colon' is on (`True`).  If "
+            "turned off (`False`), then 'Section 14 NE/4' would "
+            "be captured. However, this may result in false "
+            "matches, depending on the dataset.\n\n"
+            "(Note that the default parsing method is to first "
+            "pass over instances that do not have a colon. If no "
+            "sections are matched, it will make a second pass, "
+            "this time allowing section numbers that are NOT "
+            "followed by colon. If not set here, the potentially "
+            "two-pass method will be used by default.)\n\n"
+            "If set to on (`True`) here, that second-pass method "
+            "will be prevented. If set to off (`False`) here, it "
+            "will broadly capture all such instances, and the "
+            "second-pass method will not be needed. (Again, "
+            "beware false matches.)"
+        ),
+
+        'ocr_scrub': (
+            "Attempt to iron out common OCR artifacts in a "
+            "PLSSDesc object or Tract object (e.g., 'TIS4N-R97W' "
+            "that should have been 'T154N-R97W'). (WARNING: may "
+            "cause other issues.)\n\n"
+            "Default: off (`False`)."
+        ),
+
+        'segment': (
+            "While parsing, segment each description by T&R "
+            "before identifying tracts, which MIGHT capture SOME "
+            "descriptions whose layout changes partway through. "
+            "(However, this cannot capture ALL changes in "
+            "layouts.)\n\n"
+            "Default: off (`False`)"
+        ),
+
+        'init_preprocess': (
+            "Preprocess PLSS descriptions and Tracts upon "
+            "initialization.\n\n"
+            "Default: on (`True`)"
+        ),
+
+        'wait_to_parse': (
+            "Wait to parse PLSS descriptions upon initialization, "
+            "rather than doing it automatically.\n\n"
+            "Default: off (`False` -- i.e. do parse by default)"
+        ),
+
+        'parse_qq': (
+            "Parse Tracts into lots and QQ's upon initialization. "
+            "(If used with a PLSS description, its resulting Tracts "
+            "will be parsed into lots/QQs.)\n\n"
+            "Default: off (`False`)"
+        ),
+
+        'qq_depth_min': (
+            "Specify the MINIMUM 'depth' to which to parse "
+            "aliquots -- i.e. 2 will result in divisions NO "
+            "LARGER THAN quarter-quarters (QQs, e.g., 'NENE'); "
+            "whereas 1 will result in divisions no larger than "
+            "quarter sections (e.g., 'NE'). Will still include "
+            "smaller divisions if they exist in the data (i.e. "
+            "'E/2NE/4NE/4' would become ['E2NENE'] if this is set "
+            "to 2; or ['NENENE', 'SENENE'] if set to 3).\n\n"
+
+            "Examples (parsing the 'NE/4'):\n\n"
+
+            "1 (quarter sections) -> 'NE'\n\n"
+
+            "2 (QQs) -> 'NENE', 'NWNE', 'SENE', 'SWNE'\n\n"
+            "3 -> 'NENENE', 'NWNENE', 'SENENE', 'SWNENE', "
+            "'NENWNE', 'NWNWNE', 'SENWNE', 'SWNWNE', 'NESENE', "
+            "'NWSENE', 'SESENE', 'SWSENE', 'NESWNE', 'NWSWNE', "
+            "'SESWNE', 'SWSWNE'\n\n"
+
+            "[etc.]\n\n\n"
+
+            "Default: 2 (i.e. QQs)"
+        ),
+
+        'qq_depth_max': (
+            "Specify the MAXIMUM 'depth' to which to parse "
+            "aliquots -- i.e. 2 will result in divisions NO "
+            "SMALLER THAN quarter-quarters (QQs, e.g., 'NENE'); "
+            "whereas 1 will result in divisions no smaller than "
+            "quarters (e.g., 'NE'). Will NOT include smaller"
+            "divisions if they exist in the data (i.e."
+            "'E/2NE/4NE/4' would become ['NENE'] if this is set "
+            "to 2).\n\n"
+            "NOTE: qq_depth_max should be greater than or equal to "
+            "qq_depth_min.\n\n\n"
+
+            "Examples (parsing the 'NE/4'):\n\n"
+
+            "1 (quarter sections) -> 'NE'\n\n"
+
+            "2 (QQs) -> 'NENE', 'NWNE', 'SENE', 'SWNE'\n\n"
+            "3 -> 'NENENE', 'NWNENE', 'SENENE', 'SWNENE', "
+            "'NENWNE', 'NWNWNE', 'SENWNE', 'SWNWNE', 'NESENE', "
+            "'NWSENE', 'SESENE', 'SWSENE', 'NESWNE', 'NWSWNE', "
+            "'SESWNE', 'SWSWNE'\n\n"
+
+            "[etc.]\n\n\n"
+            "Default: None. (Will not cull smaller aliquot "
+            "divisions, unless explicitly told to do so.)"
+        ),
+
+        'qq_depth': (
+            "Specify the EXACT 'depth' to which to parse "
+            "aliquots -- i.e. 2 will result in exactly "
+            "quarter-quarters (QQs, e.g., 'NENE'), even if smaller "
+            "divisions exist in the data. This is equivalent to "
+            "setting qq_depth_min equal to qq_depth_max.\n\n"
+            "NOTE: Using `qq_depth` will override `qq_depth_min` "
+            "and `qq_depth_max`.\n\n\n"
+
+            "Examples (parsing the 'NE/4'):\n\n"
+
+            "1 (quarter sections) -> 'NE'\n\n"
+
+            "2 (QQs) -> 'NENE', 'NWNE', 'SENE', 'SWNE'\n\n"
+            "3 -> 'NENENE', 'NWNENE', 'SENENE', 'SWNENE', "
+            "'NENWNE', 'NWNWNE', 'SENWNE', 'SWNWNE', 'NESENE', "
+            "'NWSENE', 'SESENE', 'SWSENE', 'NESWNE', 'NWSWNE', "
+            "'SESWNE', 'SWSWNE'\n\n"
+
+            "[etc.]\n\n\n"
+            "Default: 2 (i.e. QQs)"
+        ),
+
+        'break_halves': (
+            "Whether to break aliquot halves into quarters, EVEN IF "
+            "we are beyond the `qq_depth_min`.\n\n"
+            "For example, if qq_depth_min is set to 2, intending "
+            "to generate QQ's, but our dataset includes the "
+            "E/2W/2NE/4...\n\n"
+            "...without `break_halves`, this would parse into "
+            "['E2NWNE', 'E2SWNE'].\n\n"
+            "...but with `break_halves` turned on, this would parse into "
+            "['NENWNE', 'SENWNE', 'NESWNE', 'SESWNE'].\n\n"
+            "Default: off (`False`)"
+        ),
+    }
+
     def __init__(
             self, master=None,
             target_var=None,
@@ -313,7 +388,7 @@ class PromptConfig(tk.Frame):
             show_cancel=False,
             prompt_after_ok=None,
             exit_after_ok=True,
-            external_target_var=None,
+            external_var_dict=None,
             ok_button_text='Confirm Config Parameters',
             cancel_button_text='Cancel',
             confirm_cancel_prompt=None,
@@ -347,11 +422,9 @@ class PromptConfig(tk.Frame):
         :param confirm_cancel_prompt: A string to display in a
         yes/no messagebox when the Cancel button is clicked. Defaults
         to None.
-        :param external_target_var: A dict with the key 'config_text',
-        to which the compiled config parameters should be set. (Used if
-        this PromptConfig object is NOT being incorporated into a
-        tkinter app, since a dict can exist outside of tkinter, whereas
-        a tk.StringVar cannot.)
+        :param external_var_dict: A dict with the key 'config_text',
+        to which the compiled config parameters should be set. (Only
+        used by `prompt_config()` -- probably ignore this parameter.)
         :param kw: Kwargs to pass through to tkinter.Frame at init.
         """
         default_master = False
@@ -375,13 +448,13 @@ class PromptConfig(tk.Frame):
         
         if isinstance(parameters, str):
             if parameters.lower() == 'all':
-                parameters = list(pytrs.Config._CONFIG_ATTRIBUTES)
+                parameters = self.ALL_PARAMETERS
             else:
                 parameters = [pr.lower().strip() for pr in parameters.split(',')]
 
-        if external_target_var is None:
-            external_target_var = {'config_text': ''}
-        self.external_target_var = external_target_var
+        if external_var_dict is None:
+            external_var_dict = {'config_text': ''}
+        self.external_var_dict = external_var_dict
 
         self.parameters = parameters
 
@@ -396,66 +469,13 @@ class PromptConfig(tk.Frame):
         # A dict of the possible config variables, with nested dicts for
         # respective variable and help text (variables are set later).
         self.CONFIG_DEF = {
-            param: {'help': HELP_TEXT[param]} for param in HELP_TEXT
+            param: {'help': self.HELP_TEXT[param]} for param in self.HELP_TEXT
         }
 
-        self.CONFIG_DEF['default_ns']['label_txt'] = (
-            "Default unspecified Townships to [North] or [South]?")
-        self.CONFIG_DEF['default_ns']['values'] = (
-            '[default: North]',
-            'North',
-            'South',
-        )
-
-        self.CONFIG_DEF['default_ew']['label_txt'] = (
-            "Default unspecified Ranges to [West] or [East]?")
-        self.CONFIG_DEF['default_ew']['values'] = (
-            '[default: West]',
-            'West',
-            'East'
-        )
-
-        self.CONFIG_DEF['layout']['label_txt'] = (
-            "Force parsing as a particular layout?")
-        self.CONFIG_DEF['layout']['values'] = tuple(
-            ['Deduce (RECOMMENDED)'] + list(pytrs.IMPLEMENTED_LAYOUTS)
-        )
-        # Set options and default indexes for the various `depth` parameters.
-        self.CONFIG_DEF['qq_depth_min']['label_txt'] = (
-            "MINIMUM depth to parse QQs")
-        self.CONFIG_DEF['qq_depth_min']['default_index']: 1
-        self.CONFIG_DEF['qq_depth_min']['values'] = (
-            "[Default: 2 -> QQ's]",
-            '1 (quarter sections)',
-            '2 (QQs)',
-            '3',
-            '4',
-            '5'
-        )
-        self.CONFIG_DEF['qq_depth_max']['label_txt'] = (
-            "MAXIMUM depth to parse QQs"
-        )
-        self.CONFIG_DEF['qq_depth_max']['default_index'] = 0
-        self.CONFIG_DEF['qq_depth_max']['values'] = (
-            '[Default - no max]',
-            '1 (quarter sections)',
-            '2 (QQs)',
-            '3',
-            '4',
-            '5'
-        )
-        self.CONFIG_DEF['qq_depth']['label_txt'] = (
-            "EXACT depth to parse QQs (override min and max)"
-        )
-        self.CONFIG_DEF['qq_depth']['default_index'] = 0
-        self.CONFIG_DEF['qq_depth']['values'] = (
-            '[Default - use min and max]',
-            '1 (quarter sections)',
-            '2 (QQs)',
-            '3',
-            '4',
-            '5'
-        )
+        for pr in self.COMBO_PARAMS:
+            # Set the values.
+            self.CONFIG_DEF[pr]['values'] = self.COMBO_VALUES[pr]
+            self.CONFIG_DEF[pr]['label_txt'] = self.COMBO_LABELS[pr]
 
         # Define widths for comboboxes.
         for pr in self.COMBO_PARAMS + self.QQ_DEPTH_CONTROLS:
@@ -722,7 +742,7 @@ class PromptConfig(tk.Frame):
 
         # Set the target tk.StringVar to the compiled config_text
         self.target_var.set(config_text)
-        self.external_target_var['config_text'] = config_text
+        self.external_var_dict['config_text'] = config_text
 
         if self.prompt_after_ok is not None:
             messagebox.showinfo('', self.prompt_after_ok)
@@ -741,7 +761,7 @@ class PromptConfig(tk.Frame):
             confirm = messagebox.askyesno('Cancel?', self.confirm_cancel_prompt)
         if confirm:
             self.target_var.set('CANCEL')
-            self.external_target_var['config_text'] = 'CANCEL'
+            self.external_var_dict['config_text'] = 'CANCEL'
             self.master.destroy()
 
     class ConfigComboGen:
