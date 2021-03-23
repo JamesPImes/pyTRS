@@ -77,6 +77,8 @@ class TractWriter:
             write_headers = False
         self.open()
         self.gen_uids = uid is not None
+        if not self.gen_uids:
+            uid = 0
         self.uid = uid
         if write_headers:
             self.write_headers()
