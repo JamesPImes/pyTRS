@@ -172,8 +172,8 @@ class TractListTypeError(TypeError):
     """Illegal object added to TractList."""
     def __init__(self, additional_msg=None):
         msg = (
-            "Only Tract objects (or unpacked PLSSDesc objects) "
-            "may be added to TractList."
+            "Only Tract objects (or unpacked PLSSDesc and TractList "
+            "objects) may be added to TractList."
         )
         if additional_msg:
             msg = f"{msg} {additional_msg}"
@@ -278,7 +278,8 @@ class PLSSDesc:
     .list_trs() -- Return a list of all twp/rge/sec combinations in the
         `.parsed_tracts` TractList, optionally removing duplicates.
 
-    .print_data() -- Equivalent to `.tracts_to_dict()`, but the data
+    .
+    () -- Equivalent to `.tracts_to_dict()`, but the data
         is formatted as a table and printed to console.
 
 
@@ -2232,8 +2233,11 @@ class TractList(list):
         for elem in iterable:
             if isinstance(elem, Tract):
                 tmp.append(elem)
-            elif isinstance(elem, PLSSDesc):
-                tmp.extend(elem.parsed_tracts)
+            elif isinstance(elem, (PLSSDesc, TractList)):
+                # Rely on the fact that we can iterate over PLSSDesc
+                # objects' (implicitly over the TractList in their
+                # `.parsed_tracts` attribute).
+                tmp.extend(elem)
             else:
                 raise TractListTypeError(
                     f"Iterable contained {type(elem)!r}.")
@@ -3081,7 +3085,7 @@ class TractList(list):
                 # Flatten lists/tuples, but leave everything else as-is
                 if isinstance(v, (list, tuple)):
                     v = ", ".join(flatten(v))
-                v = v.replace("\n", jst_linebreak)
+                v = str(v).replace("\n", jst_linebreak)
                 # Justify attribute name and report its value
                 tract_data = f"{tract_data}\n{att_name.ljust(jst, ' ')}: {v}"
 
@@ -3341,19 +3345,20 @@ class TractList(list):
         objects (or other list-like element holding any of those object
         types).
 
-        WARNING: Will NOT handle infinitely-nested lists!
-
         :param objects: Any number or combination of Tract, PLSSDesc,
         and/or TractList objects (or other list-like element holding
         any of those object types).
+        :return: A new `TractList` object containing all of the
+        extracted `Tract` objects.
         """
         tl = TractList()
         for obj in objects:
-            if isinstance(obj, PLSSDesc):
-                tl.extend(obj.parsed_tracts)
-            elif isinstance(obj, Tract):
+            if isinstance(obj, Tract):
                 tl.append(obj)
-            elif isinstance(obj, TractList):
+            elif isinstance(obj, (PLSSDesc, TractList)):
+                # Rely on the fact that we can iterate over PLSSDesc
+                # objects' (implicitly over the TractList in their
+                # `.parsed_tracts` attribute).
                 tl.extend(obj)
             else:
                 # Assume it's another list-like object.
@@ -3367,7 +3372,7 @@ class TractList(list):
         Create from multiple elements a generator of Tract objects.
 
         (Identical to `.from_multiple()`, but returns a generator of
-        Tract objects, rather than a `TractList`.)
+        `Tract` objects, rather than a `TractList`.)
 
         :param objects: Any number or combination of Tract, PLSSDesc,
         and/or TractList objects (or other list-like element holding
@@ -3384,13 +3389,9 @@ class TractList(list):
                 for tract in obj:
                     yield tract
             else:
-                # Assume it's another other list-like object.
-                for maybe_tract in obj:
-                    try:
-                        yield TractList._verify_type(maybe_tract)
-                    except TractListTypeError:
-                        for deeper_maybe_tract in maybe_tract:
-                            yield TractList._verify_type(deeper_maybe_tract)
+                # Assume it's another list-like object.
+                for obj_deeper in obj:
+                    yield from TractList.iter_from_multiple(obj_deeper)
 
 
 class Config:
