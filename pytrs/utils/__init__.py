@@ -160,12 +160,12 @@ def config_parameters():
             False),
         (("'ocr_scrub'", "'ocr_scrub.True'"),
             "Scrub common OCR artifacts from the text (currently limited effect)", False),
-        (("'ocr_scrub.False",), "Do NOT scrub OCR artifacts from the text.", True),
+        (("'ocr_scrub.False'",), "Do NOT scrub OCR artifacts from the text.", True),
         (("'segment'", "'segment.True'"),
             "Segment description before parsing into Tracts (MIGHT capture descriptions "
             "with multiple layouts).",
             False),
-        (("'segment.False",), "Do NOT segment the description before parsing.", True),
+        (("'segment.False'",), "Do NOT segment the description before parsing.", True),
         (("'qq_depth_min.<number>'",),
             "In QQ parsing, specify the MINIMUM 'depth' to parse aliquots. 2 (the "
             "default) will parse to AT LEAST quarter-quarters (QQs).",
