@@ -80,8 +80,8 @@ def main():
         # should be a simple PLSS land description that we can parse.
         cleaned_fn = re.sub(REPORT_SURPLUS, "", fn)
 
-        # Parse the PLSS description, and specify that source of it is
-        # the original filepath `fp`.
+        # Parse the PLSS description, and specify that the source of it
+        # is the original filepath `fp`.
         parsed = pytrs.PLSSDesc(cleaned_fn, config=config, source=fp)
 
         # Write the Tract contents to the csv file (manually including
