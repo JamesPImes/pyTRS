@@ -69,7 +69,7 @@ def prompt_attrib(
         cancel_button_text=cancel_button_text,
         ok_button_text=ok_button_text,
         exit_after_ok=True,
-        external_target_var=attrib_holder,
+        external_var_dict=attrib_holder,
         confirm_cancel_prompt=confirm_cancel_prompt)
     popup.master.mainloop()
     return attrib_holder['attrib_list']
@@ -142,7 +142,7 @@ class PromptAttrib(tk.Frame):
             confirm_cancel_prompt=None,
             exit_after_ok=True,
             prompt_after_ok=None,
-            external_target_var=None,
+            external_var_dict=None,
             **kw):
         """
         :param master: The tkinter master (same as for tkinter.Frame)
@@ -169,11 +169,10 @@ class PromptAttrib(tk.Frame):
         :param confirm_cancel_prompt: A string to display in a
         yes/no messagebox when the Cancel button is clicked. Defaults
         to None.
-        :param external_target_var: A dict with the key 'attrib_list',
+        :param external_var_dict: A dict with the key 'attrib_list',
         to which the chosen attributes should be set (as a list of
-        strings). (Used if this PromptAttrib object is NOT being
-        incorporated into a tkinter app, since a dict can exist outside
-        of tkinter, whereas a tk.StringVar cannot.)
+        strings). (Only used by `prompt_attrib()` -- probably ignore
+        this parameter.)
         :param kw: Kwargs to pass through to tkinter.Frame at init.
         """
 
@@ -192,9 +191,9 @@ class PromptAttrib(tk.Frame):
             target_var = tk.StringVar()
         self.target_var = target_var
 
-        if not external_target_var:
-            external_target_var = {'attrib_list': []}
-        self.external_target_var = external_target_var
+        if not external_var_dict:
+            external_var_dict = {'attrib_list': []}
+        self.external_var_dict = external_var_dict
 
         self.show_ok = show_ok
         self.show_cancel = show_cancel
@@ -262,7 +261,7 @@ class PromptAttrib(tk.Frame):
     def ok_clicked(self):
         selected_attribs = self.compile_attributes()
         self.target_var.set(','.join(selected_attribs))
-        self.external_target_var['attrib_list'] = selected_attribs
+        self.external_var_dict['attrib_list'] = selected_attribs
 
         if self.prompt_after_ok is not None:
             messagebox.showinfo('', self.prompt_after_ok)
@@ -277,7 +276,7 @@ class PromptAttrib(tk.Frame):
                 'Cancel?', self.confirm_cancel_prompt)
         if confirm:
             self.target_var.set('CANCEL')
-            self.external_target_var['attrib_list'] = ['CANCEL']
+            self.external_var_dict['attrib_list'] = ['CANCEL']
             self.master.destroy()
 
 
