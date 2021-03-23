@@ -1,8 +1,9 @@
-# Copyright (c) 2021, James P. Imes
+# Copyright (c) 2021, James P. Imes. All rights reserved.
 
 import csv
 from pathlib import Path
 from pytrs import Tract, TractList
+from pytrs.utils import gen_uid
 
 
 class TractWriter:
@@ -10,7 +11,8 @@ class TractWriter:
     A wrapper for csv.writer for streamlined output of Tract data.
     """
     def __init__(
-            self, attributes, fp, mode="w", plus_cols=None, nice_headers=False):
+            self, attributes, fp, mode="w", plus_cols=None, nice_headers=False,
+            uid: int = None):
         """
         A wrapper for csv.writer for streamlined output of Tract data.
         Ensures that the same attributes are written for every Tract
@@ -27,9 +29,41 @@ class TractWriter:
         this functionality, a list of the specific data to write in
         these columns will need to be included every time something is
         written.)
-        :param nice_headers: a bool, whether to use the values in the
-        ``Tract.ATTRIBUTES`` dict for headers. Defaults to ``False``
-        (i.e. just use the attribute names themselves).
+        :param nice_headers: By default, this class will use the
+        attribute names as headers. To use custom headers, pass to
+        ``nice_headers=`` any of the following:
+        -- a list of strings to use. (Should be equal in length to the
+        list passed as ``attributes``, but will not raise an error if
+        that's not the case. The resulting column headers will just be
+        fewer than the actual number of columns.)
+        -- a dict, keyed by attribute name, and whose values are the
+        corresponding headers. (Any missing keys will use the attribute
+        name.)
+        -- `True` -> use the values in the ``Tract.ATTRIBUTES`` dict for
+        headers. (WARNING: Any value passed that is not a list or dict
+        and that evaluates to `True` will cause this behavior.)
+        -- If not specified (i.e. None), will just use the attribute
+        names themselves.
+        :param plus_cols: (Optional) a list of additional headers to
+        write that are not covered by the Tract attributes.
+
+        :param uid: (Optional) The number at which to start generating
+        unique identifiers. If specified, UID's will be written for
+        every new row (e.g., `'0001.a-e'`). The number component of the
+        UID will be incremented every time `.write()` is called, and the
+        letter components will encode how many rows were added that
+        time (a: 1, b: 2, c: 3, <...>, aa: 27, ab: 28, etc.).
+            For example (assuming our UID is currently at 27, and
+            `parsed_desc` is a `PLSSDesc` object containing 4 Tract
+            objects):
+
+             `some_tractwriter.write(parsed_desc)`
+                 -> Writes 4 rows and generates these UIDs (one for
+                 each):
+                     '0027.a-d'
+                     '0027.b-d'
+                     '0027.c-d'
+                     '0027.d-d'
         """
         self.attributes = attributes
         self.fp = Path(fp)
@@ -42,6 +76,8 @@ class TractWriter:
         if self.fp.exists() and mode == "a":
             write_headers = False
         self.open()
+        self.gen_uids = uid is not None
+        self.uid = uid
         if write_headers:
             self.write_headers()
 
@@ -71,13 +107,10 @@ class TractWriter:
         Write headers.
         :return: None
         """
-        header_row = self.attributes.copy()
-        if self.plus_cols:
-            header_row.extend(self.plus_cols)
-        if self.nice_headers:
-            header_row = [
-                Tract.ATTRIBUTES.get(att, att) for att in header_row
-            ]
+        header_row = Tract.get_headers(
+            self.attributes, self.nice_headers, self.plus_cols)
+        if self.gen_uids:
+            header_row.append('UID')
         self.writer.writerow(header_row)
         return None
 
@@ -95,13 +128,18 @@ class TractWriter:
             raise RuntimeError("writer is not open. Call `.open()` first.")
         tl = TractList.from_multiple(tracts)
         written = 0
+        total_to_write = len(tl)
         for tract in tl:
             row = tract.to_list(self.attributes)
             if plus_cols:
                 row.extend(plus_cols)
+            if self.gen_uids:
+                uid = gen_uid(self.uid, written + 1, total_to_write)
+                row.append(uid)
             row = TractWriter.scrub_row(row)
             self.writer.writerow(row)
             written += 1
+        self.uid += 1
         return written
 
     @staticmethod
