@@ -1,4 +1,4 @@
-# Copyright (c) 2020, James P. Imes, all rights reserved
+# Copyright (c) 2020-2021, James P. Imes, all rights reserved
 
 """
 A GUI app for choosing pytrs.Tract attributes.
@@ -14,21 +14,28 @@ from pytrs import Tract
 
 
 def prompt_attrib(
-        attribs='standard', header='Desired Tract Attributes', show_ok=True,
-        show_cancel=True, ok_button_text='Confirm Attributes',
-        cancel_button_text='Cancel', confirm_cancel_prompt=None,
+        attributes='standard',
+        header='Desired Tract Attributes',
+        show_ok=True,
+        show_cancel=True,
+        ok_button_text='Confirm Attributes',
+        cancel_button_text='Cancel',
+        confirm_cancel_prompt=None,
         prompt_after_ok=None):
     """
     Launch a PromptAttrib tkinter frame, for the user to choose from
-    pytrs.Tract instance attributes. Will wait for the PromptAttrib
-    window to close, and then will return the chosen attribute names
-    as a list of strings.
+    pytrs.Tract attributes. Will wait for the PromptAttrib window to
+    close, and then will return the chosen attribute names as a list of
+    strings.
+
+    If the user hits the Cancel button, it will return as `['CANCEL']`.
+    If the user exits the window, it will return as `['EXIT']`.
 
     All parameters have the same effect as they do in __init__() for a
     PromptAttrib object, although not all parameters are available in
     this function.
 
-    :param attribs: Which attributes to allow the user to select
+    :param attributes: Which attributes to allow the user to select
     from; may be passed as a list, or as a string with attributes
     separated by commas (defaults to 'standard')
     :param header: Text to be placed above the attribute options.
@@ -41,7 +48,7 @@ def prompt_attrib(
     Cancel button.
     :param show_cancel: Include the Cancel button.
     IMPORTANT: If the Cancel button is clicked, it will set the
-    `target_attrib_var` to the string 'CANCEL' and close the window.
+    `target_var` to the string 'CANCEL' and close the window.
     :param confirm_cancel_prompt: A string to display in a
     yes/no messagebox when the Cancel button is clicked. Defaults
     to None.
@@ -49,13 +56,19 @@ def prompt_attrib(
     (i.e. a list of strings).
     """
 
-    attrib_holder = {'attrib_list': ''}
+    attrib_holder = {'attrib_list': ['EXIT']}
 
     popup = PromptAttrib(
-        master=None, target_config_var=None, attribs=attribs, header=header,
-        show_ok=show_ok, show_cancel=show_cancel,
-        prompt_after_ok=prompt_after_ok, cancel_button_text=cancel_button_text,
-        ok_button_text=ok_button_text, exit_after_ok=True,
+        master=None,
+        target_var=None,
+        attributes=attributes,
+        header=header,
+        show_ok=show_ok,
+        show_cancel=show_cancel,
+        prompt_after_ok=prompt_after_ok,
+        cancel_button_text=cancel_button_text,
+        ok_button_text=ok_button_text,
+        exit_after_ok=True,
         external_target_var=attrib_holder,
         confirm_cancel_prompt=confirm_cancel_prompt)
     popup.master.mainloop()
@@ -92,7 +105,8 @@ class PromptAttrib(tk.Frame):
     DEFAULT_ON = [
         'trs',
         'desc',
-        'lots_qqs',
+        'lots',
+        'qqs',
         'flags'
     ]
 
@@ -105,7 +119,7 @@ class PromptAttrib(tk.Frame):
         att: [Tract.ATTRIBUTES[att], 0] for att in STANDARD_OPTIONS
     }
 
-    # And one for ALL of the attributes. (Turned on with `attribs='all'`)
+    # And one for ALL of the attributes. (Turned on with `attributes='all'`)
     ALL_ATTRIBUTES = {
         att: [val, 0] for att, val in Tract.ATTRIBUTES.items()
     }
@@ -116,19 +130,27 @@ class PromptAttrib(tk.Frame):
         ALL_ATTRIBUTES[att][1] = 1
 
     def __init__(
-            self, master=None, attribs='standard', target_attrib_var=None,
-            header='Desired Tract Attributes', show_ok=True,
-            show_cancel=True, ok_button_text='Confirm Attributes',
-            cancel_button_text='Cancel', confirm_cancel_prompt=None,
-            exit_after_ok=True, prompt_after_ok=None, external_target_var=None,
+            self,
+            master=None,
+            attributes='standard',
+            target_var=None,
+            header='Desired Tract Attributes',
+            show_ok=True,
+            show_cancel=True,
+            ok_button_text='Confirm Attributes',
+            cancel_button_text='Cancel',
+            confirm_cancel_prompt=None,
+            exit_after_ok=True,
+            prompt_after_ok=None,
+            external_target_var=None,
             **kw):
         """
         :param master: The tkinter master (same as for tkinter.Frame)
-        :param target_attrib_var: A tk.StringVar to which the chosen
+        :param target_var: A tk.StringVar to which the chosen
         attributes should be stored when the OK button is clicked.
         Stored as a single string, with attribute names separated by
         a comma and no spaces.
-        :param attribs: Which attributes to allow the user to select
+        :param attributes: Which attributes to allow the user to select
         from; may be passed as a list, or as a string with attributes
         separated by commas (defaults to 'standard')
         :param header: Text to be placed above the attribute options.
@@ -143,7 +165,7 @@ class PromptAttrib(tk.Frame):
         Cancel button.
         :param show_cancel: Include the Cancel button.
         IMPORTANT: If the Cancel button is clicked, it will set the
-        `target_attrib_var` to the string 'CANCEL' and close the window.
+        `target_var` to the string 'CANCEL' and close the window.
         :param confirm_cancel_prompt: A string to display in a
         yes/no messagebox when the Cancel button is clicked. Defaults
         to None.
@@ -156,7 +178,7 @@ class PromptAttrib(tk.Frame):
         """
 
         default_master = False
-        if master is None:
+        if not master:
             default_master = True
             master = tk.Tk()
             master.title('Select pyTRS Tract Attributes')
@@ -166,11 +188,11 @@ class PromptAttrib(tk.Frame):
         if default_master:
             self.pack(padx=20, pady=20)
 
-        if target_attrib_var is None:
-            target_attrib_var = tk.StringVar()
-        self.target_attrib_var = target_attrib_var
+        if not target_var:
+            target_var = tk.StringVar()
+        self.target_var = target_var
 
-        if external_target_var is None:
+        if not external_target_var:
             external_target_var = {'attrib_list': []}
         self.external_target_var = external_target_var
 
@@ -180,19 +202,16 @@ class PromptAttrib(tk.Frame):
         self.exit_after_ok = exit_after_ok
         self.confirm_cancel_prompt = confirm_cancel_prompt
 
-        if attribs.lower() == 'standard':
-            attribs = PromptAttrib.STANDARD_OPTIONS
-        elif attribs.lower() == 'all':
-            attribs = PromptAttrib.ALL_ATTRIBUTES.keys()
+        if attributes.lower() == 'standard':
+            attributes = PromptAttrib.STANDARD_OPTIONS
+        elif attributes.lower() == 'all':
+            attributes = PromptAttrib.ALL_ATTRIBUTES.keys()
 
-        if isinstance(attribs, str):
-            attribs = attribs.replace(' ', '').split(',')
+        if isinstance(attributes, str):
+            attributes = [at.lower().strip() for at in attributes.split(',')]
 
-        if header is not None:
-            try:
-                hdr = tk.Label(self, text=header, font='"Arial Black"')
-            except:
-                hdr = tk.Label(self, text=header)
+        if header:
+            hdr = tk.Label(self, text=str(header), font='"Arial Black"')
             hdr.grid(row=0, column=0, sticky='n')
 
         # Generate a new IntVar for each available attribute option, set
@@ -200,15 +219,15 @@ class PromptAttrib(tk.Frame):
         # it as an instance variable, and also set it to the attrib_dict.
         # Finally, create a checkbutton for that attribute.
         # So for attribute 'qqs':
-        #   -> self.QQListVar --> a tk.IntVar with initial value 0
+        #   -> self.qqs_var --> a tk.IntVar with initial value 0
         #   -> self.attrib_dict['qqs'] --> self.QQListVar
         #   -> <create a checkbutton for qqs>
         self.attrib_dict = dict()
         cur_row = 5
-        for att in attribs:
+        for att in attributes:
             new_var = tk.IntVar()
             new_var.set(PromptAttrib.ALL_ATTRIBUTES[att][1])
-            setattr(self, att + 'Var', new_var)
+            setattr(self, f"{att}_var", new_var)
             self.attrib_dict[att] = new_var
             cb = Checkbutton(
                 self, text=PromptAttrib.ALL_ATTRIBUTES[att][0],
@@ -242,7 +261,7 @@ class PromptAttrib(tk.Frame):
 
     def ok_clicked(self):
         selected_attribs = self.compile_attributes()
-        self.target_attrib_var.set(','.join(selected_attribs))
+        self.target_var.set(','.join(selected_attribs))
         self.external_target_var['attrib_list'] = selected_attribs
 
         if self.prompt_after_ok is not None:
@@ -257,7 +276,7 @@ class PromptAttrib(tk.Frame):
             confirm = messagebox.askyesno(
                 'Cancel?', self.confirm_cancel_prompt)
         if confirm:
-            self.target_attrib_var.set('CANCEL')
+            self.target_var.set('CANCEL')
             self.external_target_var['attrib_list'] = ['CANCEL']
             self.master.destroy()
 
