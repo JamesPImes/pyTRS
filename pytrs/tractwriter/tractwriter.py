@@ -11,7 +11,7 @@ class TractWriter:
     A wrapper for csv.writer for streamlined output of Tract data.
     """
     def __init__(
-            self, attributes, fp, mode="w", plus_cols=None, nice_headers=False,
+            self, attributes, fp, mode, plus_cols=None, nice_headers=False,
             uid: int = None):
         """
         A wrapper for csv.writer for streamlined output of Tract data.
@@ -80,6 +80,7 @@ class TractWriter:
         if not self.gen_uids:
             uid = 0
         self.uid = uid
+        self.uid_just = 4
         if write_headers:
             self.write_headers()
 
@@ -116,10 +117,10 @@ class TractWriter:
         self.writer.writerow(header_row)
         return None
 
-    def write(self, tracts, plus_cols=None):
+    def write(self, to_write, plus_cols=None):
         """
-        Write the data from the ``tracts``.
-        :param tracts: a Tract, a PLSSDesc object, a TractList, or an
+        Write the data from the ``to_write``.
+        :param to_write: a Tract, a PLSSDesc object, a TractList, or an
         iterable of any combination of those object types.
         :param plus_cols: (Optional) a list of additional data to write
         for each of the written rows. (Will write the same data for
@@ -128,15 +129,26 @@ class TractWriter:
         """
         if not self.is_open:
             raise RuntimeError("writer is not open. Call `.open()` first.")
-        tl = TractList.from_multiple(tracts)
+        if to_write is None:
+            self.uid += 1
+            return 0
+        total_to_write = None
+        if self.gen_uids:
+            # If we're generating UID's, we need to know how many we'll
+            # write in total, so get a TractList.
+            tl = TractList.from_multiple(to_write)
+            total_to_write = len(tl)
+        else:
+            # Otherwise, save the memory, and use a generator.
+            tl = TractList.iter_from_multiple(to_write)
         written = 0
-        total_to_write = len(tl)
         for tract in tl:
             row = tract.to_list(self.attributes)
             if plus_cols:
                 row.extend(plus_cols)
             if self.gen_uids:
-                uid = gen_uid(self.uid, written + 1, total_to_write)
+                uid = gen_uid(
+                    self.uid, written + 1, total_to_write, just=self.uid_just)
                 row.append(uid)
             row = TractWriter.scrub_row(row)
             self.writer.writerow(row)
