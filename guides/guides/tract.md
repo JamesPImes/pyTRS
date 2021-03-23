@@ -59,13 +59,13 @@ Footnotes:
 
 ## `Tract` objects created from parsing a `PLSSDesc`
 
-When a `PLSSDesc` object is parsed, it automatically creates `Tract` objects and stores them in the `.parsed_tracts` attribute (specifically, a `pytrs.TractList` object that holds the tracts).
+When a `PLSSDesc` object is parsed, it automatically creates `Tract` objects and stores them in the `.tracts` attribute (specifically, a `pytrs.TractList` object that holds the tracts).
 
 ```
 parsed_plssdesc = pytrs.PLSSDesc("T154N-R97W Sec 14: NE/4")
 
-# The resulting Tract objects are stored in `.parsed_tracts` of the PLSSDesc.
-for tract in parsed_plssdesc.parsed_tracts:
+# The resulting Tract objects are stored in `.tracts` of the PLSSDesc.
+for tract in parsed_plssdesc.tracts:
     print(tract.trs)
 ```
 

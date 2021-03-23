@@ -48,9 +48,9 @@ desc : W/2
 3) `source` does not affect the behavior of the parse in any way. Instead, it is meant as an internal record of where the description originally came from. It will be passed down to any `Tract` objects created by this `PLSSDesc`.(For example, if it came from a particular report, or a specific row in a spreadsheet, etc.) This can be useful for parsing numerous land descriptions (e.g., processing a large spreadsheet). It gets stored to the `.source` attribute (in both `PLSSDesc` and `Tract` objects).
 
 
-#### `Tract` objects are stored in the `.parsed_tracts` attribute
+#### `Tract` objects are stored in the `.tracts` attribute
 
-A `PLSSDesc` object stores `Tract` objects it created in the `.parsed_tracts` attribute (specifically, a `pytrs.TractList` object that holds the tracts, a subclass of the standard `list`).
+A `PLSSDesc` object stores `Tract` objects it created in the `.tracts` attribute (specifically, a `pytrs.TractList` object that holds the tracts, a subclass of the standard `list`).
 
 ```
 raw_description = """T154N-R97W
@@ -59,7 +59,7 @@ Sec 15: W/2"""
 
 a_plssdesc = pytrs.PLSSDesc(raw_description)
 
-len(a_plssdesc.parsed_tracts)   # -> 2  (we found 2 Tracts)
+len(a_plssdesc.tracts)   # -> 2  (we found 2 Tracts)
 ```
 
 Any unspecified parameters in `.parse()` will default to the corresponding values configured when the `PLSSDesc` was created (or reconfigured since).
@@ -80,7 +80,7 @@ parsed_plssdesc = pytrs.PLSSDesc(raw_description)
 
 ##### Re-parse the original description with the `.parse()` method.
 
-If we want to try parsing with different parameters, we can use the `.parse()` method, which returns a `pytrs.TractList` object containing all of the created `Tract` objects. If `commit=True` (on by default), the returned `TractList` will also be stored to the `.parsed_tracts` attribute of the `PLSSDesc`.
+If we want to try parsing with different parameters, we can use the `.parse()` method, which returns a `pytrs.TractList` object containing all of the created `Tract` objects. If `commit=True` (on by default), the returned `TractList` will also be stored to the `.tracts` attribute of the `PLSSDesc`.
 
 ```
 raw_description = "T154N-R97W Sec 14: NE/4"

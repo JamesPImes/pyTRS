@@ -109,11 +109,11 @@ Here, in a `PLSSDesc`:
 raw_desc = 'T154N-R97W Sec 14: NE'
 
 plssdesc1 = pytrs.PLSSDesc(raw_desc, parse_qq=True, config='clean_qq')
-plssdesc1.parsed_tracts[0].qqs      # -> ['NENE', 'NWNE', 'SENE', 'SWNE']
+plssdesc1.tracts[0].qqs      # -> ['NENE', 'NWNE', 'SENE', 'SWNE']
 
 # Without specifying 'clean_qq' we won't find any aliquots.
 plssdesc2 = pytrs.PLSSDesc(raw_desc, parse_qq=True)
-plssdesc2.parsed_tracts[0].qqs      # -> []
+plssdesc2.tracts[0].qqs      # -> []
 ```
 
 Here, in a `Tract`:
