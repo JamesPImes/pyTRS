@@ -1,4 +1,4 @@
-# Copyright (c) 2020, James P. Imes, all rights reserved
+# Copyright (c) 2020-2021, James P. Imes, all rights reserved
 
 """
 A GUI app for choosing Config parameters for pyTRS parsing;
@@ -9,18 +9,18 @@ the prompt_config() function can be used to hold up the program while
 the user makes their choices, and then continue when it returns.
 """
 
-# Note: If `show_ok==True` and `exit_after_ok==True`, then the
-# `prompt_config()` function can function as a 'go button' for a parsing
-# application: It will wait for the user to hit 'OK', then close the
-# window and return the config parameters to the program that called the
-# function. It may be useful to specify the parameter
-# `ok_button_text=<'string'>` with the appropriate context for how the
-# function is incorporated into your program.
+# Note: Pass `show_ok=True` and `exit_after_ok=True` to use
+# `prompt_config()` as a 'go button' for a parsing application. It will
+# wait for the user to hit 'OK', then close the window and return the
+# config parameters to the program that called the function. It may be
+# useful to specify the parameter `ok_button_text=<'string'>` with the
+# appropriate context for how the function is incorporated into your
+# program.
 
 import tkinter as tk
 from tkinter import messagebox
 from tkinter.ttk import Combobox
-from pytrs import parser
+import pytrs
 
 
 HELP_TEXT = {
@@ -46,7 +46,7 @@ HELP_TEXT = {
         "layouts, it is probably wise to let the program "
         "deduce the layout for each.\n\n"
         "Below are examples of the possible layouts:\n\n"
-        f"{parser.IMPLEMENTED_LAYOUT_EXAMPLES}"
+        f"{pytrs.IMPLEMENTED_LAYOUT_EXAMPLES}"
     ),
 
     'clean_qq': (
@@ -152,7 +152,7 @@ HELP_TEXT = {
         "[etc.]\n\n\n"
 
         "Default: 2 (i.e. QQs)"
-        ),
+    ),
 
     'qq_depth_max': (
         "Specify the MAXIMUM 'depth' to which to parse "
@@ -179,7 +179,7 @@ HELP_TEXT = {
         "[etc.]\n\n\n"
         "Default: None. (Will not cull smaller aliquot "
         "divisions, unless explicitly told to do so.)"
-        ),
+    ),
 
     'qq_depth': (
         "Specify the EXACT 'depth' to which to parse "
@@ -219,7 +219,6 @@ HELP_TEXT = {
 }
 
 
-
 def prompt_config(
         parameters='all',
         show_ok=True,
@@ -255,10 +254,14 @@ def prompt_config(
 
     popup = PromptConfig(
         master=None,
-        target_var=None, parameters=parameters,
-        show_ok=show_ok, show_cancel=show_cancel,
-        prompt_after_ok=prompt_after_ok, cancel_button_text=cancel_button_text,
-        ok_button_text=ok_button_text, exit_after_ok=True,
+        target_var=None,
+        parameters=parameters,
+        show_ok=show_ok,
+        show_cancel=show_cancel,
+        prompt_after_ok=prompt_after_ok,
+        cancel_button_text=cancel_button_text,
+        ok_button_text=ok_button_text,
+        exit_after_ok=True,
         external_target_var=config_holder,
         confirm_cancel_prompt=confirm_cancel_prompt)
     popup.master.mainloop()
@@ -287,6 +290,20 @@ class PromptConfig(tk.Frame):
     # NOTE: "qq_depth" should be first in this list, so that it takes
     # priority over qq_depth_min and _max when compiling the config text.
     QQ_DEPTH_CONTROLS = ['qq_depth', 'qq_depth_min', 'qq_depth_max']
+
+    # The order that these comboboxes will appear in.
+    COMBO_PARAMS = [
+        'default_ns',
+        'default_ew',
+        'layout',
+        'qq_depth_min',
+        'qq_depth_max',
+        'qq_depth',
+    ]
+
+    # Widths for the Comboboxes.
+    COMBO_WIDTH_NSEW = 16  # default_ns / default_ew
+    COMBO_WIDTH_OTHER = 25
 
     def __init__(
             self, master=None,
@@ -358,7 +375,7 @@ class PromptConfig(tk.Frame):
         
         if isinstance(parameters, str):
             if parameters.lower() == 'all':
-                parameters = list(parser.Config._CONFIG_ATTRIBUTES)
+                parameters = list(pytrs.Config._CONFIG_ATTRIBUTES)
             else:
                 parameters = [pr.lower().strip() for pr in parameters.split(',')]
 
@@ -381,9 +398,33 @@ class PromptConfig(tk.Frame):
         self.CONFIG_DEF = {
             param: {'help': HELP_TEXT[param]} for param in HELP_TEXT
         }
+
+        self.CONFIG_DEF['default_ns']['label_txt'] = (
+            "Default unspecified Townships to [North] or [South]?")
+        self.CONFIG_DEF['default_ns']['values'] = (
+            '[default: North]',
+            'North',
+            'South',
+        )
+
+        self.CONFIG_DEF['default_ew']['label_txt'] = (
+            "Default unspecified Ranges to [West] or [East]?")
+        self.CONFIG_DEF['default_ew']['values'] = (
+            '[default: West]',
+            'West',
+            'East'
+        )
+
+        self.CONFIG_DEF['layout']['label_txt'] = (
+            "Force parsing as a particular layout?")
+        self.CONFIG_DEF['layout']['values'] = tuple(
+            ['Deduce (RECOMMENDED)'] + list(pytrs.IMPLEMENTED_LAYOUTS)
+        )
         # Set options and default indexes for the various `depth` parameters.
+        self.CONFIG_DEF['qq_depth_min']['label_txt'] = (
+            "MINIMUM depth to parse QQs")
         self.CONFIG_DEF['qq_depth_min']['default_index']: 1
-        self.CONFIG_DEF['qq_depth_min']['options'] = (
+        self.CONFIG_DEF['qq_depth_min']['values'] = (
             "[Default: 2 -> QQ's]",
             '1 (quarter sections)',
             '2 (QQs)',
@@ -391,8 +432,11 @@ class PromptConfig(tk.Frame):
             '4',
             '5'
         )
+        self.CONFIG_DEF['qq_depth_max']['label_txt'] = (
+            "MAXIMUM depth to parse QQs"
+        )
         self.CONFIG_DEF['qq_depth_max']['default_index'] = 0
-        self.CONFIG_DEF['qq_depth_max']['options'] = (
+        self.CONFIG_DEF['qq_depth_max']['values'] = (
             '[Default - no max]',
             '1 (quarter sections)',
             '2 (QQs)',
@@ -400,8 +444,11 @@ class PromptConfig(tk.Frame):
             '4',
             '5'
         )
+        self.CONFIG_DEF['qq_depth']['label_txt'] = (
+            "EXACT depth to parse QQs (override min and max)"
+        )
         self.CONFIG_DEF['qq_depth']['default_index'] = 0
-        self.CONFIG_DEF['qq_depth']['options'] = (
+        self.CONFIG_DEF['qq_depth']['values'] = (
             '[Default - use min and max]',
             '1 (quarter sections)',
             '2 (QQs)',
@@ -410,144 +457,73 @@ class PromptConfig(tk.Frame):
             '5'
         )
 
+        # Define widths for comboboxes.
+        for pr in self.COMBO_PARAMS + self.QQ_DEPTH_CONTROLS:
+            self.CONFIG_DEF[pr]['width'] = PromptConfig.COMBO_WIDTH_OTHER
+            if pr in ['default_ns', 'default_ew']:
+                self.CONFIG_DEF[pr]['width'] = PromptConfig.COMBO_WIDTH_NSEW
+
         # --------------------------------------------------------------
+        self.MAIN_ROW = 0
+
+        # --------------------------------------------------------------
+        # Parameters set via Comboboxes
+
         # A frame for NS, EW, and Layout comboboxes and labels
-        self.combos = []
         combo_frame = tk.Frame(self)
-        combo_frame.grid(row=0, column=1, sticky='nwe')
+        combo_frame.grid(row=self.MAIN_ROW, column=1, sticky='nwe')
+        self.MAIN_ROW += 1
+        # This dict will be keyed by attribute name, and its values will
+        # be the corresponding Combobox.
+        self.combos = {}
+        self.COMBO_FRAME_ROW = 0
 
-        combo_frame_row = 0
-
-        # Prompt for default N/S
-        defaultNSPrompt = tk.Label(
-            combo_frame,
-            text="Default unspecified Townships to [North] or [South]?")
-        defaultNShbtn = tk.Button(
-            combo_frame, text='?', padx=5,
-            command=lambda: self.cf_help_clicked('default_ns'))
-        self.defaultNScombo = Combobox(combo_frame, width=16)
-        self.defaultNScombo['values'] = ('[default: North]', 'North', 'South')
-        defaultNSPrompt.grid(column=1, row=combo_frame_row, sticky='e')
-        defaultNShbtn.grid(column=2, row=combo_frame_row)
-        self.defaultNScombo.grid(column=3, row=combo_frame_row, sticky='w')
-        self.combos.append(self.defaultNScombo)
-        combo_frame_row += 1
-
-        # Prompt for default E/W
-        defaultEWPrompt = tk.Label(
-            combo_frame, text="Default unspecified Ranges to [West] or [East]?")
-        defaultEWPrompt.grid(column=1, row=combo_frame_row, sticky='e')
-        defaultEWhbtn = tk.Button(
-            combo_frame, text='?', padx=5,
-            command=lambda: self.cf_help_clicked('default_ew'))
-        defaultEWhbtn.grid(column=2, row=combo_frame_row)
-        self.defaultEWcombo = Combobox(combo_frame, width=16)
-        self.defaultEWcombo['values'] = ('[default: West]', 'West', 'East')
-        self.defaultEWcombo.grid(column=3, row=combo_frame_row, sticky='w')
-        self.combos.append(self.defaultEWcombo)
-        combo_frame_row += 1
-    
-        # Prompt for layout
-        self.layoutcombo = Combobox(combo_frame, width=25)
-        self.layoutcombo['values'] = tuple(
-            ['Deduce (RECOMMENDED)'] + list(parser.IMPLEMENTED_LAYOUTS))
-        self.combos.append(self.layoutcombo)
-    
-        if 'layout' in parameters:
-            # Only put layout into GUI if it's among the requested parameters
-            layoutPrompt = tk.Label(
-                combo_frame, text="Force parsing as a particular layout?")
-            layoutPrompt.grid(column=1, row=combo_frame_row, sticky='e')
-            layouthbtn = tk.Button(
-                combo_frame, text='?', padx=5,
-                command=lambda: self.cf_help_clicked('layout'))
-            layouthbtn.grid(column=2, row=combo_frame_row)
-            self.layoutcombo.grid(column=3, row=combo_frame_row, sticky='w')
-        combo_frame_row += 1
+        for pr in self.COMBO_PARAMS:
+            if pr not in parameters:
+                continue
+            self.ConfigComboGen(
+                master=combo_frame,
+                top_owner=self,
+                attribute=pr,
+                values=self.CONFIG_DEF[pr]['values'],
+                label_txt=self.CONFIG_DEF[pr]['label_txt'],
+                width=self.CONFIG_DEF[pr]['width']
+            )
 
         # --------------------------------------------------------------
         # Parameters set via radiobuttons (i.e. RB_PARAMS)
-        cur_row = 11
 
         lbl = tk.Label(self, text='')
-        lbl.grid(row=cur_row, column=1)
-        cur_row += 1
+        lbl.grid(row=self.MAIN_ROW, column=1)
+        self.MAIN_ROW += 1
 
         # Set a new tk.IntVar for each variable name --
-        #   i.e. var_name 'clean_qq' -> `self.clean_qq_var`, storing a tk.IntVar;
-        #   and set this tk.IntVar to the `self.CONFIG_DEF` dict for 'clean_qq'
-        #   (etc.)
+        #   i.e. var_name 'clean_qq' -> `self.clean_qq_var`, storing a
+        #   tk.IntVar; and set this tk.IntVar to the `self.CONFIG_DEF`
+        #   dict for 'clean_qq' (etc.)
         for var_name in self.RB_PARAMS:
             new_var = tk.IntVar()
-            setattr(self, var_name + 'Var', new_var)
+            setattr(self, f"{var_name}_var", new_var)
             self.CONFIG_DEF[var_name]['var'] = new_var
 
         for var_name in self.QQ_DEPTH_CONTROLS:
             new_var = tk.StringVar()
-            setattr(self, var_name + 'Var', new_var)
+            setattr(self, f"{var_name}_var", new_var)
             self.CONFIG_DEF[var_name]['var'] = new_var
 
-        # Prompt for qq_depth_min
-        qq_depth_minPrompt = tk.Label(
-            combo_frame, text="MINIMUM depth to parse QQs")
-        qq_depth_minhbtn = tk.Button(
-            combo_frame, text='?', padx=5,
-            command=lambda: self.cf_help_clicked('qq_depth_min'))
-        self.qq_depth_mincombo = Combobox(combo_frame, width=25)
-        self.qq_depth_mincombo['values'] = self.CONFIG_DEF["qq_depth_min"]["options"]
-        self.combos.append(self.qq_depth_mincombo)
-        self.CONFIG_DEF["qq_depth_min"]["combo"] = self.qq_depth_mincombo
-        if "qq_depth_min" in self.parameters:
-            qq_depth_minPrompt.grid(column=1, row=combo_frame_row, sticky='e')
-            qq_depth_minhbtn.grid(column=2, row=combo_frame_row)
-            self.qq_depth_mincombo.grid(column=3, row=combo_frame_row, sticky='w')
-            combo_frame_row += 1
-
-        # Prompt for qq_depth_max
-        qq_depth_maxPrompt = tk.Label(
-            combo_frame, text="MAXIMUM depth to parse QQs")
-        qq_depth_maxhbtn = tk.Button(
-            combo_frame, text='?', padx=5,
-            command=lambda: self.cf_help_clicked('qq_depth_max'))
-        self.qq_depth_maxcombo = Combobox(combo_frame, width=25)
-        self.qq_depth_maxcombo['values'] = self.CONFIG_DEF["qq_depth_max"]["options"]
-        self.combos.append(self.qq_depth_maxcombo)
-        self.CONFIG_DEF["qq_depth_max"]["combo"] = self.qq_depth_maxcombo
-        if "qq_depth_max" in self.parameters:
-            qq_depth_maxPrompt.grid(column=1, row=combo_frame_row, sticky='e')
-            qq_depth_maxhbtn.grid(column=2, row=combo_frame_row)
-            self.qq_depth_maxcombo.grid(column=3, row=combo_frame_row, sticky='w')
-            combo_frame_row += 1
-
-        # Prompt for qq_depth
-        qq_depthPrompt = tk.Label(
-            combo_frame,
-            text="EXACT depth to parse QQs (override min and max)")
-        qq_depthhbtn = tk.Button(
-            combo_frame, text='?', padx=5,
-            command=lambda: self.cf_help_clicked('qq_depth'))
-        self.qq_depthcombo = Combobox(combo_frame, width=25)
-        self.qq_depthcombo['values'] = self.CONFIG_DEF["qq_depth"]["options"]
-        self.combos.append(self.qq_depthcombo)
-        self.CONFIG_DEF["qq_depth"]["combo"] = self.qq_depthcombo
-        if "qq_depth" in self.parameters:
-            qq_depthPrompt.grid(column=1, row=combo_frame_row, sticky='e')
-            qq_depthhbtn.grid(column=2, row=combo_frame_row)
-            self.qq_depthcombo.grid(column=3, row=combo_frame_row, sticky='w')
-            combo_frame_row += 1
-
+        # --------------------------------------------------------------
         # Generate radiobuttons for the remaining parameters
         pr = self.RadioSetter(self, writing_header=True)
-        pr.grid(row=cur_row, column=1, sticky='w')
-        cur_row += 1
+        pr.grid(row=self.MAIN_ROW, column=1, sticky='w')
+        self.MAIN_ROW += 1
         for cf in parameters:
             if cf not in self.RB_PARAMS:
                 continue
             pr = self.RadioSetter(
                 self, parameter=cf, target_var=self.CONFIG_DEF[cf]['var'])
-            pr.grid(row=cur_row, column=1, sticky='w')
+            pr.grid(row=self.MAIN_ROW, column=1, sticky='w')
 
-            cur_row += 1
+            self.MAIN_ROW += 1
 
         # Set defaults for all of the parameters
         self.set_defaults()
@@ -556,47 +532,56 @@ class PromptConfig(tk.Frame):
         # Controls
 
         control_frame = tk.Frame(self)
-        control_frame.grid(row=cur_row, column=1, sticky='s')
-        ctrl_col = 0
+        control_frame.grid(row=self.MAIN_ROW, column=1, sticky='s')
+        self.MAIN_ROW += 1
         CTRL_BTN_INNER_PADY = 5
         CTRL_BTN_INNER_PADX = 5
         CTRL_PADY = 10
         CTRL_COL_PADX = 20
 
-        defaultButton = tk.Button(
-            control_frame, text='Reset to Defaults', command=self.set_defaults,
-            padx=CTRL_BTN_INNER_PADX, pady=CTRL_BTN_INNER_PADY)
-        defaultButton.grid(
-            column=ctrl_col, row=0, padx=CTRL_COL_PADX, pady=CTRL_PADY)
-        ctrl_col += 1
+        control_dict = {
+            'default': {
+                'text': 'Reset to Defaults',
+                'function': self.set_defaults
+            },
+            'cancel': {
+                'text': cancel_button_text,
+                'function': self.cancel_clicked
+            },
+            'ok': {
+                'text': ok_button_text,
+                'function': self.ok_clicked
+            }
+        }
 
-        if show_cancel:
-            cancelButton = tk.Button(
-                control_frame, text=cancel_button_text,
-                command=self.cancel_clicked,
-                padx=CTRL_BTN_INNER_PADX, pady=CTRL_BTN_INNER_PADY)
-            cancelButton.grid(
-                column=ctrl_col, row=0, padx=CTRL_COL_PADX, pady=CTRL_PADY)
-            ctrl_col += 1
-
+        buttons_needed = ['default']
         if show_ok:
-            compileButton = tk.Button(
-                control_frame, text=ok_button_text,
-                command=self.ok_clicked,
-                padx=CTRL_BTN_INNER_PADX, pady=CTRL_BTN_INNER_PADY)
-            compileButton.grid(
-                column=ctrl_col, row=0, padx=CTRL_COL_PADX, pady=CTRL_PADY)
+            buttons_needed.append('ok')
+        if show_ok:
+            buttons_needed.append('cancel')
+
+        ctrl_col = 0
+        for btn in buttons_needed:
+            button = tk.Button(
+                control_frame,
+                text=control_dict[btn]['text'],
+                command=control_dict[btn]['function'],
+                padx=CTRL_BTN_INNER_PADX,
+                pady=CTRL_BTN_INNER_PADY)
+            button.grid(
+                column=ctrl_col,
+                row=0,
+                padx=CTRL_COL_PADX,
+                pady=CTRL_PADY)
             ctrl_col += 1
 
     def set_defaults(self):
         """Set or reset all config variables to their defaults."""
         for var_name in self.RB_PARAMS:
             # Pull the tk.IntVar associated with this var_name, and set to -1
-            tkintvar = getattr(self, var_name + 'Var')
+            tkintvar = getattr(self, f"{var_name}_var")
             tkintvar.set(-1)
-        for combo in self.combos:
-            combo.current(0)
-            combo.current(0)
+        for combo in self.combos.values():
             combo.current(0)
 
     def cf_help_clicked(self, attrib):
@@ -609,19 +594,24 @@ class PromptConfig(tk.Frame):
 
         RB_COL_WIDTH = 5
 
-        def __init__(self, master=None, writing_header=False, parameter=None,
-                     target_var=None, **kw):
+        def __init__(
+                self,
+                master=None,
+                writing_header=False,
+                parameter=None,
+                target_var=None,
+                **kw):
             tk.Frame.__init__(self, master, **kw)
             self.master = master
 
             if writing_header:
                 # If `writing_header`, will only write these:
-                radLabel1 = tk.Label(self, text='Off', width=self.RB_COL_WIDTH)
-                radLabel2 = tk.Label(self, text='Default', width=self.RB_COL_WIDTH)
-                radLabel3 = tk.Label(self, text='On', width=self.RB_COL_WIDTH)
-                radLabel1.grid(column=1, row=0, sticky='w')
-                radLabel2.grid(column=2, row=0, sticky='w')
-                radLabel3.grid(column=3, row=0, sticky='w')
+                rlabel_1 = tk.Label(self, text='Off', width=self.RB_COL_WIDTH)
+                rlabel_2 = tk.Label(self, text='Default', width=self.RB_COL_WIDTH)
+                rlabel_3 = tk.Label(self, text='On', width=self.RB_COL_WIDTH)
+                rlabel_1.grid(column=1, row=0, sticky='w')
+                rlabel_2.grid(column=2, row=0, sticky='w')
+                rlabel_3.grid(column=3, row=0, sticky='w')
                 return
 
             for i in range(1, 4):
@@ -659,29 +649,26 @@ class PromptConfig(tk.Frame):
         )
         return messagebox.askokcancel("WARNING", msg)
 
-    def compile_config_text(self) -> str:
+    def compile_config_text(self):
         """
-        Compile and return the config text.
+        Compile and return the config text. (Returns None if cancelled.)
         """
         param_vals = []
-        
-        ns = self.defaultNScombo.get()[0].lower()
-        ew = self.defaultEWcombo.get()[0].lower()
-        if ns in ['n', 's']:
-            param_vals.append(ns)
-        if ew in ['e', 'w']:
-            param_vals.append(ew)
 
-        # Setting qq_depth or qq_depth_min to larger than this will prompt
-        # a warning.
-        QQ_DEPTH_WARN_THRESHOLD = 6
+        if 'default_ns' in self.parameters:
+            ns = self.combos['default_ns'].get().lower()
+            if ns.startswith(pytrs.PLSSDesc._LEGAL_NS):
+                param_vals.append(ns[0])
 
-        proceed = True
+        if 'default_ew' in self.parameters:
+            ew = self.combos['default_ew'].get().lower()
+            if ew.startswith(pytrs.PLSSDesc._LEGAL_EW):
+                param_vals.append(ew[0])
 
         if 'layout' in self.parameters:
-            val = self.layoutcombo.get()
-            if val in parser.IMPLEMENTED_LAYOUTS:
-                param_vals.append(val)
+            layout = self.combos['layout'].get()
+            if layout in pytrs.IMPLEMENTED_LAYOUTS:
+                param_vals.append(layout)
 
         # Check each of the requested variables. If not default (i.e. -1),
         # then append the parameter+value.
@@ -690,19 +677,26 @@ class PromptConfig(tk.Frame):
             if val != -1:
                 param_vals.append(f"{param}.{bool(val)}")
 
-        for param in [p for p in self.QQ_DEPTH_CONTROLS if p in self.parameters]:
+        # Setting qq_depth or qq_depth_min to larger than this will
+        # prompt a warning. We may want to abort after qq depth warning;
+        # we'll track that with `proceed`.
+        QQ_DEPTH_WARN_THRESHOLD = 6
+        proceed = True
+        for param in self.QQ_DEPTH_CONTROLS:
+            if param not in self.parameters:
+                continue
             try:
                 # We only want the first part (before the first space, if any).
-                val = self.CONFIG_DEF[param]['combo'].get()
+                val = self.combos[param].get()
                 val = val.split(" ")[0]
                 val = int(val)
             except ValueError:
                 val = None
             if val is not None:
                 param_vals.append(f"{param}.{val}")
-            if val is not None \
-                    and param in ["qq_depth", "qq_depth_min"] \
-                    and val >= QQ_DEPTH_WARN_THRESHOLD:
+            if (val is not None
+                    and param in ["qq_depth", "qq_depth_min"]
+                    and val >= QQ_DEPTH_WARN_THRESHOLD):
                 proceed = self.warn_deep_depths(val)
             if param == "qq_depth" and val is not None:
                 # if qq_depth was set, we don't want to pull the
@@ -749,6 +743,43 @@ class PromptConfig(tk.Frame):
             self.target_var.set('CANCEL')
             self.external_target_var['config_text'] = 'CANCEL'
             self.master.destroy()
+
+    class ConfigComboGen:
+        """Generate a Combobox and associated buttons / labels."""
+        def __init__(
+                self,
+                master: tk.Frame = None,
+                top_owner=None,
+                attribute: str = None,
+                values: tuple = None,
+                label_txt: str = None,
+                width: int = None,
+                **kw):
+            """
+            :param master: The frame holding this Combobox etc.
+            :param top_owner: The PromptConfig object.
+            :param attribute: The name of the attribute being controlled
+            by this Combobox.
+            :param values: A tuple of the optional values to choose
+            from.
+            :param label_txt: The label next to the Combobox.
+            :param width: Width of the Combobox.
+            :param kw: kwargs to pass through to the Combobox.
+            """
+
+            row = top_owner.COMBO_FRAME_ROW
+            top_owner.COMBO_FRAME_ROW += 1
+
+            lbl = tk.Label(master, text=label_txt)
+            help_button = tk.Button(
+                master, text='?', padx=5,
+                command=lambda: top_owner.cf_help_clicked(attribute))
+            self.combo = Combobox(master, width=width, **kw)
+            self.combo['values'] = values
+            lbl.grid(column=1, row=row, sticky='e')
+            help_button.grid(column=2, row=row)
+            self.combo.grid(column=3, row=row, sticky='w')
+            top_owner.combos[attribute] = self.combo
 
 
 if __name__ == '__main__':
