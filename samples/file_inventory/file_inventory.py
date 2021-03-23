@@ -22,7 +22,7 @@ from pytrs.tractwriter import TractWriter
 # Directory containing reports, with filenames in the format:
 #   '<legal description in TRS_desc layout> Report <MM-DD-YYYY>.docx'
 #   e.g., 'T154N-R97W Sec 14 NE, Sec 15 - 18 N2 Report 12-1-2014.doc'
-REPORT_DIRECTORY = Path(r"C:\Land\Reports")
+REPORT_DIRECTORY = Path(r".\Reports")
 
 # Regex pattern of the portion of the filename that needs to be removed.
 REPORT_SURPLUS = re.compile(
@@ -32,7 +32,7 @@ REPORT_SURPLUS = re.compile(
 DOC_TYPES = (".docx", ".doc")
 
 # Filepath at which to write our inventory.
-INVENTORY_FP = Path(r"C:\Land\report_inventory.csv")
+INVENTORY_FP = Path(r"file_inventory.csv")
 
 
 def main():
