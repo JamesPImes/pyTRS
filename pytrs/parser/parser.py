@@ -230,7 +230,7 @@ class PLSSDesc:
     ____ IMPORTANT INSTANCE VARIABLES AFTER PARSING ____
     .orig_desc -- The original text. (Gets set from the first positional
         argument at init.)
-    .parsed_tracts -- A pytrs.TractList object (i.e. a list) containing
+    .tracts -- A pytrs.TractList object (i.e. a list) containing
         all of the pytrs.Tract objects that were generated from parsing
         this object.
     .pp_desc -- The preprocessed description. (If the object has not yet
@@ -265,18 +265,18 @@ class PLSSDesc:
 
     .tracts_to_dict() -- Compile the requested attributes for each Tract
         into a dict, and returns a list of those dicts (i.e. the list is
-        equal in length to `.parsed_tracts` TractList).
+        equal in length to `.tracts` TractList).
 
     .tracts_to_list() -- Compile the requested attributes for each Tract
         into a list, and returns a nested list of those list (i.e. the
-        top-level list is equal in length to `.parsed_tracts` TractList).
+        top-level list is equal in length to `.tracts` TractList).
 
     .tracts_to_str() -- Compile the requested attributes for each Tract
         into a string-based table, and return a single string of all
         tables.
 
     .list_trs() -- Return a list of all twp/rge/sec combinations in the
-        `.parsed_tracts` TractList, optionally removing duplicates.
+        `.tracts` TractList, optionally removing duplicates.
 
     .
     () -- Equivalent to `.tracts_to_dict()`, but the data
@@ -285,7 +285,7 @@ class PLSSDesc:
 
     ____ SORTING / GROUPING / FILTERING TRACTS BY ATTRIBUTE VALUES ____
     These methods will sort, group, or filter the Tract objects
-    contained in the ``.parsed_tracts`` attribute:
+    contained in the ``.tracts`` attribute:
 
     .sort_tracts() -- Custom sorting based on the Twp/Rge/Sec or
     original creation order of each Tract. Can also take parameters from
@@ -300,7 +300,7 @@ class PLSSDesc:
 
     .filter_errors() -- Get a new TractList of Tract objects whose Twp,
     Rge, and/or Section were an error or undefined, and optionally
-    remove them from the original ``.parsed_tracts``.
+    remove them from the original ``.tracts``.
     """
 
     NORTH = 'n'
@@ -326,7 +326,7 @@ class PLSSDesc:
             wait_to_parse=False):
         """
         A 'raw' PLSS description of land. Will be parsed into one or
-        more Tract objects, which are stored in the `.parsed_tracts`
+        more Tract objects, which are stored in the `.tracts`
         instance variable (a list).
 
         :param orig_desc: The text of the description to be parsed.
@@ -434,7 +434,7 @@ class PLSSDesc:
         # Track fatal flaws in the parsing of this PLSS description
         self.desc_is_flawed = False
         # list of Tract objs, after parsing (TractList is a subclass of `list`)
-        self.parsed_tracts = TractList()
+        self.tracts = TractList()
         # list of warning flags
         self.w_flags = []
         # list of 2-tuples that caused warning flags (warning flag, text string)
@@ -468,7 +468,7 @@ class PLSSDesc:
             self.preprocess(commit=True)
 
     def __str__(self):
-        pt = len(self.parsed_tracts)
+        pt = len(self.tracts)
         return (
             "PLSSDesc ({0})\n"
             "Source: {1}\n"
@@ -479,34 +479,34 @@ class PLSSDesc:
                 "Unparsed" if pt == 0 else "Parsed",
                 self.source,
                 "n/a" if pt == 0 else pt,
-                self.parsed_tracts.snapshot_inside(),
+                self.tracts.snapshot_inside(),
                 self.orig_desc)
 
     def __getitem__(self, item):
         """
         `PLSSDesc` are LIMITEDLY subscriptable, in that you can ACCESS
-        elements (i.e. `pytrs.Tract` objects) of the `.parsed_tracts`
+        elements (i.e. `pytrs.Tract` objects) of the `.tracts`
         (a `pytrs.TractList`), thus (where `some_plssdesc` is a parsed
         `PLSSDesc` object):
         `some_plssdesc[0]` is the same as
-        `some_plssdesc.parsed_tracts[0]`
+        `some_plssdesc.tracts[0]`
 
         ...and we can slice, thus:
         `some_plssdesc[:2]` is the same as
-        `some_plssdesc.parsed_tracts[:2]`
+        `some_plssdesc.tracts[:2]`
 
         ...and we can iterate over all its Tract objects:
         `for tract in some_plssdesc: <...>` is the same as
-        `for tract in some_plssdesc.parsed_tracts: <...>`
+        `for tract in some_plssdesc.tracts: <...>`
 
         But you CANNOT assign, pop, or insert with a `PLSSDesc`
         directly. If any of that functionality is required, work
-        directly with the `.parsed_tracts` attribute. Or, get a new
+        directly with the `.tracts` attribute. Or, get a new
         `pytrs.TractList` to work with, thus:
         `new_tractlist = some_plssdesc.parse(commit=False)`
         (`TractList` is a subclass of the built-in `list`.)
         """
-        return self.parsed_tracts.__getitem__(item)
+        return self.tracts.__getitem__(item)
 
     @property
     def config(self):
@@ -561,10 +561,10 @@ class PLSSDesc:
         """
         Parse the description. If parameter ``commit=True`` (default),
         the results will be stored to the various instance
-        attributes (``.parsed_tracts``, ``.w_flags``, ``.w_flag_lines``,
+        attributes (``.tracts``, ``.w_flags``, ``.w_flag_lines``,
         ``.e_flags``, and ``.e_flag_lines``). Returns only the
         ``TractList`` object containing the parsed ``Tract`` objects
-        (i.e. what would be stored to ``.parsed_tracts``).
+        (i.e. what would be stored to ``.tracts``).
 
         NOTE: Any parameters passed here will override the corresponding
         ``.config`` settings, but any unspecified parameters will defer
@@ -740,8 +740,8 @@ class PLSSDesc:
         )
 
         if commit:
-            # Wipe the existing parsed_tracts, etc., if any.
-            self.parsed_tracts = TractList()
+            # Wipe the existing tracts, etc., if any.
+            self.tracts = TractList()
             self.w_flags = []
             self.e_flags = []
             self.w_flag_lines = []
@@ -756,11 +756,11 @@ class PLSSDesc:
             # description.
             self.pp_desc = parser.text
 
-        return parser.parsed_tracts
+        return parser.tracts
 
     def config_tracts(self, config):
         """
-        Reconfigure all of the Tract objects in ``.parsed_tracts``
+        Reconfigure all of the Tract objects in ``.tracts``
         (without reconfiguring this PLSSDesc object).
 
         :param config: Either a pytrs.Config object, or a string of
@@ -769,7 +769,7 @@ class PLSSDesc:
         parameters.)
         :return: None
         """
-        return self.parsed_tracts.config_tracts(config)
+        return self.tracts.config_tracts(config)
 
     def parse_tracts(
             self,
@@ -782,7 +782,7 @@ class PLSSDesc:
             break_halves=None):
         """
         Parse (or re-parse) all of the Tract objects in
-        ``.parsed_tracts`` into lots/QQ's using the specified
+        ``.tracts`` into lots/QQ's using the specified
         parameters. Will NOT pull from this PLSSDesc object's
         ``.config`` or other attributes, but WILL pull from each Tract
         object's own ``.config`` (unless otherwise configured here).
@@ -804,7 +804,7 @@ class PLSSDesc:
         :param break_halves: Same as in ``Tract.parse()`` method.
         :return: None
         """
-        return self.parsed_tracts.parse_tracts(
+        return self.tracts.parse_tracts(
                 config=config,
                 clean_qq=clean_qq,
                 include_lot_divs=include_lot_divs,
@@ -871,10 +871,10 @@ class PLSSDesc:
 
     def tracts_to_dict(self, *attributes) -> list:
         """
-        Compile the data for each Tract object in .parsed_tracts into a
+        Compile the data for each Tract object in .tracts into a
         dict containing the requested attributes only, and return a list
         of those dicts (the returned list being equal in length to
-        .parsed_tracts).
+        .tracts).
 
         :param attributes: The names (strings) of whichever attributes
         should be included (see documentation on `pytrs.Tract` objects
@@ -901,14 +901,14 @@ class PLSSDesc:
             ]
         """
         # This functionality is handled by TractList method.
-        return self.parsed_tracts.tracts_to_dict(attributes)
+        return self.tracts.tracts_to_dict(attributes)
 
     def tracts_to_list(self, *attributes) -> list:
         """
-        Compile the data for each Tract object in .parsed_tracts into a
+        Compile the data for each Tract object in .tracts into a
         list containing the requested attributes only, and return a
         nested list of those lists (the returned list being equal in
-        length to .parsed_tracts).
+        length to .tracts).
 
         :param attributes: The names (strings) of whichever attributes
         should be included (see documentation on `pytrs.Tract` objects
@@ -934,7 +934,7 @@ class PLSSDesc:
             ]
         """
         # This functionality is handled by TractList method.
-        return self.parsed_tracts.tracts_to_list(attributes)
+        return self.tracts.tracts_to_list(attributes)
 
     def iter_to_dict(self, *attributes):
         """
@@ -948,7 +948,7 @@ class PLSSDesc:
         :return: A generator of data pulled from each Tract, in the form
         of a dict.
         """
-        return self.parsed_tracts.iter_to_dict(attributes)
+        return self.tracts.iter_to_dict(attributes)
 
     def iter_to_list(self, *attributes):
         """
@@ -962,11 +962,11 @@ class PLSSDesc:
         :return: A generator of data pulled from each Tract, in the form
         of a list.
         """
-        return self.parsed_tracts.iter_to_list(attributes)
+        return self.tracts.iter_to_list(attributes)
 
     def tracts_to_str(self, *attributes) -> str:
         """
-        Compile the data for all Tract objects in .parsed_tracts,
+        Compile the data for all Tract objects in .tracts,
         containing the requested attributes only, and return a single
         string of the data.
 
@@ -996,7 +996,7 @@ class PLSSDesc:
             qqs  : NENW, NWNW, SENW, SWNW, NESW, NWSW
         """
         # This functionality is handled by TractList method.
-        return self.parsed_tracts.tracts_to_str(attributes)
+        return self.tracts.tracts_to_str(attributes)
 
     def tracts_to_csv(
             self, attributes, fp, mode="w", nice_headers=False):
@@ -1027,12 +1027,12 @@ class PLSSDesc:
         names themselves.
         :return: None
         """
-        self.parsed_tracts.tracts_to_csv(
+        self.tracts.tracts_to_csv(
             attributes, fp, mode, nice_headers)
 
     def quick_desc(self, delim=': ', newline='\n') -> str:
         """
-        Returns the entire .parsed_tracts list as a single string.
+        Returns the entire .tracts list as a single string.
         :param delim: Specify what separates TRS from the desc.
         (defaults to ': ').
         :param newline: Specify what separates Tracts from one another.
@@ -1053,12 +1053,12 @@ class PLSSDesc:
             154n97w15: Northwest Quarter, North Half South West Quarter
         """
         # This functionality is handled by TractList method.
-        return self.parsed_tracts.quick_desc(delim=delim, newline=newline)
+        return self.tracts.quick_desc(delim=delim, newline=newline)
 
     def quick_desc_short(self, delim=': ', newline='\n', max_len=30) -> str:
         """
         Returns the description (`.trs` + `.desc`) of all Tract objects
-        in `.parsed_tracts` as a single string, but trims every line down
+        in `.tracts` as a single string, but trims every line down
         to `max_len`, if needed.
         :param delim: Specify what separates TRS from the desc.
         (defaults to ': ').
@@ -1068,15 +1068,15 @@ class PLSSDesc:
         (Defaults to 30.)
         :return: A string of the complete description.
         """
-        return self.parsed_tracts.quick_desc_short(delim, newline, max_len)
+        return self.tracts.quick_desc_short(delim, newline, max_len)
 
     def list_trs(self, remove_duplicates=False):
         """
-        Return a list all the TRS's in .parsed_tracts list. Optionally
+        Return a list all the TRS's in .tracts list. Optionally
         remove duplicates with remove_duplicates=True.
         """
         # This functionality is handled by TractList method.
-        return self.parsed_tracts.list_trs(remove_duplicates=remove_duplicates)
+        return self.tracts.list_trs(remove_duplicates=remove_duplicates)
 
     def print_desc(self, delim=': ', newline='\n') -> None:
         """
@@ -1088,12 +1088,12 @@ class PLSSDesc:
         (defaults to '\n').
         """
         # This functionality is handled by TractList method.
-        self.parsed_tracts.print_desc(delim=delim, newline=newline)
+        self.tracts.print_desc(delim=delim, newline=newline)
 
     def pretty_desc(self, word_sec='Sec ', justify_linebreaks=None):
         """
         Get a neatened-up description of all of the Tract objects in
-        ``.parsed_tracts``. (Does not access this PLSSDesc object's
+        ``.tracts``. (Does not access this PLSSDesc object's
         description. Instead, compiles a cleaned-up description from the
         Tract objects.)
 
@@ -1108,12 +1108,12 @@ class PLSSDesc:
         use no justification at all, pass an empty string.
         :return: a str of the compiled description.
         """
-        return self.parsed_tracts.pretty_desc(word_sec, justify_linebreaks)
+        return self.tracts.pretty_desc(word_sec, justify_linebreaks)
 
     def pretty_print_desc(self, word_sec='Sec ', justify_linebreaks=None):
         """
         Print a neatened-up description of all of the Tract objects in
-        ``.parsed_tracts``. (Does not access this PLSSDesc object's
+        ``.tracts``. (Does not access this PLSSDesc object's
         description. Instead, compiles a cleaned-up description from the
         Tract objects.)
 
@@ -1128,15 +1128,15 @@ class PLSSDesc:
         use no justification at all, pass an empty string.
         :return: None (prints to console).
         """
-        self.parsed_tracts.pretty_print_desc(word_sec, justify_linebreaks)
+        self.tracts.pretty_print_desc(word_sec, justify_linebreaks)
 
     def print_data(self, *attributes) -> None:
         """
         Simple printing of the arg-specified attributes for each Tract
-        in the .parsed_tracts list.
+        in the .tracts list.
         """
         # This functionality is handled by TractList method.
-        self.parsed_tracts.print_data(attributes)
+        self.tracts.print_data(attributes)
         return
 
     def sort_tracts(self, key: str = 'i,s,r,t'):
@@ -1193,13 +1193,13 @@ class PLSSDesc:
         :return: None. (TractList is sorted in-situ.)
         """
         # This functionality is handled by TractList method.
-        self.parsed_tracts.sort_tracts(key=key)
+        self.tracts.sort_tracts(key=key)
         return None
 
     def group(self, by_attribute="twprge", into=None,
             sort_key=None, sort_reverse=False):
         """
-        Filter the Tract objects in the ``.parsed_tracts`` into a dict
+        Filter the Tract objects in the ``.tracts`` into a dict
         of TractLists, keyed by unique values of `by_attribute`. By
         default, will filter into groups of Tracts that share Twp/Rge
         (i.e. `'twprge'`).
@@ -1238,37 +1238,37 @@ class PLSSDesc:
         :return: A dict of TractList objects, each containing the Tracts
         with matching values of the `by_attribute`.
         """
-        return self.parsed_tracts.group(by_attribute, into, sort_key, sort_reverse)
+        return self.tracts.group(by_attribute, into, sort_key, sort_reverse)
 
     # Alias to mirror `sort_tracts`.
     group_tracts = group
 
     def filter(self, key, drop=False):
         """
-        Extract from ``.parsed_tracts`` all Tract objects that match the
+        Extract from ``.tracts`` all Tract objects that match the
         `key` (a lambda function that returns a bool or bool-like
         value when applied to each Tract object).
 
         Returns a new TractList of all of the selected Tract objects.
 
         :param key: a lambda function that returns a bool or bool-like
-        value when applied to a Tract object in ``.parsed_tracts``.
+        value when applied to a Tract object in ``.tracts``.
         (True or True-like returned values will result in the inclusion
         of that Tract).
         :param drop: Whether to drop the matching Tracts from the
-        original ``.parsed_tracts``. (Defaults to ``False``)
+        original ``.tracts``. (Defaults to ``False``)
         :return: A new TractList of the selected Tract objects. (The
-        original ``.parsed_tracts`` will still hold all other Tract
+        original ``.tracts`` will still hold all other Tract
         objects, unless ``drop=True`` was passed.)
         """
-        return self.parsed_tracts.filter(key, drop)
+        return self.tracts.filter(key, drop)
 
     # Alias to mirror `sort_tracts`.
     filter_tracts = filter
 
     def filter_errors(self, twp=True, rge=True, sec=True, undef=False, drop=False):
         """
-        Extract from ``.parsed_tracts`` all Tract objects that were
+        Extract from ``.tracts`` all Tract objects that were
         parsed with an error. Specifically extract Twp/Rge errors with
         ``twprge=True`` (on by default); and get Sec errors with
         ``sec=True`` (on by default).
@@ -1285,25 +1285,25 @@ class PLSSDesc:
         Sections that were UNDEFINED to also be errors. (Defaults to
         ``False``)  (NOTE: Undefined Twp/Rge/Sec will never occur in a
         ``PLSSDesc`` object unless a ``Tract`` was manually appended to
-        the ``.parsed_tracts`` attribute.)
+        the ``.tracts`` attribute.)
         :param drop: Whether to drop the selected Tracts from the
-        original ``.parsed_tracts``. (Defaults to ``False``)
+        original ``.tracts``. (Defaults to ``False``)
         :return: A new TractList containing all of the selected Tract
         objects.
         """
-        return self.parsed_tracts.filter_errors(twp, rge, sec, undef, drop)
+        return self.tracts.filter_errors(twp, rge, sec, undef, drop)
 
     # Alias to mirror `sort_tracts`
     filter_error_tracts = filter_errors
 
     def filter_duplicates(self, method='instance', drop=False):
         """
-        Find the duplicate Tracts in ``.parsed_tracts``, get a new
+        Find the duplicate Tracts in ``.tracts``, get a new
         TractList of those Tract objects that were duplicates, and
         optionally `drop` the duplicates from the original TractList.
         (To be clear, if there are THREE identical Tracts in the
-        ``.parsed_tracts``, the returned ``TractList`` will contain only
-        TWO Tracts, and the original ``.parsed_tracts`` will still have
+        ``.tracts``, the returned ``TractList`` will contain only
+        TWO Tracts, and the original ``.tracts`` will still have
         one.)
 
         Control how to assess whether `Tract` objects are duplicates by
@@ -1314,7 +1314,7 @@ class PLSSDesc:
         (By definition, this will also apply even if one of the other
         two methods is used.)  (This should never happen in a
         ``PLSSDesc`` object, unless a Tract was manually appended to
-        ``.parsed_tracts``.)
+        ``.tracts``.)
 
         `method='lots_qqs'`  -> Whether the `.lots_qqs` attribute
         contains the same lots/aliquots (after removing duplicates
@@ -1339,7 +1339,7 @@ class PLSSDesc:
         the original list.
         :return: A new TractList.
         """
-        return self.parsed_tracts.filter_duplicates(method, drop)
+        return self.tracts.filter_duplicates(method, drop)
 
     # Alias to mirror `sort_tracts`
     filter_duplicate_tracts = filter_duplicates
@@ -2226,7 +2226,7 @@ class TractList(list):
     @staticmethod
     def _verify_iterable(iterable):
         """Type-check the contents of an iterable, and unpack the
-        ``.parsed_tracts`` attribute of a PLSSDesc object (if found)."""
+        ``.tracts`` attribute of a PLSSDesc object (if found)."""
         if isinstance(iterable, TractList):
             return iterable
         tmp = []
@@ -2236,7 +2236,7 @@ class TractList(list):
             elif isinstance(elem, (PLSSDesc, TractList)):
                 # Rely on the fact that we can iterate over PLSSDesc
                 # objects' (implicitly over the TractList in their
-                # `.parsed_tracts` attribute).
+                # `.tracts` attribute).
                 tmp.extend(elem)
             else:
                 raise TractListTypeError(
@@ -2265,7 +2265,7 @@ class TractList(list):
 
     def append(self, object):
         if isinstance(object, PLSSDesc):
-            self.extend(object.parsed_tracts)
+            self.extend(object.tracts)
         else:
             list.append(self, TractList._verify_type(object))
 
@@ -3358,7 +3358,7 @@ class TractList(list):
             elif isinstance(obj, (PLSSDesc, TractList)):
                 # Rely on the fact that we can iterate over PLSSDesc
                 # objects' (implicitly over the TractList in their
-                # `.parsed_tracts` attribute).
+                # `.tracts` attribute).
                 tl.extend(obj)
             else:
                 # Assume it's another list-like object.
@@ -3385,7 +3385,7 @@ class TractList(list):
             elif isinstance(obj, (PLSSDesc, TractList)):
                 # Rely on the fact that we can iterate over PLSSDesc
                 # objects' (implicitly over the TractList in their
-                # `.parsed_tracts` attribute).
+                # `.tracts` attribute).
                 for tract in obj:
                     yield tract
             else:
@@ -3773,7 +3773,7 @@ class PLSSParser:
 
     # These attributes have corresponding attributes in PLSSDesc objects.
     UNPACKABLES = (
-        "parsed_tracts",
+        "tracts",
         "w_flags",
         "e_flags",
         "w_flag_lines",
@@ -3827,7 +3827,7 @@ class PLSSParser:
         self.source = None
 
         # Generated variables / parsed data.
-        self.parsed_tracts = TractList()
+        self.tracts = TractList()
         self.w_flags = []
         self.e_flags = []
         self.w_flag_lines = []
@@ -3965,7 +3965,7 @@ class PLSSParser:
 
         # If we've still not discovered any Tracts, run a final parse in
         # layout COPY_ALL, and include appropriate errors.
-        if not self.parsed_tracts:
+        if not self.tracts:
             self._parse_segment(
                     text, layout=COPY_ALL, clean_up=False, require_colon=False,
                     handed_down_config=config,
@@ -3974,7 +3974,7 @@ class PLSSParser:
                     break_halves=break_halves)
             self.desc_is_flawed = True
 
-        for tract in self.parsed_tracts:
+        for tract in self.tracts:
             if tract.trs.startswith(TRS._ERR_TWPRGE):
                 self.e_flags.append(_E_FLAG_TWPRGE_ERR)
                 self.e_flag_lines.append(
@@ -4008,7 +4008,7 @@ class PLSSParser:
         e_flags = self.e_flags.copy()
         e_flag_lines = self.e_flag_lines.copy()
         tract_num = 0
-        for tract in self.parsed_tracts:
+        for tract in self.tracts:
 
             # If we wanted to parse to lots/QQ's, we do it now for all
             # generated Tracts.
@@ -4041,7 +4041,7 @@ class PLSSParser:
         self.e_flag_lines = e_flag_lines
 
         # Return the list of identified `Tract` objects (ie. a TractList object)
-        return self.parsed_tracts
+        return self.tracts
 
     def safe_deduce_layout(self, text, candidates=None, override=False):
         """
@@ -4390,7 +4390,7 @@ class PLSSParser:
             return None
 
         # Add the new Tract objects to our TractList.
-        self.parsed_tracts.extend(new_tracts)
+        self.tracts.extend(new_tracts)
 
         # Generate a flag for each block of unused text longer than a
         # few characters.
