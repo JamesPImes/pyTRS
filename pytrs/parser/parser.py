@@ -533,6 +533,14 @@ class PLSSDesc:
 
         self.__config = new_config
 
+    @property
+    def flags(self):
+        return self.e_flags + self.w_flags
+
+    @property
+    def flag_lines(self):
+        return self.e_flag_lines + self.w_flag_lines
+
     def parse(
             self,
             layout=None,
@@ -926,6 +934,34 @@ class PLSSDesc:
         """
         # This functionality is handled by TractList method.
         return self.parsed_tracts.tracts_to_list(attributes)
+
+    def iter_to_dict(self, *attributes):
+        """
+        Identical to `.tracts_to_dict()`, but returns a generator of
+        dicts, rather than a list of dicts.
+
+        :param attributes: The names (strings) of whichever attributes
+        should be included (see documentation on `pytrs.Tract` objects
+        for the names of relevant attributes).
+
+        :return: A generator of data pulled from each Tract, in the form
+        of a dict.
+        """
+        return self.parsed_tracts.iter_to_dict(attributes)
+
+    def iter_to_list(self, *attributes):
+        """
+        Identical to `.tracts_to_dict()`, but returns a generator of
+        lists, rather than a list of lists.
+
+        :param attributes: The names (strings) of whichever attributes
+        should be included (see documentation on `pytrs.Tract` objects
+        for the names of relevant attributes).
+
+        :return: A generator of data pulled from each Tract, in the form
+        of a list.
+        """
+        return self.parsed_tracts.iter_to_list(attributes)
 
     def tracts_to_str(self, *attributes) -> str:
         """
@@ -3118,6 +3154,36 @@ class TractList(list):
                 writer.writerow(row)
         return None
 
+    def iter_to_dict(self, *attributes):
+        """
+        Identical to `.tracts_to_dict()`, but returns a generator of
+        dicts, rather than a list of dicts.
+
+        :param attributes: The names (strings) of whichever attributes
+        should be included (see documentation on `pytrs.Tract` objects
+        for the names of relevant attributes).
+
+        :return: A generator of data pulled from each Tract, in the form
+        of a dict.
+        """
+        for tract in self:
+            yield tract.to_dict(attributes)
+
+    def iter_to_list(self, *attributes):
+        """
+        Identical to `.tracts_to_dict()`, but returns a generator of
+        lists, rather than a list of lists.
+
+        :param attributes: The names (strings) of whichever attributes
+        should be included (see documentation on `pytrs.Tract` objects
+        for the names of relevant attributes).
+
+        :return: A generator of data pulled from each Tract, in the form
+        of a list.
+        """
+        for tract in self:
+            yield tract.to_list(attributes)
+
     def quick_desc(self, delim=': ', newline='\n') -> str:
         """
         Returns the description of all Tract objects (`.trs` + `.desc`)
@@ -3142,11 +3208,7 @@ class TractList(list):
             154n97w14: NE/4
             154n97w15: Northwest Quarter, North Half South West Quarter
         """
-
-        dlist = [
-            t.quick_desc(delim=delim) for t in self
-        ]
-
+        dlist = [t.quick_desc(delim=delim) for t in self]
         return newline.join(dlist)
 
     def quick_desc_short(self, delim=': ', newline='\n', max_len=30) -> str:
@@ -3207,7 +3269,7 @@ class TractList(list):
         jst = " " * (len(word_sec) + 4)
         if justify_linebreaks:
             jst = justify_linebreaks
-        if len(self) == 0:
+        if not self:
             return None
         to_print = []
         cur_twprge = self[0].twprge
@@ -3276,24 +3338,59 @@ class TractList(list):
         """
         Create a TractList from multiple elements, which may be any
         number and combination of Tract, PLSSDesc, and TractList
-        objects.
+        objects (or other list-like element holding any of those object
+        types).
 
-        (If a single TractList is passed, it will return a copy of the
-        original TractList.)
+        WARNING: Will NOT handle infinitely-nested lists!
+
+        :param objects: Any number or combination of Tract, PLSSDesc,
+        and/or TractList objects (or other list-like element holding
+        any of those object types).
         """
-        if isinstance(objects, TractList):
-            return objects.copy()
         tl = TractList()
         for obj in objects:
             if isinstance(obj, PLSSDesc):
                 tl.extend(obj.parsed_tracts)
             elif isinstance(obj, Tract):
                 tl.append(obj)
-            else:
-                # Assume it's a TractList or other list-like object.
+            elif isinstance(obj, TractList):
                 tl.extend(obj)
-
+            else:
+                # Assume it's another list-like object.
+                for obj_deeper in obj:
+                    tl.extend(TractList.from_multiple(obj_deeper))
         return tl
+
+    @staticmethod
+    def iter_from_multiple(*objects):
+        """
+        Create from multiple elements a generator of Tract objects.
+
+        (Identical to `.from_multiple()`, but returns a generator of
+        Tract objects, rather than a `TractList`.)
+
+        :param objects: Any number or combination of Tract, PLSSDesc,
+        and/or TractList objects (or other list-like element holding
+        any of those object types).
+        :return: A generator of Tract objects.
+        """
+        for obj in objects:
+            if isinstance(obj, Tract):
+                yield obj
+            elif isinstance(obj, (PLSSDesc, TractList)):
+                # Rely on the fact that we can iterate over PLSSDesc
+                # objects' (implicitly over the TractList in their
+                # `.parsed_tracts` attribute).
+                for tract in obj:
+                    yield tract
+            else:
+                # Assume it's another other list-like object.
+                for maybe_tract in obj:
+                    try:
+                        yield TractList._verify_type(maybe_tract)
+                    except TractListTypeError:
+                        for deeper_maybe_tract in maybe_tract:
+                            yield TractList._verify_type(deeper_maybe_tract)
 
 
 class Config:
