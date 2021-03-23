@@ -66,7 +66,7 @@ def quick_flags(text) -> list:
 
     d = PLSSDesc(text, parse_qq=True)
 
-    return d.e_flags + d.w_flags
+    return d.flags
 
 
 def quick_flag_lines(text) -> list:
@@ -79,7 +79,7 @@ def quick_flag_lines(text) -> list:
 
     d = PLSSDesc(text, parse_qq=True)
 
-    return d.e_flag_lines + d.w_flag_lines
+    return d.flag_lines
 
 
 def quick_lots_qqs(text, clean_qq=False) -> list:
