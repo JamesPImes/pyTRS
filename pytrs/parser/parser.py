@@ -459,6 +459,10 @@ class PLSSDesc:
 
         # If layout was specified as kwarg, use that:
         self.layout = layout
+        # Track whether the layout was dictated by the user.
+        self.layout_specified = False
+        if self.layout is not None:
+            self.layout_specified = True
 
         # Optionally can run the parse when the object is initialized
         # (on by default).
@@ -6040,11 +6044,26 @@ class TractPreprocessor:
             # The str we'll use to replace matches of this regex pattern.
             replace_with = TractPreprocessor.QQ_SCRUBBER_DEFINITIONS[regex_run]
 
-            # All of the preprocess regex patterns have been designed
-            # such that Group 1 will be kept, and Group 2 will be
-            # replaced. So we sub in group 1 + the replacement string.
-            txt = re.sub(regex_run, rf"\1{replace_with}", txt)
-            return txt
+            # NOTE: we do not use the `re.sub()` function because we need to
+            # maintain the first character in the regex match, which provides
+            # necessary context to prevent over-matching. For example, the
+            # `NE_regex` must match '(\b|¼|4|½|2)' at the beginning, so that
+            # we don't capture "one hundred" as "oNE¼ hundred".
+            # (The clean_qq regexes do not have this requirement.)
+            remaining_text = txt
+            rebuilt_text = ''
+            while True:
+                rgx_mo = regex_run.search(remaining_text)
+                if rgx_mo is None:  # If we found no more matches like this.
+                    rebuilt_text = rebuilt_text + remaining_text
+                    break
+                rebuilt_text = (
+                    f"{rebuilt_text}"
+                    f"{remaining_text[:rgx_mo.start(2)]}"
+                    f"{replace_with}"
+                )
+                remaining_text = remaining_text[rgx_mo.end():]
+            return rebuilt_text
 
         # We'll run these scrubber regexes on the text:
         scrubber_rgxs = list(TractPreprocessor.SCRUBBER_REGEXES)
