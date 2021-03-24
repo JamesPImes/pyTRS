@@ -1,5 +1,5 @@
 # pyTRS Quick Start Guide
-*(__Note:__ This guide assumes that you are already familiar with the [PLSS](https://en.wikipedia.org/wiki/Public_Land_Survey_System) and its terminology.)*
+*__Note:__ This guide assumes that you are already familiar with the [Public Land Survey System (PLSS)](https://en.wikipedia.org/wiki/Public_Land_Survey_System) and its terminology.*
 
 ## Bird's Eye View
 
@@ -9,7 +9,7 @@ The two primary parsing classes in the library are [`PLSSDesc`]() and [`Tract`](
 
 The conceptual difference between these two classes is that a `Tract` object represents land within a single, specific section; whereas a `PLSSDesc` object can represent land across any number of sections (in a single township, or across multiple townships).
 
-Parsing a `PLSSDesc` object will creates one or more `Tract` objects.
+Parsing a `PLSSDesc` object will create one or more `Tract` objects, which are stored in the `.tracts` attribute of the `PLSSDesc` object (and the `.tracts` attribute is a `pytrs.TractList` object, a subclass of the built-in `list` that has been specialized for handling `Tract` objects).
 
 `Tract` objects can also be created directly, for when our dataset already has the description blocks separated from their respective Twp/Rge/Sec.
 
@@ -28,35 +28,30 @@ raw_description = "T154N-R97W Sec 14: NE/4, Sec 15: W/2"
 
 parsed_plssdesc = pytrs.PLSSDesc(raw_description)
 
-# Extract some data from the parsed description with `.tracts_to_dict()`.
-tract_data = parsed_plssdesc.tracts_to_dict(['twp', 'rge', 'sec', 'desc'])
+len(parsed_plssdesc.tracts)     # -> 2  (i.e. we created 2 Tract objects)
+
+# Print some data to console with `.print_data(<list of attributes>)`
+parsed_plssdesc.print_data(['twp', 'rge', 'sec', 'desc'])
 ```
 
-In the above example, we stored a list to the variable `tract_data`, which holds two dicts (one for each `Tract` object identified when the description was parsed).
-
+The above example prints the following to console:
 ```
-[
-    # The first tract:
-    {
-        'twp': '154n',
-        'rge': '97w',
-        'sec': '14',
-        'desc': 'NE/4'
-    },
-    
-    # The second tract:
-    {
-        'twp': '154n',
-        'rge': '97w',
-        'sec': '15',
-        'desc': 'W/2'
-    }
-]
+Tract 1 / 2
+twp  : 154n
+rge  : 97w
+sec  : 14
+desc : NE/4
+
+Tract 2 / 2
+twp  : 154n
+rge  : 97w
+sec  : 15
+desc : W/2
 ```
 
 See [the table here]() for all of the relevant data that can be extracted from a parsed `PLSSDesc` object.  [# TODO: LINK]
 
-See [the guide here]() for the various methods for extracting the data. [# TODO: LINK]
+There are various methods that extract data to more useful formats than just printing to console. See [the guide here](). [# TODO: LINK]
 
 
 ### Parsing tracts into lots/aliquots with `Tract` objects
@@ -96,3 +91,70 @@ print(tract_1.twp)          # -> prints '154n'
 ```
 
 (If we just care about parsing to lots/aliquots, we don't even need to specify Twp/Rge/Sec.)
+
+
+#### Parsing an entire PLSS description into lots/aliquots
+
+When creating a `PLSSDesc` object, passing the optional parameter `parse_qq=True` will cause *__all__* of its `Tract` objects to populate their `.lots`, `.qqs`, and `.lots_qqs` attributes.
+
+```
+import pytrs
+
+raw_description = """T154N-R97W
+Sec 1: Lots 1 - 3, S/2NE/4
+Sec 14: NE/4
+Sec 15: W/2"""
+
+parsed_plssdesc = pytrs.PLSSDesc(raw_description, parse_qq=True)
+
+# Extract some data from the parsed description with `.tracts_to_dict()`.
+tract_data = parsed_plssdesc.tracts_to_dict(['trs', 'desc', 'lots', 'qqs'])
+```
+
+In the above example, we stored a list to the variable `tract_data`, which holds three dicts (one for each `Tract` object identified when the description was parsed).
+
+```
+[
+    # The first tract:
+    {
+        'trs': '154n97w01',
+        'desc': 'Lots 1 - 3, S/2NE/4',
+        'lots': ['L1', 'L2', 'L3'],
+        'qqs': ['SENE', 'SWNE'],
+    },
+
+    # The second tract:
+    {
+        'trs': '154n97w14',
+        'desc': 'NE/4',
+        'lots': [],
+        'qqs': ['NENE', 'NWNE', 'SENE', 'SWNE']
+    },
+    
+    # The third tract:
+    {
+        'trs': '154n97w15',
+        'desc': 'W/2',
+        'lots': [],
+        'qqs': ['NENW', 'NWNW', 'SENW', 'SWNW', 'NESW', 'NWSW', 'SESW', 'SWSW']
+    }
+]
+```
+
+### Configuring the parser
+
+Both `PLSSDesc` and `Tract` objects take the optional parameter `config=<str>` when created, which controls how they are parsed.
+
+```
+import pytrs
+
+plssdesc_1 = pytrs.PLSSDesc('T154N-R97W Sec 14: NE/4', config='n,w,clean_qq')
+tract_1 = pytrs.Tract('NE/4', trs='154n97w14', config='clean_qq')
+```
+
+The specific config options are beyond the scope of this quickstart guide, but [take a look at the guide on that topic]().  [# TODO: LINK]
+
+
+### What else?
+
+Beyond that, it depends what your needs are. Check the [table of contents]() for other useful functionality.  [# TODO: LINK]
