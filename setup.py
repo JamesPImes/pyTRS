@@ -46,10 +46,10 @@ setup(
     packages=[
         'pytrs',
         'pytrs.parser',
-        'pytrs.check',
         'pytrs.quick',
         'pytrs.utils',
-        'pytrs.interface_tools'
+        'pytrs.interface_tools',
+        'pytrs.tractwriter'
     ],
     url=get_constant("url"),
     license='Modified Academic Public License',
