@@ -7467,7 +7467,7 @@ class TRS:
             # Couch the pattern in '\b' to ensure we match the entire str.
             twp = TRS._ERR_TWP
 
-        if rge is [None, ""]:
+        if rge in [None, ""]:
             rge = TRS._UNDEF_RGE
         try:
             rge = int(rge)
