@@ -120,7 +120,7 @@ It's hard to depict, but the dict stored above to var `grouped_tracts` looks lik
 }
 ```
 
-To demonstrate a bit more intuitively, let's print some contents:
+To demonstrate a bit more intuitively, let's get the `Tract` objects whose `.twprge` was `'154n97w'` (i.e. the `TractList` in the dict that is keyed by `'154n97w'`) and print some contents:
 ```
 t_list = pytrs.TractList.from_multiple([<some large list of tracts>])
 
@@ -157,61 +157,50 @@ trs  : 154n97w17
 desc : W/2
 ```
 
-#### Nested grouping
+#### Grouping by multiple attributes
 
-If we pass a list of attribute names to `by_attributes=[<list of attribute names>]` instead of a single attribute, we get a nested dict (one layer per attribute name in the list).
+If we pass a list of attribute names to `by_attributes=[<list of attribute names>]` instead of a single attribute, then the keys of the returned dict will be tuples, the elements of which line up with the listed attributes in `by_attributes`.
 
 ```
 t_list = pytrs.TractList.from_multiple([<some large list of tracts>])
 
 # Group by `.twp` and then by `.rge` attribute values.
-nested_grouped_tracts = t_list.group(by_attribute=['twp', 'rge'])
+grouped_tracts = t_list.group(by_attribute=['twp', 'rge'])
 ```
-Again, it's hard to depict, but the dict stored to variable `nested_grouped_tracts` looks like this, keyed by unique `.twp` values, with the dict in the next level down keyed by unique `.rge` values. The values in the deepest level dict will be a `TractList` of the `Tract` objects in that group.
+Again, it's hard to depict, but the dict stored to variable `grouped_tracts` looks like this, keyed by unique tuples of (`.twp`, `.rge` value pairs). Each value is still a `TractList` of the `Tract` objects whose corresponding attributes match the key tuple.
 ```
 {
-    '154n': {
-        '97w': [
-            <pytrs.parser.parser.Tract object at 0x042871D8>,
-            <pytrs.parser.parser.Tract object at 0x042876E8>,
-            <pytrs.parser.parser.Tract object at 0x04287E38>,
-            <pytrs.parser.parser.Tract object at 0x04287E08>
-            ],
-        '96w': [
-            <pytrs.parser.parser.Tract object at 0x042A6E20>,
-            <pytrs.parser.parser.Tract object at 0x042871C0>,
-            <pytrs.parser.parser.Tract object at 0x042A6E68>
-            ]
-    },
-    '155n': {
-        '98w': [
-            <pytrs.parser.parser.Tract object at 0x042A62C8>,
-            <pytrs.parser.parser.Tract object at 0x042A6AA8>
+    ('154n', '97w'): [
+        <pytrs.parser.parser.Tract object at 0x042871D8>,
+        <pytrs.parser.parser.Tract object at 0x042876E8>,
+        <pytrs.parser.parser.Tract object at 0x04287E38>,
+        <pytrs.parser.parser.Tract object at 0x04287E08>
         ],
-        '96w': [
-            <pytrs.parser.parser.Tract object at 0x042A6C28>
-        ]
-    },
+    ('154n', '96w'): [
+        <pytrs.parser.parser.Tract object at 0x042A6E20>,
+        <pytrs.parser.parser.Tract object at 0x042871C0>,
+        <pytrs.parser.parser.Tract object at 0x042A6E68>
+        ],
+    ('155n', '98w'): [
+        <pytrs.parser.parser.Tract object at 0x042A62C8>,
+        <pytrs.parser.parser.Tract object at 0x042A6AA8>
+        ],
+    ('155n', '96w'): [
+        <pytrs.parser.parser.Tract object at 0x042A6C28>
+        ],
     <etc.>
 }
 ```
 
-To demonstrate, we'll get the `Tract` objects whose `.twp` was `'154n'` and whose `.rge` was `'97w'`, and then print some of their basic data to console:
+To demonstrate, we'll get the `Tract` objects whose `.twp` was `'154n'` and whose `.rge` was `'97w'` (i.e. the `TractList` in the dict that is keyed by the tuple `('154n', '97w')` ), and then print some of their basic data to console:
 ```
 t_list = pytrs.TractList.from_multiple([<some large list of tracts>])
 
 # Group by `.twp` and then by `.rge` attribute values.
-nested_grouped_tracts = t_list.group(by_attribute=['twp', 'rge'])
+grouped_tracts = t_list.group(by_attribute=['twp', 'rge'])
 
-# Get the tracts whose `.twp` is '154n'.
-dict_154n = nested_grouped_tracts['154n']
-
-# Show that it's a dict, and that it in turns holds 2 more dicts.
-type(dict_154n)             # -> <class 'dict'>
-len(dict_154n)              # -> 2  (there were two unique ranges in '154n')
-
-# Get the TractList of tracts whose `.twp` was '154n' and `.rge` was '97w'.
-t_list_154n97w = dict_154n['97w']
+# Get the tracts whose `.twp` is '154n' and `.rge` is '97w'.
+t_list_154n97w = grouped_tracts[('154n', '97w')]
 
 # Show that it's a TractList object and how many tracts are in it.
 type(t_list_154n97w)        # -> <class 'pytrs.parser.parser.TractList'>
@@ -248,15 +237,15 @@ Use the `into=<dict>` parameter to add additional tracts to an existing dict of 
 t_list_1 = pytrs.TractList.from_multiple([<some large list of tracts>])
 grouped_tracts = t_list_1.group(by_attribute='twprge')
 
-grouped_tracts.keys()           # -> dict_keys(['154n97w', '155n97w'])
+grouped_tracts.keys()       # -> dict_keys(['154n97w', '155n97w'])
 
 t_list_2 = pytrs.TractList.from_multiple([<some other list of tracts>])
 t_list_2.group(by_attribute='twprge', into=grouped_tracts)
 
-grouped_tracts.keys()           # -> dict_keys(['154n97w', '155n97w', '154n96w'])
+grouped_tracts.keys()       # -> dict_keys(['154n97w', '155n97w', '154n96w'])
 ```
 
-Note: In the above example, the tracts are added to the `grouped_tracts` dict, so it doesn't matter whether we re-assign the returned dict to var `grouped_tracts`. New keys are added as necessary.
+Note: In the above example, the tracts are added to the `grouped_tracts` dict (because of parameter `into=grouped_tracts`), so it doesn't matter whether we re-assign the returned dict to var `grouped_tracts` (i.e. `into=grouped_tracts` and the dict returned by the method are the same object). New keys are added as necessary.
 
 #### Sort the grouped tracts
 
