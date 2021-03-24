@@ -49,7 +49,6 @@ setup(
         'pytrs.check',
         'pytrs.quick',
         'pytrs.utils',
-        'pytrs.csv_suite',
         'pytrs.interface_tools'
     ],
     url=get_constant("url"),
