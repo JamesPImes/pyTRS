@@ -999,7 +999,7 @@ class PLSSDesc:
         return self.tracts.tracts_to_str(attributes)
 
     def tracts_to_csv(
-            self, attributes, fp, mode="w", nice_headers=False):
+            self, attributes, fp, mode, nice_headers=False):
         """
         Write Tract data to a .csv file.
 
@@ -1009,7 +1009,6 @@ class PLSSDesc:
         :param fp: The filepath of the .csv file to write to.
         :param mode: The `mode` in which to open the file we're
         writing to. Either 'w' (new file) or 'a' (continue a file).
-        Defaults to 'w' (new file). (Mode 'r' will cause an error.)
         :param nice_headers: By default, this method will use the
         attribute names as headers. To use custom headers, pass to
         ``nice_headers=`` any of the following:
@@ -3094,7 +3093,7 @@ class TractList(list):
         return all_tract_data
 
     def tracts_to_csv(
-            self, attributes, fp, mode="w", nice_headers=False):
+            self, attributes, fp, mode, nice_headers=False):
         """
         Write Tract data to a .csv file.
 
@@ -3104,7 +3103,6 @@ class TractList(list):
         :param fp: The filepath of the .csv file to write to.
         :param mode: The `mode` in which to open the file we're
         writing to. Either 'w' (new file) or 'a' (continue a file).
-        Defaults to 'w' (new file). (Mode 'r' will cause an error.)
         :param nice_headers: By default, this method will use the
         attribute names as headers. To use custom headers, pass to
         ``nice_headers=`` any of the following:
