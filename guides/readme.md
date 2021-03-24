@@ -8,22 +8,23 @@ __Note also:__ These guides are not intended to cover all of the functionality o
 
 ## Table of Contents
 
-|Guide             | Main Topic                                 | Main object<br>type(s) discussed                     |           |
-|------------------|-----------------------------------------|----------------------|-----------|
+|Guide             | Main Topic                                 | Main object<br>type(s) discussed                     |
+|------------------|-----------------------------------------|----------------------|
 | quickstart.md     | A bird's-eye view on getting started.      | `PLSSDesc`, `Tract` |
 | plssdesc.md       | Parsing PLSS land descriptions into tracts. | `PLSSDesc`       |
 | tract_attributes.md | The names of data fields of parsed descriptions (i.e. `Tract` <br> attributes). | `Tract` |
 | tract.md          | Parsing tracts into lots/aliquots.          | `Tract`          |
-| trs.md     | The pyTRS standard format for Twp/Rge/Sec     | `TRS`
+| trs.md     | The pyTRS standard format for Twp/Rge/Sec     | `TRS` |
 | config.md    | Configuring how the descriptions and lots/aliquots are parsed | `PLSSDesc`, `Tract` |
 | extracting_data.md | Extracting data fields (e.g., township, range, section, description, <br>lots, aliquots, etc.) from tracts and land descriptions in bulk. | `Tract`, `TractList`, (`PLSSDesc`\*\*) |
 | tractlist.md | Working with tracts that were parsed from multiple land <br> descriptions, and/or multiple individually-created tracts. | `TractList` (`PLSSDesc`\*\*) |
 | sort_filter_group.md | Sorting, filtering, and grouping tracts (by Twp / Rge / Sec or <br>other attributes) | `TractList` (`PLSSDesc`\*\*) | 
-| tractwriter.md | Streamlined writing of parsed data to .csv files     | `TractWriter` |
+| tractwriter.md | Streamlined writing of parsed data to .csv files     | `TractWriter` \*\*\* |
 | implementations.md | Some example implementations of pyTRS | n/a |
 
 *\*\* `PLSSDesc` objects have most of the same methods as `TractList` objects for sorting, filtering, grouping, and extracting data. When a `PLSSDesc` object's method is used, it applies to that `PLSSDesc` object's own `.tracts` attribute.*
 
+*\*\*\* The `TractWriter` class is imported from the `pytrs.tractwriter` package.*
 
 
 ### Quick note regarding the simple examples
@@ -46,6 +47,6 @@ Or even typos and some missing data (within reason)...
 Twpnship 154 97 Wst
 Sciton 14: Norhaest qrter
 ```
-...becomes `'154n97w14: Norhaest qrter` (or `'154s97w14'` if configured to assume 'South' townships)
+...becomes `'154n97w14: Norhaest qrter` (or `'154s97w14'` if configured to assume 'South' townships).
 
 And I should also point out that all of the examples in these guides and in the code and its comments are dummy data or arbitrarily chosen.
