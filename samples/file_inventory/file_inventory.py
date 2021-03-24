@@ -38,16 +38,29 @@ INVENTORY_FP = Path(r"file_inventory.csv")
 def main():
     files = os.listdir(REPORT_DIRECTORY)
 
+    # We want this data from the land descriptions.
+    attributes_to_write = ['trs', 'twprge', 'sec', 'desc', 'source']
+
+    # And we want their headers to look like this.
+    custom_headers = {
+        'trs': 'Twp/Rge/Sec',
+        'twprge': 'Twp/Rge',
+        'sec': 'Sec',
+        'desc': 'Specific Lands Covered',
+        'source': 'Filepath'
+    }
+
     # Get a TractWriter for writing our Tract data to .csv file.
     # We'll use the 'source' attribute will tell us which file provided
     # each tract.
     # We'll also include the report date -- which is not a pytrs.Tract
     # attribute, so we'll have to manually add it with `plus_cols=[]`.
     writer = TractWriter(
-        attributes=['trs', 'twprge', 'sec', 'desc', 'source'],
+        attributes=attributes_to_write,
         fp=INVENTORY_FP,
-        nice_headers=True,
-        plus_cols=["Report Date"]
+        mode='w',
+        nice_headers=custom_headers,
+        plus_cols=['Report Date']
     )
 
     # We know our filenames are in the TRS_desc layout, and that they
