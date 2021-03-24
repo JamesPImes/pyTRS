@@ -171,7 +171,7 @@ In this example, `list_for_tract1` looks like this:
 
 #### Write `Tract` attributes to a .csv file with `.tracts_to_csv()`
 
-*(Note: A more robust csv writer class is included as `pytrs.tractwriter.TractWriter`. But this method is simpler, if we just need to dump the data to a csv.)*
+*(Note: A [more robust csv writer class is included as `pytrs.tractwriter.TractWriter`](). But this method is simpler, if we just need to dump the data to a csv.)*  [# TODO: LINK]
 
 Use this to write data to a .csv file (one row per `Tract`).
 
@@ -203,7 +203,7 @@ all_tract_data = some_tractlist.tracts_to_csv(
 |`mode=<'w' or 'a'>`| The mode to open the file in (either `'w'` or `'a'`)| 1|
 |`nice_headers=<bool, list, or dict>`| use custom headers (see footnote) | 2 |
 
-1) `mode` serves the same purpose as it does in the builtin `open()` function. Here, it defaults to `'w'` (a new file, and overwriting any file already at that path). Use mode `'a'` to add this data to an existing .csv file.
+1) `mode` serves the same purpose as it does in the built-in `open()` function. Pass either `'w'` (a new file, and overwriting any file already at that path) or `'a'` to add this data to an existing .csv file.
 
 2) `nice_headers` defaults to `False` (i.e. just use the attribute names themselves as headers). Alternatively, may pass any of the following:
 
