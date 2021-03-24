@@ -1,7 +1,7 @@
 # Guide to pyTRS
 Copyright © 2021, James P. Imes. All rights reserved.
 
-*__Note:__ pyTRS is NOT licensed for any commercial or for-profit use. [Contact me](mailto:jamesimes@gmail.com) for licensing inquiries, or to inquire about my contracting, or just to say hello / offer feedback.*
+*__Note:__ pyTRS is NOT licensed for any commercial or for-profit use. [Contact me](mailto:jamesimes@gmail.com) for licensing inquiries, or to inquire about my consulting, or just to say hello / offer feedback.*
 
 __Note also:__ These guides are not intended to cover all of the functionality of pyTRS, but they will get you up and running for most purposes.
 
@@ -19,7 +19,8 @@ __Note also:__ These guides are not intended to cover all of the functionality o
 | extracting_data.md | Extracting data fields (e.g., township, range, section, description, <br>lots, aliquots, etc.) from tracts and land descriptions in bulk. | `Tract`, `TractList`, (`PLSSDesc`\*\*) |
 | tractlist.md | Working with tracts that were parsed from multiple land <br> descriptions, and/or multiple individually-created tracts. | `TractList` (`PLSSDesc`\*\*) |
 | sort_filter_group.md | Sorting, filtering, and grouping tracts (by Twp / Rge / Sec or <br>other attributes) | `TractList` (`PLSSDesc`\*\*) | 
-| tractwriter.md | Streamlined writing of parsed data to .csv files     | `TractWriter`
+| tractwriter.md | Streamlined writing of parsed data to .csv files     | `TractWriter` |
+| implementations.md | Some example implementations of pyTRS | n/a |
 
 *\*\* `PLSSDesc` objects have most of the same methods as `TractList` objects for sorting, filtering, grouping, and extracting data. When a `PLSSDesc` object's method is used, it applies to that `PLSSDesc` object's own `.tracts` attribute.*
 
