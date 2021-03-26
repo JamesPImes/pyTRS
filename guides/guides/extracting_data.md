@@ -1,11 +1,11 @@
 
 # Guide to extracting data in bulk from parsed objects
 
-`Tract` objects have methods for extracting parsed data from themselves individually. [# TODO: LINK TO TRACT.MD]
+[`Tract` objects](https://github.com/JamesPImes/pyTRS/blob/master/guides/guides/tract.md) have methods for [extracting parsed data from themselves individually](https://github.com/JamesPImes/pyTRS/blob/master/guides/guides/extracting_data.md#extracting-data-from-individual-tract-objects).
 
-But `PLSSDesc` and `TractList` objects contain methods to extract data from multiple `Tract` objects all at once--or for grouping / filtering / sorting `Tract` objects based on their attributes. This can be useful for compiling a spreadsheet, or for finding tracts that match some specific condition.
+But `PLSSDesc` and `TractList` objects contain methods to [extract data from multiple `Tract` objects all at once](https://github.com/JamesPImes/pyTRS/blob/master/guides/guides/extracting_data.md#extracting-data-from-tract-objects-in-bulk)--or for [grouping / filtering / sorting `Tract` objects based on their attributes](https://github.com/JamesPImes/pyTRS/blob/master/guides/guides/sort_filter_group.md#guide-to-sorting--filtering--grouping-tract-objects-in-a-tractlist-or-plssdesc). This can be useful for compiling a spreadsheet, or for finding tracts that match some specific condition.
 
-(For a guide to the various useful `Tract` attributes, see this table.)  [# TODO: LINK TO TRACT.MD ATTRIBUTE TABLE]
+For a guide to which data fields we can extract via these methods (into a spreadsheet, etc.) -- see [this table of `Tract` attributes](https://github.com/JamesPImes/pyTRS/blob/master/guides/guides/tract_attributes.md#tract-attribute-table).
 
 
 ## Extracting data from individual `Tract` objects
@@ -53,9 +53,9 @@ The list stored to variable `tract_data` contains these values:
 
 When a method is called by a `PLSSDesc` object, it will operate on the `Tract` objects stored in its own `.tracts` attribute (i.e. the `Tract` objects generated when it was parsed).
  
- On the other hand, a `TractList` object might contain `Tract` objects from any number of sources. Examples below show a `TractList` that holds the `Tract` objects from a single source, but we can add any number of them from any number of objects. See the guide on `TractList` objects for how to collect `Tract` objects from multiple sources. [# TODO: LINK TO TRACTLIST.MD]
+ On the other hand, a `TractList` object might contain `Tract` objects from any number of sources. Examples below show a `TractList` that holds the `Tract` objects from a single source, but we can add any number of them from any number of objects. See [the guide on `TractList` objects](https://github.com/JamesPImes/pyTRS/blob/master/guides/guides/tractlist.md#guide-to-tractlist-objects) for how to collect `Tract` objects [from multiple sources](https://github.com/JamesPImes/pyTRS/blob/master/guides/guides/tractlist.md#creating-a-tractlist-or-equivalent-generator).
 
-*(See also the specialized csv writer class included as `pytrs.tractwriter.TractWriter`.)*  [# TODO: LINK TO TRACTWRITER]
+*(See also the [specialized csv writer class included as `pytrs.tractwriter.TractWriter`](https://github.com/JamesPImes/pyTRS/blob/master/guides/guides/tractwriter.md).)*
 
 #### Compile `Tract` attributes to dicts with `.tracts_to_dict()` or `.iter_to_dict()`
 
@@ -171,7 +171,7 @@ In this example, `list_for_tract1` looks like this:
 
 #### Write `Tract` attributes to a .csv file with `.tracts_to_csv()`
 
-*(Note: A [more robust csv writer class is included as `pytrs.tractwriter.TractWriter`](). But this method is simpler, if we just need to dump the data to a csv.)*  [# TODO: LINK]
+*(Note: A [more robust csv writer class is included as `pytrs.tractwriter.TractWriter`](https://github.com/JamesPImes/pyTRS/blob/master/guides/guides/tractwriter.md). But this method is simpler, if we just need to dump the data to a csv.)*
 
 Use this to write data to a .csv file (one row per `Tract`).
 
