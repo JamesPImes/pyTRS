@@ -18,7 +18,7 @@ some_tract = pytrs.Tract('NE/4', trs='154n97w14', config=cf)
 
 We can also (re)configure a `PLSSDesc` or `Tract` object later by setting its `.config` attribute with the appropriate config parameters, but there are two caveats to know:
 
-1) Setting the `.config` attribute will not cause the object to be parse. You must trigger that by calling `.parse()`.
+1) Setting the `.config` attribute will not cause the object to be parsed. You must trigger that by calling `.parse()`.
 
 2) Doing it this way will ONLY enact the parameters *__specifically__* included in the newly assigned `.config`. It will *__not__* reset any defaults or overwrite any *__prior__* config settings beyond what was specified here. 
   
