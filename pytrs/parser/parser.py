@@ -337,7 +337,7 @@ class PLSSDesc:
 
     def __init__(
             self,
-            orig_desc: str,
+            raw_plss: str,
             layout=None,
             config=None,
             parse_qq=None,
@@ -348,7 +348,7 @@ class PLSSDesc:
         more Tract objects, which are stored in the `.tracts`
         instance variable (a list).
 
-        :param orig_desc: The text of the description to be parsed.
+        :param raw_plss: The text of the description to be parsed.
         :param layout: The pyTRS layout. If not specified, will be
         deduced when initialized, and/or when parsed. See available
         options in `pytrs.IMPLEMENTED_LAYOUTS` and examples in
@@ -371,13 +371,13 @@ class PLSSDesc:
         """
 
         # The original input of the PLSS description:
-        self.orig_desc = orig_desc
+        self.orig_desc = raw_plss
 
         # If something other than a string is fed in, raise a TypeError
-        if not isinstance(orig_desc, str):
+        if not isinstance(raw_plss, str):
             raise TypeError(
-                f"`orig_desc` must be of type 'string'. "
-                f"Passed as type {type(orig_desc)}.")
+                f"`raw_plss` must be of type 'string'. "
+                f"Passed as type {type(raw_plss)}.")
 
         # The source of this PLSS description:
         self.source = source
@@ -438,14 +438,6 @@ class PLSSDesc:
 
         # Apply settings from `config=`.
         self.config = config
-
-        # If `default_ns` has not yet been specified, default to 'n'
-        if self.default_ns is None:
-            self.default_ns = PLSSDesc.MASTER_DEFAULT_NS
-
-        # If `default_ew` has not yet been specified, default to 'w'
-        if self.default_ew is None:
-            self.default_ew = PLSSDesc.MASTER_DEFAULT_EW
 
         # Track fatal flaws in the parsing of this PLSS description
         self.desc_is_flawed = False
