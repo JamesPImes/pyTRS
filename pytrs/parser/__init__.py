@@ -24,9 +24,7 @@ from .parser import (
     # Misc. functions for examining / handling descriptions
     find_twprge,
     find_sec,
-    decompile_twprge,
     find_multisec,
-    break_trs,
     trs_to_dict,
 
     # For grouping / sorting Tract objects
