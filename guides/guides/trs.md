@@ -1,9 +1,9 @@
 
 # Guide to `TRS` objects
 
-pyTRS uses a standard format for representing Township / Range / Section, detailed below. [# TODO: LINK TO THIS SECTION BELOW]
+pyTRS uses a standard format for representing Township / Range / Section, detailed below.
 
-The `TRS` class can be used to compile a string in this format, from the Twp/Rge/Sec components. [# TODO: LINK TO THIS SECTION BELOW] It can also be used to extract the components from a pyTRS-standardized Twp/Rge/Sec.
+The [`TRS` class](https://github.com/JamesPImes/pyTRS/blob/master/guides/guides/trs.md#trs-objects) can be used to compile a string in this format, from the Twp/Rge/Sec components. It can also be used to [extract the components](https://github.com/JamesPImes/pyTRS/blob/master/guides/guides/trs.md#trs-attribute-table) from a pyTRS-standardized Twp/Rge/Sec.
 
 ## Standard pyTRS format for Twp/Rge/Sec
 
