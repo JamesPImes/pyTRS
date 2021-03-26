@@ -271,6 +271,14 @@ class PLSSDesc:
         into a list, and returns a nested list of those list (i.e. the
         top-level list is equal in length to `.tracts` TractList).
 
+    .iter_to_dict() -- Identical to `.tracts_to_dict()`, but returns a
+        generator of dicts for the Tract data.
+
+    .iter_to_list() -- Identical to `.tracts_to_list()`, but returns a
+        generator of lists for the Tract data.
+
+    .tracts_to_csv() --
+
     .tracts_to_str() -- Compile the requested attributes for each Tract
         into a string-based table, and return a single string of all
         tables.
@@ -278,8 +286,7 @@ class PLSSDesc:
     .list_trs() -- Return a list of all twp/rge/sec combinations in the
         `.tracts` TractList, optionally removing duplicates.
 
-    .
-    () -- Equivalent to `.tracts_to_dict()`, but the data
+    .print_data() -- Equivalent to `.tracts_to_dict()`, but the data
         is formatted as a table and printed to console.
 
 
@@ -7660,35 +7667,6 @@ class TRS:
         return new_rgx
 
 
-def decompile_twprge(twprge) -> tuple:
-    """
-    Take a compiled T&R (format '000n000w', or fewer digits) and break
-    it into four elements, returned as a 4-tuple:
-    (Twp number, Twp direction, Rge number, Rge direction)
-        NOTE: If Twp and Rge cannot be matched, will return the error
-        versions of Twp/Rge:
-            ('XXXz', None, 'XXXz', None)
-        ... or the undefined versions:
-            ('___z', None, '___z', None)
-        ex: '154n97w'   -> ('154', 'n', '97', 'w')
-        ex: 'asdf'      -> ('XXXz', None, 'XXXz', None)
-        ex: ''          -> ('___z', None, '___z', None)
-
-    NOTE: This function is being deprecated. Better to use ``pytrs.TRS``
-    objects instead.
-    """
-    trs = TRS(twprge)
-    twp_num = trs.twp_num
-    if not trs.twp_num:
-        twp_num = trs.twp
-
-    rge_num = trs.rge_num
-    if not trs.rge_num:
-        rge_num = trs.rge
-
-    return str(twp_num), trs.twp_ns, str(rge_num), trs.rge_ew
-
-
 def find_sec(text):
     """
     Returns a list of all identified individual Section numbers in the
@@ -7749,33 +7727,6 @@ def flatten(list_or_tuple=None) -> list:
             else:
                 flattened.extend(flatten(element))
     return flattened
-
-
-def break_trs(trs: str) -> tuple:
-    """
-    Break down a TRS that is already in the format '000n000w00' (or
-    fewer digits for twp/rge) into its component parts.
-    Returns a 3-tuple containing:
-    -- a str for `twp`
-    -- a str for `rge`
-    -- either a str or None for `sec`
-
-        ex:  '154n97w14' -> ('154n', '97w', '14')
-        ex:  '154n97w' -> ('154n', '97w', None)
-        ex:  '154n97wXX' -> ('154n', '97w', 'XX')
-        ex:  'XXXzXXXz14' -> ('XXXz', 'XXXz', '14')
-        ex:  'asdf' -> ('XXXz', 'XXXz', 'XX')
-
-    NOTE: This function is being deprecated. Better to use ``pytrs.TRS``
-    objects instead.
-    """
-
-    trs = TRS(trs)
-    sec = trs.sec
-    if not trs.sec_num:
-        sec = None
-
-    return trs.twp, trs.rge, sec
 
 
 def group_tracts(
@@ -7904,9 +7855,7 @@ __all__ = [
     Config,
     IMPLEMENTED_LAYOUTS,
     IMPLEMENTED_LAYOUT_EXAMPLES,
-    decompile_twprge,
     trs_to_dict,
-    break_trs,
     find_twprge,
     find_sec,
     find_multisec,
