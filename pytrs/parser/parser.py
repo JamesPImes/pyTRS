@@ -388,9 +388,6 @@ class PLSSDesc:
         # `.config` is set, as applicable.
         ###############################################################
 
-        # Whether we should preprocess the text at initialization:
-        self.init_preprocess = False
-
         # Whether we should parse the text at initialization, or wait:
         self.wait_to_parse = None
 
@@ -476,7 +473,7 @@ class PLSSDesc:
         # (on by default).
         if not self.wait_to_parse:
             self.parse(commit=True)
-        elif self.init_preprocess:
+        else:
             self.preprocess(commit=True)
 
     def __str__(self):
@@ -1700,12 +1697,8 @@ class Tract:
         # `.set_twprgesec()`
         self.default_ew = None
 
-        # NOTE: `init_preprocess`, `parse_qq`, `clean_qq`, &
-        # `include_lot_divs` will be changed when `.config` is set, if
-        # needed
-
-        # Whether we should preprocess the text at initialization:
-        self.init_preprocess = True
+        # NOTE: `parse_qq`, `clean_qq`, & `include_lot_divs` will be
+        # changed when `.config` is set, if needed
 
         # Whether we should parse lots and aliquots at init.
         self.parse_qq = False
@@ -1736,8 +1729,7 @@ class Tract:
         # If config settings require calling parse() at init, do it now.
         if self.parse_qq:
             self.parse(commit=True)
-
-        elif self.init_preprocess:
+        else:
             self.preprocess(commit=True)
 
     def __str__(self):
@@ -3576,7 +3568,6 @@ class Config:
         -- 'e'  <or>  'default_ew.e'  vs.  'w'  <or>  'default_ew.w'
         -- 'init_parse'  vs.  'init_parse.False'
         -- 'parse_qq'  vs.  'parse_qq.False'
-        -- 'init_preprocess'  vs.  'init_preprocess.False'
         -- 'clean_qq'  vs.  'clean_qq.False'
         -- 'require_colon'  vs.  'require_colon.False'
         -- 'include_lot_divs'  vs.  'include_lot_divs.False'
@@ -3599,7 +3590,6 @@ class Config:
     _CONFIG_ATTRIBUTES = (
         'default_ns',
         'default_ew',
-        'init_preprocess',
         'layout',
         'wait_to_parse',
         'parse_qq',
@@ -3620,7 +3610,6 @@ class Config:
         'parse_qq',
         'clean_qq',
         'include_lot_divs',
-        'init_preprocess',
         'require_colon',
         'ocr_scrub',
         'segment',
@@ -3640,7 +3629,6 @@ class Config:
     _TRACT_ATTRIBUTES = (
         'default_ns',
         'default_ew',
-        'init_preprocess',
         'parse_qq',
         'clean_qq',
         'include_lot_divs',
@@ -3667,7 +3655,6 @@ class Config:
         -- 'e'  <or>  'default_ew.e'  vs.  'w'  <or>  'default_ew.w'
         -- 'wait_to_parse'  vs.  'wait_to_parse.False'
         -- 'parse_qq'  vs.  'parse_qq.False'
-        -- 'init_preprocess'  vs.  'init_preprocess.False'
         -- 'clean_qq'  vs.  'clean_qq.False'
         -- 'require_colon'  vs.  'require_colon.False'
         -- 'include_lot_divs'  vs.  'include_lot_divs.False'
@@ -3704,7 +3691,6 @@ class Config:
         # Default all other attributes to `None`:
         self.default_ns = None
         self.default_ew = None
-        self.init_preprocess = None
         self.layout = None
         self.wait_to_parse = None
         self.parse_qq = None
@@ -3770,7 +3756,6 @@ class Config:
         config = Config()
 
         config.config_name = config_name
-        config.init_preprocess = parent.init_preprocess
         if isinstance(parent, PLSSDesc) and not suppress_layout:
             config.layout = parent.layout
         else:
