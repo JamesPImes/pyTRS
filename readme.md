@@ -53,7 +53,7 @@ If you've ever received a database or spreadsheet with land descriptions in it, 
 
 Basically, it's intended for use by land professionals (right-of-way agents, petroleum land managers, GIS analysts, etc.), land records personnel, or anybody who might work with large datasets of land descriptions that would be more usefully broken out into their component parts (township, range, section, and description) into a table or spreadsheet.
 
-A few notable implementations [are showcased here](https://github.com/JamesPImes/pyTRS/blob/master/guides/readme.md).
+A few notable implementations [are showcased here](https://github.com/JamesPImes/pyTRS/blob/master/guides/guides/implementations.md).
 
 
 ## License
