@@ -24,7 +24,7 @@ This example writes a .csv file that looks like this (with `'Sec 15 - 17: S/2N/2
 | 154n | 97w | 16  | S/2N/2 | | SENE, SWNE, SENW, SWNW |
 | 154n | 97w | 17  | S/2N/2 | | SENE, SWNE, SENW, SWNW |
 
-We can alternatively compile these data fields (and [others](](https://github.com/JamesPImes/pyTRS/blob/master/guides/guides/tract_attributes.md#tract-attribute-table))) into a list of dicts, nested list of lists, and other [options](https://github.com/JamesPImes/pyTRS/blob/master/guides/guides/extracting_data.md#guide-to-extracting-data-in-bulk-from-parsed-objects) -- or just accessed individually as `Tract` object attributes.
+We can alternatively compile these data fields (and [others](https://github.com/JamesPImes/pyTRS/blob/master/guides/guides/tract_attributes.md#tract-attribute-table)) into a list of dicts, nested list of lists, and other [options](https://github.com/JamesPImes/pyTRS/blob/master/guides/guides/extracting_data.md#guide-to-extracting-data-in-bulk-from-parsed-objects) -- or just accessed individually as `Tract` object attributes.
 
 
 
