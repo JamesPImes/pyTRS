@@ -229,8 +229,8 @@ class PLSSDesc:
     (NOTE: parse_qq entails init_parse, but not vice-versa.)
 
     ____ IMPORTANT INSTANCE VARIABLES AFTER PARSING ____
-    These attributes are attributes of a PLSSDesc object. For the
-    tract information (i.e. the data fields you might want to write to a
+    These are the notable attributes of a PLSSDesc object. For the tract
+    information (i.e. the data fields you might want to write to a
     spreadsheet or table), look into the attributes of Tract objects
     (which can be created by a PLSSDesc).
 
