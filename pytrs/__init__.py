@@ -14,8 +14,6 @@ THIS LIBRARY IS NOT TO BE USED FOR ANY UNLICENSED COMMERCIAL PURPOSES OR
 FOR GENERATING OR MODIFYING LEGAL DESCRIPTIONS IN ANY LEGAL DOCUMENT!
 Intended for data analysis purposes ONLY. Read license and disclaimer
 prior to using for any purpose.
-
-!!! USE AT YOUR OWN RISK !!!
 """
 
 import pytrs._constants as _constants
@@ -41,9 +39,7 @@ from pytrs.parser import (
     # Misc. functions for examining / handling descriptions
     find_twprge,
     find_sec,
-    decompile_twprge,
     find_multisec,
-    break_trs,
     trs_to_dict,
 
     # For grouping / sorting Tract objects
