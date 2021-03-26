@@ -12,7 +12,7 @@ Section 6: Lots 1 - 7, S/2NE/4, SE/4NW/4, E/2SW/4, SE/4
 Section 13: That portion of the E/2 lying north of the river and west of the private road right-of-way as more particularly described in Book 1234 / Page 567, recorded on January 1, 1964 in the records of Example County, as amended in that Right-of-Way Amendment Agreement dated December 10, 1987, recorded on December 11, 1987 as Document No. 1987-1234567 of the records of Example County.
 Section 14: NE/4
 ```
-...results in this auto-generated plat (colors, size, etc. can be configured in the [`pyTRSplat` module](https://github.com/JamesPImes/pyTRSplat)):
+...results in this auto-generated plat (colors, size, etc. can be configured in the `pyTRSplat` module):
 
 ![pyTRSplat 02](assets/sample_plat_02.png)
 
@@ -40,4 +40,4 @@ The Excel macro uses pyTRS to take a crack at ironing all of that out, inserting
 
 ## Example Use #3 - inventorying files/reports
 
-Included in the [`pyTRS/samples/` directory]() is a script I wrote to inventory title reports by Twp/Rge/Section based on their filenames.  [#TODO: LINK]
+Included in the [`pyTRS/samples/` directory](https://github.com/JamesPImes/pyTRS/tree/master/samples/file_inventory) is a script I wrote to inventory title reports by Twp/Rge/Section based on their filenames.

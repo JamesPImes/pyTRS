@@ -144,7 +144,7 @@ class ConfigError(TypeError):
         msg = "`config` must be a str, None, or a pytrs.Config object."
         if obj is not None:
             msg = f"{msg} Passed type {type(obj)!r}."
-        super().__init__(msg)
+        super().__init__(self, msg)
 
 
 class DefaultNSError(ValueError):
@@ -155,7 +155,7 @@ class DefaultNSError(ValueError):
         msg = f"`default_ns` must be one of {legal}."
         if obj is not None:
             msg = f"{msg} Passed {obj!r}."
-        super().__init__(msg)
+        super().__init__(self, msg)
 
 
 class DefaultEWError(ValueError):
@@ -166,7 +166,7 @@ class DefaultEWError(ValueError):
         msg = f"`default_ew` must be one of {legal}."
         if obj is not None:
             msg = f"{msg} Passed {obj!r}."
-        super().__init__(msg)
+        super().__init__(self, msg)
 
 
 class TractListTypeError(TypeError):
@@ -178,7 +178,7 @@ class TractListTypeError(TypeError):
         )
         if additional_msg:
             msg = f"{msg} {additional_msg}"
-        super().__init__(msg)
+        super().__init__(self, msg)
 
 
 class PLSSDesc:
@@ -229,6 +229,11 @@ class PLSSDesc:
     (NOTE: parse_qq entails init_parse, but not vice-versa.)
 
     ____ IMPORTANT INSTANCE VARIABLES AFTER PARSING ____
+    These attributes are attributes of a PLSSDesc object. For the
+    tract information (i.e. the data fields you might want to write to a
+    spreadsheet or table), look into the attributes of Tract objects
+    (which can be created by a PLSSDesc).
+
     .orig_desc -- The original text. (Gets set from the first positional
         argument at init.)
     .tracts -- A pytrs.TractList object (i.e. a list) containing
@@ -236,10 +241,11 @@ class PLSSDesc:
         this object.
     .pp_desc -- The preprocessed description. (If the object has not yet
         been preprocessed, it will be equivalent to .orig_desc)
-    .source -- (Optional) A string specifying where the description came
-        from. Useful if parsing multiple descriptions and need to
-        internally keep track where they came from. (Optionally specify
-        at init with parameter `source=<str>`.)
+    .source -- (Optional) Any value of any type (probably a str or int)
+        specifying where the description came from. Useful if parsing
+        multiple descriptions and need to internally keep track where
+        they came from. (Optionally specify at init with parameter
+        `source=<str, int, etc.>`.)
     .w_flags -- a list of warning flags (strings) generated during
         preprocessing and/or parsing.
     .w_flag_lines -- a list of 2-tuples, each being a warning flag and the
@@ -248,11 +254,15 @@ class PLSSDesc:
         preprocessing and/or parsing.
     .e_flag_lines -- a list of 2-tuples, each being an error flag and the
         line or context from the description that caused the error.
+    .flags -- a combined list of Warning & Error flags.
+    .flag_lines -- a combined lines of 2-tuples, for Warning & Error
+        flags.
     .desc_is_flawed -- a bool, whether or not an apparently fatal flaw was
         discovered during parsing.
     .layout -- The user-dictated or algorithm-deduced layout of the
         description (controls how the parsing algorithm interprets the
         text).
+
 
 
     ____ STREAMLINED OUTPUT OF THE PARSED TRACT DATA ____
@@ -278,7 +288,8 @@ class PLSSDesc:
     .iter_to_list() -- Identical to `.tracts_to_list()`, but returns a
         generator of lists for the Tract data.
 
-    .tracts_to_csv() --
+    .tracts_to_csv() -- Compile the requested attributes for each Tract
+        and write them to a .csv file, with one row per Tract.
 
     .tracts_to_str() -- Compile the requested attributes for each Tract
         into a string-based table, and return a single string of all
@@ -388,9 +399,6 @@ class PLSSDesc:
         # `.config` is set, as applicable.
         ###############################################################
 
-        # Whether we should preprocess the text at initialization:
-        self.init_preprocess = False
-
         # Whether we should parse the text at initialization, or wait:
         self.wait_to_parse = None
 
@@ -476,7 +484,7 @@ class PLSSDesc:
         # (on by default).
         if not self.wait_to_parse:
             self.parse(commit=True)
-        elif self.init_preprocess:
+        else:
             self.preprocess(commit=True)
 
     def __str__(self):
@@ -1470,10 +1478,11 @@ class Tract:
                     -> {'L1': '38.29', 'L2':'39.22', 'L3':'39.78'}
     .pp_desc -- The preprocessed description. (If the object has not yet
         been parsed, it will be equivalent to .desc)
-    .source -- (Optional) A string specifying where the description came
-        from. Useful if parsing multiple descriptions and need to
-        internally keep track where they came from. (Optionally specify
-        at init with parameter `source=<str>`.)
+    .source -- (Optional) Any value of any type (probably a str or int)
+        specifying where the description came from. Useful if parsing
+        multiple descriptions and need to internally keep track where
+        they came from. (Optionally specify at init with parameter
+        `source=<str, int, etc.>`.)
     .orig_desc -- The full, original text of the parent PLSSDesc object,
         if any.
     .orig_index -- An integer represeting the order in which this Tract
@@ -1612,9 +1621,10 @@ class Tract:
         parameters.)
         :param parse_qq: Whether to parse the `desc` into lots/QQs at
         init. (Defaults to False)
-        :param source: (Optional) A string specifying where the
-        description came from. Useful if parsing multiple descriptions
-        and need to internally keep track where they came from.
+        :param source: (Optional) Essentially any value (e.g., a unique
+        identifier number or document id) specifying where the
+        description came from. (Useful if parsing multiple descriptions
+        and need to internally keep track where they came from.)
         :param orig_desc: The full, original text of the parent PLSSDesc
         object, if any.
         :param orig_index: An integer representing the order in which this
@@ -1700,12 +1710,8 @@ class Tract:
         # `.set_twprgesec()`
         self.default_ew = None
 
-        # NOTE: `init_preprocess`, `parse_qq`, `clean_qq`, &
-        # `include_lot_divs` will be changed when `.config` is set, if
-        # needed
-
-        # Whether we should preprocess the text at initialization:
-        self.init_preprocess = True
+        # NOTE: `parse_qq`, `clean_qq`, & `include_lot_divs` will be
+        # changed when `.config` is set, if needed
 
         # Whether we should parse lots and aliquots at init.
         self.parse_qq = False
@@ -1736,8 +1742,7 @@ class Tract:
         # If config settings require calling parse() at init, do it now.
         if self.parse_qq:
             self.parse(commit=True)
-
-        elif self.init_preprocess:
+        else:
             self.preprocess(commit=True)
 
     def __str__(self):
@@ -2257,6 +2262,15 @@ class TractList(list):
 
     .tracts_to_list() -- Compile the requested attributes for each Tract
         into a list, and returns a nested list of those list.
+
+    .iter_to_dict() -- Identical to `.tracts_to_dict()`, but returns a
+        generator of dicts for the Tract data.
+
+    .iter_to_list() -- Identical to `.tracts_to_list()`, but returns a
+        generator of lists for the Tract data.
+
+    .tracts_to_csv() -- Compile the requested attributes for each Tract
+        and write them to a .csv file, with one row per Tract.
 
     .tracts_to_str() -- Compile the requested attributes for each Tract
         into a string-based table, and return a single string of all
@@ -3576,7 +3590,6 @@ class Config:
         -- 'e'  <or>  'default_ew.e'  vs.  'w'  <or>  'default_ew.w'
         -- 'init_parse'  vs.  'init_parse.False'
         -- 'parse_qq'  vs.  'parse_qq.False'
-        -- 'init_preprocess'  vs.  'init_preprocess.False'
         -- 'clean_qq'  vs.  'clean_qq.False'
         -- 'require_colon'  vs.  'require_colon.False'
         -- 'include_lot_divs'  vs.  'include_lot_divs.False'
@@ -3599,7 +3612,6 @@ class Config:
     _CONFIG_ATTRIBUTES = (
         'default_ns',
         'default_ew',
-        'init_preprocess',
         'layout',
         'wait_to_parse',
         'parse_qq',
@@ -3620,7 +3632,6 @@ class Config:
         'parse_qq',
         'clean_qq',
         'include_lot_divs',
-        'init_preprocess',
         'require_colon',
         'ocr_scrub',
         'segment',
@@ -3640,7 +3651,6 @@ class Config:
     _TRACT_ATTRIBUTES = (
         'default_ns',
         'default_ew',
-        'init_preprocess',
         'parse_qq',
         'clean_qq',
         'include_lot_divs',
@@ -3667,7 +3677,6 @@ class Config:
         -- 'e'  <or>  'default_ew.e'  vs.  'w'  <or>  'default_ew.w'
         -- 'wait_to_parse'  vs.  'wait_to_parse.False'
         -- 'parse_qq'  vs.  'parse_qq.False'
-        -- 'init_preprocess'  vs.  'init_preprocess.False'
         -- 'clean_qq'  vs.  'clean_qq.False'
         -- 'require_colon'  vs.  'require_colon.False'
         -- 'include_lot_divs'  vs.  'include_lot_divs.False'
@@ -3704,7 +3713,6 @@ class Config:
         # Default all other attributes to `None`:
         self.default_ns = None
         self.default_ew = None
-        self.init_preprocess = None
         self.layout = None
         self.wait_to_parse = None
         self.parse_qq = None
@@ -3770,7 +3778,6 @@ class Config:
         config = Config()
 
         config.config_name = config_name
-        config.init_preprocess = parent.init_preprocess
         if isinstance(parent, PLSSDesc) and not suppress_layout:
             config.layout = parent.layout
         else:

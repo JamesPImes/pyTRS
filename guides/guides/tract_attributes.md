@@ -1,6 +1,6 @@
 # `Tract` attribute table
 
-Access these `Tract` attributes directly, or compile them in bulk with various methods. [#TODO: LINK]
+Access these `Tract` attributes directly, or [compile them in bulk](https://github.com/JamesPImes/pyTRS/blob/master/guides/guides/extracting_data.md#guide-to-extracting-data-in-bulk-from-parsed-objects) with various methods.
 
 | Attribute         | Explanation                                                           | Possible Type(s) 	| Footnote |
 |:------------------|:----------------------------------------------------------------------|------------------	|:--------:|
