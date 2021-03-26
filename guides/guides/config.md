@@ -56,11 +56,9 @@ Note: Including a parameter that affects only `PLSSDesc` objects in the `config=
 |`'e'` or `'default_ew.e'`	|	|x	|x **	|1, 2 **	|	|Assume any missing E/W in a Rge should be 'e'	|
 |`'wait_to_parse'`	|	|x	|	|	|	|Hold off on parsing `PLSSDesc` object at init	|
 |`'parse_qq'`	|	|x	|x	|	|	|Populate lots/aliquots in a `Tract` object (or in a `PLSSDesc` object's subordinate `Tract` objects) when created.	|
-|`'init_preprocess'`	|	|x	|x	|3	|	|Will preprocess description at init	|
-|`'init_preprocess.False'`	|x	|x	|x	|3	|	|Will NOT preprocess description at init	|
 |`'clean_qq'`	|	|	|x	|	|[info](https://github.com/JamesPImes/pyTRS/blob/master/guides/config.md#clean_qq-for-expanded-aliquot-parsing)	|expect ONLY clean aliquots/lots (no metes-and-bounds, exceptions, etc.)	|
-|`'require_colon'`	|x	|x	|	|7	|	|Require a colon between Section number and its following description block (on a 'first-pass' attempt at a parse only)	|
-|`'require_colon.False'`	|	|x	|	|7	|	|Do not require a colon in that position	|
+|`'require_colon'`	|x	|x	|	|3	|	|Require a colon between Section number and its following description block (on a 'first-pass' attempt at a parse only)	|
+|`'require_colon.False'`	|	|x	|	|3	|	|Do not require a colon in that position	|
 |`'include_lot_divs'`	|x	|	|x	|	|	|Report lot divisions (i.e., `'N/2 of Lot 1'` -> `'N2 of L1'`)	|
 |`'include_lot_divs.False`	|	|	|x	|	|	|Do NOT report lot divisions (i.e. just `'L1'`, even if divided further)	|
 |`'ocr_scrub'`	|	|x	|x **	|2 **	|	|Scrub common OCR artifacts from the text	|
@@ -83,15 +81,13 @@ Note: Including a parameter that affects only `PLSSDesc` objects in the `config=
 
 2) The effect of `default_ns`, `default_ew`, and `ocr_scrub` on `Tract` objects is currently limited to the `.set_twprgesec()` method or creating a `Tract` object via the `Tract.from_twprgesec()` method. (But these parameters have more use in `PLSSDesc` objects.)
 
-3) Preprocessing is done automatically whenever an object is parsed. Using `init_preprocess` is only relevant if you do not parse at init but want to see the preprocessed description anyway.
+3) `require_colon` only impacts `'TRS_desc'` and `'S_desc_TR'` layouts -- i.e. layouts where description block follows the section number.
 
 4) The size of the aliquots that get parsed is controlled by `qq_depth` or its `qq_depth_min` / `qq_depth_max`. Setting `qq_depth` will override `qq_depth_min` and `qq_depth_max`. By default (`qq_depth_min.2`), aliquots are parsed to quarter-quarters (QQs) but allows for smaller divisions if they exist in the description). See [the guide on `qq_depth` etc.](https://github.com/JamesPImes/pyTRS/blob/master/guides/config.md#control-the-granularity-or-depth-of-aliquot-parsing-with-qq_depth-qq_depth_min-andor-qq_depth_max) for more details.
 
 5) In aliquot parsing, `break_halves` forces all halves into the equivalent quarters--e.g., `'W2SENE'` -> [`'NWSENE'`, `'SWSENE'`]. The effect of `break_halves` is only *noticeable* if the halves occur 'deeper' than the `qq_depth_min` (otherwise the halves would be broken into quarters anyway). See [the guide on `qq_depth` etc.](https://github.com/JamesPImes/pyTRS/blob/master/guides/config.md#control-the-granularity-or-depth-of-aliquot-parsing-with-qq_depth-qq_depth_min-andor-qq_depth_max) for more details.
 
 6) Forcing the parser to [use a particular `layout`](https://github.com/JamesPImes/pyTRS/blob/master/guides/plssdesc.md#layout-syntax-of-twprgesecdesc) is generally not advised, unless you are certain that all of the descriptions in your dataset have the same layout.
-
-7) `require_colon` only impacts `'TRS_desc'` and `'S_desc_TR'` layouts -- i.e. layouts where description block follows the section number.
 
 
 ### Some specific parameters
