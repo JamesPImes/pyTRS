@@ -70,8 +70,8 @@ trs2.rge        # -> '97w'
 |Parameter              | Explanation                                                         |Footnote |
 |:----------------------|:--------------------------------------------------------------------|:-------:|
 | `twp=<str or int>`    | Township (e.g., `'154n'`, `'1s'`, etc.)                             | 1       |
-| `rge=<str or int>`    | Range, either an int or a str (e.g., `'154n'`, `'1s'`, etc.)        | 1       |
-| `sec=<str or int>`    | Section, either an int or a str (e.g., `'154n'`, `'1s'`, etc.)      |         |
+| `rge=<str or int>`    | Range, either an int or a str (e.g., `'97w'`, `'9e'`, etc.)        | 1       |
+| `sec=<str or int>`    | Section, either an int or a str (e.g., `'14'`, `14`, `'01'`, `1`, etc.)      |         |
 | `default_ns=<'n' or 's'>` | Whether to default Township to North or South, if not specified | 1       |
 | `default_ns=<'e' or 'w'>` | Whether to default Range to East or West, if not specified      | 1       |
 
