@@ -1690,20 +1690,20 @@ class Tract:
 
         # If a T&R is identified without 'North/South' specified, fall
         # back on this. Will be filled in when `.config` is set (if
-        # applicable) or defaulted to 'n' shortly.
+        # applicable).
         # NOTE: only applicable for using .from_twprgesec() or
         # `.set_twprgesec()`
         self.default_ns = None
 
         # If a T&R is identified without 'East/West' specified, fall
         # back on this. Will be filled in when `.config` is set (if
-        # applicable) or defaulted to 'w' shortly.
+        # applicable).
         # NOTE: only applicable for using .from_twprgesec() or
         # `.set_twprgesec()`
         self.default_ew = None
 
         # NOTE: `parse_qq`, `clean_qq`, & `include_lot_divs` will be
-        # changed when `.config` is set, if needed
+        # changed when `.config` is set, if needed.
 
         # Whether we should parse lots and aliquots at init.
         self.parse_qq = False
