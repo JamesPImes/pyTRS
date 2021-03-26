@@ -144,7 +144,7 @@ class ConfigError(TypeError):
         msg = "`config` must be a str, None, or a pytrs.Config object."
         if obj is not None:
             msg = f"{msg} Passed type {type(obj)!r}."
-        super().__init__(msg)
+        super().__init__(self, msg)
 
 
 class DefaultNSError(ValueError):
@@ -155,7 +155,7 @@ class DefaultNSError(ValueError):
         msg = f"`default_ns` must be one of {legal}."
         if obj is not None:
             msg = f"{msg} Passed {obj!r}."
-        super().__init__(msg)
+        super().__init__(self, msg)
 
 
 class DefaultEWError(ValueError):
@@ -166,7 +166,7 @@ class DefaultEWError(ValueError):
         msg = f"`default_ew` must be one of {legal}."
         if obj is not None:
             msg = f"{msg} Passed {obj!r}."
-        super().__init__(msg)
+        super().__init__(self, msg)
 
 
 class TractListTypeError(TypeError):
@@ -178,7 +178,7 @@ class TractListTypeError(TypeError):
         )
         if additional_msg:
             msg = f"{msg} {additional_msg}"
-        super().__init__(msg)
+        super().__init__(self, msg)
 
 
 class PLSSDesc:
