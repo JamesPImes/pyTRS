@@ -1,6 +1,6 @@
 
-__version__ = '0.8.0'
-__versionDate__ = '2/23/2021'
+__version__ = '1.0.0'
+__version_date__ = '3/26/2021'
 __author__ = 'James P. Imes'
 __email__ = 'jamesimes@gmail.com'
 __website__ = 'https://github.com/JamesPImes/pyTRS'
@@ -58,4 +58,3 @@ __disclaimer__ = (
     "comments in the code and documentation are dummy data and were invented "
     "or arbitrarily chosen. (Some are even nonsense.)"
 )
-

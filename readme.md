@@ -4,54 +4,35 @@ pyTRS (imported as `pytrs`) is a Python library for parsing [Public Land Survey 
 
 ## Quick example
 
-We have this land description to parse: `"T154N-R97W Sec 14: Lots 1 - 3, NE/4, Sec 15 - 17: S/2N/2"`
+We have this land description and want to break it into tabular data: `'T154N-R97W Sec 14: Lots 1 - 3, NE/4, Sec 15 - 17: S/2N/2'`
 ```
 import pytrs
 
-text_to_parse = "T154N-R97W Sec 14: Lots 1 - 3, NE/4, Sec 15 - 17: S/2N/2"
+text_to_parse = 'T154N-R97W Sec 14: Lots 1 - 3, NE/4, Sec 15 - 17: S/2N/2'
 
 parsed = pytrs.PLSSDesc(text_to_parse, parse_qq=True)
-parsed.print_data(['twp', 'rge', 'sec', 'desc', 'lots_qqs'])
+parsed.tracts_to_csv(
+    attributes=['twp', 'rge', 'sec', 'desc', 'lots', 'qqs'],
+    fp=<some filepath>, mode='w')
 ```
-This simple example prints the following to console:
-```
-Tract 1 / 4
-twp      : 154n
-rge      : 97w
-sec      : 14
-desc     : Lots 1 - 3, NE/4
-lots_qqs : L1, L2, L3, NENE, NWNE, SENE, SWNE
+This example writes a .csv file that looks like this (with `'Sec 15 - 17: S/2N/2'` broken out as the S½N½ of each Section 15, 16, and 17):
 
-Tract 2 / 4
-twp      : 154n
-rge      : 97w
-sec      : 15
-desc     : S/2N/2
-lots_qqs : SENE, SWNE, SENW, SWNW
+| twp | rge | sec | desc          | lots |   qqs |
+|------|-----|-----|---------------|------|--------|
+| 154n | 97w | 14  | Lots 1 - 3, NE/4 | L1, L2, L3 | NENE, NWNE, SENE, SWNE |
+| 154n | 97w | 15  | S/2N/2 | | SENE, SWNE, SENW, SWNW |
+| 154n | 97w | 16  | S/2N/2 | | SENE, SWNE, SENW, SWNW |
+| 154n | 97w | 17  | S/2N/2 | | SENE, SWNE, SENW, SWNW |
 
-Tract 3 / 4
-twp      : 154n
-rge      : 97w
-sec      : 16
-desc     : S/2N/2
-lots_qqs : SENE, SWNE, SENW, SWNW
+We can alternatively compile these data fields (and [others](https://github.com/JamesPImes/pyTRS/blob/master/guides/guides/tract_attributes.md#tract-attribute-table)) into a list of dicts, nested list of lists, and other [options](https://github.com/JamesPImes/pyTRS/blob/master/guides/guides/extracting_data.md#guide-to-extracting-data-in-bulk-from-parsed-objects) -- or just accessed individually as `Tract` object attributes.
 
-Tract 4 / 4
-twp      : 154n
-rge      : 97w
-sec      : 17
-desc     : S/2N/2
-lots_qqs : SENE, SWNE, SENW, SWNW
-```
-
-(It handles more complicated data than that, too.)
 
 
 ## Who might use this library
 
-If you've ever received a database or spreadsheet with land descriptions in it, you might have a use of pyTRS.
+If you've ever received a database or spreadsheet with land descriptions in it, you might have a use for pyTRS.
 
-Basically, it's intended for use by land professionals (right-of-way agents, petroleum land managers, GIS analysts, etc.), land records personnel, or anybody who might work with large datasets of land descriptions that would be more usefully broken out into their component parts (township, range, section, and description) into a table or spreadsheet.
+Basically, it's intended for land professionals (right-of-way agents, petroleum land managers, GIS analysts, etc.), land records personnel, or anybody who might work with large datasets of land descriptions that would be more usefully broken out into a table or spreadsheet of township, range, section, description, lots, aliquots, etc.
 
 A few notable implementations [are showcased here](https://github.com/JamesPImes/pyTRS/blob/master/guides/guides/implementations.md).
 

@@ -142,10 +142,6 @@ def config_parameters():
         (("'parse_qq'",),
             "Tract object (or PLSSDesc object's subordinate Tract objects) should parse "
             "lots/aliquots at init", False),
-        (("'init_preprocess'", "'init_preprocess.True'"),
-            "Will preprocess description at init", False),
-        (("'init_preprocess.False'",),
-            "Will NOT preprocess description at init", True),
         (("'clean_qq'",),
          "Expect ONLY clean aliquots/lots (no metes-and-bounds, exceptions, etc.)", False),
         (("'require_colon'", "'require_colon.True'"),

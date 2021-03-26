@@ -20,7 +20,7 @@ Access these `Tract` attributes directly, or [compile them in bulk](https://gith
 | `.lots_qqs`       | list of identified lots and aliquots                                  | list of strings  	| 2        |
 | `.lot_acres`      | identified lots and their purported gross acreages                    | dict of {str: str}| 2        |
 | `.pp_desc`        | the preprocessed description                                          | str              	|          |
-| `.source`         | (optional) source specifying where the description came from          | (any)            	|          |
+| `.source`         | user-specified source of the data that was parsed <br> (specify `source=<any value>` at init) | (any)            	|          |
 | `.orig_desc`      | The full, original text of the parent `PLSSDesc` object, if any.      | str, None        	|          |
 | `.orig_index`     | order in which this `Tract` object was created in parent `PLSSDesc`   | int              	|          |
 | `.w_flags`        | a list of warning flags                                               | list of strings  	| 3        |
