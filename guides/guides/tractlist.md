@@ -5,13 +5,13 @@
 
 * type-check any objects that are added to it (if an object other than a `Tract` is appended, it will raise a `TractListTypeError`, although it can also unpack `Tract` objects out of `PLSSDesc`, `TractList` or other iterables that hold any of those object types -- see the `.from_multiple()` method).
 
-* compile `Tract` data to lists or dicts, or write it to .csv files (see [the guide on extracting `Tract` data in bulk]()).  [# TODO: LINK]
+* compile `Tract` data to lists or dicts, or write it to .csv files (see [the guide on extracting `Tract` data in bulk](https://github.com/JamesPImes/pyTRS/blob/master/guides/guides/extracting_data.md#guide-to-extracting-data-in-bulk-from-parsed-objects)).
 
-* [sort the `Tract` objects]() using custom sort keys (e.g., by Township, Range, Section).  [# TODO: LINK]
+* [sort the `Tract` objects](https://github.com/JamesPImes/pyTRS/blob/master/guides/guides/sort_filter_group.md#sort_tracts) using custom sort keys (e.g., by Township, Range, Section).
 
-* [filter the `Tract` objects]() into new `TractList` objects, and optionally remove them from the original `TractList` (e.g., removing duplicates, removing errors, finding any whose `.twprge` is `'154n97w'` etc.).  [# TODO: LINK]
+* [filter the `Tract` objects](https://github.com/JamesPImes/pyTRS/blob/master/guides/guides/sort_filter_group.md#filter) into new `TractList` objects, and optionally remove them from the original `TractList` (e.g., removing duplicates, removing errors, finding any whose `.twprge` is `'154n97w'` etc.).
 
-* [group the `Tract` objects]() by their shared attribute values -- e.g., by Twp/Rge.  [# TODO: LINK]
+* [group the `Tract` objects](https://github.com/JamesPImes/pyTRS/blob/master/guides/guides/sort_filter_group.md#group) by their shared attribute values -- e.g., by Twp/Rge.
 
 With only a few exceptions\*\*, any method in the `TractList` class has an equivalent method in the `PLSSDesc` class. The `PLSSDesc` will apply the method to its own tracts (i.e. the `Tract` objects in its `.tracts` attribute, which is a `TractList` itself).
 
@@ -19,9 +19,9 @@ With only a few exceptions\*\*, any method in the `TractList` class has an equiv
 
 ## Creating a `TractList` (or equivalent `generator`)
 
-If we need a collection of `Tract` objects, create a `TractList` by [initializing with `TractList()`]() or with the [more robust `TractList.from_multiple()` method]().  [# TODO: LINKS]
+If we need a collection of `Tract` objects, create a `TractList` by [initializing with `TractList()`](https://github.com/JamesPImes/pyTRS/blob/master/guides/guides/tractlist.md#creating-a-tractlist-or-equivalent-generator) or with the [more robust `TractList.from_multiple()` method](https://github.com/JamesPImes/pyTRS/blob/master/guides/guides/tractlist.md#robustly-construct-a-tractlist-from-multiple-sources-with-from_multiple).
 
-If we just want to iterate over `Tract` objects, [create a `generator` with the `TractList.iter_from_multiple()` static method]().  [# TODO: LINK]
+If we just want to iterate over `Tract` objects, [create a `generator` with the `TractList.iter_from_multiple()` static method](https://github.com/JamesPImes/pyTRS/blob/master/guides/guides/tractlist.md#construct-a-generator-of-tract-objects-with-tractlistiter_from_multiple).
 
 
 ### Constructing a `TractList` from a single iterable
@@ -85,4 +85,4 @@ for tract in some_tractlist:
 
 ## Extracting `Tract` data in bulk
 
-[See the separate guide on this functionality.]()
+See [the separate guide](https://github.com/JamesPImes/pyTRS/blob/master/guides/guides/extracting_data.md#guide-to-extracting-data-in-bulk-from-parsed-objects) on this functionality.
