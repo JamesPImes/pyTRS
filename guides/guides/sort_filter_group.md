@@ -1,12 +1,12 @@
 # Guide to Sorting / Filtering / Grouping `Tract` objects in a `TractList` or `PLSSDesc`
 
-`PLSSDesc` has equivalent methods for sorting / filter / grouping the `Tract` objects in its `.tracts` attribute.
+`PLSSDesc` has equivalent methods for [sorting](https://github.com/JamesPImes/pyTRS/blob/master/guides/guides/sort_filter_group.md#sort_tracts) / [filtering](https://github.com/JamesPImes/pyTRS/blob/master/guides/guides/sort_filter_group.md#filter) / [grouping](https://github.com/JamesPImes/pyTRS/blob/master/guides/guides/sort_filter_group.md#group) the `Tract` objects in its `.tracts` attribute.
 
 ## `.sort_tracts()`
 
 Sort the `Tract` objects stored in this `TractList` (in place), with optional custom sort keys (see below).
 
-Firstly, `sort_key=<lambda>` and `reverse=<bool>` parameters can be used here -- identical in behavior to the built-in `list.sort(key=<lambda>, reverse=<bool>)`, but note the parameter name here is `sort_key`, rather than `key`. (This is named `sort_key` because it is also a parameter in [the grouping methods](), and it serves the same purpose there.) [#TODO: LINK]
+Firstly, `sort_key=<lambda>` and `reverse=<bool>` parameters can be used here -- identical in behavior to the built-in `list.sort(key=<lambda>, reverse=<bool>)`, but note the parameter name here is `sort_key`, rather than `key`. (This is named `sort_key` because it is also a parameter in [the grouping methods](https://github.com/JamesPImes/pyTRS/blob/master/guides/guides/sort_filter_group.md#group), and it serves the same purpose there.)
 
 ```
 t_list = pytrs.TractList.from_multiple([<some large list of tracts>])
@@ -73,7 +73,7 @@ t_list.sort_tracts(sort_key='s.reverse,r.ew,t.ns')
 ```
 
 
-Note that Twp/Rge's that [are errors or undefined (i.e. `'XXXzXXXz'` or `'___z___z'`)]() will be sorted to the end of the list when sorting on Twp and/or Rge (whether by number, north-to-south, south-to-north, east-to-west, or west-to-east).  Similarly, [error Sections and undefined sections (i.e. `'XX'` or `'__'`)]() will be sorted to the end of the list when sorting on section.  (The exception is if the sort is reversed, in which case, they come first.) [#TODO: LINKS]
+Note that Twp/Rge's that [are errors or undefined (i.e. `'XXXzXXXz'` or `'___z___z'`)](https://github.com/JamesPImes/pyTRS/blob/master/guides/guides/trs.md#standard-pytrs-format-for-twprgesec) will be sorted to the end of the list when sorting on Twp and/or Rge (whether by number, north-to-south, south-to-north, east-to-west, or west-to-east).  Similarly, [error Sections and undefined sections (i.e. `'XX'` or `'__'`)](https://github.com/JamesPImes/pyTRS/blob/master/guides/guides/trs.md#standard-pytrs-format-for-twprgesec) will be sorted to the end of the list when sorting on section.  (The exception is if the sort is reversed, in which case, they come first.)
 
 
 
@@ -249,7 +249,7 @@ Note: In the above example, the tracts are added to the `grouped_tracts` dict (b
 
 #### Sort the grouped tracts
 
-Use the parameters `sort_key=` (and optionally `reverse=`) to sort *__each__* of the `TractList` objects in the dict of group tracts. (Takes any of the [options available in `.sort_tracts()` method]().) [# TODO: LINK]
+Use the parameters `sort_key=` (and optionally `reverse=`) to sort *__each__* of the `TractList` objects in the dict of group tracts. (Takes any of the [options available in `.sort_tracts()` method](https://github.com/JamesPImes/pyTRS/blob/master/guides/guides/sort_filter_group.md#sort_tracts).)
 
 An example using the `TractList` custom sort keys -- sorting by Range (number), then Township (north-to-south):
 ```
