@@ -4,3 +4,4 @@ venv/
 build/
 dist/
 dev/
+/pyTRS.egg-info/

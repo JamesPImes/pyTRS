@@ -1,4 +1,4 @@
-# Copyright (c) 2020, James P. Imes, All rights reserved.
+# Copyright (c) 2020-2021, James P. Imes, All rights reserved.
 
 """
 Quick functions for simple parsing operations, without storing
@@ -35,7 +35,7 @@ def quick_parse_list(
     # Compile the config string:
     config = ','.join([f'{layout},{default_ns},{default_ew}', config])
 
-    d = PLSSDesc(text, layout=layout, config=config, init_parse=True)
+    d = PLSSDesc(text, layout=layout, config=config)
     return d.tracts_to_list('trs', 'desc')
 
 
@@ -64,9 +64,9 @@ def quick_flags(text) -> list:
     """
     from pytrs.parser import PLSSDesc
 
-    d = PLSSDesc(text, init_parse_qq=True)
+    d = PLSSDesc(text, parse_qq=True)
 
-    return d.e_flags + d.w_flags
+    return d.flags
 
 
 def quick_flag_lines(text) -> list:
@@ -77,9 +77,9 @@ def quick_flag_lines(text) -> list:
     """
     from pytrs.parser import PLSSDesc
 
-    d = PLSSDesc(text, init_parse_qq=True)
+    d = PLSSDesc(text, parse_qq=True)
 
-    return d.e_flag_lines + d.w_flag_lines
+    return d.flag_lines
 
 
 def quick_lots_qqs(text, clean_qq=False) -> list:
@@ -87,10 +87,11 @@ def quick_lots_qqs(text, clean_qq=False) -> list:
     Parses the text as though it were a Tract, and returns a single list
     of resulting lots and QQ's, without storing a `Tract` object.
 
+    :param text: The text to check.
     :param clean_qq: Whether to expect only clean lots and QQ's (i.e.
     no metes-and-bounds, exceptions, complicated descriptions,
     etc.). Defaults to False.
     """
     from pytrs.parser import Tract
-    t = Tract(desc=text, config="clean_qq" * clean_qq, init_parse_qq=True)
+    t = Tract(desc=text, config="clean_qq" * clean_qq, parse_qq=True)
     return t.lots_qqs

@@ -1,4 +1,4 @@
-# Copyright (c) 2020, James P. Imes, all rights reserved.
+# Copyright (c) 2020-2021, James P. Imes, all rights reserved.
 
 """
 pyTRS - a pure Python library for parsing Public Land Survey System
@@ -8,14 +8,12 @@ spreadsheets, and databases generally. It accounts for common variations
 in layout, abbreviations, typos, etc. and can therefore process a range
 of real-world data.
 
-Copyright (c) 2020, James P. Imes, all rights reserved.
+Copyright (c) 2020-2021, James P. Imes, all rights reserved.
 
 THIS LIBRARY IS NOT TO BE USED FOR ANY UNLICENSED COMMERCIAL PURPOSES OR
 FOR GENERATING OR MODIFYING LEGAL DESCRIPTIONS IN ANY LEGAL DOCUMENT!
 Intended for data analysis purposes ONLY. Read license and disclaimer
 prior to using for any purpose.
-
-!!! USE AT YOUR OWN RISK !!!
 """
 
 import pytrs._constants as _constants
@@ -35,17 +33,18 @@ from pytrs.parser import (
     PLSSDesc,
     Tract,
     TractList,
+    TRS,
     Config,
 
     # Misc. functions for examining / handling descriptions
     find_twprge,
     find_sec,
-    decompile_twprge,
     find_multisec,
-    break_trs,
+    trs_to_dict,
 
-    # For outputting parsed data to csv files
-    output_to_csv,
+    # For grouping / sorting Tract objects
+    group_tracts,
+    sort_grouped_tracts,
 
     # A tuple of currently implemented layouts
     IMPLEMENTED_LAYOUTS,

@@ -21,32 +21,40 @@ long_description = (
 )
 
 
-def get_version():
-    version_var_setter = "__version__ = "
-    with open(r".\pytrs\_constants.py", "r") as file:
+MODULE_DIR = "pytrs"
+
+
+def get_constant(constant):
+    setters = {
+        "version": "__version__ = ",
+        "author": "__author__ = ",
+        "author_email": "__email__ = ",
+        "url": "__website__ = "
+    }
+    var_setter = setters[constant]
+    with open(rf".\{MODULE_DIR}\_constants.py", "r") as file:
         for line in file:
-            if line.startswith(version_var_setter):
-                version = line[len(version_var_setter):].strip('\'\n \"')
+            if line.startswith(var_setter):
+                version = line[len(var_setter):].strip('\'\n \"')
                 return version
-        raise RuntimeError("Could not get __version__ info.")
+        raise RuntimeError(f"Could not get {constant} info.")
 
 
 setup(
     name='pyTRS',
-    version=get_version(),
+    version=get_constant("version"),
     packages=[
         'pytrs',
         'pytrs.parser',
-        'pytrs.check',
         'pytrs.quick',
         'pytrs.utils',
-        'pytrs.csv_suite',
-        'pytrs.interface_tools'
+        'pytrs.interface_tools',
+        'pytrs.tractwriter'
     ],
-    url='https://github.com/JamesPImes/pyTRS',
+    url=get_constant("url"),
     license='Modified Academic Public License',
-    author='James P. Imes',
-    author_email='jamesimes@gmail.com',
+    author=get_constant("author"),
+    author_email=get_constant("author_email"),
     description=description,
     long_description=long_description,
     long_description_content_type="text/markdown",

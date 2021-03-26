@@ -282,8 +282,8 @@ lots_context_regex = re.compile(r'Lo?ts?|Lo?s?t', re.IGNORECASE)
 # For unpacking TRS into its component parts -- break into twp, rge, sec
 # with break_trs():
 TRS_unpacker_regex = re.compile(
-    r"""((\d{1,3}[ns])(\d{1,3}[we])|(TRerr)_?)
-    ((\d{1,2})|(secError))?""", re.VERBOSE | re.IGNORECASE)
+    r"""((\d{1,3}[ns])(\d{1,3}[we])|(XXXzXXXz))
+    ((\d{1,2})|(XX))?""", re.VERBOSE | re.IGNORECASE)
 
 
 ########################################################################
@@ -360,7 +360,13 @@ cleanSW_regex = re.compile(
 # their cleaner counterparts, so 'E2NE' -> 'E½NE' --> 'E½NE¼'.
 # Must be at word boundaries, per \b.
 halfPlusQ_regex = re.compile(
-    r'(\b|½)((N|E|S|W)½(\s*| of | of the )(NE|NW|SE|SW))¼?\b', re.IGNORECASE)
+    r"""
+    (\b|½)
+    ([NESW])½
+    ((\s*|\s*of\s*|\s*of\s*the\s*)
+    ((NE|North?\s*East|NW|North?\s*West|SE|South?\s*East|SW|South?\s*West)(¼?)(Quarter)?))+
+    \b""",
+    re.IGNORECASE | re.VERBOSE)
 
 # For breaking down the identified lots strings:
 through_regex = re.compile(r'([\-–—]|th[rough]{3,6}\.?|thru\.?|to)', re.IGNORECASE)
