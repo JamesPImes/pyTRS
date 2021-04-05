@@ -264,7 +264,6 @@ class PLSSDesc:
         text).
 
 
-
     ____ STREAMLINED OUTPUT OF THE PARSED TRACT DATA ____
     See the notable instance variables listed in the pytrs.Tract object
     documentation. Those variables can be compiled with these PLSSDesc
@@ -439,8 +438,6 @@ class PLSSDesc:
         # Apply settings from `config=`.
         self.config = config
 
-        # Track fatal flaws in the parsing of this PLSS description
-        self.desc_is_flawed = False
         # list of Tract objs, after parsing (TractList is a subclass of `list`)
         self.tracts = TractList()
         # list of warning flags
@@ -553,6 +550,10 @@ class PLSSDesc:
     @property
     def flag_lines(self):
         return self.e_flag_lines + self.w_flag_lines
+
+    @property
+    def desc_is_flawed(self):
+        return len(self.e_flags) > 0
 
     def parse(
             self,
@@ -758,7 +759,6 @@ class PLSSDesc:
             self.e_flags = []
             self.w_flag_lines = []
             self.e_flag_lines = []
-            self.desc_is_flawed = False
 
             # Unpack each of the 'unpackable' attributes.
             for attribute in parser.UNPACKABLES:
@@ -1596,8 +1596,7 @@ class Tract:
             parse_qq=None,
             source=None,
             orig_desc=None,
-            orig_index=0,
-            desc_is_flawed=False):
+            orig_index=0):
         """
         :param desc: The description block within this TRS. (What will
         be processed if this Tract object gets parsed into lots/QQs.)
@@ -1622,10 +1621,6 @@ class Tract:
         :param orig_index: An integer representing the order in which this
         Tract object was created while parsing the parent PLSSDesc
         object, if any
-        :param desc_is_flawed: a bool, whether or not an apparently fatal
-        flaw was discovered during parsing of the parent PLSSDesc
-        object, if any. (Tract objects themselves are agnostic to fatal
-        flaws.)
         """
 
         if not isinstance(trs, (str, TRS)) and trs is not None:
@@ -1655,9 +1650,6 @@ class Tract:
         # Whether we have parsed this Tract and committed the results
         self.parse_complete = False
 
-        # Whether fatal flaws were identified during the parsing of the
-        # parent PLSSDesc object, if any
-        self.desc_is_flawed = desc_is_flawed
         # list of warning flags
         self.w_flags = []
         # list of 2-tuples that caused warning flags (warning flag, text string)
@@ -1907,8 +1899,7 @@ class Tract:
             parse_qq=None,
             source=None,
             orig_desc=None,
-            orig_index=0,
-            desc_is_flawed=False):
+            orig_index=0):
         """
         Create a Tract object from separate Twp, Rge, and Sec components
         rather than joined Twp/Rge/Sec. All parameters are the same as
@@ -1941,7 +1932,6 @@ class Tract:
         :param source: Same as when initializing a Tract object.
         :param orig_desc: Same as when initializing a Tract object.
         :param orig_index: Same as when initializing a Tract object.
-        :param desc_is_flawed: Same as when initializing a Tract object.
         :param config: Same as when initializing a Tract object.
         :param parse_qq: Same as when initializing a Tract object.
         :return: The new Tract object, with the ``.trs`` compiled here.
@@ -1973,8 +1963,7 @@ class Tract:
         # Create a new Tract object and return it
         new_tract = Tract(
             desc=desc, trs=trs, source=source, orig_desc=orig_desc,
-            orig_index=orig_index, desc_is_flawed=desc_is_flawed, config=config,
-            parse_qq=parse_qq)
+            orig_index=orig_index, config=config, parse_qq=parse_qq)
         return new_tract
 
     @property
@@ -2002,6 +1991,10 @@ class Tract:
                 setattr(self, attrib, value)
 
         self.__config = new_config
+
+    @property
+    def desc_is_flawed(self):
+        return len(self.e_flags) > 0
 
     def parse(
             self,
@@ -3938,7 +3931,6 @@ class PLSSParser:
         "e_flags",
         "w_flag_lines",
         "e_flag_lines",
-        "desc_is_flawed",
         "current_layout"
     )
 
@@ -3992,7 +3984,6 @@ class PLSSParser:
         self.e_flags = []
         self.w_flag_lines = []
         self.e_flag_lines = []
-        self.desc_is_flawed = False
 
         # Pull pre-existing flags from the parent PLSSDesc, if applicable.
         if parent:
@@ -4132,19 +4123,17 @@ class PLSSParser:
                     clean_qq=clean_qq, qq_depth_min=qq_depth_min,
                     qq_depth_max=qq_depth_max, qq_depth=qq_depth,
                     break_halves=break_halves)
-            self.desc_is_flawed = True
+            self.e_flags.append('unrequested_copy_all')
 
         for tract in self.tracts:
             if tract.trs.startswith(TRS._ERR_TWPRGE):
                 self.e_flags.append(_E_FLAG_TWPRGE_ERR)
                 self.e_flag_lines.append(
                     (_E_FLAG_TWPRGE_ERR, f"{tract.trs}:{tract.desc}"))
-                self.desc_is_flawed = True
             if tract.trs.endswith(TRS._ERR_SEC):
                 self.e_flags.append(_E_FLAG_SECERR)
                 self.e_flag_lines.append(
                     (_E_FLAG_SECERR, f"{tract.trs}:{tract.desc}"))
-                self.desc_is_flawed = True
 
         # Check for warning flags (and a couple error flags).
         # Note that .gen_flags() is being run on `flag_text`, not `text`.
@@ -5664,11 +5653,10 @@ class PLSSParser:
 
     def gen_flags(self):
         """
-        Generate w_flags, w_flag_lines, e_flags, and eFlagLine, and
-        maybe whether desc_is_flawed. Each element in w_flag_lines or
-        e_flag_lines is a tuple, the first element being the warning or
-        error flag, and the second element being the line that raised
-        the flag.
+        Generate w_flags, w_flag_lines, e_flags, and e_flag_lines. Each
+        element in w_flag_lines or e_flag_lines is a tuple, the first
+        element being the warning or error flag, and the second element
+        being the line that raised the flag.
         """
         text = self.orig_desc
         preprocessed = self.text
@@ -5685,14 +5673,12 @@ class PLSSParser:
             self.e_flags.append('noTR')
             self.e_flag_lines.append(
                 ('noTR', 'No T&R\'s identified!'))
-            self.desc_is_flawed = True
 
         # For everything else, we check against the orig_desc
         if len(find_sec(text)) == 0 and len(find_multisec(text)) == 0:
             self.e_flags.append('noSection')
             self.e_flag_lines.append(
                 ('noSection', 'No Sections identified!'))
-            self.desc_is_flawed = True
 
         ################################################################
         # Warning flags
