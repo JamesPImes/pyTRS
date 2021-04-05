@@ -51,7 +51,7 @@ def main():
     }
 
     # Get a TractWriter for writing our Tract data to .csv file.
-    # We'll use the 'source' attribute will tell us which file provided
+    # We'll use the 'source' attribute to tell us which file provided
     # each tract.
     # We'll also include the report date -- which is not a pytrs.Tract
     # attribute, so we'll have to manually add it with `plus_cols=[]`.
