@@ -201,13 +201,13 @@ class PromptAttrib(tk.Frame):
         self.exit_after_ok = exit_after_ok
         self.confirm_cancel_prompt = confirm_cancel_prompt
 
-        if attributes.lower() == 'standard':
-            attributes = PromptAttrib.STANDARD_OPTIONS
-        elif attributes.lower() == 'all':
-            attributes = PromptAttrib.ALL_ATTRIBUTES.keys()
-
         if isinstance(attributes, str):
-            attributes = [at.lower().strip() for at in attributes.split(',')]
+            if attributes.lower() == 'standard':
+                attributes = PromptAttrib.STANDARD_OPTIONS
+            elif attributes.lower() == 'all':
+                attributes = PromptAttrib.ALL_ATTRIBUTES.keys()
+            else:
+                attributes = [at.lower().strip() for at in attributes.split(',')]
 
         if header:
             hdr = tk.Label(self, text=str(header), font='"Arial Black"')
@@ -219,7 +219,7 @@ class PromptAttrib(tk.Frame):
         # Finally, create a checkbutton for that attribute.
         # So for attribute 'qqs':
         #   -> self.qqs_var --> a tk.IntVar with initial value 0
-        #   -> self.attrib_dict['qqs'] --> self.QQListVar
+        #   -> self.attrib_dict['qqs'] --> self.qqs_var
         #   -> <create a checkbutton for qqs>
         self.attrib_dict = dict()
         cur_row = 5
