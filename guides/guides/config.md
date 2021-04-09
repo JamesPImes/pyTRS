@@ -1,7 +1,7 @@
 
 # Guide to `config=` parameters
 
-The parsing of `PLSSDesc` and `Tract` objects is configured with `config=<str>` when either object is created. Specifically, encode all of the [desired parameters](https://github.com/JamesPImes/pyTRS/blob/master/guides/config.md#config-parameter-table) into a single string, separated by comma (spaces are optional with no effect), and pass that string to `config=` when creating a `PLSSDesc` or `Tract` object.
+The parsing of `PLSSDesc` and `Tract` objects is configured with `config=<str>` when either object is created. Specifically, encode all of the [desired parameters](https://github.com/JamesPImes/pyTRS/blob/master/guides/guides/config.md#config-parameter-table) into a single string, separated by comma (spaces are optional with no effect), and pass that string to `config=` when creating a `PLSSDesc` or `Tract` object.
 
 ```
 cf = 'n, w, segment, clean_qq, parse_qq'
@@ -41,7 +41,7 @@ Essentially all config parameters have corresponding parameters in the `PLSSDesc
 
 *__Wherever `config=` parameters (passed at init) are later in conflict with a parameter in a `.parse()` method, the method's parameter will control.__*
 
- Just as one example, [`clean_qq`](https://github.com/JamesPImes/pyTRS/blob/master/guides/config.md#clean_qq-for-expanded-aliquot-parsing) can be turned on with a `config=` parameter (`config='clean_qq'`) when creating a `PLSSDesc` or `Tract` object--but it can also be specified as a kwarg when calling either `PLSSDesc.parse(clean_qq=<bool>)` or `Tract.parse(clean_qq=<bool>)`. If specified as `.parse(clean_qq=<bool>)`, then that `bool` will be used for that parse, regardless of what was in `config=` before. On the other hand, calling `PLSSDesc.parse()` without specifying `clean_qq=<bool>` will cause it to look to however the object was configured via `config=` (if at all).
+ Just as one example, [`clean_qq`](https://github.com/JamesPImes/pyTRS/blob/master/guides/guides/config.md#clean_qq-for-expanded-aliquot-parsing) can be turned on with a `config=` parameter (`config='clean_qq'`) when creating a `PLSSDesc` or `Tract` object--but it can also be specified as a kwarg when calling either `PLSSDesc.parse(clean_qq=<bool>)` or `Tract.parse(clean_qq=<bool>)`. If specified as `.parse(clean_qq=<bool>)`, then that `bool` will be used for that parse, regardless of what was in `config=` before. On the other hand, calling `PLSSDesc.parse()` without specifying `clean_qq=<bool>` will cause it to look to however the object was configured via `config=` (if at all).
 
 
 ## `Config` parameter table
@@ -56,7 +56,7 @@ Note: Including a parameter that affects only `PLSSDesc` objects in the `config=
 |`'e'` or `'default_ew.e'`	|	|x	|x **	|1, 2 **	|	|Assume any missing E/W in a Rge should be 'e'	|
 |`'wait_to_parse'`	|	|x	|	|	|	|Hold off on parsing `PLSSDesc` object at init	|
 |`'parse_qq'`	|	|x	|x	|	|	|Populate lots/aliquots in a `Tract` object (or in a `PLSSDesc` object's subordinate `Tract` objects) when created.	|
-|`'clean_qq'`	|	|	|x	|	|[info](https://github.com/JamesPImes/pyTRS/blob/master/guides/config.md#clean_qq-for-expanded-aliquot-parsing)	|expect ONLY clean aliquots/lots (no metes-and-bounds, exceptions, etc.)	|
+|`'clean_qq'`	|	|	|x	|	|[info](https://github.com/JamesPImes/pyTRS/blob/master/guides/guides/config.md#clean_qq-for-expanded-aliquot-parsing)	|expect ONLY clean aliquots/lots (no metes-and-bounds, exceptions, etc.)	|
 |`'require_colon'`	|x	|x	|	|3	|	|Require a colon between Section number and its following description block (on a 'first-pass' attempt at a parse only)	|
 |`'require_colon.False'`	|	|x	|	|3	|	|Do not require a colon in that position	|
 |`'include_lot_divs'`	|x	|	|x	|	|	|Report lot divisions (i.e., `'N/2 of Lot 1'` -> `'N2 of L1'`)	|
@@ -65,16 +65,16 @@ Note: Including a parameter that affects only `PLSSDesc` objects in the `config=
 |`'ocr_scrub.False'`	|x	|x	|x **	|2 **	|	|Do NOT scrub OCR artifacts from the text	|
 |`'segment'`	|	|x	|	|	|	|Segment PLSS description before parsing into `Tract` objects. (MIGHT capture descriptions with multiple layouts.)	|
 |`'segment.False`	|x	|x	|	|	|	|Do NOT segment the description before parsing.	|
-|`'qq_depth_min.<number>`	|x (=`2`)	|	|x 	|4	|[info](https://github.com/JamesPImes/pyTRS/blob/master/guides/config.md#control-the-granularity-or-depth-of-aliquot-parsing-with-qq_depth-qq_depth_min-andor-qq_depth_max)	|specify the MINIMUM 'depth' to parse aliquots. Value of `2` renders quarter-quarters (QQs).	|
-|`'qq_depth_max.<number>`	|	|	|x	|4	|[info](https://github.com/JamesPImes/pyTRS/blob/master/guides/config.md#control-the-granularity-or-depth-of-aliquot-parsing-with-qq_depth-qq_depth_min-andor-qq_depth_max)	|specify the MAXIMUM 'depth' to parse aliquots, and discard any smaller divisions.	|
-|`'qq_depth.<number>`	|	|	|x	|4	|[info](https://github.com/JamesPImes/pyTRS/blob/master/guides/config.md#control-the-granularity-or-depth-of-aliquot-parsing-with-qq_depth-qq_depth_min-andor-qq_depth_max)	|specify the EXACT 'depth' to parse aliquots, and discard any smaller divisions.	|
+|`'qq_depth_min.<number>`	|x (=`2`)	|	|x 	|4	|[info](https://github.com/JamesPImes/pyTRS/blob/master/guides/guides/config.md#control-the-granularity-or-depth-of-aliquot-parsing-with-qq_depth-qq_depth_min-andor-qq_depth_max)	|specify the MINIMUM 'depth' to parse aliquots. Value of `2` renders quarter-quarters (QQs).	|
+|`'qq_depth_max.<number>`	|	|	|x	|4	|[info](https://github.com/JamesPImes/pyTRS/blob/master/guides/guides/config.md#control-the-granularity-or-depth-of-aliquot-parsing-with-qq_depth-qq_depth_min-andor-qq_depth_max)	|specify the MAXIMUM 'depth' to parse aliquots, and discard any smaller divisions.	|
+|`'qq_depth.<number>`	|	|	|x	|4	|[info](https://github.com/JamesPImes/pyTRS/blob/master/guides/guides/config.md#control-the-granularity-or-depth-of-aliquot-parsing-with-qq_depth-qq_depth_min-andor-qq_depth_max)	|specify the EXACT 'depth' to parse aliquots, and discard any smaller divisions.	|
 |`'break_halves'`	|	|	|x	|4, 5	|	|break all aliquot halves into quarters, EVEN IF we're at divisions smaller than the specified `qq_depth_min`.	|
 |`'break_halves.False`	|x	|	|x	|4, 5 |	|Leave aliquot halves as halves when we're at divisions smaller than the specified `qq_depth_min`	|
-|`'TRS_desc'`	|	|x	|	|Y	|[info](https://github.com/JamesPImes/pyTRS/blob/master/guides/plssdesc.md#layout-syntax-of-twprgesecdesc)	|Force the parser to use `'TRS_desc'` layout	|
-|`'desc_STR'`	|	|x	|	|Y	|[info](https://github.com/JamesPImes/pyTRS/blob/master/guides/plssdesc.md#layout-syntax-of-twprgesecdesc)	|Force the parser to use `'desc_STR'` layout	|
-|`'S_desc_TR'`	|	|x	|	|Y	|[info](https://github.com/JamesPImes/pyTRS/blob/master/guides/plssdesc.md#layout-syntax-of-twprgesecdesc)	|Force the parser to use `'S_desc_TR'` layout	|
-|`'TR_desc_S'`	|	|x	|	|Y	|[info](https://github.com/JamesPImes/pyTRS/blob/master/guides/plssdesc.md#layout-syntax-of-twprgesecdesc)	|Force the parser to use `'TR_desc_S'` layout	|
-|`'copy_all'`	|	|x	|	|Y	|[info](https://github.com/JamesPImes/pyTRS/blob/master/guides/plssdesc.md#layout-syntax-of-twprgesecdesc)	|Force the parser to use `'copy_all'` layout	|
+|`'TRS_desc'`	|	|x	|	|Y	|[info](https://github.com/JamesPImes/pyTRS/blob/master/guides/guides/plssdesc.md#layout-syntax-of-twprgesecdesc)	|Force the parser to use `'TRS_desc'` layout	|
+|`'desc_STR'`	|	|x	|	|Y	|[info](https://github.com/JamesPImes/pyTRS/blob/master/guides/guides/plssdesc.md#layout-syntax-of-twprgesecdesc)	|Force the parser to use `'desc_STR'` layout	|
+|`'S_desc_TR'`	|	|x	|	|Y	|[info](https://github.com/JamesPImes/pyTRS/blob/master/guides/guides/plssdesc.md#layout-syntax-of-twprgesecdesc)	|Force the parser to use `'S_desc_TR'` layout	|
+|`'TR_desc_S'`	|	|x	|	|Y	|[info](https://github.com/JamesPImes/pyTRS/blob/master/guides/guides/plssdesc.md#layout-syntax-of-twprgesecdesc)	|Force the parser to use `'TR_desc_S'` layout	|
+|`'copy_all'`	|	|x	|	|Y	|[info](https://github.com/JamesPImes/pyTRS/blob/master/guides/guides/plssdesc.md#layout-syntax-of-twprgesecdesc)	|Force the parser to use `'copy_all'` layout	|
 
 
 1) Objects for which `default_ns` or `default_ew` is not specified will fall back to the class attributes `PLSSDesc.MASTER_DEFAULT_NS` and `PLSSDesc.MASTER_DEFAULT_EW` (which are `'n'` and `'w'` unless changed by the user). If your data is from an area where you expect only South townships or East ranges, it may be simpler to set those `PLSSDesc` class attributes instead. 
@@ -83,11 +83,11 @@ Note: Including a parameter that affects only `PLSSDesc` objects in the `config=
 
 3) `require_colon` only impacts `'TRS_desc'` and `'S_desc_TR'` layouts -- i.e. layouts where description block follows the section number.
 
-4) The size of the aliquots that get parsed is controlled by `qq_depth` or its `qq_depth_min` / `qq_depth_max`. Setting `qq_depth` will override `qq_depth_min` and `qq_depth_max`. By default (`qq_depth_min.2`), aliquots are parsed to quarter-quarters (QQs) but allows for smaller divisions if they exist in the description). See [the guide on `qq_depth` etc.](https://github.com/JamesPImes/pyTRS/blob/master/guides/config.md#control-the-granularity-or-depth-of-aliquot-parsing-with-qq_depth-qq_depth_min-andor-qq_depth_max) for more details.
+4) The size of the aliquots that get parsed is controlled by `qq_depth` or its `qq_depth_min` / `qq_depth_max`. Setting `qq_depth` will override `qq_depth_min` and `qq_depth_max`. By default (`qq_depth_min.2`), aliquots are parsed to quarter-quarters (QQs) but allows for smaller divisions if they exist in the description). See [the guide on `qq_depth` etc.](https://github.com/JamesPImes/pyTRS/blob/master/guides/guides/config.md#control-the-granularity-or-depth-of-aliquot-parsing-with-qq_depth-qq_depth_min-andor-qq_depth_max) for more details.
 
-5) In aliquot parsing, `break_halves` forces all halves into the equivalent quarters--e.g., `'W2SENE'` -> [`'NWSENE'`, `'SWSENE'`]. The effect of `break_halves` is only *noticeable* if the halves occur 'deeper' than the `qq_depth_min` (otherwise the halves would be broken into quarters anyway). See [the guide on `qq_depth` etc.](https://github.com/JamesPImes/pyTRS/blob/master/guides/config.md#control-the-granularity-or-depth-of-aliquot-parsing-with-qq_depth-qq_depth_min-andor-qq_depth_max) for more details.
+5) In aliquot parsing, `break_halves` forces all halves into the equivalent quarters--e.g., `'W2SENE'` -> [`'NWSENE'`, `'SWSENE'`]. The effect of `break_halves` is only *noticeable* if the halves occur 'deeper' than the `qq_depth_min` (otherwise the halves would be broken into quarters anyway). See [the guide on `qq_depth` etc.](https://github.com/JamesPImes/pyTRS/blob/master/guides/guides/config.md#control-the-granularity-or-depth-of-aliquot-parsing-with-qq_depth-qq_depth_min-andor-qq_depth_max) for more details.
 
-6) Forcing the parser to [use a particular `layout`](https://github.com/JamesPImes/pyTRS/blob/master/guides/plssdesc.md#layout-syntax-of-twprgesecdesc) is generally not advised, unless you are certain that all of the descriptions in your dataset have the same layout.
+6) Forcing the parser to [use a particular `layout`](https://github.com/JamesPImes/pyTRS/blob/master/guides/guides/plssdesc.md#layout-syntax-of-twprgesecdesc) is generally not advised, unless you are certain that all of the descriptions in your dataset have the same layout.
 
 
 ### Some specific parameters
