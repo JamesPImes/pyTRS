@@ -70,11 +70,11 @@ Note: Including a parameter that affects only `PLSSDesc` objects in the `config=
 |`'qq_depth.<number>`	|	|	|x	|4	|[info](https://github.com/JamesPImes/pyTRS/blob/master/guides/guides/config.md#control-the-granularity-or-depth-of-aliquot-parsing-with-qq_depth-qq_depth_min-andor-qq_depth_max)	|specify the EXACT 'depth' to parse aliquots, and discard any smaller divisions.	|
 |`'break_halves'`	|	|	|x	|4, 5	|	|break all aliquot halves into quarters, EVEN IF we're at divisions smaller than the specified `qq_depth_min`.	|
 |`'break_halves.False`	|x	|	|x	|4, 5 |	|Leave aliquot halves as halves when we're at divisions smaller than the specified `qq_depth_min`	|
-|`'TRS_desc'`	|	|x	|	|Y	|[info](https://github.com/JamesPImes/pyTRS/blob/master/guides/guides/plssdesc.md#layout-syntax-of-twprgesecdesc)	|Force the parser to use `'TRS_desc'` layout	|
-|`'desc_STR'`	|	|x	|	|Y	|[info](https://github.com/JamesPImes/pyTRS/blob/master/guides/guides/plssdesc.md#layout-syntax-of-twprgesecdesc)	|Force the parser to use `'desc_STR'` layout	|
-|`'S_desc_TR'`	|	|x	|	|Y	|[info](https://github.com/JamesPImes/pyTRS/blob/master/guides/guides/plssdesc.md#layout-syntax-of-twprgesecdesc)	|Force the parser to use `'S_desc_TR'` layout	|
-|`'TR_desc_S'`	|	|x	|	|Y	|[info](https://github.com/JamesPImes/pyTRS/blob/master/guides/guides/plssdesc.md#layout-syntax-of-twprgesecdesc)	|Force the parser to use `'TR_desc_S'` layout	|
-|`'copy_all'`	|	|x	|	|Y	|[info](https://github.com/JamesPImes/pyTRS/blob/master/guides/guides/plssdesc.md#layout-syntax-of-twprgesecdesc)	|Force the parser to use `'copy_all'` layout	|
+|`'TRS_desc'`	|	|x	|	|6	|[info](https://github.com/JamesPImes/pyTRS/blob/master/guides/guides/plssdesc.md#layout-syntax-of-twprgesecdesc)	|Force the parser to use `'TRS_desc'` layout	|
+|`'desc_STR'`	|	|x	|	|6	|[info](https://github.com/JamesPImes/pyTRS/blob/master/guides/guides/plssdesc.md#layout-syntax-of-twprgesecdesc)	|Force the parser to use `'desc_STR'` layout	|
+|`'S_desc_TR'`	|	|x	|	|6	|[info](https://github.com/JamesPImes/pyTRS/blob/master/guides/guides/plssdesc.md#layout-syntax-of-twprgesecdesc)	|Force the parser to use `'S_desc_TR'` layout	|
+|`'TR_desc_S'`	|	|x	|	|6	|[info](https://github.com/JamesPImes/pyTRS/blob/master/guides/guides/plssdesc.md#layout-syntax-of-twprgesecdesc)	|Force the parser to use `'TR_desc_S'` layout	|
+|`'copy_all'`	|	|x	|	|6	|[info](https://github.com/JamesPImes/pyTRS/blob/master/guides/guides/plssdesc.md#layout-syntax-of-twprgesecdesc)	|Force the parser to use `'copy_all'` layout	|
 
 
 1) Objects for which `default_ns` or `default_ew` is not specified will fall back to the class attributes `PLSSDesc.MASTER_DEFAULT_NS` and `PLSSDesc.MASTER_DEFAULT_EW` (which are `'n'` and `'w'` unless changed by the user). If your data is from an area where you expect only South townships or East ranges, it may be simpler to set those `PLSSDesc` class attributes instead. 
