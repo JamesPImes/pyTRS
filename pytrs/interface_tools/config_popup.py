@@ -406,7 +406,6 @@ class PromptConfig(tk.Frame):
         that should be available to the user. If `parameters='all'`,
         will display all possible parameters. If passed as a string,
         parameter names should be separate by a comma and no spaces.
-        Note: default_ns and default_ew are always on.
         :param show_ok: Include the OK button.
         :param ok_button_text: A string, for custom text for the OK
         button.
