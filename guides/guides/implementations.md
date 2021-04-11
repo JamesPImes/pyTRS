@@ -38,6 +38,15 @@ And because the seller is getting rid of the assets, they don't want to spend ti
 The Excel macro uses pyTRS to take a crack at ironing all of that out, inserting the parsed data into new rows and columns.
 
 
-## Example Use #3 - inventorying files/reports
+## Example Use #3 - Breaking down .csv files
+
+Included in the [`pyTRS/samples/` directory](https://github.com/JamesPImes/pyTRS/tree/master/samples/csv_parser) is an application with similar functionality to the Excel macro shown above, but which works only on .csv files.
+
+![](assets/csv_ss01.png)
+
+*(Unlike the Excel macros, this application does not work on spreadsheets other than .csv format, so it cannot maintain formulas, tables, etc.)*
+
+
+## Example Use #4 - inventorying files/reports
 
 Included in the [`pyTRS/samples/` directory](https://github.com/JamesPImes/pyTRS/tree/master/samples/file_inventory) is a script I wrote to inventory title reports by Twp/Rge/Section based on their filenames.
