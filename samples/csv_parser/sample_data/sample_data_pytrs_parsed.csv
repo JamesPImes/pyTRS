@@ -1,0 +1,256 @@
+Note: This spreadsheet contains only auto-generated dummy data.,,,,,,,,,
+Grantor,Grantee,Doc. Date,Recording Info,Legal Description,Contract Acres,Seller's Represented Ownership %,Seller's Represented Net Acres,Internal Valuation Tier,Internal Valuation $,parse_UID,trs,desc,lots,qqs,flags
+Liliana Perkins and Karter Perkins,Marina Mountain Holding Company,8/28/2006,"Book 1543, Page 526","T. 153 No ,  Rge 103 W
+Section 33: SE¼NW¼
+Section 16: SW¼SE¼NW¼
+Sec 22: SW¼, Lot  8  thru 12 and 12  to 16 , 12 - 14 & 1 - 4, SE¼
+Sec. 14: SW¼, S½NE¼, E½NW¼
+
+Tw.  153 No ,  103 W
+Sec. 29: N½N½, SW¼SW¼",56522.20%,0.61,343.4798321,1,"$187,996.82 ",0001.a-e,153n103w33,SE¼NW¼,,SENW,
+,,,,,,,,,,0001.b-e,153n103w16,SW¼SE¼NW¼,,SWSENW,
+,,,,,,,,,,0001.c-e,153n103w22,"SW¼, Lot 8 thru 12 and 12 to 16 , 12 - 14 & 1 - 4, SE¼","L8, L9, L10, L11, L12, L12, L13, L14, L15, L16, L12, L13, L14, L1, L2, L3, L4","NESW, NWSW, SESW, SWSW, NESE, NWSE, SESE, SWSE",dup_lot
+,,,,,,,,,,0001.d-e,153n103w14,"SW¼, S½NE¼, E½NW¼",,"NESW, NWSW, SESW, SWSW, SENE, SWNE, NENW, SENW",
+,,,,,,,,,,0001.e-e,153n103w29,"N½N½, SW¼SW¼",,"NENE, NWNE, NENW, NWNW, SWSW",
+Vanessa Marshall and Alan Marshall,Marina Mountain Holding Company,1/12/1953,"Book 7351, Page 821","SW1/4SW1/4, NE1/4SW1/4, L  8 thru 12 & 7 of Section 18, SE1/4NW1/4NW1/4 of Sec.29, Lot  8, S1/2N1/2, SE1/4, E1/2NE1/4 of Section 23, Twp. 155 N - Range   98 W.",74023.97%,0.58,429.4123693,1,"$235,030.27 ",0002.a-c,155n98w18,"SW1/4SW1/4, NE1/4SW1/4, L 8 thru 12 & 7","L8, L9, L10, L11, L12, L7","SWSW, NESW",
+,,,,,,,,,,0002.b-c,155n98w29,SE1/4NW1/4NW1/4,,SENWNW,
+,,,,,,,,,,0002.c-c,155n98w23,"Lot 8, S1/2N1/2, SE1/4, E1/2NE1/4",L8,"SENE, SWNE, SENW, SWNW, NESE, NWSE, SESE, SWSE, NENE, SENE",dup_qq
+Holly Ryan and Gracelyn Ryan,Fast Sight Holding Company,2/2/1959,Doc. #8237812,"SE1/4NE1/4NW1/4, NE1/4NW1/4, NW1/4NE1/4, W1/2W1/2 of Sec.27, N1/2S1/2, N1/2S1/2, NW1/4SW1/4 of Section 25, NW1/4SE1/4 of Sec 36, Twp155 No. -  R. 103 West; NE1/4NW1/4, W1/2SE1/4, SW1/4NW1/4 of Sec. 28, NE1/4NW1/4, SE1/4SE1/4NW1/4, NE1/4NE1/4 of Sec9, Tw. 155 North , Range 99 W",56823.09%,0.11,61.15760998,3,"$4,668.16 ",0003.a-e,155n103w27,"SE1/4NE1/4NW1/4, NE1/4NW1/4, NW1/4NE1/4, W1/2W1/2",,"SENENW, NENW, NWNE, NWNW, SWNW, NWSW, SWSW",
+,,,,,,,,,,0003.b-e,155n103w25,"N1/2S1/2, N1/2S1/2, NW1/4SW1/4",,"NESE, NWSE, NESW, NWSW, NESE, NWSE, NESW, NWSW, NWSW",dup_qq
+,,,,,,,,,,0003.c-e,155n103w36,NW1/4SE1/4,,NWSE,
+,,,,,,,,,,0003.d-e,155n99w28,"NE1/4NW1/4, W1/2SE1/4, SW1/4NW1/4",,"NENW, NWSE, SWSE, SWNW",
+,,,,,,,,,,0003.e-e,155n99w09,"NE1/4NW1/4, SE1/4SE1/4NW1/4, NE1/4NE1/4",,"NENW, SESENW, NENE",
+Mena Miles and Clara Miles,Focused Carrion Corp.,6/7/1954,"Book 7403, Page 649","Township 155 No -  Range 102 
+Sec. 18: SE1/4NW1/4NE1/4
+Sec. 10: W1/2SE1/4, NE1/4SW1/4
+
+Townshp 155North - Rg 099 West
+Sec.2: N1/2N1/2, S1/2S1/2, SE1/4SE1/4, E1/2NW1/4
+
+Twp. 154 No , Range 97 W
+Sec14: NW1/4SE1/4",118067.10%,0.34,403.2787745,2,"$125,790.72 ",0004.a-d,155n102w18,SE1/4NW1/4NE1/4,,SENWNE,T&R_fixed<155n102w>
+,,,,,,,,,,0004.b-d,155n102w10,"W1/2SE1/4, NE1/4SW1/4",,"NWSE, SWSE, NESW",T&R_fixed<155n102w>
+,,,,,,,,,,0004.c-d,155n99w02,"N1/2N1/2, S1/2S1/2, SE1/4SE1/4, E1/2NW1/4",,"NENE, NWNE, NENW, NWNW, SESE, SWSE, SESW, SWSW, SESE, NENW, SENW","T&R_fixed<155n102w>, dup_qq"
+,,,,,,,,,,0004.d-d,154n97w14,NW1/4SE1/4,,NWSE,T&R_fixed<155n102w>
+Allen Howard et al,Striking Knapp Limited Liability Company,3/13/1978,Doc. #8213826,"Township  155No - Rge 67 East
+Sec 2:South West Quarter of south west quarter, South West Quarter of North East Quarter, Northeast Quarter of southeast quarter
+
+T 154 N ,  R 65   E
+Section 11: southeast quarter, North Half of Northeast Quarter
+Section 30: South West Quarter
+
+T 154 N - Range 65 E
+Sec. 34: North West Quarter of southeast quarter, L 11, South West Quarter of south west quarter",77171.83%,0.23,178.7295155,1,"$97,824.03 ",0005.a-d,155n67e02,"South West Quarter of south west quarter, South West Quarter of North East Quarter, Northeast Quarter of southeast quarter",,"SWSW, SWNE, NESE",
+,,,,,,,,,,0005.b-d,154n65e11,"southeast quarter, North Half of Northeast Quarter",,"NESE, NWSE, SESE, SWSE, NENE, NWNE",
+,,,,,,,,,,0005.c-d,154n65e30,South West Quarter,,"NESW, NWSW, SESW, SWSW",
+,,,,,,,,,,0005.d-d,154n65e34,"North West Quarter of southeast quarter, L 11, South West Quarter of south west quarter",L11,"NWSE, SWSW",
+Miah Keller and Paul Keller,Hammered Equipment Corporation,11/4/1950,"Book 7709, Page 384","North Half of the southeast quarter, northwest quarter of the southeast quarter of the south west quarter, Southwest Quarter of the southwest quarter, South East Quarter of the southeast quarter of Sec.20, Twp 154 No ,R. 101",103298.29%,0.77,795.0531322,1,"$435,156.43 ",0006.a-a,154n101w20,"North Half of the southeast quarter, northwest quarter of the southeast quarter of the south west quarter, Southwest Quarter of the southwest quarter, South East Quarter of the southeast quarter",,"NESE, NWSE, NWSESW, SWSW, SESE",T&R_fixed<154n101w>
+Emmaline Matthews,Focused Carrion Corp.,6/22/1984,"Book 2552, Page 636","Township  155  , R. 101 Wes
+Sec 35: SE¼NW¼, NE¼SE¼
+Sec 12: W½E½, NW¼SW¼SW¼
+
+Township 155 N  - Rge. 97 W
+Sec 3: NE¼NW¼SW¼, L.  4 through 7 & 12 through 15, SE¼, NE¼",88363.09%,0.1,89.47940843,3,"$6,829.96 ",0007.a-c,155n101w35,"SE¼NW¼, NE¼SE¼",,"SENW, NESE",T&R_fixed<155n101w>
+,,,,,,,,,,0007.b-c,155n101w12,"W½E½, NW¼SW¼SW¼",,"NWNE, SWNE, NWSE, SWSE, NWSWSW",T&R_fixed<155n101w>
+,,,,,,,,,,0007.c-c,155n97w03,"NE¼NW¼SW¼, L. 4 through 7 & 12 through 15, SE¼, NE¼","L4, L5, L6, L7, L12, L13, L14, L15","NENWSW, NESE, NWSE, SESE, SWSE, NENE, NWNE, SENE, SWNE",T&R_fixed<155n101w>
+Joel Hayes and Rebecca Hayes,Striking Knapp Limited Liability Company,4/7/1997,"Book 785, Page 511","W½W½, NW¼NW¼NE¼ of Section 18, T. 154 North , Rge 101 W.; L14, SE¼, SE¼SW¼, SE¼NE¼ of Sec. 4, T 153N. , R 103 West; L.  9 &  15 , 11 and 5 thru 7 of Section22, NE¼NE¼, W½NW¼, L. 13, NW¼ of Sec 20, NE¼SE¼ of Sec. 2, Township 154 North , R 99 West",71698.83%,0.46,332.8556502,3,"$25,406.87 ",0008.a-e,154n101w18,"W½W½, NW¼NW¼NE¼",,"NWNW, SWNW, NWSW, SWSW, NWNWNE",
+,,,,,,,,,,0008.b-e,153n103w04,"L14, SE¼, SE¼SW¼, SE¼NE¼",L14,"NESE, NWSE, SESE, SWSE, SESW, SENE",
+,,,,,,,,,,0008.c-e,154n99w22,"L. 9 & 15 , 11 and 5 thru 7","L9, L15, L11, L5, L6, L7",,
+,,,,,,,,,,0008.d-e,154n99w20,"NE¼NE¼, W½NW¼, L. 13, NW¼",L13,"NENE, NWNW, SWNW, NENW, NWNW, SENW, SWNW",dup_qq
+,,,,,,,,,,0008.e-e,154n99w02,NE¼SE¼,,NESE,
+Ashley Washington and Frederick Washington,Fast Sight Holding Company,5/15/2015,"Book 5227, Page 460","NE1/4NE1/4NE1/4, NE1/4SE1/4, SE1/4NE1/4 of Sec 5, Townshi  154 No , Rg099 West; NE1/4NE1/4, N1/2NE1/4, NW1/4, NE1/4SW1/4 of Section10, S1/2NE1/4, NW1/4SW1/4, Lot 14 of Sec.  27, SW1/4SE1/4NE1/4, N1/2 of Sec 12, Township 155 N - Rge 101Wes",12749.55%,0.8,101.7280941,3,"$7,764.91 ",0009.a-d,154n99w05,"NE1/4NE1/4NE1/4, NE1/4SE1/4, SE1/4NE1/4",,"NENENE, NESE, SENE",
+,,,,,,,,,,0009.b-d,155n101w10,"NE1/4NE1/4, N1/2NE1/4, NW1/4, NE1/4SW1/4",,"NENE, NENE, NWNE, NENW, NWNW, SENW, SWNW, NESW",dup_qq
+,,,,,,,,,,0009.c-d,155n101w27,"S1/2NE1/4, NW1/4SW1/4, Lot 14",L14,"SENE, SWNE, NWSW",
+,,,,,,,,,,0009.d-d,155n101w12,"SW1/4SE1/4NE1/4, N1/2",,"SWSENE, NENE, NWNE, SENE, SWNE, NENW, NWNW, SENW, SWNW",
+"Lucas Rivera, as Trustee",Focused Carrion Corp.,2/7/1987,"Book 3862, Page 531","SE4SW4 of Sec. 7, NE4, SE4 of Section 29, W2SE4, W2W2, Lots  13 and 16 of Sec 17, Twp.  153 North ,  R 099 West",99656.28%,0.05,49.20145199,2,"$15,346.92 ",0010.a-c,153n99w07,SE4SW4,,SESW,
+,,,,,,,,,,0010.b-c,153n99w29,"NE4, SE4",,"NENE, NWNE, SENE, SWNE, NESE, NWSE, SESE, SWSE",
+,,,,,,,,,,0010.c-c,153n99w17,"W2SE4, W2W2, Lots 13 and 16","L13, L16","NWSE, SWSE, NWNW, SWNW, NWSW, SWSW",
+Benjamin Hunt,Hammered Equipment Corporation,1/25/1974,"Book 6860, Page 355","Twp. 155 North  - R. 101 W
+Sec 31: North East Quarter of the Southwest Quarter
+Section 13: L 11",69716.02%,0.19,132.9888218,3,"$10,151.04 ",0011.a-b,155n101w31,North East Quarter of the Southwest Quarter,,NESW,
+,,,,,,,,,,0011.b-b,155n101w13,L 11,L11,,
+Phoenix Daniels,Clear Flight Incorporated,5/4/1997,"Book 8141, Page 202","W1/2E1/2 of Sec.28, SE1/4NW1/4NW1/4, NW1/4NE1/4, L. 6, NE1/4 of Section 4, Tw. 155 No.  , R 097  West; NW1/4NE1/4NE1/4 of Sec. 7, Tw. 155  No -Rg.100Wst; NE1/4NW1/4 of Section 2, NE1/4SW1/4, S1/2SE1/4 of Sec  33, Twp.153  N - Rg 098  W",109704.35%,0.05,51.55879754,2,"$16,082.22 ",0012.a-e,155n97w28,W1/2E1/2,,"NWNE, SWNE, NWSE, SWSE",
+,,,,,,,,,,0012.b-e,155n97w04,"SE1/4NW1/4NW1/4, NW1/4NE1/4, L. 6, NE1/4",L6,"SENWNW, NWNE, NENE, NWNE, SENE, SWNE",dup_qq
+,,,,,,,,,,0012.c-e,155n100w07,NW1/4NE1/4NE1/4,,NWNENE,
+,,,,,,,,,,0012.d-e,153n98w02,NE1/4NW1/4,,NENW,
+,,,,,,,,,,0012.e-e,153n98w33,"NE1/4SW1/4, S1/2SE1/4",,"NESW, SESE, SWSE",
+Ruth Fernandez and Taven Fernandez,Sixteen Matrix Holding Company,7/10/2014,Doc. #572440,"W2SW4 of Sec. 29, SE4, S2S2, NE4SE4 of Sec. 19, E2SE4, SW4NE4, SW4SE4, SE4 of Sec. 12, NW4NE4 of Section 2, Twp  154 No - Rge 100 W",119265.74%,0.51,611.8241264,2,"$190,840.18 ",0013.a-d,154n100w29,W2SW4,,"NWSW, SWSW",
+,,,,,,,,,,0013.b-d,154n100w19,"SE4, S2S2, NE4SE4",,"NESE, NWSE, SESE, SWSE, SESE, SWSE, SESW, SWSW, NESE",dup_qq
+,,,,,,,,,,0013.c-d,154n100w12,"E2SE4, SW4NE4, SW4SE4, SE4",,"NESE, SESE, SWNE, SWSE, NESE, NWSE, SESE, SWSE",dup_qq
+,,,,,,,,,,0013.d-d,154n100w02,NW4NE4,,NWNE,
+Julieta Valdez and Frederick Valdez,Clear Flight Incorporated,5/10/2003,Doc. #7785937,"SW4NW4, L. 10, W2W2NW4, SW4SE4 of Sec. 13, Township 155 No , Range 102W; SW4SE4, N2, SE4, NW4NW4 of Sec. 33, L  13 of Section 23, SE4NW4NW4, N2N2, NE4 of Sec 31, Tw.155 North , Range 099",120296.34%,0.11,131.7831083,1,"$72,128.85 ",0014.a-d,155n102w13,"SW4NW4, L. 10, W2W2NW4, SW4SE4",L10,"SWNW, W2NWNW, W2SWNW, SWSE",T&R_fixed<155n99w>
+,,,,,,,,,,0014.b-d,155n99w33,"SW4SE4, N2, SE4, NW4NW4",,"SWSE, NENE, NWNE, SENE, SWNE, NENW, NWNW, SENW, SWNW, NESE, NWSE, SESE, SWSE, NWNW","T&R_fixed<155n99w>, dup_qq"
+,,,,,,,,,,0014.c-d,155n99w23,L 13,L13,,T&R_fixed<155n99w>
+,,,,,,,,,,0014.d-d,155n99w31,"SE4NW4NW4, N2N2, NE4",,"SENWNW, NENE, NWNE, NENW, NWNW, NENE, NWNE, SENE, SWNE","T&R_fixed<155n99w>, dup_qq"
+Carleigh Gregory and Lewis Gregory,Fast Sight Holding Company,1/10/1996,Doc. #8492265,"T 155 North - Rg. 101 
+Section 32: L 10
+Sec.  19: L 6, NW4 of SW4, S2 of S2, N2 of SE4
+Sec 35: W2 of SE4
+Section 23: SW4 of SW4",119802.98%,0.49,585.7426394,1,"$320,594.52 ",0015.a-d,155n101w32,L 10,L10,,T&R_fixed<155n101w>
+,,,,,,,,,,0015.b-d,155n101w19,"L 6, NW4 of SW4, S2 of S2, N2 of SE4",L6,"NWSW, SESE, SWSE, SESW, SWSW, NESE, NWSE",T&R_fixed<155n101w>
+,,,,,,,,,,0015.c-d,155n101w35,W2 of SE4,,"NWSE, SWSE",T&R_fixed<155n101w>
+,,,,,,,,,,0015.d-d,155n101w23,SW4 of SW4,,SWSW,T&R_fixed<155n101w>
+Crystal Byrd,Beyond Wealth Partners,8/23/1989,"Book 2134, Page 41","T. 153 No. - Rg 098 West
+Sec32: NE¼NE¼
+Sec.13: SW¼, N½NW¼
+Section 22: NE¼NW¼NW¼
+Section 1:  NE¼, Lot 9, SW¼SE¼
+
+Tw 155 North - R 97 W
+Sec 17: L. 13, S½",15914.17%,0.93,148.7370227,1,"$81,408.23 ",0016.a-e,153n98w32,NE¼NE¼,,NENE,
+,,,,,,,,,,0016.b-e,153n98w13,"SW¼, N½NW¼",,"NESW, NWSW, SESW, SWSW, NENW, NWNW",
+,,,,,,,,,,0016.c-e,153n98w22,NE¼NW¼NW¼,,NENWNW,
+,,,,,,,,,,0016.d-e,153n98w01,"NE¼, Lot 9, SW¼SE¼",L9,"NENE, NWNE, SENE, SWNE, SWSE",
+,,,,,,,,,,0016.e-e,155n97w17,"L. 13, S½",L13,"NESE, NWSE, SESE, SWSE, NESW, NWSW, SESW, SWSW",
+Claudia Hayes and Layton Hayes,Fast Sight Holding Company,11/19/1960,"Book 1217, Page 516","T  153No , Range 68 East
+Sec. 6: South Half of the South Half, L  8 - 10 &  16, southwest quarter
+Sec21: North West Quarter, East Half of the West Half, L  9 through 12 and 8 and 13, West Half of the southwest quarter
+Sec. 30: northeast quarter of the Northwest Quarter of the southwest quarter, South West Quarter of the Southwest Quarter, South West Quarter
+Section 24: West Half of the north west quarter, South Half of the North Half",87695.82%,0.4,351.4037829,2,"$109,609.87 ",0017.a-d,153n68e06,"South Half of the South Half, L 8 - 10 & 16, southwest quarter","L8, L9, L10, L16","SESE, SWSE, SESW, SWSW, NESW, NWSW, SESW, SWSW",dup_qq
+,,,,,,,,,,0017.b-d,153n68e21,"North West Quarter, East Half of the West Half, L 9 through 12 and 8 and 13, West Half of the southwest quarter","L9, L10, L11, L12, L8, L13","NENW, NWNW, SENW, SWNW, NENW, SENW, NESW, SESW, NWSW, SWSW",dup_qq
+,,,,,,,,,,0017.c-d,153n68e30,"northeast quarter of the Northwest Quarter of the southwest quarter, South West Quarter of the Southwest Quarter, South West Quarter",,"NENWSW, SWSW, NESW, NWSW, SESW, SWSW",dup_qq
+,,,,,,,,,,0017.d-d,153n68e24,"West Half of the north west quarter, South Half of the North Half",,"NWNW, SWNW, SENE, SWNE, SENW, SWNW",dup_qq
+Elaina Boyd et al,Quick Lake LP,11/22/1960,"Book 4959, Page 693","T154 No. , R. 100 W
+Section 34: SW/4SW/4, W/2W/2E/2, L.  5 and 10 to 15, NE/4
+
+Twp. 155  North , Rge. 99 W
+Section 15: Lots  16 and 10 & 4 to 6, E/2NE/4
+Sec.  6 and 7: S/2S/2
+Sec. 7: S/2NE/4",102392.65%,0.68,696.0959486,2,"$217,126.25 ",0018.a-e,154n100w34,"SW/4SW/4, W/2W/2E/2, L. 5 and 10 to 15, NE/4","L5, L10, L11, L12, L13, L14, L15","SWSW, W2NWNE, W2SWNE, W2NWSE, W2SWSE, NENE, NWNE, SENE, SWNE","multiSec_found<06, 07>"
+,,,,,,,,,,0018.b-e,155n99w15,"Lots 16 and 10 & 4 to 6, E/2NE/4","L16, L10, L4, L5, L6","NENE, SENE","multiSec_found<06, 07>"
+,,,,,,,,,,0018.c-e,155n99w06,S/2S/2,,"SESE, SWSE, SESW, SWSW","multiSec_found<06, 07>"
+,,,,,,,,,,0018.d-e,155n99w07,S/2S/2,,"SESE, SWSE, SESW, SWSW","multiSec_found<06, 07>"
+,,,,,,,,,,0018.e-e,155n99w07,S/2NE/4,,"SENE, SWNE","multiSec_found<06, 07>"
+Carlos Mendez and Luke Mendez,Hammered Equipment Corporation,12/20/1988,"Book 9131, Page 460","Tw. 155N- Rge. 100
+Sec. 27:   NE1/4NW1/4, E1/2W1/2, SW1/4NW1/4, SE1/4SW1/4SW1/4
+
+T 153 No , Range 99 East
+Sec 21:  Lot2, SW1/4NE1/4, SE1/4NW1/4
+Sec 24: NE1/4NE1/4, L. 1, SE1/4SE1/4
+Sec 12: Lot 14, E1/2W1/2, S1/2S1/2
+Sec 4: Lots 3  to 8, 13, NE1/4SE1/4, SE1/4, SW1/4NW1/4",82206.67%,0.33,272.1118436,3,"$20,770.30 ",0019.a-e,155n100w27,"NE1/4NW1/4, E1/2W1/2, SW1/4NW1/4, SE1/4SW1/4SW1/4",,"NENW, NENW, SENW, NESW, SESW, SWNW, SESWSW","T&R_fixed<155n100w>, dup_qq"
+,,,,,,,,,,0019.b-e,153n99e21,"Lot2, SW1/4NE1/4, SE1/4NW1/4",L2,"SWNE, SENW",T&R_fixed<155n100w>
+,,,,,,,,,,0019.c-e,153n99e24,"NE1/4NE1/4, L. 1, SE1/4SE1/4",L1,"NENE, SESE",T&R_fixed<155n100w>
+,,,,,,,,,,0019.d-e,153n99e12,"Lot 14, E1/2W1/2, S1/2S1/2",L14,"NENW, SENW, NESW, SESW, SESE, SWSE, SESW, SWSW","T&R_fixed<155n100w>, dup_qq"
+,,,,,,,,,,0019.e-e,153n99e04,"Lots 3 to 8, 13, NE1/4SE1/4, SE1/4, SW1/4NW1/4","L3, L4, L5, L6, L7, L8, L13","NESE, NESE, NWSE, SESE, SWSE, SWNW","T&R_fixed<155n100w>, dup_qq"
+Antonella West et al,Marina Mountain Holding Company,10/26/1999,"Book 539, Page 355","Twp. 155 N. - Range 98 
+Sec. 11: N1/2S1/2, S1/2N1/2NW1/4
+
+Twnship 154 No. , Rge. 099 
+Section  28:NE1/4, NW1/4SW1/4, W1/2W1/2
+Sec. 9: SE1/4SW1/4, NW1/4SE1/4, L 11
+Sect 8:NW1/4SW1/4, SE1/4SE1/4, NE1/4NW1/4",126700.36%,0.48,603.0349801,2,"$188,098.67 ",0020.a-d,155n98w11,"N1/2S1/2, S1/2N1/2NW1/4",,"NESE, NWSE, NESW, NWSW, S2NENW, S2NWNW",T&R_fixed<155n98w//154n99w>
+,,,,,,,,,,0020.b-d,154n99w28,"NE1/4, NW1/4SW1/4, W1/2W1/2",,"NENE, NWNE, SENE, SWNE, NWSW, NWNW, SWNW, NWSW, SWSW","T&R_fixed<155n98w//154n99w>, dup_qq"
+,,,,,,,,,,0020.c-d,154n99w09,"SE1/4SW1/4, NW1/4SE1/4, L 11",L11,"SESW, NWSE",T&R_fixed<155n98w//154n99w>
+,,,,,,,,,,0020.d-d,154n99w08,"NW1/4SW1/4, SE1/4SE1/4, NE1/4NW1/4",,"NWSW, SESE, NENW",T&R_fixed<155n98w//154n99w>
+"Devin Simmons, dealing in sole and separate property",Miller's Coast Holding Company,7/16/2009,"Book 2882, Page 959","Township 153 No - Rge 103 W
+Sec.  21: West Half of the West Half of the East Half
+Sec26: East Half of the East Half, southwest quarter of the northeast quarter, Southwest Quarter of the Northeast Quarter",37293.09%,0.78,289.8831358,2,"$90,420.35 ",0021.a-b,153n103w21,West Half of the West Half of the East Half,,"W2NWNE, W2SWNE, W2NWSE, W2SWSE",
+,,,,,,,,,,0021.b-b,153n103w26,"East Half of the East Half, southwest quarter of the northeast quarter, Southwest Quarter of the Northeast Quarter",,"NENE, SENE, NESE, SESE, SWNE, SWNE",dup_qq
+Matthew Matthews and Johanna Matthews,Clear Flight Incorporated,11/20/1981,"Book 3837, Page 469","Lot 11 of Section 28, N2NW4NW4, S2N2 of Section 7, Lot 3, SE4SE4 of Sec10, N2NE4, E2NW4NE4 of Sec  1, Twp153   , Range 99 W",37672.70%,0.92,346.5876146,1,"$189,697.80 ",0022.a-d,153n99w28,Lot 11,L11,,T&R_fixed<153n99w>
+,,,,,,,,,,0022.b-d,153n99w07,"N2NW4NW4, S2N2",,"N2NWNW, SENE, SWNE, SENW, SWNW",T&R_fixed<153n99w>
+,,,,,,,,,,0022.c-d,153n99w10,"Lot 3, SE4SE4",L3,SESE,T&R_fixed<153n99w>
+,,,,,,,,,,0022.d-d,153n99w01,"N2NE4, E2NW4NE4",,"NENE, NWNE, E2NWNE",T&R_fixed<153n99w>
+"Adelaide Ryan and Kade Ryan, as Trustees",Sixteen Matrix Holding Company,10/16/1996,Doc. #9844231,"Township 154No., Rge.98 
+Sec. 2: West Half of the West Half, Southwest Quarter of the Southwest Quarter",66007.11%,0.39,257.1353195,1,"$140,737.87 ",0023.a-a,154n98w02,"West Half of the West Half, Southwest Quarter of the Southwest Quarter",,"NWNW, SWNW, NWSW, SWSW, SWSW","T&R_fixed<154n98w>, dup_qq"
+Celine Watson et vir,Clear Flight Incorporated,7/26/1984,Doc. #6102584,"T.  154 No - Rg. 098 W
+Sec. 36: Lots  4 and4, NW/4SE/4, SE/4NW/4, NE/4SW/4
+
+T 154 N. - Rg. 101 W
+Sec.14: SW/4SW/4, NE/4SW/4
+
+Townshp 153 No- R. 98 W
+Sec 24: SE/4SE/4, SW/4NE/4, Lot 10
+Sec.25: S/2S/2SW/4, SW/4NE/4, NW/4NW/4
+Sec.  14: L. 7, SW/4NE/4, NW/4SE/4",120861.57%,0.2,242.566123,2,"$75,661.23 ",0024.a-e,154n98w36,"Lots 4 and4, NW/4SE/4, SE/4NW/4, NE/4SW/4","L4, L4","NWSE, SENW, NESW",dup_lot
+,,,,,,,,,,0024.b-e,154n101w14,"SW/4SW/4, NE/4SW/4",,"SWSW, NESW",
+,,,,,,,,,,0024.c-e,153n98w24,"SE/4SE/4, SW/4NE/4, Lot 10",L10,"SESE, SWNE",
+,,,,,,,,,,0024.d-e,153n98w25,"S/2S/2SW/4, SW/4NE/4, NW/4NW/4",,"S2SESW, S2SWSW, SWNE, NWNW",
+,,,,,,,,,,0024.e-e,153n98w14,"L. 7, SW/4NE/4, NW/4SE/4",L7,"SWNE, NWSE",
+"Amey Kennedy and Carson Kennedy, as Trustees",Striking Knapp Limited Liability Company,11/26/1958,Doc. #4253701,"north east quarter of the northwest quarter, southwest quarter of the southwest quarter, L 10 of Section 29, North West Quarter of the Northeast Quarter, south east quarter, southeast quarter of the North East Quarter of Sec20, T155 North - Range 097 W; south east quarter, North West Quarter of the southeast quarter, North Half of the South Half of Sec 28, East Half of Setion 16, northeast quarter of the northwest quarter of Sec.  15, Township 155  , Range  98  W",7312.67%,0.58,42.41073453,1,"$23,212.67 ",0025.a-d,155n97w29,"north east quarter of the northwest quarter, southwest quarter of the southwest quarter, L 10",L10,"NENW, SWSW",T&R_fixed<155n98w>
+,,,,,,,,,,0025.b-d,155n97w20,"North West Quarter of the Northeast Quarter, south east quarter, southeast quarter of the North East Quarter",,"NWNE, NESE, NWSE, SESE, SWSE, SENE",T&R_fixed<155n98w>
+,,,,,,,,,,0025.c-d,155n98w28,"south east quarter, North West Quarter of the southeast quarter, North Half of the South Half",,"NESE, NWSE, SESE, SWSE, NWSE, NESE, NWSE, NESW, NWSW","T&R_fixed<155n98w>, dup_qq"
+,,,,,,,,,,0025.d-d,155n98w15,"East Half of Setion 16, northeast quarter of the northwest quarter",,"NENE, NWNE, SENE, SWNE, NESE, NWSE, SESE, SWSE, NENW",T&R_fixed<155n98w>
+Gracelynn Gibson and Laylah Gibson,Fast Sight Holding Company,7/9/2000,"Book 7685, Page 639","Township 155  No  Rge.97  W
+Sec. 1: SW4, SE4NW4, E2SE4, SW4
+Sec 13: NE4NE4, SE4SW4
+
+T 155 N - Rge 103 W.
+Sec 25: SE4, SE4NW4SE4
+
+Township 154 N. , Rge 100 West
+Section 2: NW4NE4, SW4
+Sections 11: NE4NW4, NE4SE4, E2E2",107963.89%,0.83,894.426675,3,"$68,271.59 ",0026.a-e,155n97w01,"SW4, SE4NW4, E2SE4, SW4",,"NESW, NWSW, SESW, SWSW, SENW, NESE, SESE, NESW, NWSW, SESW, SWSW",dup_qq
+,,,,,,,,,,0026.b-e,155n97w13,"NE4NE4, SE4SW4",,"NENE, SESW",
+,,,,,,,,,,0026.c-e,155n103w25,"SE4, SE4NW4SE4",,"NESE, NWSE, SESE, SWSE, SENWSE",
+,,,,,,,,,,0026.d-e,154n100w02,"NW4NE4, SW4",,"NWNE, NESW, NWSW, SESW, SWSW",
+,,,,,,,,,,0026.e-e,154n100w11,"NE4NW4, NE4SE4, E2E2",,"NENW, NESE, NENE, SENE, NESE, SESE",dup_qq
+Vera Porter et ux,Beyond Wealth Partners,11/13/1987,"Book 4754, Page 106","North East Quarter of Sec. 19, southeast quarter, south west quarter of Northwest Quarter, North Half of northeast quarter, north east quarter of south west quarter of Section 36, northwest quarter of Southwest Quarter of Northeast Quarter of Sec 27, L 2, north west quarter of northwest quarter of North West Quarter, Northeast Quarter of north west quarter, Northeast Quarter of Sec. 2, Tw. 153 No, R 101 W.",25707.10%,0.39,100.8609399,3,"$7,698.72 ",0027.a-d,153n101w19,North East Quarter,,"NENE, NWNE, SENE, SWNE",
+,,,,,,,,,,0027.b-d,153n101w36,"southeast quarter, south west quarter of Northwest Quarter, North Half of northeast quarter, north east quarter of south west quarter",,"NESE, NWSE, SESE, SWSE, SWNW, NENE, NWNE, NESW",
+,,,,,,,,,,0027.c-d,153n101w27,northwest quarter of Southwest Quarter of Northeast Quarter,,NWSWNE,
+,,,,,,,,,,0027.d-d,153n101w02,"L 2, north west quarter of northwest quarter of North West Quarter, Northeast Quarter of north west quarter, Northeast Quarter",L2,"NWNWNW, NENW, NENE, NWNE, SENE, SWNE",
+Lucy Rogers,Beyond Wealth Partners,8/13/2015,"Book 3387, Page 711","T 153 N., Rg. 100 W
+Sec. 36: Northwest Quarter of the north east quarter, Southwest Quarter of the southwest quarter, south east quarter
+Sec. 20: South Half of the Northeast Quarter, East Half of the West Half, L. 7
+Sec. 32:  South West Quarter of the north east quarter, L.  12 and 7 to 12 and7 through 9, North Half of the Northeast Quarter, North Half
+Sec. 2: Southeast Quarter of the Southwest Quarter, West Half of the East Half of the East Half, Northeast Quarter of the southeast quarter of the northwest quarter",73466.01%,0.44,319.7353171,3,"$24,405.40 ",0028.a-d,153n100w36,"Northwest Quarter of the north east quarter, Southwest Quarter of the southwest quarter, south east quarter",,"NWNE, SWSW, NESE, NWSE, SESE, SWSE",
+,,,,,,,,,,0028.b-d,153n100w20,"South Half of the Northeast Quarter, East Half of the West Half, L. 7",L7,"SENE, SWNE, NENW, SENW, NESW, SESW",
+,,,,,,,,,,0028.c-d,153n100w32,"South West Quarter of the north east quarter, L. 12 and 7 to 12 and7 through 9, North Half of the Northeast Quarter, North Half","L12, L7, L8, L9, L10, L11, L12, L7, L8, L9","SWNE, NENE, NWNE, NENE, NWNE, SENE, SWNE, NENW, NWNW, SENW, SWNW","dup_lot, dup_qq"
+,,,,,,,,,,0028.d-d,153n100w02,"Southeast Quarter of the Southwest Quarter, West Half of the East Half of the East Half, Northeast Quarter of the southeast quarter of the northwest quarter",,"SESW, W2NENE, W2SENE, W2NESE, W2SESE, NESENW",
+Salvador Gilbert and Vance Gilbert,Hammered Equipment Corporation,12/7/1954,"Book 1122, Page 730","L 14, SW/4SE/4SE/4, NE/4 of Sec   12, Twp.155 N - Rge 101 West; N/2N/2, Lots  12 and 13 & 14 to 16, N/2NE/4 of Section 26, W/2SW/4, L.  11 and 9, S/2N/2 of Sec.  34, N/2S/2, NW/4SE/4NE/4, SE/4SE/4, NE/4 of Section 29, Twp. 154  N. , Range 100 W.; S/2S/2 of Section 2, Twp. 154 No. - R  97",93917.72%,0.33,312.5358149,3,"$23,855.86 ",0029.a-e,155n101w12,"L 14, SW/4SE/4SE/4, NE/4",L14,"SWSESE, NENE, NWNE, SENE, SWNE",T&R_fixed<154n97w>
+,,,,,,,,,,0029.b-e,154n100w26,"N/2N/2, Lots 12 and 13 & 14 to 16, N/2NE/4","L12, L13, L14, L15, L16","NENE, NWNE, NENW, NWNW, NENE, NWNE","T&R_fixed<154n97w>, dup_qq"
+,,,,,,,,,,0029.c-e,154n100w34,"W/2SW/4, L. 11 and 9, S/2N/2","L11, L9","NWSW, SWSW, SENE, SWNE, SENW, SWNW",T&R_fixed<154n97w>
+,,,,,,,,,,0029.d-e,154n100w29,"N/2S/2, NW/4SE/4NE/4, SE/4SE/4, NE/4",,"NESE, NWSE, NESW, NWSW, NWSENE, SESE, NENE, NWNE, SENE, SWNE",T&R_fixed<154n97w>
+,,,,,,,,,,0029.e-e,154n97w02,S/2S/2,,"SESE, SWSE, SESW, SWSW",T&R_fixed<154n97w>
+Elisabeth Romero and Vance Romero,Deep Manufacturing Corp.,12/16/2013,"Book 4433, Page 818","south west quarter of the south east quarter of the north east quarter, Northeast Quarter of the south east quarter, southwest quarter of Seciton 18, East Half of the East Half, Southwest Quarter of the South East Quarter of the Southwest Quarter of Section 13, northwest quarter, L 15, North East Quarter of the North West Quarter of Sec. 3, Southeast Quarter, southwest quarter of the Northeast Quarter of the north west quarter of Section5, Township 155   - Rge. 103 W",34172.95%,0.34,115.7420989,2,"$36,102.28 ",0030.a-d,155n103w18,"south west quarter of the south east quarter of the north east quarter, Northeast Quarter of the south east quarter, southwest quarter",,"SWSENE, NESE, NESW, NWSW, SESW, SWSW",T&R_fixed<155n103w>
+,,,,,,,,,,0030.b-d,155n103w13,"East Half of the East Half, Southwest Quarter of the South East Quarter of the Southwest Quarter",,"NENE, SENE, NESE, SESE, SWSESW",T&R_fixed<155n103w>
+,,,,,,,,,,0030.c-d,155n103w03,"northwest quarter, L 15, North East Quarter of the North West Quarter",L15,"NENW, NWNW, SENW, SWNW, NENW","T&R_fixed<155n103w>, dup_qq"
+,,,,,,,,,,0030.d-d,155n103w05,"Southeast Quarter, southwest quarter of the Northeast Quarter of the north west quarter",,"NESE, NWSE, SESE, SWSE, SWNENW",T&R_fixed<155n103w>
+Lyra Todd and Antonio Todd,Strategic Plains LP,4/2/1957,"Book 6800, Page 724","T. 154 North - Rge 97  West
+Sec 14: E1/2E1/2
+Sec23: NE1/4NE1/4, Lot 11, SE1/4NE1/4, SW1/4SW1/4
+
+Tw. 154 N. , Rge. 100 West
+Sec.20: SE1/4NE1/4, W1/2, N1/2N1/2, NE1/4SE1/4
+Seciton 2: NW1/4, Lot 13, NW1/4NW1/4
+Sec 6: N1/2NW1/4NE1/4",72891.45%,0.71,517.643216,1,"$283,321.66 ",0031.a-e,154n97w14,E1/2E1/2,,"NENE, SENE, NESE, SESE",
+,,,,,,,,,,0031.b-e,154n97w23,"NE1/4NE1/4, Lot 11, SE1/4NE1/4, SW1/4SW1/4",L11,"NENE, SENE, SWSW",
+,,,,,,,,,,0031.c-e,154n100w20,"SE1/4NE1/4, W1/2, N1/2N1/2, NE1/4SE1/4",,"SENE, NENW, NWNW, SENW, SWNW, NESW, NWSW, SESW, SWSW, NENE, NWNE, NENW, NWNW, NESE",dup_qq
+,,,,,,,,,,0031.d-e,154n100w02,"NW1/4, Lot 13, NW1/4NW1/4",L13,"NENW, NWNW, SENW, SWNW, NWNW",dup_qq
+,,,,,,,,,,0031.e-e,154n100w06,N1/2NW1/4NE1/4,,N2NWNE,
+Abigail Bates et ux,Miller's Coast Holding Company,11/2/2000,"Book 8392, Page 309","Township 153N - Range 97 West
+Sec. 4: South Half of the Southeast Quarter, West Half of the southwest quarter
+Sec 21: L. 2, North West Quarter, South Half of the southwest quarter of the Northwest Quarter",74788.45%,0.35,263.6680968,3,"$20,125.79 ",0032.a-b,153n97w04,"South Half of the Southeast Quarter, West Half of the southwest quarter",,"SESE, SWSE, NWSW, SWSW",
+,,,,,,,,,,0032.b-b,153n97w21,"L. 2, North West Quarter, South Half of the southwest quarter of the Northwest Quarter",L2,"NENW, NWNW, SENW, SWNW, S2SWNW",
+"Teresa O'Brien, dealing in sole and separate property",Clear Flight Incorporated,10/11/2001,"Book 6322, Page 204","L  2 & 14 of Section15, south west quarter of the Southeast Quarter, West Half of the northeast quarter of the Southwest Quarter, L. 15 of Section 6, Twp. 155 N - Rge. 98",48024.64%,0.85,410.0088468,2,"$127,889.96 ",0033.a-b,155n98w15,L 2 & 14,"L2, L14",,T&R_fixed<155n98w>
+,,,,,,,,,,0033.b-b,155n98w06,"south west quarter of the Southeast Quarter, West Half of the northeast quarter of the Southwest Quarter, L. 15",L15,"SWSE, W2NESW",T&R_fixed<155n98w>
+"Callum Cook, as conservator for the Estate of Rayna Pena",Deep Manufacturing Corp.,10/15/1982,Doc. #4186977,"SE/4, SW/4, S/2S/2 of Sec 6, E/2 of Sec. 25, Lots  14 & 15, SW/4SE/4 of Sec.16, W/2 of Sect 12, Township154 No. ,  R100 W",90406.31%,0.23,211.168094,2,"$65,867.55 ",0034.a-d,154n100w06,"SE/4, SW/4, S/2S/2",,"NESE, NWSE, SESE, SWSE, NESW, NWSW, SESW, SWSW, SESE, SWSE, SESW, SWSW",dup_qq
+,,,,,,,,,,0034.b-d,154n100w25,E/2,,"NENE, NWNE, SENE, SWNE, NESE, NWSE, SESE, SWSE",
+,,,,,,,,,,0034.c-d,154n100w16,"Lots 14 & 15, SW/4SE/4","L14, L15",SWSE,
+,,,,,,,,,,0034.d-d,154n100w12,W/2,,"NENW, NWNW, SENW, SWNW, NESW, NWSW, SESW, SWSW",
+"Nora Rogers, as Trustee",Fast Sight Holding Company,12/14/1997,"Book 6228, Page 401","153  N, Rge. 97 West
+Sec. 18:South East Quarter of the Southeast Quarter, Southwest Quarter of the north east quarter
+
+Twp 154 North - R 097 W
+Sec. 28: Southwest Quarter of the South West Quarter, southeast quarter of the northwest quarter of the South West Quarter, Northwest Quarter of the Northwest Quarter, south east quarter of the north east quarter of the north west quarter
+Section10:  north east quarter, northwest quarter of the Southwest Quarter, South West Quarter of the southwest quarter
+Sec. 11 - 17: ALL",10576.00%,0.8,84.80627771,2,"$26,452.77 ",0035.a-j,153n97w18,"South East Quarter of the Southeast Quarter, Southwest Quarter of the north east quarter",,"SESE, SWNE","multiSec_found<11, 12, 13, 14, 15, 16, 17>"
+,,,,,,,,,,0035.b-j,154n97w28,"Southwest Quarter of the South West Quarter, southeast quarter of the northwest quarter of the South West Quarter, Northwest Quarter of the Northwest Quarter, south east quarter of the north east quarter of the north west quarter",,"SWSW, SENWSW, NWNW, SENENW","multiSec_found<11, 12, 13, 14, 15, 16, 17>"
+,,,,,,,,,,0035.c-j,154n97w10,"north east quarter, northwest quarter of the Southwest Quarter, South West Quarter of the southwest quarter",,"NENE, NWNE, SENE, SWNE, NWSW, SWSW","multiSec_found<11, 12, 13, 14, 15, 16, 17>"
+,,,,,,,,,,0035.d-j,154n97w11,ALL,,"NENE, NWNE, SENE, SWNE, NENW, NWNW, SENW, SWNW, NESE, NWSE, SESE, SWSE, NESW, NWSW, SESW, SWSW","multiSec_found<11, 12, 13, 14, 15, 16, 17>"
+,,,,,,,,,,0035.e-j,154n97w12,ALL,,"NENE, NWNE, SENE, SWNE, NENW, NWNW, SENW, SWNW, NESE, NWSE, SESE, SWSE, NESW, NWSW, SESW, SWSW","multiSec_found<11, 12, 13, 14, 15, 16, 17>"
+,,,,,,,,,,0035.f-j,154n97w13,ALL,,"NENE, NWNE, SENE, SWNE, NENW, NWNW, SENW, SWNW, NESE, NWSE, SESE, SWSE, NESW, NWSW, SESW, SWSW","multiSec_found<11, 12, 13, 14, 15, 16, 17>"
+,,,,,,,,,,0035.g-j,154n97w14,ALL,,"NENE, NWNE, SENE, SWNE, NENW, NWNW, SENW, SWNW, NESE, NWSE, SESE, SWSE, NESW, NWSW, SESW, SWSW","multiSec_found<11, 12, 13, 14, 15, 16, 17>"
+,,,,,,,,,,0035.h-j,154n97w15,ALL,,"NENE, NWNE, SENE, SWNE, NENW, NWNW, SENW, SWNW, NESE, NWSE, SESE, SWSE, NESW, NWSW, SESW, SWSW","multiSec_found<11, 12, 13, 14, 15, 16, 17>"
+,,,,,,,,,,0035.i-j,154n97w16,ALL,,"NENE, NWNE, SENE, SWNE, NENW, NWNW, SENW, SWNW, NESE, NWSE, SESE, SWSE, NESW, NWSW, SESW, SWSW","multiSec_found<11, 12, 13, 14, 15, 16, 17>"
+,,,,,,,,,,0035.j-j,154n97w17,ALL,,"NENE, NWNE, SENE, SWNE, NENW, NWNW, SENW, SWNW, NESE, NWSE, SESE, SWSE, NESW, NWSW, SESW, SWSW","multiSec_found<11, 12, 13, 14, 15, 16, 17>"
+Karri Norris et vir,Deep Manufacturing Corp.,12/18/1986,"Book 8558, Page 318","T.  154N - Rge. 099 West
+Section 33: south west quarter, South West Quarter of the Northwest Quarter, L  14
+
+Twp 153  No., Rane100 W.
+Secton 30: South East Quarter
+
+Township  154 No -  Rang  100 W
+Sec. 23: North East Quarter of the Southeast Quarter, L 3, West Half of the southeast quarter",114818.29%,0.96,1097.79155,3,"$83,794.43 ",0036.a-c,154n99w33,"south west quarter, South West Quarter of the Northwest Quarter, L 14",L14,"NESW, NWSW, SESW, SWSW, SWNW",
+,,,,,,,,,,0036.b-c,153n100w30,South East Quarter,,"NESE, NWSE, SESE, SWSE",
+,,,,,,,,,,0036.c-c,154n100w23,"North East Quarter of the Southeast Quarter, L 3, West Half of the southeast quarter",L3,"NESE, NWSE, SWSE",
