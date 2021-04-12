@@ -124,10 +124,8 @@ def parse_csv(
             f"first_row must be greater than header_row. "
             f"~~first_row={first_row}, header_row={header_row}")
 
-    # Whether we should stop after a certain number of rows
-    end_early = False
-    if last_row > 0:
-        end_early = True
+    # Whether we should stop after a certain number of rows.
+    end_early = last_row > 0
 
     if attributes in [None, '']:
         attributes = ('trs', 'desc')
@@ -139,7 +137,6 @@ def parse_csv(
 
     read_file = open(in_file)
     reader = csv.reader(read_file)
-
     write_file = open(out_file, mode='w', newline='')
     writer = csv.writer(write_file)
 
@@ -217,7 +214,8 @@ def parse_csv(
 
         for new_row_num, data in enumerate(all_tract_data, start=1):
             if new_row_num == 1 or copy_data:
-                # Copy the original row data
+                # Copy the original row list because we'll be appending
+                # to it for each new row we'll write.
                 to_write = row.copy()
             else:
                 # Blank data for inserted rows, if copy_data was not requested.
@@ -229,22 +227,19 @@ def parse_csv(
                     num=parse_num, sub=new_row_num, total_sub=total_tracts)
                 to_write.append(uid)
 
-            try:
-                # Add the parsed Tract Data
-                for val in data:
-                    if isinstance(val, (list, tuple)) and unpack:
-                        # If requested, `unpack` and join lists/tuples
-                        # before writing:
-                        to_write.append(', '.join(flatten(val)))
-                    else:
-                        to_write.append(val)
-            except IndexError:
-                # If no data for this Tract (e.g., no tracts identified
-                # in the PLSSDesc object), fill with dummy data.
-                to_write.extend([f"{attrib}: n/a" for attrib in attributes])
+            # Add the parsed Tract data.
+            for val in data:
+                if isinstance(val, (list, tuple)) and unpack:
+                    # If requested, `unpack` and join lists/tuples
+                    # before writing:
+                    to_write.append(', '.join(flatten(val)))
+                else:
+                    to_write.append(val)
 
             writer.writerow(to_write)
 
+    read_file.close()
+    write_file.close()
     print(
         f"Done. Results written to '{out_file}'. "
         f"Be sure to examine results for fidelity."
