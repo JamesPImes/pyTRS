@@ -149,9 +149,7 @@ def parse_csv(
     # if no header in original) -- for UID purposes.
     parse_num = 0
 
-    for row_num, row in enumerate(reader):
-        row_num += 1
-
+    for row_num, row in enumerate(reader, start=1):
         if write_headers:
             if row_num == header_row:
                 writer.writerow(row + ['parse_UID'] * include_uid + attributes)
@@ -167,12 +165,12 @@ def parse_csv(
 
         if (include_unparsed
                 and ((row_num < first_row) or (row_num > last_row and end_early))):
+            # Blank data to ensure unparsed rows still share the same length.
+            row = row + [''] * include_uid + ['' for _ in attributes]
             writer.writerow(row)
             continue
-
         elif row_num < first_row:
             continue
-
         elif row_num > last_row and end_early:
             break
 
@@ -308,7 +306,7 @@ class ParserAppWindow(tk.Tk):
 
         io_cur_row = 0
         io_lbl = tk.Label(
-            io_param_frame, text="Input / Output .csv Options",
+            io_param_frame, text="Output Options",
             font='"Arial Black"')
         io_lbl.grid(row=io_cur_row, column=1)
         io_cur_row += 1
