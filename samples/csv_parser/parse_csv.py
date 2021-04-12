@@ -558,8 +558,8 @@ class ParserAppWindow(tk.Tk):
         appropriate I/O fields.
         """
         # Zero-out prior data in these fields.
-        for param in self.entry_params:
-            self.entry_params[param].delete(0, 'end')
+        for entry in self.entry_params.values():
+            entry.delete(0, 'end')
 
         csv_file = open(in_file, 'r')
         reader = csv.reader(csv_file)
