@@ -276,6 +276,44 @@ class ParserAppWindow(tk.Tk):
         'unpack': ["Unpack lists", 1]
     }
 
+    # A dict of parameters that are set via tk.Entry objects, along with
+    # the text that should be used for their labels, and an error message
+    # if entered incorrectly.
+    ENTRY_PARAM_DICT = {
+        'desc_col': {
+            'lbl': 'Column with text to parse:',
+            'error': (
+                'Specify the column containing descriptions as either '
+                'the number of the column (indexed to 1), or as the '
+                'letter of the column as used in standard spreadsheet '
+                'software (A, B, ..., Z, AA, AB, etc.).\n\n'
+                '(May be up to two characters long, whether entered as '
+                'a number or as letters.)'
+            )
+        },
+        'header_row': {
+            'lbl': 'Header row (leave blank if none):',
+            'error': (
+                'To specify the row containing headers in the input '
+                '.csv file, enter a number for that row.'
+            )
+        },
+        'first_row': {
+            'lbl': 'First row to parse:',
+            'error': (
+                'Specify the first row containing descriptions to be '
+                'parsed (1 or higher).'
+            )
+        },
+        'last_row': {
+            'lbl': 'Last row to parse (leave blank for all):',
+            'error': (
+                'If you only want to parse some rows, enter a number for '
+                'the last row containing descriptions to be parsed.'
+            )
+        },
+    }
+
     def __init__(self):
         tk.Tk.__init__(self)
         self.title('pyTRS CSV Parser')
@@ -307,19 +345,14 @@ class ParserAppWindow(tk.Tk):
         io_lbl.grid(row=io_cur_row, column=1)
         io_cur_row += 1
 
-        # Generate a new IntVar for each available IO option, set its
-        # value to the default value per OUTPUT_PARAM_DICT, store it as
-        # an instance variable, and also set it to the io_param_dict.
+        # Generate a new IntVar for each available I/O option, set its
+        # value to the default value per OUTPUT_PARAM_DICT, and store it
+        # in a dict instance variable, self.io_param_dict.
         # Finally, create a checkbutton for that parameter.
-        # So for attribute 'tract_level':
-        #   -> self.tract_level_var --> a tk.IntVar with initial value 0
-        #   -> self.io_param_dict['tract_level'] --> self.tract_level_var
-        #   -> <create a checkbutton for tract_level>
         self.io_param_dict = {}
         for param in self.OUTPUT_PARAM_DICT:
             new_var = tk.IntVar()
             new_var.set(self.OUTPUT_PARAM_DICT[param][1])
-            setattr(self, f"{param}_var", new_var)
             self.io_param_dict[param] = new_var
             cb = Checkbutton(
                 io_param_frame, text=self.OUTPUT_PARAM_DICT[param][0],
@@ -340,33 +373,17 @@ class ParserAppWindow(tk.Tk):
         choose_file_button.grid(row=io_btn_cur_row, column=1, pady=10)
         io_btn_cur_row += 1
 
-        def gen_entry(txt, row):
-            """Generate a tk.Entry object and corresponding tk.Label."""
-            prompt = tk.Label(io_btn_frame, text=txt)
-            prompt.grid(row=row, column=1, sticky='e')
+        # Generate a new tk.Entry object for each option in the
+        # ENTRY_PARAM_DICT, and store it in a dict instance variable,
+        # self.entry_params.
+        self.entry_params = {}
+        for param, param_data in self.ENTRY_PARAM_DICT.items():
+            prompt = tk.Label(io_btn_frame, text=param_data['lbl'])
+            prompt.grid(row=io_btn_cur_row, column=1, sticky='e')
             entry = tk.Entry(io_btn_frame, width=5)
-            entry.grid(row=row, column=2, sticky='w')
-            return entry
-
-        self.desc_col_entry = gen_entry(
-            txt='Column with text to parse:',
-            row=io_btn_cur_row)
-        io_btn_cur_row += 1
-
-        self.header_row_entry = gen_entry(
-            txt='Header row (leave blank if none):',
-            row=io_btn_cur_row)
-        io_btn_cur_row += 1
-
-        self.first_row_entry = gen_entry(
-            txt='First row to parse:',
-            row=io_btn_cur_row)
-        io_btn_cur_row += 1
-
-        self.last_row_entry = gen_entry(
-            txt='Last row to parse (leave blank for all):',
-            row=io_btn_cur_row)
-        io_btn_cur_row += 1
+            entry.grid(row=io_btn_cur_row, column=2, sticky='w')
+            io_btn_cur_row += 1
+            self.entry_params[param] = entry
 
         cf_button = tk.Button(
             io_btn_frame, text='Choose Config Parameters', height=2,
@@ -393,7 +410,7 @@ class ParserAppWindow(tk.Tk):
         if in_file.suffix.lower() != '.csv':
             messagebox.showerror(
                 'Error', "Choose an input file with '.csv' extension")
-            return
+            return None
 
         # Prompt for save-to filepath, with default filename modified
         # from in_file.
@@ -402,105 +419,75 @@ class ParserAppWindow(tk.Tk):
             filetypes=[("CSV Files", "*.csv")], title='Save to...')
         # Ensure `out_file` points to a .csv file.
         if out_file == '':
-            return
+            return None
         out_file = Path(out_file)
         if out_file.suffix.lower() != '.csv':
             messagebox.showerror(
                 'Error', "Choose a filename with '.csv' extension")
-            return
+            return None
 
-        # Get the chosen attributes using PromptAttrib's compiler method.
+        # Pull the user-chosen attributes using PromptAttrib's compiler method.
         attributes = self.at_frame.compile_attributes()
 
-        # Individually compile all of the input/output parameters.
+        # Pull the config_text directly from the tk.StringVar.
         config_text = self.config_text.get()
-        write_headers = bool(self.write_headers_var.get())
-        unpack = bool(self.unpack_var.get())
-        copy_data = bool(self.copy_data_var.get())
-        tract_level = bool(self.tract_level_var.get())
-        include_uid = bool(self.include_uid_var.get())
-        include_unparsed = bool(self.include_unparsed_var.get())
 
-        # Get desc_col and convert to int.
-        desc_col = self.desc_col_entry.get()
-        if not desc_col:
-            messagebox.showerror(
-                'Error!',
-                'Fill in the column containing descriptions to be parsed.')
-            return
-        elif desc_col.isalpha() and len(desc_col) <= 2:
+        # Compile all other I/O parameters into a kwarg dict,
+        # converting the IntVars into bools.
+        kwargs = {
+            param: bool(var.get()) for param, var in self.io_param_dict.items()
+        }
+
+        # desc_col is handled specially because it can be entered as a
+        # number or as a letter-based name of a spreadsheet column.
+        # Verify a legal value, then add it to the kwargs dict.
+        desc_col = self.entry_params['desc_col'].get()
+        if desc_col.isalpha() and len(desc_col) <= 2:
             desc_col = int(alpha_to_num(desc_col))
         elif desc_col.isnumeric() and len(desc_col) <= 2:
             desc_col = int(desc_col)
-        if not isinstance(desc_col, int):
+        else:
             messagebox.showerror(
-                'Error!',
-                'Specify the column containing descriptions as either the '
-                'number of the column (indexed to 1), or as the letter of '
-                'the column as used in standard spreadsheet software '
-                '(A, B, ..., Z, AA, AB, etc.).\n\n'
-                '(May be up to two characters long, whether entered as a '
-                'number or as letters.)'
+                'Error!', self.ENTRY_PARAM_DICT['desc_col']['error']
             )
+            return None
+        kwargs['desc_col'] = desc_col
 
-        first_row = self.first_row_entry.get()
-        if not first_row:
-            messagebox.showerror(
-                'Error!',
-                'Specify the first row containing descriptions to be parsed.')
-            return
-        try:
-            first_row = int(first_row)
-        except (TypeError, ValueError):
-            messagebox.showerror(
-                'Error!',
-                'Enter a number for the first row containing descriptions to '
-                'be parsed.')
-            return
+        # Add the other parameters set via tk.Entry objects to kwargs.
+        for param, entry in self.entry_params.items():
+            if param == 'desc_col':
+                # desc_col was already handled above.
+                continue
+            val = entry.get()
+            if val:
+                # If specified, it must be a valid number.
+                try:
+                    val = int(val)
+                except (TypeError, ValueError):
+                    messagebox.showerror(
+                        'Error', self.ENTRY_PARAM_DICT[param]['error'])
+                    return None
+            else:
+                val = -1
 
-        last_row = self.last_row_entry.get()
-        if last_row:
-            try:
-                last_row = int(last_row)
-            except (TypeError, ValueError):
+            if param == 'first_row' and val < 1:
+                # Only first_row requires a valid positive number,
+                # whereas the other *_row parameters will simply be
+                # ignored when less than 1.
                 messagebox.showerror(
-                    'Error!',
-                    'If you only want to parse some rows, enter a number for '
-                    'the last row containing descriptions to be parsed.')
-                return
-        else:
-            last_row = -1
+                    'Error', self.ENTRY_PARAM_DICT[param]['error'])
+                return None
 
-        header_row = self.header_row_entry.get()
-        if header_row:
-            try:
-                header_row = int(header_row)
-            except (TypeError, ValueError):
-                messagebox.showerror(
-                    'Error!',
-                    'To specify the row containing headers in the input '
-                    '.csv file, enter a number for that row.')
-                return
-        else:
-            header_row = None
+            kwargs[param] = val
 
-        # Run the parser
+        # Run the parser.
         try:
             parse_csv(
                 in_file=in_file,
-                desc_col=desc_col,
                 attributes=attributes,
                 out_file=out_file,
-                first_row=first_row,
-                last_row=last_row,
-                header_row=header_row,
                 config=config_text,
-                write_headers=write_headers,
-                unpack=unpack,
-                copy_data=copy_data,
-                tract_level=tract_level,
-                include_uid=include_uid,
-                include_unparsed=include_unparsed)
+                **kwargs)
         except BaseException as error:
             messagebox.showerror(
                 'Error!',
@@ -571,9 +558,10 @@ class ParserAppWindow(tk.Tk):
         appropriate I/O fields.
         """
         # Zero-out prior data in these fields.
-        self.desc_col_entry.delete(0, 'end')
-        self.first_row_entry.delete(0, 'end')
-        self.header_row_entry.delete(0, 'end')
+        self.entry_params['desc_col'].delete(0, 'end')
+        self.entry_params['first_row'].delete(0, 'end')
+        self.entry_params['header_row'].delete(0, 'end')
+        self.entry_params['last_row'].delete(0, 'end')
 
         csv_file = open(in_file, 'r')
         reader = csv.reader(csv_file)
@@ -597,10 +585,10 @@ class ParserAppWindow(tk.Tk):
                 break
 
         if row_match:
-            self.desc_col_entry.insert('end', num_to_alpha(col_match))
-            self.first_row_entry.insert('end', str(row_match))
+            self.entry_params['desc_col'].insert('end', num_to_alpha(col_match))
+            self.entry_params['first_row'].insert('end', str(row_match))
             if row_match > 1:
-                self.header_row_entry.insert('end', str(row_match - 1))
+                self.entry_params['header_row'].insert('end', str(row_match - 1))
 
         csv_file.close()
         return None
