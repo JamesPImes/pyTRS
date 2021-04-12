@@ -16,6 +16,10 @@ Section 14: NE/4
 
 ![pyTRSplat 02](assets/sample_plat_02.png)
 
+Use it as a module (imported as `pytrsplat`), or use [the GUI application](https://github.com/JamesPImes/pyTRSplat#included-gui-application):
+
+![pyTRSplat 02](assets/plat_gui_01.png)
+
 Presumably, pyTRS could also be used with professional GIS software to generate more meaningful maps/insights.
 
 
