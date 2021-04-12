@@ -88,10 +88,12 @@ def parse_csv(
     Twp/Rge/Sec combo (TRS) per row, specify `tract_level=True` to parse
     the text into lots and QQs only. Defaults to False.
     :param include_uid: Include a unique identifier number for each row
-    in the format '0000-a.g' (where the digits refer to the row in the
-    original .csv, and the letters refer to how many rows were written
-    by the csv parser). Defaults to False.
-    :param include_unparsed: Copy rows that were not parsed.
+    in the format '0000-a.g' (where the digits refer to the count of
+    descriptions parsed, and the letters refer to how many rows were
+    written by the parser for each description -- i.e. how many tracts
+    were identified per description). Defaults to False.
+    :param include_unparsed: Copy rows that were not parsed. Defaults to
+    True.
     :return: Returns the filepath of the output file.
     """
 
@@ -101,8 +103,7 @@ def parse_csv(
 
     if out_file is None:
         from datetime import datetime
-        t = datetime.now()
-        ts = f"{t:%Y%m%d%H%M%S}"
+        ts = f"{datetime.now():%Y%m%d%H%M%S}"
         out_file = in_file.with_name(
             f"{in_file.stem}_pytrs_parsed_{ts}{in_file.suffix}")
 
@@ -253,9 +254,9 @@ class ParserAppWindow(tk.Tk):
     """
 
     SPLASH_INFO = (
-        f"pyTRS CSV Parser v{__version__} - {__version_date__}\n"
+        f"pyTRS CSV Parser v{__version__} - {__version_date__}.\n"
         f"Built on pyTRS {pytrs.version()}.\n"
-        "Copyright (c) 2020-2021, James P. Imes, all rights reserved.\n\n"
+        "Copyright © 2020-2021, James P. Imes, all rights reserved.\n\n"
         f"Contact: <{__email__}>\n\n"
         "A program for parsing PLSS land descriptions ('legal "
         "descriptions') in a .csv file into their component parts.\n\n"
@@ -318,7 +319,7 @@ class ParserAppWindow(tk.Tk):
         for param in self.OUTPUT_PARAM_DICT:
             new_var = tk.IntVar()
             new_var.set(self.OUTPUT_PARAM_DICT[param][1])
-            setattr(self, param + '_var', new_var)
+            setattr(self, f"{param}_var", new_var)
             self.io_param_dict[param] = new_var
             cb = Checkbutton(
                 io_param_frame, text=self.OUTPUT_PARAM_DICT[param][0],
@@ -339,31 +340,32 @@ class ParserAppWindow(tk.Tk):
         choose_file_button.grid(row=io_btn_cur_row, column=1, pady=10)
         io_btn_cur_row += 1
 
-        desc_col_prompt = tk.Label(
-            io_btn_frame, text='Column with text to parse:')
-        desc_col_prompt.grid(row=io_btn_cur_row, column=1, sticky='e')
-        self.desc_col_entry = tk.Entry(io_btn_frame, width=5)
-        self.desc_col_entry.grid(row=io_btn_cur_row, column=2, sticky='w')
+        def gen_entry(txt, row):
+            """Generate a tk.Entry object and corresponding tk.Label."""
+            prompt = tk.Label(io_btn_frame, text=txt)
+            prompt.grid(row=row, column=1, sticky='e')
+            entry = tk.Entry(io_btn_frame, width=5)
+            entry.grid(row=row, column=2, sticky='w')
+            return entry
+
+        self.desc_col_entry = gen_entry(
+            txt='Column with text to parse:',
+            row=io_btn_cur_row)
         io_btn_cur_row += 1
 
-        header_row_prompt = tk.Label(
-            io_btn_frame, text='Header row (leave blank if none):')
-        header_row_prompt.grid(row=io_btn_cur_row, column=1, sticky='e')
-        self.header_row_entry = tk.Entry(io_btn_frame, width=5)
-        self.header_row_entry.grid(row=io_btn_cur_row, column=2, sticky='w')
+        self.header_row_entry = gen_entry(
+            txt='Header row (leave blank if none):',
+            row=io_btn_cur_row)
         io_btn_cur_row += 1
 
-        first_row_prompt = tk.Label(io_btn_frame, text='First row to parse:')
-        first_row_prompt.grid(row=io_btn_cur_row, column=1, sticky='e')
-        self.first_row_entry = tk.Entry(io_btn_frame, width=5)
-        self.first_row_entry.grid(row=io_btn_cur_row, column=2, sticky='w')
+        self.first_row_entry = gen_entry(
+            txt='First row to parse:',
+            row=io_btn_cur_row)
         io_btn_cur_row += 1
 
-        last_row_prompt = tk.Label(
-            io_btn_frame, text='Last row to parse (leave blank for all):')
-        last_row_prompt.grid(row=io_btn_cur_row, column=1, sticky='e')
-        self.last_row_entry = tk.Entry(io_btn_frame, width=5)
-        self.last_row_entry.grid(row=io_btn_cur_row, column=2, sticky='w')
+        self.last_row_entry = gen_entry(
+            txt='Last row to parse (leave blank for all):',
+            row=io_btn_cur_row)
         io_btn_cur_row += 1
 
         cf_button = tk.Button(
@@ -386,33 +388,31 @@ class ParserAppWindow(tk.Tk):
         Pull the variables from all over, prompt for save-to filepath,
         and run it.
         """
-        in_file = self.in_file.get()
-
+        in_file = Path(self.in_file.get())
         # Ensure `in_file` points to a .csv file.
-        if not in_file.lower().endswith('csv'):
+        if in_file.suffix.lower() != '.csv':
             messagebox.showerror(
                 'Error', "Choose an input file with '.csv' extension")
             return
 
         # Prompt for save-to filepath, with default filename modified
         # from in_file.
-        def_file_name = f"{in_file.split('/')[-1][:-4]}_pytrs_parsed.csv"
         out_file = filedialog.asksaveasfilename(
-            initialdir=in_file, initialfile=def_file_name,
+            initialdir=in_file, initialfile=f"{in_file.stem}_pytrs_parsed.csv",
             filetypes=[("CSV Files", "*.csv")], title='Save to...')
         # Ensure `out_file` points to a .csv file.
         if out_file == '':
             return
-
-        elif not out_file.lower().endswith('csv'):
+        out_file = Path(out_file)
+        if out_file.suffix.lower() != '.csv':
             messagebox.showerror(
                 'Error', "Choose a filename with '.csv' extension")
             return
 
-        # Compile the attributes using the PromptAttrib method.
+        # Get the chosen attributes using PromptAttrib's compiler method.
         attributes = self.at_frame.compile_attributes()
 
-        # Compile all of the input/output parameters.
+        # Individually compile all of the input/output parameters.
         config_text = self.config_text.get()
         write_headers = bool(self.write_headers_var.get())
         unpack = bool(self.unpack_var.get())
