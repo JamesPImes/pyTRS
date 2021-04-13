@@ -24,7 +24,7 @@ See [the table here](https://github.com/JamesPImes/pyTRS/blob/master/guides/guid
 
 ## Extracting data in bulk from a `Tract` object
 
-[See the guide on extracting `Tract` data in bulk.](https://github.com/JamesPImes/pyTRS/blob/master/guides/extracting_data.md)
+[See the guide on extracting `Tract` data in bulk.](https://github.com/JamesPImes/pyTRS/blob/master/guides/guides/extracting_data.md)
 
 
 ## `Tract` objects created from parsing a `PLSSDesc`
@@ -42,7 +42,7 @@ for tract in parsed_plssdesc.tracts:
 
 ## Creating `Tract` objects directly
 
-When creating a `Tract` object directly, specifying the `trs` is optional; and populating `lots`, `qqs`, `lots_qqs`, and `lot_acres` attributes is also optional (parsing is turned on with `parse_qq=True` and [optionally configured with `config=`](https://github.com/JamesPImes/pyTRS/blob/master/guides/config.md)).
+When creating a `Tract` object directly, specifying the `trs` is optional; and populating `lots`, `qqs`, `lots_qqs`, and `lot_acres` attributes is also optional (parsing is turned on with `parse_qq=True` and [optionally configured with `config=`](https://github.com/JamesPImes/pyTRS/blob/master/guides/guides/config.md)).
 ```
 # Optional parameter `parse_qq=True`.
 tract_object = pytrs.Tract(
@@ -52,8 +52,8 @@ tract_object = pytrs.Tract(
 |Parameter              | Explanation                                                          |Footnote |
 |:----------------------|:---------------------------------------------------------------------|:-------:|
 |`desc=<str>`           | The description of the land lying within this unit Twp/Rge/Sec       |         |
-|`trs=<str>`            | The Twp/Rge/Sec in the [standard pyTRS format](https://github.com/JamesPImes/pyTRS/blob/master/guides/trs.md#standard-pytrs-format-for-twprgesec)                         | 1       |
-|`config=<str>`         | [Configure the parser with a number of options](https://github.com/JamesPImes/pyTRS/blob/master/guides/config.md)                        | 2       |
+|`trs=<str>`            | The Twp/Rge/Sec in the [standard pyTRS format](https://github.com/JamesPImes/pyTRS/blob/master/guides/guides/trs.md#standard-pytrs-format-for-twprgesec)                         | 1       |
+|`config=<str>`         | [Configure the parser with a number of options](https://github.com/JamesPImes/pyTRS/blob/master/guides/guides/config.md)                        | 2       |
 |`parse_qq=<bool>`      | Parse this `Tract` object into lots/aliquots               |         |
 |`source=<any>`         | Specify where this description came from.                            | 3       |
 |`orig_desc=<str>`      | The full PLSS description from which this `Tract` was carved out       | 4       |
@@ -62,7 +62,7 @@ tract_object = pytrs.Tract(
 
 Footnotes:
 
-*[See `.from_twprgesec()` footnotes 1 - 4, which are identical.](https://github.com/JamesPImes/pyTRS/blob/master/guides/tract.md#tractfrom_twprgesec-footnotes)*
+*[See `.from_twprgesec()` footnotes 1 - 4, which are identical.](https://github.com/JamesPImes/pyTRS/blob/master/guides/guides/tract.md#tractfrom_twprgesec-footnotes)*
 
 
 #### Create `Tract` objects with uncompiled Twp/Rge/Sec components with `Tract.from_twprgesec()`
@@ -83,7 +83,7 @@ tract_object = pytrs.Tract.from_twprgesec(
 | `sec=<str or int>`    | The Section, either an int, or a str (e.g., `'154n'`, `'1s'`, etc.)  | 1       |
 | `default_ns=<'n' or 's'>` | Whether to default Township to North or South                    | 1, 5    |
 | `default_ns=<'e' or 'w'>` | Whether to default Range to East or West                         | 1, 5    |
-|`config=<str>`         | [Configure the parser with a number of options](https://github.com/JamesPImes/pyTRS/blob/master/guides/config.md)                        | 2       |
+|`config=<str>`         | [Configure the parser with a number of options](https://github.com/JamesPImes/pyTRS/blob/master/guides/guides/config.md)                        | 2       |
 |`parse_qq=<bool>`      | Parse this `Tract` object into lots/aliquots               |         |
 |`source=<any>`         | Specify where this description came from.                            | 3       |
 |`orig_desc=<str>`      | The full PLSS description from which this `Tract` was carved out       | 4       |
@@ -91,9 +91,9 @@ tract_object = pytrs.Tract.from_twprgesec(
 |`desc_is_flawed=<bool>`| If a fatal flaw was found during parsing of parent `PLSSDesc`        | 4       |
 
 ##### `Tract.from_twprgesec()` Footnotes:
-1) The [standard pyTRS format for Twp/Rge/Sec](https://github.com/JamesPImes/pyTRS/blob/master/guides/trs.md#standard-pytrs-format-for-twprgesec) is up to 3 digits for Twp (plus `'n'` or `'s'`) and for Rge (plus `'e'` or `'w'`), and exactly two digits for section. (Examples: `Sec 14 of T154N-R97W` -> `'154n97w14'`; and `Sec 1 of T7S-R9E` -> `'7s9e01'`)
+1) The [standard pyTRS format for Twp/Rge/Sec](https://github.com/JamesPImes/pyTRS/blob/master/guides/guides/trs.md#standard-pytrs-format-for-twprgesec) is up to 3 digits for Twp (plus `'n'` or `'s'`) and for Rge (plus `'e'` or `'w'`), and exactly two digits for section. (Examples: `Sec 14 of T154N-R97W` -> `'154n97w14'`; and `Sec 1 of T7S-R9E` -> `'7s9e01'`)
 
-2) See [the `config` guide](https://github.com/JamesPImes/pyTRS/blob/master/guides/config.md) for more information on `config=` options.
+2) See [the `config` guide](https://github.com/JamesPImes/pyTRS/blob/master/guides/guides/config.md) for more information on `config=` options.
 
 3) `source` does not affect the behavior of the parse in any way. Instead, it is meant as an internal record of where the description originally came from. (For example, if it came from a particular report, or a specific row in a spreadsheet, etc.)  If a `Tract` is created by parsing a `PLSSDesc`, then `source` will be inherited from the parent `PLSSDesc`.  This can be useful for parsing numerous land descriptions (e.g., processing a large spreadsheet). It gets stored to the `.source` attribute (in both `PLSSDesc` and `Tract` objects).
 
@@ -116,12 +116,12 @@ If we want to populate the `lots`, `qqs`, `lots_qqs`, and `lot_acres` attributes
 
 5) Call `.parse()` on a `Tract` object.
 
-*__Note:__* Control the size of the parsed aliquots with [`config=` parameters](https://github.com/JamesPImes/pyTRS/blob/master/guides/config.md), specifically the [`qq_depth_min`, `qq_depth_max`, or `qq_depth` parameters](https://github.com/JamesPImes/pyTRS/blob/master/guides/config.md#control-the-granularity-or-depth-of-aliquot-parsing-with-qq_depth-qq_depth_min-andor-qq_depth_max). By default, they are parsed into quarter-quarters (QQs), i.e. 40-acre divisions (e.g., `'W/2NE/4' -> ['NWNE', 'SWNE']`) -- but will also include smaller aliquot divisions if they exist in the description (e.g., `'E/2W/2NE/4' -> ['E2NWNE','E2SWNE']`).
+*__Note:__* Control the size of the parsed aliquots with [`config=` parameters](https://github.com/JamesPImes/pyTRS/blob/master/guides/guides/config.md), specifically the [`qq_depth_min`, `qq_depth_max`, or `qq_depth` parameters](https://github.com/JamesPImes/pyTRS/blob/master/guides/guides/config.md#control-the-granularity-or-depth-of-aliquot-parsing-with-qq_depth-qq_depth_min-andor-qq_depth_max). By default, they are parsed into quarter-quarters (QQs), i.e. 40-acre divisions (e.g., `'W/2NE/4' -> ['NWNE', 'SWNE']`) -- but will also include smaller aliquot divisions if they exist in the description (e.g., `'E/2W/2NE/4' -> ['E2NWNE','E2SWNE']`).
 
 
 ### Setting Twp/Rge/Sec (`.trs` attribute, etc.)
 
-Setting the `.trs` attribute of a `Tract` object will populate the other associated attributes accordingly (`.twp`, `.rge`, `.sec`, etc.) -- and it can be done either when created (`a_tract = pytrs.Tract("NE/4", trs='154n97w14')` or with [`Tract.from_twprgesec()`](https://github.com/JamesPImes/pyTRS/blob/master/guides/tract.md#create-tract-objects-with-uncompiled-twprgesec-components-with-tractfrom_twprgesec), assigned directly afterwards (`a_tract.trs = '154n97w14'`) or with the `.set_twprgesec()` method:
+Setting the `.trs` attribute of a `Tract` object will populate the other associated attributes accordingly (`.twp`, `.rge`, `.sec`, etc.) -- and it can be done either when created (`a_tract = pytrs.Tract("NE/4", trs='154n97w14')` or with [`Tract.from_twprgesec()`](https://github.com/JamesPImes/pyTRS/blob/master/guides/guides/tract.md#create-tract-objects-with-uncompiled-twprgesec-components-with-tractfrom_twprgesec), assigned directly afterwards (`a_tract.trs = '154n97w14'`) or with the `.set_twprgesec()` method:
 ```
 # `trs` is not specified for this Tract.
 a_tract = pytrs.Tract("NE/4")

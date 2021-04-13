@@ -82,7 +82,7 @@ Footnotes:
 
 | Attribute         | Explanation                                                           | Possible Type(s) 	| Footnote |
 |:------------------|:----------------------------------------------------------------------|------------------	|:--------:|
-| `.trs`            | The Twp/Rge/Sec combination in the [standard pyTRS format](https://github.com/JamesPImes/pyTRS/blob/master/guides/trs.md#standard-pytrs-format-for-twprgesec)              | str              	| |
+| `.trs`            | The Twp/Rge/Sec combination in the [standard pyTRS format](https://github.com/JamesPImes/pyTRS/blob/master/guides/guides/trs.md#standard-pytrs-format-for-twprgesec)              | str              	| |
 | `.twp`            | Twp portion of `.trs`                                                 | str              	| | 
 | `.twp_num`        | Twp portion of `.trs` (without N/S), as an int or None                 | int, None        	| 1 |
 | `.twp_ns`         | N/S portion of `.trs`, as a str or None                               | str, None        	| 1 |
