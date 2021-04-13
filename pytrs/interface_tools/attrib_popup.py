@@ -91,6 +91,7 @@ class PromptAttrib(tk.Frame):
         'desc',
         'pp_desc',
         'lots',
+        'ilots',
         'qqs',
         'lots_qqs',
         'w_flags',
