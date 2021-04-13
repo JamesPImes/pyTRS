@@ -1461,6 +1461,8 @@ class Tract:
         Ex:     Lot 1, North Half of Lot 2 -> ['L1', 'N2 of L2']
         NOTE: Divisions of lots can be suppressed with config parameter
             'include_lot_divs.False' (i.e. ['L1', 'L2'] in this example).
+    .ilots -- The identified lots as a list of integers, with any
+        divisions discared.
     .lots_qqs -- A joined list of identified lots and QQ's. (Technically
         a property)
         Ex:     ['L1', 'N2 of L2', 'NENE', 'NWNE', 'NENW', 'NWNW']
@@ -1570,6 +1572,7 @@ class Tract:
         'sec_num': 'Section Number',  # **
         'qqs': 'Aliquots',
         'lots': 'Lots',
+        'ilots': 'Lot Numbers',  # **
         'lots_qqs': 'Lots & Aliquots',  # **
         'desc': 'Description',
         'orig_desc': 'Original (full) PLSS Description',
