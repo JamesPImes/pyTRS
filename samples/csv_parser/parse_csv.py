@@ -147,16 +147,18 @@ def parse_csv(
     # if no header in original) -- for UID purposes.
     parse_num = 0
 
+    headers = [pytrs.Tract.ATTRIBUTES[at] for at in attributes]
+
     for row_num, row in enumerate(reader, start=1):
         if write_headers:
             if row_num == header_row:
-                writer.writerow(row + ['parse_UID'] * include_uid + attributes)
+                writer.writerow(row + ['parse_UID'] * include_uid + headers)
                 write_headers = False
                 continue
             elif row_num == first_row and header_row < 1:
                 # In this scenario, write headers just above first-parsed row.
                 writer.writerow(
-                    ['' for _ in row] + ['parse_UID'] * include_uid + attributes)
+                    ['' for _ in row] + ['parse_UID'] * include_uid + headers)
                 write_headers = False
                 # Do not continue yet, because we still need to parse
                 # and write results.
