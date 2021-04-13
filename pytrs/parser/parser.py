@@ -1880,6 +1880,11 @@ class Tract:
         return self.lots + self.qqs
 
     @property
+    def ilots(self):
+        """Lots as a list of integers, with any divisions discarded."""
+        return [int(lt.split('L')[-1]) for lt in self.lots]
+
+    @property
     def flags(self):
         return self.e_flags + self.w_flags
 
