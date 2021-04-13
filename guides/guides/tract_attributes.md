@@ -17,6 +17,7 @@ Access these `Tract` attributes directly, or [compile them in bulk](https://gith
 | `.desc`           | the description block of the land __within__ this Twp/Rge/Sec         | str              	|          |
 | `.qqs`            | list of identified aliquots                                           | list of strings  	| 2        |
 | `.lots`           | list of identified lots                                               | list of strings  	| 2        |
+| `.ilots`          | list of identified lots, as integers                                  | list of ints      | 2        |
 | `.lots_qqs`       | list of identified lots and aliquots                                  | list of strings  	| 2        |
 | `.lot_acres`      | identified lots and their purported gross acreages                    | dict of {str: str}| 2        |
 | `.pp_desc`        | the preprocessed description                                          | str              	|          |
@@ -34,7 +35,7 @@ Access these `Tract` attributes directly, or [compile them in bulk](https://gith
 Footnotes:
 1) The [standard pyTRS format for Twp/Rge/Sec](https://github.com/JamesPImes/pyTRS/blob/master/guides/trs.md#standard-pytrs-format-for-twprgesec) is up to 3 digits for Twp (plus `'n'` or `'s'`) and for Rge (plus `'e'` or `'w'`), and exactly two digits for section. (Examples: `Sec 14 of T154N-R97W` -> `'154n97w14'`; and `Sec 1 of T7S-R9E` -> `'7s9e01'`) 
 
-2) `.lots`, `.qqs`, `.lots_qqs`, and `.lot_acres` are only populated [if/when a `Tract` object itself is parsed](https://github.com/JamesPImes/pyTRS/blob/master/guides/tract.md#populating-lotsaliquots). If a `Tract` object was created by a `PLSSDesc`, lots/aliquots will be populated *__only if__* `parse_qq=True` was passed or `config='parse_qq'`. 
+2) `.lots`, `.ilots`, `.qqs`, `.lots_qqs`, and `.lot_acres` are only populated [if/when a `Tract` object itself is parsed](https://github.com/JamesPImes/pyTRS/blob/master/guides/tract.md#populating-lotsaliquots). If a `Tract` object was created by a `PLSSDesc`, lots/aliquots will be populated *__only if__* `parse_qq=True` was passed or `config='parse_qq'`. 
 
 3) Warning and error flags are shared by a `Tract` object and its parent `PLSSDesc` object. A given flags might have been caused by a different `Tract` under the same parent `PLSSDesc`. (This is intentional, because flags mean something might have gone wrong during parsing, and the wrong text might have ended up with the wrong `Tract`, etc.)
 
