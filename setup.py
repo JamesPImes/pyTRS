@@ -35,8 +35,7 @@ def get_constant(constant):
     with open(rf".\{MODULE_DIR}\_constants.py", "r") as file:
         for line in file:
             if line.startswith(var_setter):
-                version = line[len(var_setter):].strip('\'\n \"')
-                return version
+                return line[len(var_setter):].strip('\'\n \"')
         raise RuntimeError(f"Could not get {constant} info.")
 
 
