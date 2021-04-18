@@ -7159,6 +7159,24 @@ class TRS:
     _UNDEF_TWPRGE = f"{_UNDEF_TWP}{_UNDEF_RGE}"
     _UNDEF_TRS = f"{_UNDEF_TWPRGE}{_UNDEF_SEC}"
 
+    _ALL_ERR = (
+        _ERR_SEC,
+        _ERR_TWP,
+        _ERR_RGE,
+        _ERR_TWPRGE,
+        _ERR_TRS
+    )
+
+    _ALL_UNDEF = (
+        _UNDEF_SEC,
+        _UNDEF_TWP,
+        _UNDEF_RGE,
+        _UNDEF_TWPRGE,
+        _UNDEF_TRS
+    )
+
+    _ALL_ERR_UNDEF = tuple(list(_ALL_ERR) + list(_ALL_UNDEF))
+
     # Regex patterns for unpacking Twp/Rge/Sec
     _TWP_RGX = r"((?P<twp_num>\d{1,3})(?P<ns>[nsNS]))"
     _RGE_RGX = r"((?P<rge_num>\d{1,3})(?P<ew>[ewEW]))"
@@ -7509,7 +7527,6 @@ class TRS:
         if TRS._USE_CACHE:
             TRS.__CACHE[trs] = dct
         return dct
-
 
     @staticmethod
     def trs_to_dict(trs) -> dict:
