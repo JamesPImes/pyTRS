@@ -2317,8 +2317,7 @@ class TractList(list):
     def _verify_type(obj):
         """Type-check a single object."""
         if not isinstance(obj, Tract):
-            raise TractListTypeError(
-                f"Cannot accept {type(obj)!r}.")
+            raise TractListTypeError(f"Cannot accept {type(obj)!r}.")
         return obj
 
     def __str__(self):
@@ -2754,7 +2753,6 @@ class TractList(list):
         }
 
         def extract_safe_num(tract, var):
-
             val = getattr(tract, var)
             if val is None:
                 val = assume[var]
