@@ -2238,6 +2238,878 @@ class Tract:
         return header_row
 
 
+class _TRSTractList(list):
+
+    def __init__(self, iterable=(), tract_or_trs=None):
+        self.__own_type = _TRSTractList
+        # Default to either TractList or TRSList functionality.
+        self.__ok_individuals = (Tract, TRS)
+        self.__ok_iterables = (PLSSDesc, TractList, TRSList)
+        if tract_or_trs == 'tract':
+            self.__own_type = TractList
+            self.__ok_individuals = (Tract,)
+            self.__ok_iterables = (PLSSDesc, TractList)
+        elif tract_or_trs == 'trs':
+            self.__own_type = TRSList
+            self.__ok_individuals = (TRS,)
+            self.__ok_iterables = (TRSList,)
+        list.__init__(self, self._verify_iterable(iterable))
+
+    def _verify_iterable(self, iterable):
+        """Type-check the contents of an iterable, and unpack the
+        ``.tracts`` attribute of a PLSSDesc object (if found)."""
+        tmp = []
+        for elem in iterable:
+            if isinstance(elem, self.__ok_individuals):
+                tmp.append(elem)
+            elif isinstance(elem, self.__ok_iterables):
+                tmp.extend(elem)
+            else:
+                raise TractListTypeError(
+                    f"Iterable contained {type(elem)!r}.")
+        return tmp
+
+    def _verify_type(self, obj):
+        """Type-check a single object."""
+        if not isinstance(obj, self.__ok_individuals):
+            raise TractListTypeError(f"Cannot accept {type(obj)!r}.")
+        return obj
+
+    def __setitem__(self, index, value):
+        list.__setitem__(self, index, self._verify_type(value))
+
+    def extend(self, iterable):
+        list.extend(self, self._verify_iterable(iterable))
+
+    def append(self, obj):
+        list.append(self, self._verify_type(obj))
+
+    def __iadd__(self, other):
+        list.__iadd__(self, self._verify_iterable(other))
+
+    def copy(self):
+        return self.__own_type(list.copy(self))
+
+    def filter(self, key, drop=False):
+        """
+        Extract from this TractList all Tract objects that match the
+        `key` (a lambda function that returns a bool or bool-like
+        value when applied to each Tract object).
+
+        Returns a new TractList of all of the selected Tract objects.
+
+        :param key: a lambda function that returns a bool or bool-like
+        value when applied to a Tract object in this TractList. (True or
+        True-like returned values will result in the inclusion of that
+        Tract).
+        :param drop: Whether to drop the matching Tracts from the
+        original TractList. (Defaults to ``False``)
+        :return: A new TractList of the selected Tract objects. (The
+        original TractList will still hold all other Tract objects,
+        unless ``drop=True`` was passed.)
+        """
+        indexes_to_include = []
+        for i, element in enumerate(self):
+            if key(element):
+                indexes_to_include.append(i)
+        return self._new_list_from_self(indexes_to_include, drop)
+
+    def filter_errors(self, twp=True, rge=True, sec=True, undef=False, drop=False):
+        """
+        Extract from this TractList all Tract objects that were parsed
+        with an error. Specifically extract Twp/Rge errors with
+        ``twprge=True`` (on by default); and get Sec errors with
+        ``sec=True`` (on by default).
+
+        Returns a new TractList of all of the selected Tract objects.
+
+        :param twp: a bool, whether to get Twp errors. (Defaults to
+        ``True``)
+        :param rge: a bool, whether to get Rge errors. (Defaults to
+        ``True``)
+        :param sec: a bool, whether to get Sec errors. (Defaults to
+        ``True``)
+        :param undef: a bool, whether to get consider Twps, Rges, or
+        Sections that were UNDEFINED to also be errors. (Defaults to
+        ``False``)
+        :param drop: Whether to drop the selected Tracts from the
+        original TractList. (Defaults to ``False``)
+        :return: A new TractList containing all of the selected Tract
+        objects.
+        """
+
+        def match_by(elem, controller, var, undef_var):
+            # Note: `undef_var` is the Tract/TRS attribute (or rather,
+            # property) that says whether the corresponding `var` was
+            # undefined. If it is False, then that means that particular
+            # `var` was defined but ended up being an error.
+            # For example, `match_by("twp_num", "twp_undef")`...
+
+            bad = getattr(elem, var) is None
+            if bad:
+                # The `undef` parameter means cull any `None` values,
+                # regardless of whether it was undefined or an error.
+                # Either way, cull the var that was NOT undefined (i.e.
+                # was an error.)
+                bad = undef or not getattr(elem, undef_var)
+            return bad and controller
+
+        indexes_to_include = []
+        for i, element in enumerate(self):
+            if (match_by(element, twp, "twp_num", "twp_undef")
+                    or match_by(element, rge, "rge_num", "rge_undef")
+                    or match_by(element, sec, "sec_num", "sec_undef")):
+                indexes_to_include.append(i)
+        return self._new_list_from_self(indexes_to_include, drop)
+
+    def filter_duplicates(self, method='default', drop=False):
+        """
+        Find the duplicate Tracts from this TractList, get a new
+        TractList of those Tract objects that were duplicates, and
+        optionally `drop` the duplicates from the original TractList.
+        (To be clear, if there are THREE identical Tracts in the
+        ``TractList``, the returned ``TractList`` will contain only TWO
+        Tracts, and the original ``TractList`` will still have one.)
+
+        Control how to assess whether `Tract` objects are duplicates by
+        ONE of the following methods:
+
+        `method='instance'` (the default) -> Whether two objects are
+        actually the same instance -- i.e. literally the same object.
+        (By definition, this will also apply even if one of the other
+        two methods is used.)
+
+        `method='lots_qqs'`  -> Whether the `.lots_qqs` attribute
+        contains the same lots/aliquots (after removing duplicates
+        there).  NOTE: Lots/aliquots must have been parsed for a given
+        Tract object, or it will NOT match as a duplicate with this
+        parameter.
+                Ex: Will match these as duplicate tracts, assuming they
+                were parsed with identical `config` settings:
+                    `154n97w14: Lots 1 - 3, S/2NE/4`
+                    `154n97w14: Lot 3, S/2NE/4, Lots 1, 2`
+
+        `method='desc'` -> Whether the `.trs` and `.pp_desc` (i.e.
+        preprocessed description) combine to form an identical tract.
+                Ex: Will match these as duplicate tracts:
+                    `154n97w14: NE/4`
+                    `154n97w14: Northeast Quarter`
+
+        :param method: Specify how to assess whether Tract objects are
+        duplicates (either 'instance', 'lots_qqs', or 'desc'). See above
+        for example behavior of each.
+        :param drop: Whether to remove the identified duplicates from
+        the original list.
+        :return: A new TractList.
+        """
+        unique = set()
+        indexes_to_include = []
+
+        if method == 'default':
+            method = 'instance'
+            if isinstance(self, TRSList):
+                method = 'trs'
+        options = ('instance', 'lots_qqs', 'desc', 'trs')
+        if method not in options:
+            raise ValueError(f"`method` must be one of {options}")
+        lots_qqs = method == 'lots_qqs'
+        desc = method == 'desc'
+        trs = method == 'trs'
+        only_by_instance = not (lots_qqs or desc)
+
+        for i, element in enumerate(self):
+            # Always find duplicate instances (because not all Tract
+            # objects are parsed into lots/qqs).
+            if element not in unique:
+                unique.add(element)
+            else:
+                indexes_to_include.append(i)
+            if only_by_instance:
+                continue
+
+            to_check = element
+            if lots_qqs:
+                if not isinstance(element, Tract):
+                    continue
+                if not element.parse_complete:
+                    continue
+                lq = sorted(set(element.lots_qqs))
+                to_check = f"{element.trs}_{lq}"
+            if desc:
+                if not isinstance(element, Tract):
+                    continue
+                to_check = f"{element.trs}_{element.pp_desc.strip()}"
+            if trs:
+                to_check = element.trs
+
+            if to_check not in unique:
+                unique.add(to_check)
+            elif i not in indexes_to_include:
+                # Use elif to avoid double-appending i (may have already
+                # been added from the `instance` check).
+                indexes_to_include.append(i)
+
+        return self._new_list_from_self(indexes_to_include, drop)
+
+    def _new_list_from_self(self, indexes: list, drop: bool):
+        """
+        INTERNAL USE:
+
+        Get a new ``TractList`` of the elements at the specified
+        ``indexes``.  Optionally remove them from the original
+        ``TractList`` with ``drop=True``.
+
+        :param indexes: Indexes of the elements to include in the new
+        ``TractList``.
+        :param drop: a bool, whether to drop those Tract objects from
+        the original TractList.
+        :return: The new TractList.
+        """
+        # Initialize a new instance of the type that this object already
+        # is. (Done this way for subclassing purposes.)
+        new_list = self.__own_type()
+        indexes.reverse()
+        for i in indexes:
+            new_list.append(self[i])
+            if drop:
+                self.pop(i)
+        new_list.reverse()
+        return new_list
+
+    def _custom_sort(self, key='i,s,r,t', reverse=False):
+        """
+        Sort the Tract objects stored in this TractList, in-situ.
+        The standard ``list.sort(key=<lambda>, reverse=<bool>)``
+        parameters can be used here. But this method has additional
+        customized key options.  (Note that the parameter
+        ``reverse=<bool>`` applies only to lambda sorts, and NOT to the
+        custom keys detailed below.)
+
+        Customized key options:
+
+        'i' -> Sort by the original order they were created.
+
+        't' -> Sort by Township.
+               't.num'  --> Sort by raw number, ignoring N/S. (default)
+               't.ns'   --> Sort from north-to-south
+               't.sn'   --> Sort from south-to-north
+
+        'r' -> Sort by Range.
+               'r.num'  --> Sort by raw number, ignoring E/W. (default)
+               'r.ew'   --> Sort from east-to-west **
+               'r.we'   --> Sort from west-to-east **
+        (** NOTE: These do not account for Principal Meridians.)
+
+        's' -> Sort by Section number.
+
+        Reverse any or all of the keys by adding '.reverse' (or '.rev')
+        at the end of it.
+
+        Use as many sort keys as you want. They will be applied in order
+        from left-to-right, so place the highest 'priority' sort last.
+
+        Twp/Rge's that are errors (i.e. 'XXXzXXXz') will be sorted to
+        the end of the list when sorting on Twp and/or Rge (whether by
+        number, north-to-south, south-to-north, east-to-west, or west-
+        to-east).  Similarly, error Sections (i.e. 'XX') will be
+        sorted to the end of the list when sorting on section.  (The
+        exception is if the sort is reversed, in which case, they come
+        first.)
+
+        Construct all keys as a single string, separated by comma
+        (spaces are optional). The components of each key should be
+        separated by a period.
+
+        Example keys:
+
+            's.reverse,r.ew,t.ns'
+                ->  Sort by section number (reversed, so largest-to-
+                        smallest);
+                    then sort by Range (east-to-west);
+                    then sort by Township (north-to-south)
+
+            'i,s,r,t'  (this is the default)
+                ->  Sort by original creation order;
+                    then sort by Section (smallest-to-largest);
+                    then sort by Range (smallest-to-largest);
+                    then sort by Township (smallest-to-largest)
+
+        Moreover, we can conduct multiple sorts by passing ``key`` as a
+        list of sort keys. We can mix and match string keys above with
+        lambdas, although the ``reverse=<bool>`` will apply only to the
+        lambdas.
+
+        Optionally pass ``reverse=`` as a list of bools (i.e. a list
+        equal in length to ``key=<list of sort keys>``) to use different
+        ``reverse`` values for different lambdas. But then make sure
+        that the lengths are equal, or it will raise an IndexError.
+
+        :param key: A str, specifying which sort(s) should be done, and
+        in which order. Alternatively, a lambda function (same as for
+        the builtin ``list.sort(key=<lambda>)`` method).
+
+        May optionally pass `sort_key` as a list of sort keys, to be
+        applied left-to-right. In that case, lambdas and string keys may
+        be mixed and matched.
+
+        :param reverse: (Optional) Whether to reverse the sort.
+        NOTE: This ONLY has an effect if the ``key`` is passed as a
+        lambda (or a list containing lambdas). It has no effect on
+        string keys (for which you would instead specify ``'.rev'``
+        within the string key itself). Defaults to ``False``.
+
+        NOTE: If ``key`` was passed as a list of keys, then ``reverse``
+        must be passed as EITHER a single bool that will apply to all of
+        the (non-string) sorts, OR as a list of bools that is equal in
+        length to ``key`` (i.e. the values in ``key`` and ``reverse``
+        will be matched up one-to-one).
+
+        :return: None. (TractList is sorted in-situ.)
+        """
+        if not key:
+            return None
+
+        # Determine whether the sort_key was passed as a list/tuple
+        # (i.e. if we're doing one sort operation or multiple).
+        is_multi_key = isinstance(key, (list, tuple))
+        is_multi_rev = isinstance(reverse, (list, tuple))
+        if is_multi_key and not is_multi_rev:
+            reverse = [reverse for _ in key]
+
+        # If `iterable` sort_key and/or `sort_reverse`, make sure
+        # the length of each matches.
+        if ((is_multi_key and len(key) != len(reverse))
+                or (is_multi_rev and not is_multi_key)):
+            raise IndexError(
+                "Mismatched length of iterable `sort_key` "
+                "and `sort_reverse`")
+
+        if is_multi_key:
+            # If multiple sorts, do each.
+            for sk, rv in zip(key, reverse):
+                self._custom_sort(key=sk, reverse=rv)
+        elif isinstance(key, str):
+            # `._sort_custom` takes str-type sort keys.
+            self._sort_custom(key)
+        else:
+            # Otherwise, assume it's a lambda. Use builtin `sort()`.
+            self.sort(key=key, reverse=reverse)
+
+        return None
+
+    def _sort_custom(self, key: str = 'i,s,r,t'):
+        """
+        INTERNAL USE:
+        (You should use the public ``.sort_tracts()`` method instead.)
+
+        Apply the custom str-type sort keys detailed in
+        ``.sort_tracts()``.
+
+        NOTE: Documentation on the str-type sort keys is maintained in
+        ``.sort_tracts()``.
+
+        :param key: A str, specifying which sort(s) should be done, and
+        in which order.
+        :return: None. (TractList is sorted in-situ.)
+        """
+
+        def get_max(var):
+            """
+            Get the largest value of the matching var in the of any
+            Tract in this TractList. If there are no valid ints, return
+            0.
+            """
+            nums = [getattr(t, var) for t in self if getattr(t, var) is not None]
+            if nums:
+                return max(nums)
+            return 0
+
+        # TODO: Sort undefined Twp/Rge/Sec before error Twp/Rge/Sec.
+
+        default_twp = get_max("twp_num") + 1
+        default_rge = get_max("rge_num") + 1
+        default_sec = get_max("sec_num") + 1
+
+        assume = {
+            "twp_num": default_twp,
+            "rge_num": default_rge,
+            "sec_num": default_sec
+        }
+
+        illegal_key_error = ValueError(f"Could not interpret sort key {key!r}.")
+
+        # The regex pattern for a valid key component.
+        pat = r"(?P<var>[itrs])(\.(?P<method>ns|sn|ew|we|num))?(\.(?P<rev>rev(erse)?))?"
+
+        legal_methods = {
+            "i": ("num", None),
+            "t": ("ns", "sn", "num", None),
+            "r": ("ew", "we", "num", None),
+            "s": ("num", None)
+        }
+
+        def extract_safe_num(tract, var):
+            val = getattr(tract, var)
+            if val is None:
+                val = assume[var]
+            return val
+
+        def i_sort_evaluate(list_element):
+            """
+            If the element is a Tract object, extract and return its
+            internal UID. Otherwise, return 0.
+            (This function exists so that the sort method works on a
+            list of Tract objects as well as a list of TRS objects, the
+            latter of which do not have a `._Tract__uid` attribute.
+            """
+            if isinstance(list_element, Tract):
+                return list_element._Tract__uid
+            else:
+                return 0
+
+        sort_defs = {
+            'i.num': i_sort_evaluate,
+            't.num': lambda x: extract_safe_num(x, "twp_num"),
+            't.ns': lambda x: n_to_s(x),
+            't.sn': lambda x: n_to_s(x, reverse=True),
+            'r.num': lambda x: extract_safe_num(x, "rge_num"),
+            'r.we': lambda x: w_to_e(x),
+            'r.ew': lambda x: w_to_e(x, reverse=True),
+            's.num': lambda x: extract_safe_num(x, "sec_num")
+        }
+
+        def n_to_s(element, reverse=False):
+            """
+            Convert Twp number and direction to a positive or negative
+            int, depending on direction. North townships are negative;
+            South are positive (in order to leverage the default
+            behavior of ``list.sort()`` -- i.e. smallest to largest).
+            ``reverse=True`` to inverse the positive and negative.
+            """
+            num = element.twp_num
+            ns = element.twp_ns
+
+            multiplier = 1
+            if num is None:
+                num = default_twp
+            if ns is None:
+                multiplier = 1
+            if ns == 's':
+                multiplier = 1
+            elif ns == 'n':
+                multiplier = -1
+            if reverse:
+                multiplier *= -1
+            if ns is None:
+                # Always put _TRR_ERROR parses at the end.
+                multiplier *= -1 if reverse else 1
+            return multiplier * num
+
+        def w_to_e(element, reverse=False):
+            """
+            Convert Rge number and direction to a positive or negative
+            int, depending on direction. East townships are positive;
+            West are negative (in order to leverage the default behavior
+            of ``list.sort()`` -- i.e. smallest to largest).
+            ``reverse=True`` to inverse the positive and negative.
+            """
+            num = element.rge_num
+            ew = element.rge_ew
+
+            multiplier = 1
+            if num is None:
+                num = default_rge
+            if ew == 'e':
+                multiplier = 1
+            elif ew == 'w':
+                multiplier = -1
+            if reverse:
+                multiplier *= -1
+            if ew is None:
+                # Always put _TRR_ERROR parses at the end.
+                multiplier *= -1 if reverse else 1
+            return multiplier * num
+
+        def parse_key(k_):
+            k_ = k_.lower()
+            mo = re.search(pat, k_)
+            if not mo:
+                raise illegal_key_error
+            if len(mo.group(0)) != len(k_):
+                import warnings
+                warnings.warn(SyntaxWarning(
+                    f"Sort key {k_!r} may not have been fully interpreted. "
+                    f"Check to make sure you are using the correct syntax."
+                ))
+
+            var = mo.group("var")
+            method = mo.group("method")
+
+            if method is None:
+                # default to "num" for all vars.
+                method = "num"
+            # Whether to reverse
+            rev = mo.group("rev") is not None
+
+            # Confirm legal method for this var
+            if method not in legal_methods[var]:
+                raise ValueError(f"invalid sort method: {k!r}")
+
+            var_method = f"{var}.{method}"
+            return var_method, rev
+
+        key = key.lower()
+        key = re.sub(r"\s", "", key)
+        key = re.sub(r"reverse", "rev", key)
+        keys = key.split(',')
+        for k in keys:
+            sk, reverse = parse_key(k)
+            self.sort(key=sort_defs[sk], reverse=reverse)
+
+    def group_nested(
+            self, by_attribute="twprge", into: dict = None,
+            sort_key=None, sort_reverse=False):
+        """
+        Filter the Tract objects in this TractList into a dict of
+        TractLists, keyed by unique values of ``by_attribute``. By
+        default, will filter into groups of Tracts that share Twp/Rge
+        (i.e. ``'twprge'``). Pass ``by_attribute`` as a list of
+        attributes to group by multiple attributes, and get a NESTED
+        dict back. (Each consecutive attribute in the list will be
+        another layer of nesting.)
+
+        :param by_attribute: The str name of an attribute of Tract
+        objects. (Defaults to ``'twprge'``). NOTE: Must be a hashable
+        type!  (Optionally pass as a list of str names of attributes to
+        do multiple groupings.)
+
+        :param into: (Optional) An existing dict into which to group the
+        Tracts. If not specified, will create a new dict. Use this arg if
+        you need to continue adding Tracts to an existing grouped dict.
+
+        :param sort_key: (Optional) How to sort each grouped TractList
+        in the returned dict. Use a string that works with the
+        ``.sort_tracts(key=<str>)`` method (e.g., 'i, s, r.ew, t.ns') or
+        a lambda function, as you would with the builtin
+        ``list.sort(key=<lambda>)`` method. (Defaults to ``None``, i.e.
+        not sorted.)
+
+        May optionally pass `sort_key` as a list of sort keys, to be
+        applied left-to-right. Here, you may mix and match lambdas and
+        ``.sort_tracts()`` strings.
+
+        :param sort_reverse: (Optional) Whether to reverse the sort.
+        NOTE: Only has an effect if the ``sort_key`` is passed as a
+        lambda -- NOT as a custom string sort key. Defaults to ``False``
+
+        NOTE: If ``sort_key`` was passed as a list, then
+        ``sort_reverse`` must be passed as EITHER a single bool that
+        will apply to all of the (non-string) sorts, OR as a list or
+        tuple of bools that is equal in length to ``sort_key`` (i.e. the
+        values in ``sort_key`` and ``sort_reverse`` will be matched up
+        one-to-one).
+
+        :return: A dict of TractList objects, each containing the Tracts
+        with matching values of the ``by_attribute``.  (If
+        ``by_attribute`` was passed as a list of attribute names, then
+        this will return a nested dict, with TractList objects being the
+        deepest values.)
+        """
+        # Determine whether it's a single-attribute grouping, or multiple.
+        this_attribute = by_attribute
+        is_multi_group = isinstance(by_attribute, list)
+        if is_multi_group:
+            by_attribute = by_attribute.copy()
+            this_attribute = by_attribute.pop(0)
+            if not by_attribute:
+                # If this is the last one to run.
+                is_multi_group = False
+
+        if not is_multi_group:
+            # The `._group()` method handles single-attribute groupings.
+            return self._group(
+                self, this_attribute, into, sort_key, sort_reverse,
+                list_type=self.__own_type)
+
+        def add_to_existing_dict(dct_, into_=into):
+            """
+            Recursively add keys/values to the original ``into`` dict.
+            """
+            if into_ is None:
+                return dct_
+            for k_, v_ in dct_.items():
+                # This will always be one of two pairs:
+                #   a key/TractList pair (in which case we have reached
+                #       the bottom); OR
+                #   a key/dict pair (in which case, we need to do
+                #       another recursion)
+                if isinstance(v_, self.__own_type):
+                    into_.setdefault(k_, self.__own_type())
+                    into_[k_].extend(v_)
+                else:
+                    into_.setdefault(k_, {})
+                    add_to_existing_dict(v_, into_=into_[k_])
+            return into_
+
+        # Do a single-attribute grouping as our first pass.
+        dct = self._group(self, this_attribute, list_type=self.__own_type)
+
+        # We have at least one more grouping to do, so recursively group
+        # each current TractList object.
+        dct_2 = {}
+        for k, trstractlist in dct.items():
+            dct_2[k] = trstractlist.group(by_attribute=by_attribute, into=None)
+
+        # Unpack dct_2 into the existing dict (`into`), sort, and return.
+        dct = add_to_existing_dict(dct_2, into)
+        self.sort_grouped_tracts(dct, sort_key, sort_reverse)
+        return dct
+
+    def group(
+            self, by_attribute="twprge", into: dict = None, sort_key=None,
+            sort_reverse=False):
+        """
+        Filter the Tract objects in this TractList into a dict of
+        TractLists, keyed by unique values of ``by_attribute``. By
+        default, will filter into groups of Tracts that share Twp/Rge
+        (i.e. ``'twprge'``). Pass ``by_attribute`` as a list of
+        attributes to group by multiple attributes, in which case the
+        keys of the returned dict will be a tuple whose elements line up
+        with the attributes listed in ``by_attribute``.
+
+        :param by_attribute: The str name of an attribute of Tract
+        objects. (Defaults to ``'twprge'``). NOTE: Attributes must be a
+        hashable type!  (Optionally pass as a list of str names of
+        attributes to do multiple groupings.)
+
+        :param into: (Optional) An existing dict into which to group the
+        Tracts. If not specified, will create a new dict. Use this arg if
+        you need to continue adding Tracts to an existing grouped dict.
+
+        :param sort_key: (Optional) How to sort each grouped TractList
+        in the returned dict. Use a string that works with the
+        ``.sort_tracts(key=<str>)`` method (e.g., 'i, s, r.ew, t.ns') or
+        a lambda function, as you would with the builtin
+        ``list.sort(key=<lambda>)`` method. (Defaults to ``None``, i.e.
+        not sorted.)
+
+        May optionally pass `sort_key` as a list of sort keys, to be
+        applied left-to-right. Here, you may mix and match lambdas and
+        ``.sort_tracts()`` strings.
+
+        :param sort_reverse: (Optional) Whether to reverse the sort.
+        NOTE: Only has an effect if the ``sort_key`` is passed as a
+        lambda -- NOT as a custom string sort key. Defaults to ``False``
+
+        NOTE: If ``sort_key`` was passed as a list, then
+        ``sort_reverse`` must be passed as EITHER a single bool that
+        will apply to all of the (non-string) sorts, OR as a list or
+        tuple of bools that is equal in length to ``sort_key`` (i.e. the
+        values in ``sort_key`` and ``sort_reverse`` will be matched up
+        one-to-one).
+
+        :return: A dict of TractList objects, each containing the Tracts
+        with matching values of the ``by_attribute``.  (If
+        ``by_attribute`` was passed as a list of attribute names, then
+        the keys in the returned dict will be a tuple whose values
+        line up with the list passed as ``by_attribute``.)
+        """
+
+        # Determine whether it's a single-attribute grouping, or multiple.
+        first_attribute = by_attribute
+        is_multi_group = isinstance(by_attribute, list)
+        if is_multi_group:
+            by_attribute = by_attribute.copy()
+            first_attribute = by_attribute.pop(0)
+            if not by_attribute:
+                # If this is the last one to run.
+                is_multi_group = False
+
+        if not is_multi_group:
+            # The `._group()` method handles single-attribute groupings.
+            return self._group(
+                self, first_attribute, into, sort_key, sort_reverse,
+                list_type=self.__own_type)
+
+        def get_keybase(key_):
+            """
+            Convert tuple to list and put any other object type in a
+            list.  (i.e. make mutable to add an element to the list,
+            which we'll then convert back to a tuple to serve as a dict
+            key.)
+            """
+            if isinstance(key_, tuple):
+                return list(key_)
+            else:
+                return [key_]
+
+        dct = self._group(self, first_attribute, list_type=self.__own_type)
+        while by_attribute:
+            dct_new = {}
+            grp_att = by_attribute.pop(0)
+            for k1, v1 in dct.items():
+                k1_base = get_keybase(k1)
+                dct_2 = self._group(self, grp_att, list_type=self.__own_type)
+                for k2, v2 in dct_2.items():
+                    dct_new[tuple(k1_base + [k2])] = v2
+            dct = dct_new
+
+        # Unpack `dct` into the existing dict (`into`), if applicable.
+        if isinstance(into, dict):
+            for k, tl in dct.items():
+                into.setdefault(k, self.__own_type())
+                into[k].extend(tl)
+            dct = into
+
+        # Sort and return.
+        self.sort_grouped_tracts(dct, sort_key, sort_reverse)
+        return dct
+
+    @staticmethod
+    def _group(
+            trstractlist, by_attribute="twprge", into: dict = None,
+            sort_key=None, sort_reverse=False, list_type=None):
+        """
+        INTERNAL USE:
+        (Use the public-facing ``.group()`` method.)
+
+        Group the Tract objects in this TractList into a dict of
+        TractLists, keyed by unique values of ``by_attribute``. By
+        default, will filter into groups of Tracts that share Twp/Rge
+        (i.e. `'twprge'`).
+
+        :param by_attribute: Same as for ``.group()`, but MUST BE A STR
+        FOR THIS METHOD!
+        :param into: Same as for ``.group()``.
+        :param sort_key: Same as for ``.group()``.
+        :param sort_reverse:  Same as for ``.group()``.
+        :return: A dict of TractList objects, each containing the Tracts
+        with matching values of the `by_attribute`.  (Will NOT be a
+        nested dict.)
+        """
+        dct = {}
+        for t in trstractlist:
+            val = getattr(t, by_attribute)
+            dct.setdefault(val, list_type())
+            dct[val].append(t)
+
+        if isinstance(into, dict):
+            for k, tl in dct.items():
+                into.setdefault(k, list_type())
+                into[k].extend(tl)
+            dct = into
+
+        if not sort_key:
+            return dct
+
+        for tl in dct.values():
+            tl._custom_sort(key=sort_key, reverse=sort_reverse)
+
+        return dct
+
+    @staticmethod
+    def sort_grouped_tracts(group_dict, sort_key, reverse=False) -> dict:
+        """
+        Sort TractLists within a dict of grouped Tracts. Also works on
+        a nested dict (i.e. when multiple groupings were done).
+
+        Returns the original ``group_dict``, but with the TractList
+        objects having been sorted in-situ.
+
+        :param group_dict: A dict, as returned by a TractList grouping
+        method or function (e.g., ``.group()`` or
+        ``group_tracts()``).
+        :param sort_key: How to sort the Tracts. (Can be any value
+        acceptable to the ``.sort_tracts()`` method.)
+        :param reverse: (Optional) Whether to reverse lambda sorts.
+        (More detail provided in the docs for
+        ``.sort_tracts()``.)
+        :return: The original ``group_dict``, with the TractList
+        objects having been sorted in-situ.
+        """
+        if not sort_key:
+            return group_dict
+        for k, v in group_dict.items():
+            if isinstance(v, dict):
+                _TRSTractList.sort_grouped_tracts(v, sort_key, reverse)
+            else:
+                v._custom_sort(key=sort_key, reverse=reverse)
+        return group_dict
+
+    @staticmethod
+    def _from_multiple(*objects, of_type):
+        """
+        Create a TractList from multiple elements, which may be any
+        number and combination of Tract, PLSSDesc, and TractList
+        objects (or other list-like element holding any of those object
+        types).
+
+        :param objects: Any number or combination of Tract, PLSSDesc,
+        and/or TractList objects (or other list-like element holding
+        any of those object types).
+        :param of_type: The class `TractList` or `TRSList` (NOT an
+        instance of these types).
+        :return: A new `TractList` object containing all of the
+        extracted `Tract` objects.
+        """
+        tl = of_type()
+        for obj in objects:
+            if isinstance(obj, of_type.__ok_individuals):
+                tl.append(obj)
+            elif isinstance(obj, of_type.__ok_iterables):
+                # Rely on the fact that we can iterate over PLSSDesc
+                # objects' (implicitly over the TractList in their
+                # `.tracts` attribute).
+                tl.extend(obj)
+            else:
+                # Assume it's another list-like object.
+                for obj_deeper in obj:
+                    tl.extend(_TRSTractList._from_multiple(obj_deeper, of_type))
+        return tl
+
+    @staticmethod
+    def iter_from_multiple(*objects):
+        """
+        Create from multiple elements a generator of Tract objects.
+
+        (Identical to `.from_multiple()`, but returns a generator of
+        `Tract` objects, rather than a `TractList`.)
+
+        :param objects: Any number or combination of Tract, PLSSDesc,
+        and/or TractList objects (or other list-like element holding
+        any of those object types).
+        :return: A generator of Tract objects.
+        """
+        for obj in objects:
+            if isinstance(obj, Tract):
+                yield obj
+            elif isinstance(obj, (PLSSDesc, TractList)):
+                # Rely on the fact that we can iterate over PLSSDesc
+                # objects' (implicitly over the TractList in their
+                # `.tracts` attribute).
+                for tract in obj:
+                    yield tract
+            else:
+                # Assume it's another list-like object.
+                for obj_deeper in obj:
+                    yield from _TRSTractList.iter_from_multiple(obj_deeper)
+
+
+class TRSList(_TRSTractList):
+    def __init__(self, iterable=()):
+        _TRSTractList.__init__(self, iterable, tract_or_trs='trs')
+
+    def append(self, obj):
+        if isinstance(obj, str):
+            obj = TRS(obj)
+        super(TRSList, self).append(obj)
+
+    def extend(self, iterable):
+        _ = [*map(self.append, iterable)]
+
+    sort_trs = _TRSTractList._custom_sort
+
+
 class TractList(list):
     """
     A specialized ``list`` for Tract objects, with added methods for
@@ -2291,7 +3163,7 @@ class TractList(list):
     """
 
     def __init__(self, iterable=()):
-        list.__init__(self, TractList._verify_iterable(iterable))
+        list.__init__(self, self._verify_iterable(iterable))
 
     @staticmethod
     def _verify_iterable(iterable):
@@ -2332,11 +3204,11 @@ class TractList(list):
     def extend(self, iterable):
         list.extend(self, TractList._verify_iterable(iterable))
 
-    def append(self, object):
-        if isinstance(object, PLSSDesc):
-            self.extend(object.tracts)
+    def append(self, obj):
+        if isinstance(obj, PLSSDesc):
+            self.extend(obj.tracts)
         else:
-            list.append(self, TractList._verify_type(object))
+            list.append(self, TractList._verify_type(obj))
 
     def __iadd__(self, other):
         list.__iadd__(self, TractList._verify_iterable(other))
