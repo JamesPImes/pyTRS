@@ -3229,6 +3229,14 @@ class TRSList(_TRSTractList):
             obj = TRS(obj.trs)
         return obj
 
+    def to_strings(self):
+        """
+        Get the Twp/Rge/Sec as a string from each element in this list.
+        :return: A new (plain) list containing the Twp/Rge/Sec's as
+        strings.
+        """
+        return [trs_obj.trs for trs_obj in self]
+
     sort_trs = _TRSTractList.custom_sort
     # Aliases to mirror `sort_trs`
     filter_trs = _TRSTractList.filter
