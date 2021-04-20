@@ -171,15 +171,10 @@ class DefaultEWError(ValueError):
 
 class TractListTypeError(TypeError):
     """Illegal object added to TractList."""
-    def __init__(self, additional_msg=None, was_iterable=False):
+    def __init__(self, additional_msg=None):
         msg = (
             f"Tractlist will accept only {TractList._ok_individuals}."
         )
-        if was_iterable:
-            msg = (
-                f"TractList can unpack iterable types "
-                f"{TractList._ok_iterables}."
-            )
         if additional_msg:
             msg = f"{msg} {additional_msg}"
         super().__init__(msg)
@@ -187,16 +182,11 @@ class TractListTypeError(TypeError):
 
 class TRSListTypeError(TypeError):
     """Illegal object added to TRSList."""
-    def __init__(self, additional_msg=None, was_iterable=False):
+    def __init__(self, additional_msg=None):
         msg = (
             f"TRSList will accept only {TRSList._ok_individuals}. "
             "(`TRS` object will be created from `str` or `Tract`)"
         )
-        if was_iterable:
-            msg = (
-                f"TRSList can unpack iterable types "
-                f"{TRSList._ok_iterables}."
-            )
         if additional_msg:
             msg = f"{msg} {additional_msg}"
         super().__init__(msg)
@@ -3770,6 +3760,72 @@ class _TRSTractList(list):
 
 
 class TRSList(_TRSTractList):
+    """
+    A specialized ``list`` for ``TRS`` objects, with added methods for
+    sorting, grouping, and filtering the ``TRS`` objects.
+
+    NOTE: `TRSList` and `TractList` are subclassed from the same
+    superclass and have some of the same functionality for sorting,
+    grouping, and filtering.  In the docstrings for many of the methods,
+    there will be references to either `TRS` or `Tract` objects, and to
+    `TRSList` or `TractList` objects.  To be clear, `TRSList` objects
+    hold only `TRS` objects, and `TractList` objects hold only `Tract`
+    objects.
+
+    ____ ADDING TWP/RGE/SEC's TO THE TRSLIST ____
+    A ``TRSList`` will hold only ``TRS`` objects. However, if you try to
+    add a string to it, it will first convert it to a ``TRS`` object.
+    Similarly, if you try to add a ``Tract`` object, it will extract its
+    ``.trs`` attribute and convert it to a ``TRS`` object, which is then
+    added to the list (the original ``Tract`` itself is not).
+
+    ``TRSList`` can also be created from a ``PLSSDesc``, ``TractList``,
+    or other iterable containing ``Tract`` objects (the ``.trs``
+    attribute for each ``Tract`` will be extracted and converted to a
+    ``TRS`` object then added to the resulting ``TRSList``).
+
+    These are all acceptable:
+        ```
+        trs_list1 = pytrs.TRSList(['154n97w14', '154n97w15'])
+        trs_list2 = pytrs.TRSList([pytrs.TRS('154n97w14')])
+        trs_list3 = pytrs.TRSList([tract_object_1, tract_object_2])
+        trs_list4 = pytrs.TRSList(plssdesc_obj)
+        ```
+    (Note that the ``PLSSDesc`` object is passed directly, rather than
+    inside a list.)
+
+    To robustly create a list of ``TRS`` objects from multiple objects
+    of different types, look into ``TRS.from_multiple()``.
+
+        ```
+        trs_list5 = pytrs.TRSList.from_multiple(
+            '154n97w14',
+            pytrs.TRS('154n97w15'),
+            tract_object_1,
+            some_tract_list,
+            some_other_trs_list)
+        ```
+
+    ____ STREAMLINED OUTPUT OF THE TWP/RGE/SEC DATA ____
+    .to_strings() -- Return a plain list of all ``TRS`` objects,
+    converted to strings.
+
+    ____ SORTING / GROUPING / FILTERING ``TRS`` BY ATTRIBUTE VALUES ____
+    .sort_trs() -- Custom sorting based on the Twp/Rge/Sec. Can also
+    take parameters from the built-in ``list.sort()`` method.
+
+    .group() -- Group ``TRS`` objects into a dict of ``TRSList``
+    objects, based on their shared attribute values (e.g., by Twp/Rge),
+    and optionally sort them.
+
+    .filter() -- Get a new ``TRSList`` of ``TRS`` objects that match
+    some condition, and optionally remove them from the original
+    ``TRSList``.
+
+    .filter_errors() -- Get a new ``TRSList`` of ``TRS`` objects whose
+    Twp, Rge, and/or Section were an error or undefined, and optionally
+    remove them from the original ``TRSList``.
+    """
 
     # We'll convert all strings to TRS objects when encountered,
     # and extract from Tract objects the `.trs` attribute (which
@@ -3846,6 +3902,14 @@ class TractList(_TRSTractList):
     compiling and manipulating the data inside the contained Tract
     objects, and for sorting, grouping, and filtering the Tract objects
     themselves.
+
+    NOTE: `TractList` and `TRSList` are subclassed from the same
+    superclass and have some of the same functionality for sorting,
+    grouping, and filtering.  In the docstrings for many of the methods,
+    there will be references to either `TRS` or `Tract` objects, and to
+    `TRSList` or `TractList` objects.  To be clear, `TRSList` objects
+    hold only `TRS` objects, and `TractList` objects hold only `Tract`
+    objects.
 
     ____ STREAMLINED OUTPUT OF THE PARSED TRACT DATA ____
     These methods have the same effect as in PLSSDesc objects.
@@ -8200,6 +8264,7 @@ __all__ = [
     Tract,
     TractList,
     TRS,
+    TRSList,
     Config,
     IMPLEMENTED_LAYOUTS,
     IMPLEMENTED_LAYOUT_EXAMPLES,
