@@ -2828,14 +2828,12 @@ class _TRSTractList(list):
     for streamlined extraction of data from `Tract` objects.
     """
 
-    # This will break this class if it were used directly. However,
-    # subclasses TRSList and TractList will set this differently.
-    __own_type = None
-    __error_type = TypeError
+    _error_type = TypeError
+    # _handle_type_specially = {}
     _ok_individuals = ()
     _ok_iterables = ()
 
-    def __init__(self, iterable=(), _handle_type_specially=None):
+    def __init__(self, iterable=()):
         """
         INTERNAL USE:
         (Initialize a `TRSList` or `TractList` directly.)
@@ -2847,12 +2845,10 @@ class _TRSTractList(list):
         them to self. (Used for TRSList to extract `.trs` from Tract
         objects, and to convert `str` to `TRS` objects.)
         """
-        self.__handle_type_specially = {}
-        if _handle_type_specially:
-            self.__handle_type_specially = _handle_type_specially
         list.__init__(self, self._verify_iterable(iterable))
 
-    def _verify_iterable(self, iterable, into=None):
+    @classmethod
+    def _verify_iterable(cls, iterable, into=None):
         """
         Type-check the contents of an iterable. Return a plain list of
         the elements in `iterable` if all are legal.
@@ -2860,24 +2856,30 @@ class _TRSTractList(list):
         if into is None:
             into = []
         for elem in iterable:
-            if isinstance(elem, self._ok_individuals):
-                into.append(self._verify_individual(elem))
-            elif isinstance(elem, self._ok_iterables):
+            if isinstance(elem, cls._ok_individuals):
+                into.append(cls._verify_individual(elem))
+            elif isinstance(elem, cls._ok_iterables) or isinstance(elem, cls):
                 for elem_deeper in elem:
-                    into.append(self._verify_individual(elem_deeper))
+                    into.append(cls._verify_individual(elem_deeper))
             else:
-                raise self.__error_type(
+                raise cls._error_type(
                     f"Iterable contained {type(elem)!r}.")
         return into
 
-    def _verify_individual(self, obj):
+    @classmethod
+    def _verify_individual(cls, obj):
         """Type-check a single object."""
-        if not isinstance(obj, self._ok_individuals):
-            raise self.__error_type(f"Cannot accept {type(obj)!r}.")
-        for type_, function in self.__handle_type_specially.items():
-            if isinstance(obj, type_):
-                obj = function(obj)
-                break
+        if not isinstance(obj, cls._ok_individuals):
+            raise cls._error_type(f"Cannot accept {type(obj)!r}.")
+        # for type_, function in cls._handle_type_specially.items():
+        #     if isinstance(obj, type_):
+        #         obj = function(obj)
+        #         break
+        return cls._handle_type_specially(obj)
+
+    @classmethod
+    def _handle_type_specially(cls, obj):
+        """INTERNAL USE: For subclassing purposes."""
         return obj
 
     def __setitem__(self, index, value):
@@ -2893,7 +2895,7 @@ class _TRSTractList(list):
         list.__iadd__(self, self._verify_iterable(other))
 
     def copy(self):
-        return self.__own_type(list.copy(self))
+        return self.__class__(list.copy(self))
 
     def filter(self, key, drop=False):
         """
@@ -3098,7 +3100,7 @@ class _TRSTractList(list):
         """
         # Initialize a new instance of the type that this object already
         # is. (Done this way for subclassing purposes.)
-        new_list = self.__own_type()
+        new_list = self.__class__()
         indexes.reverse()
         for i in indexes:
             new_list.append(self[i])
@@ -3467,8 +3469,7 @@ class _TRSTractList(list):
         if not is_multi_group:
             # The `._group()` method handles single-attribute groupings.
             return self._group(
-                self, this_attribute, into, sort_key, sort_reverse,
-                list_type=self.__own_type)
+                self, this_attribute, into, sort_key, sort_reverse)
 
         def add_to_existing_dict(dct_, into_=into):
             """
@@ -3478,12 +3479,12 @@ class _TRSTractList(list):
                 return dct_
             for k_, v_ in dct_.items():
                 # This will always be one of two pairs:
-                #   a key/TractList pair (in which case we have reached
-                #       the bottom); OR
+                #   a key/TractList (or TRSList) pair (in which case we
+                #       have reached the bottom); OR
                 #   a key/dict pair (in which case, we need to do
                 #       another recursion)
-                if isinstance(v_, self.__own_type):
-                    into_.setdefault(k_, self.__own_type())
+                if isinstance(v_, self.__class__):
+                    into_.setdefault(k_, self.__class__())
                     into_[k_].extend(v_)
                 else:
                     into_.setdefault(k_, {})
@@ -3491,7 +3492,7 @@ class _TRSTractList(list):
             return into_
 
         # Do a single-attribute grouping as our first pass.
-        dct = self._group(self, this_attribute, list_type=self.__own_type)
+        dct = self._group(self, this_attribute)
 
         # We have at least one more grouping to do, so recursively group
         # each current TractList object.
@@ -3501,7 +3502,7 @@ class _TRSTractList(list):
 
         # Unpack dct_2 into the existing dict (`into`), sort, and return.
         dct = add_to_existing_dict(dct_2, into)
-        self.sort_grouped_tracts(dct, sort_key, sort_reverse)
+        self.sort_grouped(dct, sort_key, sort_reverse)
         return dct
 
     def group(
@@ -3572,8 +3573,7 @@ class _TRSTractList(list):
         if not is_multi_group:
             # The `._group()` method handles single-attribute groupings.
             return self._group(
-                self, first_attribute, into, sort_key, sort_reverse,
-                list_type=self.__own_type)
+                self, first_attribute, into, sort_key, sort_reverse)
 
         def get_keybase(key_):
             """
@@ -3587,13 +3587,13 @@ class _TRSTractList(list):
             else:
                 return [key_]
 
-        dct = self._group(self, first_attribute, list_type=self.__own_type)
+        dct = self._group(self, first_attribute)
         while by_attribute:
             dct_new = {}
             grp_att = by_attribute.pop(0)
             for k1, v1 in dct.items():
                 k1_base = get_keybase(k1)
-                dct_2 = self._group(self, grp_att, list_type=self.__own_type)
+                dct_2 = self._group(self, grp_att)
                 for k2, v2 in dct_2.items():
                     dct_new[tuple(k1_base + [k2])] = v2
             dct = dct_new
@@ -3601,7 +3601,7 @@ class _TRSTractList(list):
         # Unpack `dct` into the existing dict (`into`), if applicable.
         if isinstance(into, dict):
             for k, tl in dct.items():
-                into.setdefault(k, self.__own_type())
+                into.setdefault(k, self.__class__())
                 into[k].extend(tl)
             dct = into
 
@@ -3609,10 +3609,10 @@ class _TRSTractList(list):
         self.sort_grouped(dct, sort_key, sort_reverse)
         return dct
 
-    @staticmethod
+    @classmethod
     def _group(
-            trstractlist, by_attribute="twprge", into: dict = None,
-            sort_key=None, sort_reverse=False, list_type=None):
+            cls, trstractlist, by_attribute="twprge", into: dict = None,
+            sort_key=None, sort_reverse=False):
         """
         INTERNAL USE:
         (Use the public-facing ``.group()`` method.)
@@ -3641,25 +3641,21 @@ class _TRSTractList(list):
         dct = {}
         for t in trstractlist:
             val = getattr(t, by_attribute)
-            dct.setdefault(val, list_type())
+            dct.setdefault(val, cls())
             dct[val].append(t)
-
         if isinstance(into, dict):
             for k, tl in dct.items():
-                into.setdefault(k, list_type())
+                into.setdefault(k, cls())
                 into[k].extend(tl)
             dct = into
-
         if not sort_key:
             return dct
-
         for tl in dct.values():
             tl.custom_sort(key=sort_key, reverse=sort_reverse)
-
         return dct
 
-    @staticmethod
-    def sort_grouped(group_dict, sort_key, reverse=False) -> dict:
+    @classmethod
+    def sort_grouped(cls, group_dict, sort_key, reverse=False) -> dict:
         """
         Sort the `TractList` objects (or `TRSList` objects) within a
         grouped dict.
@@ -3685,13 +3681,13 @@ class _TRSTractList(list):
             return group_dict
         for k, v in group_dict.items():
             if isinstance(v, dict):
-                _TRSTractList.sort_grouped(v, sort_key, reverse)
+                cls.sort_grouped(v, sort_key, reverse)
             else:
                 v.custom_sort(key=sort_key, reverse=reverse)
         return group_dict
 
-    @staticmethod
-    def _from_multiple(*objects, into):
+    @classmethod
+    def _from_multiple(cls, *objects, into=None):
         """
         INTERNAL USE:
 
@@ -3710,21 +3706,23 @@ class _TRSTractList(list):
         :return: The list originally passed as `into`, now containing
         the extracted `Tract` or `TRS` objects.
         """
+        if into is None:
+            into = cls()
         for obj in objects:
-            if isinstance(obj, into._ok_individuals):
+            if isinstance(obj, cls._ok_individuals):
                 into.append(obj)
-            elif isinstance(obj, into._ok_iterables):
+            elif isinstance(obj, cls._ok_iterables) or isinstance(obj, cls):
                 for obj_deeper in obj:
                     into.append(obj_deeper)
             else:
                 # Assume it's another list-like object.
                 for obj_deeper in obj:
                     # Elements are appended in place, no need to store var.
-                    _TRSTractList._from_multiple(obj_deeper, into=into)
+                    cls._from_multiple(obj_deeper, into=into)
         return into
 
-    @staticmethod
-    def _iter_from_multiple(*objects, sample_of_type):
+    @classmethod
+    def _iter_from_multiple(cls, *objects):
         """
         INTERNAL USE:
 
@@ -3742,160 +3740,19 @@ class _TRSTractList(list):
         strings in the pyTRS standardized Twp/Rge/Sec format, or
         `TRSList` objects.
 
-        :param sample_of_type: A `TRSList` or `TractList` object. (Will
-        not be modified -- its instance variables will be examined.)
-
         :return: A generator of `Tract` objects (or `TRS` objects, as
         applicable).
         """
         for obj in objects:
-            if isinstance(obj, sample_of_type._ok_individuals):
-                yield sample_of_type._verify_individual(obj)
-            elif isinstance(obj, sample_of_type._ok_iterables):
+            if isinstance(obj, cls._ok_individuals):
+                yield cls._verify_individual(obj)
+            elif isinstance(obj, cls._ok_iterables) or isinstance(obj, cls):
                 for obj_deeper in obj:
-                    yield sample_of_type._verify_individual(obj_deeper)
+                    yield cls._verify_individual(obj_deeper)
             else:
                 # Assume it's another list-like object.
                 for obj_deeper in obj:
-                    yield from _TRSTractList._iter_from_multiple(
-                        obj_deeper, sample_of_type=sample_of_type)
-
-
-class TRSList(_TRSTractList):
-    """
-    A specialized ``list`` for ``TRS`` objects, with added methods for
-    sorting, grouping, and filtering the ``TRS`` objects.
-
-    NOTE: `TRSList` and `TractList` are subclassed from the same
-    superclass and have some of the same functionality for sorting,
-    grouping, and filtering.  In the docstrings for many of the methods,
-    there will be references to either `TRS` or `Tract` objects, and to
-    `TRSList` or `TractList` objects.  To be clear, `TRSList` objects
-    hold only `TRS` objects, and `TractList` objects hold only `Tract`
-    objects.
-
-    ____ ADDING TWP/RGE/SEC's TO THE TRSLIST ____
-    A ``TRSList`` will hold only ``TRS`` objects. However, if you try to
-    add a string to it, it will first convert it to a ``TRS`` object.
-    Similarly, if you try to add a ``Tract`` object, it will extract its
-    ``.trs`` attribute and convert it to a ``TRS`` object, which is then
-    added to the list (the original ``Tract`` itself is not).
-
-    ``TRSList`` can also be created from a ``PLSSDesc``, ``TractList``,
-    or other iterable containing ``Tract`` objects (the ``.trs``
-    attribute for each ``Tract`` will be extracted and converted to a
-    ``TRS`` object then added to the resulting ``TRSList``).
-
-    These are all acceptable:
-        ```
-        trs_list1 = pytrs.TRSList(['154n97w14', '154n97w15'])
-        trs_list2 = pytrs.TRSList([pytrs.TRS('154n97w14')])
-        trs_list3 = pytrs.TRSList([tract_object_1, tract_object_2])
-        trs_list4 = pytrs.TRSList(plssdesc_obj)
-        ```
-    (Note that the ``PLSSDesc`` object is passed directly, rather than
-    inside a list.)
-
-    To robustly create a list of ``TRS`` objects from multiple objects
-    of different types, look into ``TRS.from_multiple()``.
-
-        ```
-        trs_list5 = pytrs.TRSList.from_multiple(
-            '154n97w14',
-            pytrs.TRS('154n97w15'),
-            tract_object_1,
-            some_tract_list,
-            some_other_trs_list)
-        ```
-
-    ____ STREAMLINED OUTPUT OF THE TWP/RGE/SEC DATA ____
-    .to_strings() -- Return a plain list of all ``TRS`` objects,
-    converted to strings.
-
-    ____ SORTING / GROUPING / FILTERING ``TRS`` BY ATTRIBUTE VALUES ____
-    .sort_trs() -- Custom sorting based on the Twp/Rge/Sec. Can also
-    take parameters from the built-in ``list.sort()`` method.
-
-    .group() -- Group ``TRS`` objects into a dict of ``TRSList``
-    objects, based on their shared attribute values (e.g., by Twp/Rge),
-    and optionally sort them.
-
-    .filter() -- Get a new ``TRSList`` of ``TRS`` objects that match
-    some condition, and optionally remove them from the original
-    ``TRSList``.
-
-    .filter_errors() -- Get a new ``TRSList`` of ``TRS`` objects whose
-    Twp, Rge, and/or Section were an error or undefined, and optionally
-    remove them from the original ``TRSList``.
-    """
-
-    # We'll convert all strings to TRS objects when encountered,
-    # and extract from Tract objects the `.trs` attribute (which
-    # will then get converted to TRS object).
-    __handle_type_specially = {
-        TRS: lambda x: x,
-        str: lambda x: TRS(x),
-        Tract: lambda x: TRS(x.trs)
-    }
-
-    def __init__(self, iterable=()):
-        self.__own_type = TRSList
-        self.__error_type = TRSListTypeError
-        self._ok_individuals = (str, TRS, Tract)
-        self._ok_iterables = (TRSList, TractList, PLSSDesc)
-        _TRSTractList.__init__(
-            self, iterable,
-            _handle_type_specially=TRSList.__handle_type_specially)
-
-    def __str__(self):
-        return str([elem.trs for elem in self])
-
-    def to_strings(self):
-        """
-        Get the Twp/Rge/Sec as a string from each element in this list.
-        :return: A new (plain) list containing the Twp/Rge/Sec's as
-        strings.
-        """
-        return [trs_obj.trs for trs_obj in self]
-
-    sort_trs = _TRSTractList.custom_sort
-    # Aliases to mirror `sort_trs`
-    filter_trs = _TRSTractList.filter
-    filter_trs_errors = _TRSTractList.filter_errors
-    group_trs = _TRSTractList.group
-    sort_grouped_trs = _TRSTractList.sort_grouped
-
-    @staticmethod
-    def from_multiple(*objects):
-        """
-        Create a `TRSList` from multiple sources.
-
-        :param objects: May pass any number or combination of `TRS`
-        objects or strings in the pyTRS standardized Twp/Rge/Sec format,
-        or `TRSList` objects, or other list-like objects containing
-        those object types.  (Any strings will be interpreted as
-        Twp/Rge/Sec and converted to `TRS` objects.)
-
-        :return: A `TRSList` containing the `TRS` objects.
-        """
-        return TRSList._from_multiple(objects, into=TRSList())
-
-    @staticmethod
-    def iter_from_multiple(*objects):
-        """
-        Create from multiple sources a generator of `TRS` objects.
-
-        (Identical to `.from_multiple()`, but returns a generator of
-        `TRS` objects, rather than a `TRSList`.)
-
-        :param objects: May pass any number or combination of `TRS`
-        objects or strings in the pyTRS standardized Twp/Rge/Sec format,
-        or `TRSList` objects, or other list-like objects containing
-        those object types.
-
-        :return: A generator of `TRS` objects.
-        """
-        yield from TRSList._iter_from_multiple(objects, sample_of_type=TRSList())
+                    yield from cls._iter_from_multiple(obj_deeper)
 
 
 class TractList(_TRSTractList):
@@ -3958,18 +3815,21 @@ class TractList(_TRSTractList):
     remove them from the original TractList.
     """
 
+    # A TractList holds only Tract objects. But Tract objects can be
+    # extracted from these types and added to the list.
+    _ok_individuals = (Tract,)
+    _ok_iterables = (PLSSDesc,)
+    _error_type = TractListTypeError
+
     def __init__(self, iterable=()):
-        self.__own_type = TractList
-        self.__error_type = TractListTypeError
-        self._ok_individuals = (Tract,)
-        self._ok_iterables = (PLSSDesc, TractList)
-        super().__init__(self, iterable)
+        """
+        :param iterable: An iterable (or `PLSSDesc`) containing `Tract`
+        objects.
+        """
+        _TRSTractList.__init__(self, iterable)
 
     def __str__(self):
-        return (
-            f"TractList\nTotal Tracts: {len(self)}\n"
-            f"Tracts: {self.snapshot_inside()}"
-        )
+        return f"TractList ({len(self)}): {self.snapshot_inside()}"
 
     def append(self, obj):
         if isinstance(obj, PLSSDesc):
@@ -4351,7 +4211,6 @@ class TractList(_TRSTractList):
         :param newline: Specify what separates Tracts from one another.
         (defaults to '\n').
         """
-
         print(self.quick_desc(delim=delim, newline=newline))
 
     def pretty_desc(self, word_sec="Sec ", justify_linebreaks=None):
@@ -4424,8 +4283,8 @@ class TractList(_TRSTractList):
 
     def list_trs(self, remove_duplicates=False):
         """
-        Return a list all the TRS's in this TractList. Optionally remove
-        duplicates with remove_duplicates=True.
+        Return a list all the TRS's in this `TractList`. Optionally
+        remove duplicates with remove_duplicates=True.
         """
         unique_trs = []
         all_trs = []
@@ -4437,94 +4296,199 @@ class TractList(_TRSTractList):
             return unique_trs
         return all_trs
 
-    @staticmethod
-    def from_multiple(*objects):
+    @classmethod
+    def from_multiple(cls, *objects):
         """
-        Create a TractList from multiple sources, which may be any
-        number and combination of Tract, PLSSDesc, and TractList objects
-        (or other list-like element holding any of those object types).
+        Create a `TractList` from multiple sources, which may be any
+        number and combination of `Tract`, `PLSSDesc`, and `TractList`
+        objects (or other iterable holding any of those object types).
 
-        :param objects: Any number or combination of Tract, PLSSDesc,
-        and/or TractList objects (or other list-like element holding
-        any of those object types).
+        :param objects: Any number or combination of `Tract`,
+        `PLSSDesc`, and/or `TractList` objects (or other iterable
+        holding any of those object types).
 
         :return: A new `TractList` object containing all of the
         extracted `Tract` objects.
         """
-        return TractList._from_multiple(objects, into=TractList())
+        # This is (re-)defined from the superclass only in order to have
+        # an accurate docstring (and to simplify the signature).
+        return cls._from_multiple(objects)
 
-    @staticmethod
-    def iter_from_multiple(*objects):
+    @classmethod
+    def iter_from_multiple(cls, *objects):
         """
-        Create from multiple sources a generator of Tract objects.
+        Create from multiple sources a generator of `Tract` objects.
 
         (Identical to `.from_multiple()`, but returns a generator of
         `Tract` objects, rather than a `TractList`.)
 
-        :param objects: Any number or combination of Tract, PLSSDesc,
-        and/or TractList objects (or other list-like element holding
-        any of those object types).
+        :param objects: Any number or combination of `Tract`,
+        `PLSSDesc`, and/or `TractList` objects (or other iterable
+        holding any of those object types).
 
         :return: A generator of Tract objects.
         """
-        yield from TractList._iter_from_multiple(
-            objects, sample_of_type=TractList())
+        # This is (re-)defined from the superclass only in order to have
+        # an accurate docstring.
+        yield from cls._iter_from_multiple(objects)
 
-    # @staticmethod
-    # def from_multiple(*objects):
-    #     """
-    #     Create a TractList from multiple sources, which may be any
-    #     number and combination of Tract, PLSSDesc, and TractList objects
-    #     (or other list-like element holding any of those object types).
-    #
-    #     :param objects: Any number or combination of Tract, PLSSDesc,
-    #     and/or TractList objects (or other list-like element holding
-    #     any of those object types).
-    #     :return: A new `TractList` object containing all of the
-    #     extracted `Tract` objects.
-    #     """
-    #     tl = TractList()
-    #     for obj in objects:
-    #         if isinstance(obj, Tract):
-    #             tl.append(obj)
-    #         elif isinstance(obj, (PLSSDesc, TractList)):
-    #             # Rely on the fact that we can iterate over PLSSDesc
-    #             # objects' (implicitly over the TractList in their
-    #             # `.tracts` attribute).
-    #             tl.extend(obj)
-    #         else:
-    #             # Assume it's another list-like object.
-    #             for obj_deeper in obj:
-    #                 tl.extend(TractList.from_multiple(obj_deeper))
-    #     return tl
-    #
-    # @staticmethod
-    # def iter_from_multiple(*objects):
-    #     """
-    #     Create from multiple sources a generator of Tract objects.
-    #
-    #     (Identical to `.from_multiple()`, but returns a generator of
-    #     `Tract` objects, rather than a `TractList`.)
-    #
-    #     :param objects: Any number or combination of Tract, PLSSDesc,
-    #     and/or TractList objects (or other list-like element holding
-    #     any of those object types).
-    #
-    #     :return: A generator of Tract objects.
-    #     """
-    #     for obj in objects:
-    #         if isinstance(obj, Tract):
-    #             yield obj
-    #         elif isinstance(obj, (PLSSDesc, TractList)):
-    #             # Rely on the fact that we can iterate over PLSSDesc
-    #             # objects' (implicitly over the TractList in their
-    #             # `.tracts` attribute).
-    #             for tract in obj:
-    #                 yield tract
-    #         else:
-    #             # Assume it's another list-like object.
-    #             for obj_deeper in obj:
-    #                 yield from TractList.iter_from_multiple(obj_deeper)
+
+class TRSList(_TRSTractList):
+    """
+    A specialized ``list`` for ``TRS`` objects, with added methods for
+    sorting, grouping, and filtering the ``TRS`` objects.
+
+    NOTE: `TRSList` and `TractList` are subclassed from the same
+    superclass and have some of the same functionality for sorting,
+    grouping, and filtering.  In the docstrings for many of the methods,
+    there will be references to either `TRS` or `Tract` objects, and to
+    `TRSList` or `TractList` objects.  To be clear, `TRSList` objects
+    hold only `TRS` objects, and `TractList` objects hold only `Tract`
+    objects.
+
+    ____ ADDING TWP/RGE/SEC's TO THE TRSLIST ____
+    A ``TRSList`` will hold only ``TRS`` objects. However, if you try to
+    add a string to it, it will first convert it to a ``TRS`` object.
+    Similarly, if you try to add a ``Tract`` object, it will extract its
+    ``.trs`` attribute and convert it to a ``TRS`` object, which is then
+    added to the list (the original ``Tract`` itself is not).
+
+    ``TRSList`` can also be created from a ``PLSSDesc``, ``TractList``,
+    or other iterable containing ``Tract`` objects (the ``.trs``
+    attribute for each ``Tract`` will be extracted and converted to a
+    ``TRS`` object then added to the resulting ``TRSList``).
+
+    These are all acceptable:
+        ```
+        trs_list1 = pytrs.TRSList(['154n97w14', '154n97w15'])
+        trs_list2 = pytrs.TRSList([pytrs.TRS('154n97w14')])
+        trs_list3 = pytrs.TRSList([tract_object_1, tract_object_2])
+        trs_list4 = pytrs.TRSList(plssdesc_obj)
+        ```
+    (Note that the ``PLSSDesc`` object is passed directly, rather than
+    inside a list.)
+
+    To robustly create a list of ``TRS`` objects from multiple objects
+    of different types, look into ``TRS.from_multiple()``.
+
+        ```
+        trs_list5 = pytrs.TRSList.from_multiple(
+            '154n97w14',
+            pytrs.TRS('154n97w15'),
+            tract_object_1,
+            some_tract_list,
+            some_other_trs_list)
+        ```
+
+    ____ STREAMLINED OUTPUT OF THE TWP/RGE/SEC DATA ____
+    .to_strings() -- Return a plain list of all ``TRS`` objects,
+    converted to strings.
+
+    ____ SORTING / GROUPING / FILTERING ``TRS`` BY ATTRIBUTE VALUES ____
+    .sort_trs() -- Custom sorting based on the Twp/Rge/Sec. Can also
+    take parameters from the built-in ``list.sort()`` method.
+
+    .group() -- Group ``TRS`` objects into a dict of ``TRSList``
+    objects, based on their shared attribute values (e.g., by Twp/Rge),
+    and optionally sort them.
+
+    .filter() -- Get a new ``TRSList`` of ``TRS`` objects that match
+    some condition, and optionally remove them from the original
+    ``TRSList``.
+
+    .filter_errors() -- Get a new ``TRSList`` of ``TRS`` objects whose
+    Twp, Rge, and/or Section were an error or undefined, and optionally
+    remove them from the original ``TRSList``.
+    """
+
+    # A TRSList holds only TRS objects. But these types can be processed
+    # into individual TRS objects, which are then added.
+    _ok_individuals = (str, TRS, Tract)
+    _ok_iterables = (TractList, PLSSDesc)
+    _error_type = TRSListTypeError
+
+    def __init__(self, iterable=()):
+        """
+        :param iterable: An iterable (or `PLSSDesc`) containing any of
+        the following:
+        -- `TRS` objects
+        -- strings (which will be converted to `TRS` objects)
+        -- `Tract` objects (from which the `TRS` will be extracted and
+            added to the list)
+        """
+        _TRSTractList.__init__(self, iterable)
+
+    @classmethod
+    def _handle_type_specially(cls, obj):
+        """
+        INTERNAL USE:
+        
+        -- Pass `TRS` objects through.
+        -- Convert encountered strings to `TRS` objects.
+        -- Extract from encountered `Tract` objects the `.trs` attribute
+            and convert it to `TRS` object.
+        """
+        if isinstance(obj, TRS):
+            return obj
+        if isinstance(obj, str):
+            return TRS(obj)
+        if isinstance(obj, Tract):
+            return TRS(obj.trs)
+        raise TRSListTypeError
+    
+    def __str__(self):
+        return f"TRSList ({len(self)}): {str([elem.trs for elem in self])}"
+
+    def to_strings(self):
+        """
+        Get the Twp/Rge/Sec as a string from each element in this list.
+        :return: A new (plain) list containing the Twp/Rge/Sec's as
+        strings.
+        """
+        return [trs_obj.trs for trs_obj in self]
+
+    sort_trs = _TRSTractList.custom_sort
+    # Aliases to mirror `sort_trs`
+    filter_trs = _TRSTractList.filter
+    filter_trs_errors = _TRSTractList.filter_errors
+    group_trs = _TRSTractList.group
+    sort_grouped_trs = _TRSTractList.sort_grouped
+
+    @classmethod
+    def from_multiple(cls, *objects):
+        """
+        Create a `TRSList` from multiple sources.
+
+        :param objects: May pass any number or combination of `TRS`
+        objects or strings in the pyTRS standardized Twp/Rge/Sec format,
+        or `TRSList` objects, or other list-like objects containing
+        those object types.  (Any strings will be interpreted as
+        Twp/Rge/Sec and converted to `TRS` objects.)
+
+        :return: A `TRSList` containing the `TRS` objects.
+        """
+        # This is (re-)defined from the superclass only in order to have
+        # an accurate docstring (and to simplify the signature).
+        return cls._from_multiple(objects)
+
+    @classmethod
+    def iter_from_multiple(cls, *objects):
+        """
+        Create from multiple sources a generator of `TRS` objects.
+
+        (Identical to `.from_multiple()`, but returns a generator of
+        `TRS` objects, rather than a `TRSList`.)
+
+        :param objects: May pass any number or combination of `TRS`
+        objects or strings in the pyTRS standardized Twp/Rge/Sec format,
+        or `TRSList` objects, or other list-like objects containing
+        those object types.
+
+        :return: A generator of `TRS` objects.
+        """
+        # This is (re-)defined from the superclass only in order to have
+        # an accurate docstring.
+        yield from cls._iter_from_multiple(objects)
 
 
 class Config:
