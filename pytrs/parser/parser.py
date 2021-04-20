@@ -11,6 +11,8 @@ The main parsing package. Primary classes:
     data into broadly useful formats (i.e. into list, dict, string), as
     well as custom methods for sorting, grouping, and filtering the
     Tract objects themselves.
+> TRSList objects are similar to TractList, but instead hold TRS
+    objects.
 > Config objects configure parsing parameters for Tract and PLSSDesc.
 """
 

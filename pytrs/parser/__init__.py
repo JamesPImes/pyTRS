@@ -7,10 +7,13 @@ The main parsing package. Primary classes:
 > Tract objects parse tract text into lots and aliquots.
 > Tract objects represent the land in a single, unique Twp/Rge/Sec, and
     also parse text into lots and aliquots.
+> TRS objects break a Twp/Rge/Sec into its components.
 > TractList objects contain a list of Tracts, and can compile that Tract
     data into broadly useful formats (i.e. into list, dict, string), as
     well as custom methods for sorting, grouping, and filtering the
     Tract objects themselves.
+> TRSList objects are similar to TractList, but instead hold TRS
+    objects.
 > Config objects configure parsing parameters for Tract and PLSSDesc.
 """
 
