@@ -2828,10 +2828,11 @@ class _TRSTractList(list):
     for streamlined extraction of data from `Tract` objects.
     """
 
-    _error_type = TypeError
-    # _handle_type_specially = {}
+    # These will be modified in the subclasses to determine what
+    # elements can be processed by each.
     _ok_individuals = ()
     _ok_iterables = ()
+    _error_type = TypeError
 
     def __init__(self, iterable=()):
         """
@@ -2850,6 +2851,7 @@ class _TRSTractList(list):
     @classmethod
     def _verify_iterable(cls, iterable, into=None):
         """
+        INTERNAL USE:
         Type-check the contents of an iterable. Return a plain list of
         the elements in `iterable` if all are legal.
         """
@@ -2858,7 +2860,11 @@ class _TRSTractList(list):
         for elem in iterable:
             if isinstance(elem, cls._ok_individuals):
                 into.append(cls._verify_individual(elem))
-            elif isinstance(elem, cls._ok_iterables) or isinstance(elem, cls):
+            elif isinstance(elem, cls):
+                # Other instances of this class have already been
+                # appropriately type-checked.
+                into.extend(elem)
+            elif isinstance(elem, cls._ok_iterables):
                 for elem_deeper in elem:
                     into.append(cls._verify_individual(elem_deeper))
             else:
@@ -2868,18 +2874,14 @@ class _TRSTractList(list):
 
     @classmethod
     def _verify_individual(cls, obj):
-        """Type-check a single object."""
+        """INTERNAL USE: Type-check a single object."""
         if not isinstance(obj, cls._ok_individuals):
             raise cls._error_type(f"Cannot accept {type(obj)!r}.")
-        # for type_, function in cls._handle_type_specially.items():
-        #     if isinstance(obj, type_):
-        #         obj = function(obj)
-        #         break
         return cls._handle_type_specially(obj)
 
     @classmethod
     def _handle_type_specially(cls, obj):
-        """INTERNAL USE: For subclassing purposes."""
+        """INTERNAL USE: (For subclassing purposes.)"""
         return obj
 
     def __setitem__(self, index, value):
@@ -3711,7 +3713,11 @@ class _TRSTractList(list):
         for obj in objects:
             if isinstance(obj, cls._ok_individuals):
                 into.append(obj)
-            elif isinstance(obj, cls._ok_iterables) or isinstance(obj, cls):
+            elif isinstance(obj, cls):
+                # Other instances of this class have already been
+                # appropriately type-checked.
+                into.extend(obj)
+            elif isinstance(obj, cls._ok_iterables):
                 for obj_deeper in obj:
                     into.append(obj_deeper)
             else:
@@ -3746,7 +3752,11 @@ class _TRSTractList(list):
         for obj in objects:
             if isinstance(obj, cls._ok_individuals):
                 yield cls._verify_individual(obj)
-            elif isinstance(obj, cls._ok_iterables) or isinstance(obj, cls):
+            elif isinstance(obj, cls):
+                # Other instances of this class have already been
+                # appropriately type-checked.
+                yield from obj
+            elif isinstance(obj, cls._ok_iterables):
                 for obj_deeper in obj:
                     yield cls._verify_individual(obj_deeper)
             else:
