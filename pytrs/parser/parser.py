@@ -171,11 +171,15 @@ class DefaultEWError(ValueError):
 
 class TractListTypeError(TypeError):
     """Illegal object added to TractList."""
-    def __init__(self, additional_msg=None):
+    def __init__(self, additional_msg=None, was_iterable=False):
         msg = (
-            "Only Tract objects (or unpacked PLSSDesc and TractList "
-            "objects) may be added to TractList."
+            f"Tractlist will accept only {TractList._ok_individuals}."
         )
+        if was_iterable:
+            msg = (
+                f"TractList can unpack iterable types "
+                f"{TractList._ok_iterables}."
+            )
         if additional_msg:
             msg = f"{msg} {additional_msg}"
         super().__init__(msg)
@@ -183,11 +187,16 @@ class TractListTypeError(TypeError):
 
 class TRSListTypeError(TypeError):
     """Illegal object added to TRSList."""
-    def __init__(self, additional_msg=None):
+    def __init__(self, additional_msg=None, was_iterable=False):
         msg = (
-            "Only TRS objects (or a string of a Twp/Rge/Sec in the pyTRS "
-            "format) may be added to TRSList."
+            f"TRSList will accept only {TRSList._ok_individuals}. "
+            "(`TRS` object will be created from `str` or `Tract`)"
         )
+        if was_iterable:
+            msg = (
+                f"TRSList can unpack iterable types "
+                f"{TRSList._ok_iterables}."
+            )
         if additional_msg:
             msg = f"{msg} {additional_msg}"
         super().__init__(msg)
@@ -2265,31 +2274,28 @@ class _TRSTractList(list):
     for streamlined extraction of data from `Tract` objects.
     """
 
-    def __init__(self, iterable=(), tract_or_trs=None):
+    # This will break this class if it were used directly. However,
+    # subclasses TRSList and TractList will set this differently.
+    __own_type = None
+    __error_type = TypeError
+    _ok_individuals = ()
+    _ok_iterables = ()
+
+    def __init__(self, iterable=(), _handle_type_specially=None):
         """
+        INTERNAL USE:
+        (Initialize a `TRSList` or `TractList` directly.)
+
         :param iterable: Same as in `list()`
-        :param tract_or_trs: Either 'tract' (when initializing a
-        `TractList` object) or 'trs' (when initializing a `TRSList`
-        object).
+        :param _handle_type_specially: A dict, keyed by class (NOT
+        instances of that class), whose value is a lambda function to
+        apply to objects of that class when encountered, before adding
+        them to self. (Used for TRSList to extract `.trs` from Tract
+        objects, and to convert `str` to `TRS` objects.)
         """
-        self.__own_type = _TRSTractList
-        self.__error_type = TypeError
-        self.__handle_strings = None
-        # Default to either TractList or TRSList functionality.
-        self._ok_individuals = (Tract, TRS)
-        self._ok_iterables = (PLSSDesc, TractList, TRSList)
-        if tract_or_trs == 'tract':
-            self.__own_type = TractList
-            self.__error_type = TractListTypeError
-            self._ok_individuals = (Tract,)
-            self._ok_iterables = (PLSSDesc, TractList)
-        elif tract_or_trs == 'trs':
-            self.__own_type = TRSList
-            self.__error_type = TRSListTypeError
-            # We'll convert all strings to TRS objects when encountered.
-            self.__handle_strings = lambda x: TRS(x)
-            self._ok_individuals = (str, TRS, Tract)
-            self._ok_iterables = (TRSList, TractList, PLSSDesc)
+        self.__handle_type_specially = {}
+        if _handle_type_specially:
+            self.__handle_type_specially = _handle_type_specially
         list.__init__(self, self._verify_iterable(iterable))
 
     def _verify_iterable(self, iterable, into=None):
@@ -2314,16 +2320,10 @@ class _TRSTractList(list):
         """Type-check a single object."""
         if not isinstance(obj, self._ok_individuals):
             raise self.__error_type(f"Cannot accept {type(obj)!r}.")
-        if isinstance(obj, str) and self.__handle_strings is not None:
-            obj = self.__handle_strings(obj)
-        return self._type_scrub(obj)
-
-    def _type_scrub(self, obj):
-        """
-        INTERNAL USE:
-
-        For subclassing purposes.
-        """
+        for type_, function in self.__handle_type_specially.items():
+            if isinstance(obj, type_):
+                obj = function(obj)
+                break
         return obj
 
     def __setitem__(self, index, value):
@@ -2662,7 +2662,7 @@ class _TRSTractList(list):
             raise IndexError(
                 "Mismatched length of iterable `sort_key` "
                 "and `sort_reverse`")
-        
+
         if is_multi_key:
             # If multiple sorts, do each.
             for sk, rv in zip(key, reverse):
@@ -3160,15 +3160,13 @@ class _TRSTractList(list):
             if isinstance(obj, into._ok_individuals):
                 into.append(obj)
             elif isinstance(obj, into._ok_iterables):
-                # Rely on the fact that we can iterate over PLSSDesc
-                # objects' (implicitly over the TractList in their
-                # `.tracts` attribute).
-                into.extend(obj)
+                for obj_deeper in obj:
+                    into.append(obj_deeper)
             else:
                 # Assume it's another list-like object.
                 for obj_deeper in obj:
-                    into.extend(_TRSTractList._from_multiple(
-                        obj_deeper, into=into))
+                    # Elements are appended in place, no need to store var.
+                    _TRSTractList._from_multiple(obj_deeper, into=into)
         return into
 
     @staticmethod
@@ -3190,18 +3188,18 @@ class _TRSTractList(list):
         strings in the pyTRS standardized Twp/Rge/Sec format, or
         `TRSList` objects.
 
-        :param sample_of_type: Either `TRSList` or `TractList` (the classes
-        themselves -- not instances of them).
+        :param sample_of_type: A `TRSList` or `TractList` object. (Will
+        not be modified -- its instance variables will be examined.)
 
         :return: A generator of `Tract` objects (or `TRS` objects, as
         applicable).
         """
         for obj in objects:
             if isinstance(obj, sample_of_type._ok_individuals):
-                yield obj
+                yield sample_of_type._verify_individual(obj)
             elif isinstance(obj, sample_of_type._ok_iterables):
-                for elem in obj:
-                    yield elem
+                for obj_deeper in obj:
+                    yield sample_of_type._verify_individual(obj_deeper)
             else:
                 # Assume it's another list-like object.
                 for obj_deeper in obj:
@@ -3210,24 +3208,26 @@ class _TRSTractList(list):
 
 
 class TRSList(_TRSTractList):
+
+    # We'll convert all strings to TRS objects when encountered,
+    # and extract from Tract objects the `.trs` attribute (which
+    # will then get converted to TRS object).
+    __handle_type_specially = {
+        str: lambda x: TRS(x),
+        Tract: lambda x: TRS(x.trs)
+    }
+
     def __init__(self, iterable=()):
-        _TRSTractList.__init__(self, iterable, tract_or_trs='trs')
+        self.__own_type = TRSList
+        self.__error_type = TRSListTypeError
+        self._ok_individuals = (str, TRS, Tract)
+        self._ok_iterables = (TRSList, TractList, PLSSDesc)
+        _TRSTractList.__init__(
+            self, iterable,
+            _handle_type_specially=TRSList.__handle_type_specially)
 
     def __str__(self):
         return str([elem.trs for elem in self])
-
-    def append(self, obj):
-        super().append(self._type_scrub(obj))
-
-    def extend(self, iterable):
-        _ = [*map(self.append, iterable)]
-
-    def _type_scrub(self, obj):
-        if isinstance(obj, str):
-            obj = TRS(obj)
-        elif isinstance(obj, Tract):
-            obj = TRS(obj.trs)
-        return obj
 
     def to_strings(self):
         """
@@ -3257,20 +3257,7 @@ class TRSList(_TRSTractList):
 
         :return: A `TRSList` containing the `TRS` objects.
         """
-        tl = TRSList()
-        for obj in objects:
-            if isinstance(obj, tl._ok_individuals):
-                tl.append(obj)
-            elif isinstance(obj, tl._ok_iterables):
-                # Rely on the fact that we can iterate over PLSSDesc
-                # objects' (implicitly over the TractList in their
-                # `.tracts` attribute).
-                tl.extend(obj)
-            else:
-                # Assume it's another list-like object.
-                for obj_deeper in obj:
-                    tl.extend(tl.from_multiple(obj_deeper))
-        return tl
+        return TRSList._from_multiple(objects, into=TRSList())
 
     @staticmethod
     def iter_from_multiple(*objects):
@@ -3287,18 +3274,7 @@ class TRSList(_TRSTractList):
 
         :return: A generator of `TRS` objects.
         """
-        for obj in objects:
-            if isinstance(obj, TRS):
-                yield obj
-            elif isinstance(obj, str):
-                yield TRS(obj)
-            elif isinstance(obj, TRSList):
-                for trs in obj:
-                    yield trs
-            else:
-                # Assume it's another list-like object.
-                for obj_deeper in obj:
-                    yield from TRSList.iter_from_multiple(obj_deeper)
+        yield from TRSList._iter_from_multiple(objects, sample_of_type=TRSList())
 
 
 class TractList(_TRSTractList):
@@ -3354,13 +3330,17 @@ class TractList(_TRSTractList):
     """
 
     def __init__(self, iterable=()):
-        _TRSTractList.__init__(self, iterable, tract_or_trs='tract')
+        self.__own_type = TractList
+        self.__error_type = TractListTypeError
+        self._ok_individuals = (Tract,)
+        self._ok_iterables = (PLSSDesc, TractList)
+        super().__init__(self, iterable)
 
     def __str__(self):
         return (
-            "TractList\nTotal Tracts: {0}\n"
-            "Tracts: {1}").format(
-                len(self), self.snapshot_inside())
+            f"TractList\nTotal Tracts: {len(self)}\n"
+            f"Tracts: {self.snapshot_inside()}"
+        )
 
     def append(self, obj):
         if isinstance(obj, PLSSDesc):
@@ -3838,23 +3818,11 @@ class TractList(_TRSTractList):
         :param objects: Any number or combination of Tract, PLSSDesc,
         and/or TractList objects (or other list-like element holding
         any of those object types).
+
         :return: A new `TractList` object containing all of the
         extracted `Tract` objects.
         """
-        tl = TractList()
-        for obj in objects:
-            if isinstance(obj, Tract):
-                tl.append(obj)
-            elif isinstance(obj, (PLSSDesc, TractList)):
-                # Rely on the fact that we can iterate over PLSSDesc
-                # objects' (implicitly over the TractList in their
-                # `.tracts` attribute).
-                tl.extend(obj)
-            else:
-                # Assume it's another list-like object.
-                for obj_deeper in obj:
-                    tl.extend(TractList.from_multiple(obj_deeper))
-        return tl
+        return TractList._from_multiple(objects, into=TractList())
 
     @staticmethod
     def iter_from_multiple(*objects):
@@ -3870,19 +3838,64 @@ class TractList(_TRSTractList):
 
         :return: A generator of Tract objects.
         """
-        for obj in objects:
-            if isinstance(obj, Tract):
-                yield obj
-            elif isinstance(obj, (PLSSDesc, TractList)):
-                # Rely on the fact that we can iterate over PLSSDesc
-                # objects' (implicitly over the TractList in their
-                # `.tracts` attribute).
-                for tract in obj:
-                    yield tract
-            else:
-                # Assume it's another list-like object.
-                for obj_deeper in obj:
-                    yield from TractList.iter_from_multiple(obj_deeper)
+        yield from TractList._iter_from_multiple(
+            objects, sample_of_type=TractList())
+
+    # @staticmethod
+    # def from_multiple(*objects):
+    #     """
+    #     Create a TractList from multiple sources, which may be any
+    #     number and combination of Tract, PLSSDesc, and TractList objects
+    #     (or other list-like element holding any of those object types).
+    #
+    #     :param objects: Any number or combination of Tract, PLSSDesc,
+    #     and/or TractList objects (or other list-like element holding
+    #     any of those object types).
+    #     :return: A new `TractList` object containing all of the
+    #     extracted `Tract` objects.
+    #     """
+    #     tl = TractList()
+    #     for obj in objects:
+    #         if isinstance(obj, Tract):
+    #             tl.append(obj)
+    #         elif isinstance(obj, (PLSSDesc, TractList)):
+    #             # Rely on the fact that we can iterate over PLSSDesc
+    #             # objects' (implicitly over the TractList in their
+    #             # `.tracts` attribute).
+    #             tl.extend(obj)
+    #         else:
+    #             # Assume it's another list-like object.
+    #             for obj_deeper in obj:
+    #                 tl.extend(TractList.from_multiple(obj_deeper))
+    #     return tl
+    #
+    # @staticmethod
+    # def iter_from_multiple(*objects):
+    #     """
+    #     Create from multiple sources a generator of Tract objects.
+    #
+    #     (Identical to `.from_multiple()`, but returns a generator of
+    #     `Tract` objects, rather than a `TractList`.)
+    #
+    #     :param objects: Any number or combination of Tract, PLSSDesc,
+    #     and/or TractList objects (or other list-like element holding
+    #     any of those object types).
+    #
+    #     :return: A generator of Tract objects.
+    #     """
+    #     for obj in objects:
+    #         if isinstance(obj, Tract):
+    #             yield obj
+    #         elif isinstance(obj, (PLSSDesc, TractList)):
+    #             # Rely on the fact that we can iterate over PLSSDesc
+    #             # objects' (implicitly over the TractList in their
+    #             # `.tracts` attribute).
+    #             for tract in obj:
+    #                 yield tract
+    #         else:
+    #             # Assume it's another list-like object.
+    #             for obj_deeper in obj:
+    #                 yield from TractList.iter_from_multiple(obj_deeper)
 
 
 class Config:
