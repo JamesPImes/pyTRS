@@ -20,6 +20,7 @@ from .parser import (
     Tract,
     TractList,
     TRS,
+    TRSList,
     Config,
 
     # Misc. functions for examining / handling descriptions
