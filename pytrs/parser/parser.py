@@ -3960,9 +3960,7 @@ class TractList(_TRSTractList):
             'qqs': ['NENW', 'NWNW', 'SENW', 'SWNW', 'NESW', 'NWSW']}
             ]
         """
-
         attributes = _clean_attributes(attributes)
-
         return [t.to_dict(attributes) for t in self]
 
     def tracts_to_list(self, *attributes) -> list:
@@ -3996,9 +3994,7 @@ class TractList(_TRSTractList):
                 ['NENW', 'NWNW', 'SENW', 'SWNW', 'NESW', 'NWSW']]
             ]
         """
-
         attributes = _clean_attributes(attributes)
-
         return [t.to_list(attributes) for t in self]
 
     def tracts_to_str(self, *attributes) -> str:
@@ -4032,12 +4028,10 @@ class TractList(_TRSTractList):
             desc : Northwest Quarter, North Half South West Quarter
             qqs  : NENW, NWNW, SENW, SWNW, NESW, NWSW
         """
-
         attributes = _clean_attributes(attributes)
 
         # How far to justify the attribute names in the output str:
         jst = max([len(att) for att in attributes]) + 1
-
         # For justifying linebreaks within a value.
         jst_linebreak = f"\n{' ' * (jst + 2)}"
 
@@ -4054,9 +4048,7 @@ class TractList(_TRSTractList):
                 v = str(v).replace("\n", jst_linebreak)
                 # Justify attribute name and report its value
                 tract_data = f"{tract_data}\n{att_name.ljust(jst, ' ')}: {v}"
-
             all_tract_data = f"{all_tract_data}{tract_data}"
-
         return all_tract_data
 
     def tracts_to_csv(
@@ -4089,7 +4081,6 @@ class TractList(_TRSTractList):
         """
         if not fp:
             raise ValueError("`fp` must be a filepath")
-
         from pathlib import Path
         fp = Path(fp)
         headers = True
@@ -4098,7 +4089,6 @@ class TractList(_TRSTractList):
 
         import csv
         attributes = _clean_attributes(attributes)
-
         header_row = Tract.get_headers(attributes, nice_headers)
 
         def scrub_row(data):
@@ -4114,7 +4104,6 @@ class TractList(_TRSTractList):
 
         with open(fp, mode=mode, newline="") as file:
             writer = csv.writer(file)
-
             if headers:
                 writer.writerow(header_row)
             for tract in self:
@@ -4353,10 +4342,10 @@ class TRSList(_TRSTractList):
 
     ____ ADDING TWP/RGE/SEC's TO THE TRSLIST ____
     A ``TRSList`` will hold only ``TRS`` objects. However, if you try to
-    add a string to it, it will first convert it to a ``TRS`` object.
-    Similarly, if you try to add a ``Tract`` object, it will extract its
-    ``.trs`` attribute and convert it to a ``TRS`` object, which is then
-    added to the list (the original ``Tract`` itself is not).
+    add a string to it, it will first be converted to a ``TRS`` object.
+    Similarly, if you try to add a ``Tract`` object, its ``.trs``
+    attribute will be extracted and converted to a ``TRS`` object, which
+    then gets added to the list (the original ``Tract`` itself is not).
 
     ``TRSList`` can also be created from a ``PLSSDesc``, ``TractList``,
     or other iterable containing ``Tract`` objects (the ``.trs``
