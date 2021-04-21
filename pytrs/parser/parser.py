@@ -492,17 +492,12 @@ class PLSSDesc:
     def __str__(self):
         pt = len(self.tracts)
         return (
-            "PLSSDesc ({0})\n"
-            "Source: {1}\n"
-            "Total Tracts: {2}\n"
-            "Tracts: {3}\n"
+            f"PLSSDesc ({'Unparsed' if pt == 0 else 'Parsed'})\n"
+            f"Source: {self.source}\n"
+            f"Tracts ({'n/a' if pt == 0 else pt}): "
+            f"{self.tracts.snapshot_inside()}\n"
             "Original description:\n"
-            "{4}").format(
-                "Unparsed" if pt == 0 else "Parsed",
-                self.source,
-                "n/a" if pt == 0 else pt,
-                self.tracts.snapshot_inside(),
-                self.orig_desc)
+            f"{self.orig_desc}")
 
     def __getitem__(self, item):
         """
