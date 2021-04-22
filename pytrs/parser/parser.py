@@ -3491,10 +3491,10 @@ class _TRSTractList(list):
         dct = self._group(self, this_attribute)
 
         # We have at least one more grouping to do, so recursively group
-        # each current TractList object.
+        # each current TractList/TRSList object.
         dct_2 = {}
-        for k, trstractlist in dct.items():
-            dct_2[k] = trstractlist.group(by_attribute=by_attribute, into=None)
+        for k, tlist in dct.items():
+            dct_2[k] = tlist.group_nested(by_attribute=by_attribute, into=None)
 
         # Unpack dct_2 into the existing dict (`into`), sort, and return.
         dct = add_to_existing_dict(dct_2, into)
@@ -3589,7 +3589,7 @@ class _TRSTractList(list):
             grp_att = by_attribute.pop(0)
             for k1, v1 in dct.items():
                 k1_base = get_keybase(k1)
-                dct_2 = self._group(self, grp_att)
+                dct_2 = self._group(v1, grp_att)
                 for k2, v2 in dct_2.items():
                     dct_new[tuple(k1_base + [k2])] = v2
             dct = dct_new
