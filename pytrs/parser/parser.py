@@ -2822,6 +2822,12 @@ class _TRSTractList(list):
         Type-check the contents of an iterable. Return a plain list of
         the elements in `iterable` if all are legal.
         """
+        if isinstance(iterable, str):
+            # A string is technically iterable, and they are acceptable
+            # by a `TRSList` -- but NOT to be iterated over. If a
+            # TRSList iterates over a string, each character would be
+            # converted to an error `TRS` object, and nobody wants that.
+            raise TypeError("type 'str' is not an acceptable iterable.")
         if into is None:
             into = []
         for elem in iterable:
