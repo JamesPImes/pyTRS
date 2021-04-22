@@ -3,7 +3,7 @@
 
 `TractList` objects are a subclass of the built-in `list`, with added functionality to:
 
-* type-check any objects that are added to it (if an object other than a `Tract` is appended, it will raise a `TractListTypeError`, although it can also unpack `Tract` objects out of `PLSSDesc`, `TractList` or other iterables that hold any of those object types -- see the `.from_multiple()` method).
+* type-check any objects that are added to it (if an object other than a `Tract` is appended, it will raise a `TypeError`, although it can also unpack `Tract` objects out of `PLSSDesc`, `TractList` or other iterables that hold any of those object types -- see the `.from_multiple()` method).
 
 * compile `Tract` data to lists or dicts, or write it to .csv files (see [the guide on extracting `Tract` data in bulk](https://github.com/JamesPImes/pyTRS/blob/master/guides/guides/extracting_data.md#guide-to-extracting-data-in-bulk-from-parsed-objects)).
 
@@ -33,14 +33,14 @@ normal_list = [tract1, tract2, plssdesc1, another_tractlist]
 some_tractlist = pytrs.TractList(normal_list)
 ```
 
-If the iterable includes an object of any other kind, it will raise a `TractListTypeError`.
+If the iterable includes an object of any other kind, it will raise a `TypeError`.
 ```
 bad_list = ['foo', tract1, tract2, plssdesc1, another_tractlist]
 some_tractlist = pytrs.TractList(bad_list)
 ```
 Raises... 
 ```
-pytrs.parser.parser.TractListTypeError: Only Tract objects (or unpacked PLSSDesc / TractList objects) may be added to TractList. Iterable contained <class 'str'>.
+TypeError: TractList will accept only type `pytrs.Tract`. Iterable contained <class 'str'>.
 ```
 
 ### Robustly construct a `TractList` from multiple sources with `.from_multiple()`
@@ -52,7 +52,7 @@ normal_list1 = [tract1, tract2]
 
 nested_list = [normal_list1, another_tractlist]
 
-# This would raise a TractListTypeError:
+# This would raise a TypeError:
 # some_tractlist = pytrs.TractList(nested_list)
 
 # This is fine.
