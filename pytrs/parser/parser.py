@@ -2812,11 +2812,6 @@ class _TRSTractList(list):
         (Initialize a `TRSList` or `TractList` directly.)
 
         :param iterable: Same as in `list()`
-        :param _handle_type_specially: A dict, keyed by class (NOT
-        instances of that class), whose value is a lambda function to
-        apply to objects of that class when encountered, before adding
-        them to self. (Used for TRSList to extract `.trs` from Tract
-        objects, and to convert `str` to `TRS` objects.)
         """
         list.__init__(self, self._verify_iterable(iterable))
 
