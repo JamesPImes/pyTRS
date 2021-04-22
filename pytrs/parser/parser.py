@@ -1341,8 +1341,8 @@ class PLSSDesc:
         """
         Extract from ``.tracts`` all Tract objects that were
         parsed with an error. Specifically extract Twp/Rge errors with
-        ``twprge=True`` (on by default); and get Sec errors with
-        ``sec=True`` (on by default).
+        ``twp=True`` and ``rge=True``; and get Sec errors with
+        ``sec=True`` (all of which are on by default).
 
         Returns a new TractList of all of the selected Tract objects.
 
@@ -2926,8 +2926,8 @@ class _TRSTractList(list):
         """
         Extract from this custom list all elements that were parsed
         with an error. Specifically extract Twp/Rge errors with
-        ``twprge=True`` (on by default); and get Sec errors with
-        ``sec=True`` (on by default).
+        ``twp=True`` and ``rge=True``; and get Sec errors with
+        ``sec=True`` (all of which are on by default).
 
         Returns a new `TractList` (or `TRSList`, as applicable) of all
         of the selected elements.
@@ -3050,10 +3050,9 @@ class _TRSTractList(list):
         for i, element in enumerate(self):
             # Always find duplicate instances (because not all Tract
             # objects are parsed into lots/qqs).
-            if element not in unique:
-                unique.add(element)
-            else:
+            if element in unique:
                 indexes_to_include.append(i)
+            unique.add(element)
             if only_by_instance:
                 continue
 
@@ -3095,14 +3094,14 @@ class _TRSTractList(list):
         original list.
         :return: The new `TractList` (or `TRSList`).
         """
-        # Initialize a new instance of the type that this object already
-        # is. (Done this way for subclassing purposes.)
         new_list = self.__class__()
-        indexes.reverse()
-        for i in indexes:
-            new_list.append(self[i])
+        # Populate the new list in reverse order, in order to remove the
+        # intended elements from the original list if requested.
+        for i in range(len(indexes) - 1, -1, -1):
+            ind = indexes[i]
+            new_list.append(self[ind])
             if drop:
-                self.pop(i)
+                self.pop(ind)
         new_list.reverse()
         return new_list
 
@@ -3637,7 +3636,7 @@ class _TRSTractList(list):
         """
         dct = {}
         for t in trstractlist:
-            val = getattr(t, by_attribute)
+            val = getattr(t, by_attribute, f"{by_attribute}: n/a")
             dct.setdefault(val, cls())
             dct[val].append(t)
         if isinstance(into, dict):
@@ -3688,8 +3687,8 @@ class _TRSTractList(list):
         """
         INTERNAL USE:
 
-        Create a `TractList` or `TRSList` (as dictated by `of_type`)
-        from multiple sources.
+        Create a `TractList` or `TRSList` from multiple sources of
+        varying types.
 
         :param objects: For `TractList` objects, may pass any number or
         combination of Tract, PLSSDesc, and/or TractList objects (or
@@ -3836,12 +3835,6 @@ class TractList(_TRSTractList):
     def __str__(self):
         return f"TractList ({len(self)}): {self.snapshot_inside()}"
 
-    def append(self, obj):
-        if isinstance(obj, PLSSDesc):
-            self.extend(obj.tracts)
-        else:
-            list.append(self, self._verify_individual(obj))
-
     def config_tracts(self, config):
         """
         Reconfigure all of the Tract objects in this TractList.
@@ -3878,7 +3871,7 @@ class TractList(_TRSTractList):
         attributes, overwriting data from a prior parse.
 
         :param config: (Optional) New Config parameters to apply to each
-        Tract before parsing. (If there is a conflict
+        Tract before parsing.
         :param clean_qq: Same as in ``Tract.parse()`` method.
         :param include_lot_divs: Same as in ``Tract.parse()`` method.
         :param qq_depth_min: Same as in ``Tract.parse()`` method.
