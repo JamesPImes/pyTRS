@@ -171,29 +171,6 @@ class DefaultEWError(ValueError):
         super().__init__(msg)
 
 
-class TractListTypeError(TypeError):
-    """Illegal object added to TractList."""
-    def __init__(self, additional_msg=None):
-        msg = (
-            f"Tractlist will accept only {TractList._ok_individuals}."
-        )
-        if additional_msg:
-            msg = f"{msg} {additional_msg}"
-        super().__init__(msg)
-
-
-class TRSListTypeError(TypeError):
-    """Illegal object added to TRSList."""
-    def __init__(self, additional_msg=None):
-        msg = (
-            f"TRSList will accept only {TRSList._ok_individuals}. "
-            "(`TRS` object will be created from `str` or `Tract`)"
-        )
-        if additional_msg:
-            msg = f"{msg} {additional_msg}"
-        super().__init__(msg)
-
-
 class PLSSDesc:
     """
     Each object of this class is a full PLSS description, taking the raw
@@ -2827,7 +2804,7 @@ class _TRSTractList(list):
     # elements can be processed by each.
     _ok_individuals = ()
     _ok_iterables = ()
-    _error_type = TypeError
+    _typeerror_msg = ''
 
     def __init__(self, iterable=()):
         """
@@ -2863,15 +2840,16 @@ class _TRSTractList(list):
                 for elem_deeper in elem:
                     into.append(cls._verify_individual(elem_deeper))
             else:
-                raise cls._error_type(
-                    f"Iterable contained {type(elem)!r}.")
+                raise TypeError(
+                    f"{cls._typeerror_msg} Iterable contained {type(elem)!r}.")
         return into
 
     @classmethod
     def _verify_individual(cls, obj):
         """INTERNAL USE: Type-check a single object."""
         if not isinstance(obj, cls._ok_individuals):
-            raise cls._error_type(f"Cannot accept {type(obj)!r}.")
+            raise TypeError(
+                f"{cls._typeerror_msg} Cannot accept {type(obj)!r}.")
         return cls._handle_type_specially(obj)
 
     @classmethod
@@ -3865,7 +3843,7 @@ class TractList(_TRSTractList):
     # extracted from these types and added to the list.
     _ok_individuals = (Tract,)
     _ok_iterables = (PLSSDesc,)
-    _error_type = TractListTypeError
+    _typeerror_msg = "TractList will accept only type `pytrs.Tract`."
 
     def __init__(self, iterable=()):
         """
@@ -4434,7 +4412,9 @@ class TRSList(_TRSTractList):
     # into individual TRS objects, which are then added.
     _ok_individuals = (str, TRS, Tract)
     _ok_iterables = (TractList, PLSSDesc)
-    _error_type = TRSListTypeError
+    _typeerror_msg = (
+        "TRSList will accept only types (`str`, `pytrs.TRS`, `pytrs.Tract`)."
+    )
 
     def __init__(self, iterable=()):
         """
@@ -4463,7 +4443,7 @@ class TRSList(_TRSTractList):
             return TRS(obj)
         if isinstance(obj, Tract):
             return TRS(obj.trs)
-        raise TRSListTypeError
+        raise TypeError(f"{cls._typeerror_msg} Cannot accept {type(obj)}")
     
     def __str__(self):
         return f"TRSList ({len(self)}): {str([elem.trs for elem in self])}"
