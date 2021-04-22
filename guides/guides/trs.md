@@ -105,3 +105,61 @@ Footnotes:
 * `twp_num` is not `None` -> This township is fine.
 * (and similar for range and section)
 
+
+## `TRSList` objects
+
+The class `TRSList` is very similar to [`TractList`](https://github.com/JamesPImes/pyTRS/blob/master/guides/guides/tractlist.md) (in fact they are both subclassed from the same superclass and contain many of the same methods), but it holds `TRS` objects instead of `Tract` objects.
+
+If you add to a `TRSList` a string, the string will first be converted to a `TRS` object.
+
+```
+trs1 = pytrs.TRS('154n97w14')
+trs2 = pytrs.TRS('154n97w15')
+trs_list = pytrs.TRSList([trs1, trs2])
+
+# Or add strings directly (they will be converted to TRS objects):
+trs_list = TRSList(['154n97w14', '154n97w15'])
+```
+
+We can also pass to it `Tract` objects, in which case the `.trs` attribute will be extracted and converted to a `TRS` object before being added.
+```
+tract = pytrs.Tract('NE/4', trs='154n97w14')
+trs_list = pytrs.TRSList([tract])
+```
+
+Similarly, we can extract/convert the `.trs` attributes in `Tract` objects from a `PLSSDesc` or `TractList` object if we pass them to `.extend()`:
+```
+plssdesc = pytrs.PLSSDesc('T154N-R97W Sec 14: NE/4, Sec 15: W/2')
+trs_list = pytrs.TRSList()
+trs_list.extend(plssdesc)
+
+# or even...
+trs_list = pytrs.TRSList(plssdesc)
+```
+(In either case, `trs_list` contains `TRS` objects for `154n97w14` and `154n97w15`.)
+
+
+### Sorting / Filtering / Grouping
+
+We can sort, filter, or group `TRSList` objects, essentially the same [as with `TractList` objects](https://github.com/JamesPImes/pyTRS/blob/master/guides/guides/sort_filter_group.md#guide-to-sorting--filtering--grouping-tract-objects-in-a-tractlist-or-plssdesc):
+```
+trs_list = pytrs.TRSList(['154n97w14', '154n97w14', '154n97w15', '155n97w22'])
+trs_list.custom_sort(sort_key='s,r,t')
+group_dict = trs_list.group(by_attribute='twprge', sort_key='s,r')
+selected = trs_list.filter(key=lambda x: x.twprge = '154n97w')
+discarded = trs_list.filter_duplicates(drop=True)
+``` 
+
+## Get a regular list of strings with `TRSList.to_strings()`
+
+Use this method to get a regular list of strings in the pyTRS standard format.
+
+```
+trs1 = pytrs.TRS('154n97w14')
+trs2 = pytrs.TRS('154n97w01')
+trs_list = pytrs.TRSList([trs1, trs2])
+
+plain_list = trs_list.to_strings()
+```
+
+In this example, `plain_list` is simply `['154n97w14', '154n97w01']` (holding strings).
