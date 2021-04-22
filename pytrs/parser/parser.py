@@ -2326,6 +2326,15 @@ class TRS:
     def __str__(self):
         return self.trs
 
+    def __eq__(self, other):
+        """
+        A `TRS` object is equal to another object if that object is also
+        a `TRS` object with an identical `.trs` attribute.
+        """
+        if not isinstance(other, TRS):
+            return False
+        return self.trs == other.trs
+
     @property
     def trs(self):
         return self.__trs_dict["trs"]
@@ -4456,6 +4465,38 @@ class TRSList(_TRSTractList):
         strings.
         """
         return [trs_obj.trs for trs_obj in self]
+
+    def contains(self, trs, match_all=False) -> bool:
+        """
+        Check whether this `TRSList` contains one or more specific
+        Twp/Rge/Sec.  By default, a match of ANY Twp/Rge/Sec will return
+        True.  But to look for matches of ALL Twp/Rge/Sec, use
+        `match_all=True`.  (Duplicates are ignored.)
+
+        :param trs: The Twp/Rge/Section(s) to look for in this TRSList.
+        May pass as a TRS object, a string in the standard pyTRS format,
+        or a TRSList.  May also pass a Tract, a parsed PLSSDesc object,
+        a TractList.  May also or an iterable containing any combination
+        of those types. (Note: If a `Tract`, `PLSSDesc`, or `TractList`
+        is passed, the `.trs` attribute in each `Tract` will be looked
+        for.)
+
+        :param match_all: If we need to check whether ALL of the
+        Twp/Rge/Sections are contained in this `TRSList` (ignoring
+        duplicates).  Defaults to False (i.e. a match of ANY Twp/Rge/Sec
+        will be interpreted as True).
+
+        :return: A bool, whether or not any of the Twp/Rge/Sec in `trs`
+        are found in this `TRSList`.
+        """
+        # Convert `trs` to a TRS object (or if `trs` is an iterable,
+        # convert all elements within it to `TRS` objects) and add to a
+        # TRSList. Convert the resulting TRSList to a set.
+        look_for = set(TRSList.from_multiple(trs).to_strings())
+        contained = set(self.to_strings())
+        if match_all:
+            return len(look_for - contained) == 0
+        return len(contained.intersection(look_for)) > 0
 
     sort_trs = _TRSTractList.custom_sort
     # Aliases to mirror `sort_trs`
