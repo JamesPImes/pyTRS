@@ -3664,11 +3664,10 @@ class _TRSTractList(list):
         ``.group_tracts()``, or ``.group_trs()``).
 
         :param sort_key: How to sort the elements in the lists. (Can be
-        any value acceptable to the ``.sort_tracts()`` method.)
+        any value acceptable to the ``.custom_sort()`` method.)
 
         :param reverse: (Optional) Whether to reverse lambda sorts.
-        (More detail provided in the docs for
-        ``.sort_tracts()``.)
+        (More detail provided in the docs for ``.custom_sort()``.)
 
         :return: The original ``group_dict``, with the lists inside it
         having been sorted in place.
@@ -3681,6 +3680,49 @@ class _TRSTractList(list):
             else:
                 v.custom_sort(key=sort_key, reverse=reverse)
         return group_dict
+
+    @classmethod
+    def unpack_group(cls, group_dict: dict, sort_key=None, reverse=False):
+        """
+        Convert a grouped dict (or nested group dict) of ``TRSList`` or
+        ``TractList`` objects into a new single ``TRSList`` or
+        ``TractList`` object.
+
+        NOTE: If ``group_dict`` contains ``TRSList`` objects, this
+        method must be called as ``TRSList.unpack_group()``.
+        Conversely, if ``group_dict`` contains ``TractList`` objects,
+        this method must be called as ``TractList.unpack_group()``.
+
+        :param group_dict: A dict, as returned by ``.group()`` or
+        ``.group_nested()`` (or a nested dict inside what was returned
+        by ``.group_nested()``).
+
+        :param sort_key: (Optional) How to sort the elements in the
+        returned list.  NOT applied to the original lists inside the
+        dict.  (Can be any value acceptable to the ``.custom_sort()``
+        method.)
+
+        :param reverse: (Optional) Whether to reverse lambda sorts.
+        (More detail provided in the docs for ``.custom_sort()``.)
+
+        :return: A new `TractList` (or `TRSList`, as applicable).
+        """
+        tl = cls()
+
+        def unpack(dct):
+            # We place recursion within the `unpack_group()` method
+            # itself to avoid creating multiple `tl` instances.
+            for v_ in dct.values():
+                if isinstance(v_, dict):
+                    # Recursively unpack nested dicts.
+                    unpack(v_)
+                else:
+                    # Add the elements of this list.
+                    tl.extend(v_)
+        unpack(group_dict)
+        if sort_key:
+            tl.custom_sort(sort_key, reverse)
+        return tl
 
     @classmethod
     def _from_multiple(cls, *objects, into=None):
