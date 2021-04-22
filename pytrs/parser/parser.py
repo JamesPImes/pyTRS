@@ -11,6 +11,8 @@ The main parsing package. Primary classes:
     data into broadly useful formats (i.e. into list, dict, string), as
     well as custom methods for sorting, grouping, and filtering the
     Tract objects themselves.
+> TRSList objects are similar to TractList, but instead hold TRS
+    objects.
 > Config objects configure parsing parameters for Tract and PLSSDesc.
 """
 
@@ -144,7 +146,7 @@ class ConfigError(TypeError):
         msg = "`config` must be a str, None, or a pytrs.Config object."
         if obj is not None:
             msg = f"{msg} Passed type {type(obj)!r}."
-        super().__init__(self, msg)
+        super().__init__(msg)
 
 
 class DefaultNSError(ValueError):
@@ -155,7 +157,7 @@ class DefaultNSError(ValueError):
         msg = f"`default_ns` must be one of {legal}."
         if obj is not None:
             msg = f"{msg} Passed {obj!r}."
-        super().__init__(self, msg)
+        super().__init__(msg)
 
 
 class DefaultEWError(ValueError):
@@ -166,19 +168,7 @@ class DefaultEWError(ValueError):
         msg = f"`default_ew` must be one of {legal}."
         if obj is not None:
             msg = f"{msg} Passed {obj!r}."
-        super().__init__(self, msg)
-
-
-class TractListTypeError(TypeError):
-    """Illegal object added to TractList."""
-    def __init__(self, additional_msg=None):
-        msg = (
-            "Only Tract objects (or unpacked PLSSDesc and TractList "
-            "objects) may be added to TractList."
-        )
-        if additional_msg:
-            msg = f"{msg} {additional_msg}"
-        super().__init__(self, msg)
+        super().__init__(msg)
 
 
 class PLSSDesc:
@@ -479,17 +469,12 @@ class PLSSDesc:
     def __str__(self):
         pt = len(self.tracts)
         return (
-            "PLSSDesc ({0})\n"
-            "Source: {1}\n"
-            "Total Tracts: {2}\n"
-            "Tracts: {3}\n"
+            f"PLSSDesc ({'Unparsed' if pt == 0 else 'Parsed'})\n"
+            f"Source: {self.source}\n"
+            f"Tracts ({'n/a' if pt == 0 else pt}): "
+            f"{self.tracts.snapshot_inside()}\n"
             "Original description:\n"
-            "{4}").format(
-                "Unparsed" if pt == 0 else "Parsed",
-                self.source,
-                "n/a" if pt == 0 else pt,
-                self.tracts.snapshot_inside(),
-                self.orig_desc)
+            f"{self.orig_desc}")
 
     def __getitem__(self, item):
         """
@@ -1333,8 +1318,8 @@ class PLSSDesc:
         """
         Extract from ``.tracts`` all Tract objects that were
         parsed with an error. Specifically extract Twp/Rge errors with
-        ``twprge=True`` (on by default); and get Sec errors with
-        ``sec=True`` (on by default).
+        ``twp=True`` and ``rge=True``; and get Sec errors with
+        ``sec=True`` (all of which are on by default).
 
         Returns a new TractList of all of the selected Tract objects.
 
@@ -2238,316 +2223,832 @@ class Tract:
         return header_row
 
 
-class TractList(list):
+class TRS:
     """
-    A specialized ``list`` for Tract objects, with added methods for
-    compiling and manipulating the data inside the contained Tract
-    objects, and for sorting, grouping, and filtering the Tract objects
-    themselves.
+    A container for Twp/Rge/Section in the standard pyTRS format.
+    Automatically breaks the TRS down into its component parts, which
+    can be accessed as properties:
+        .trs        -> The full Twp/Rge/Sec combination. *
+        .twp        -> Twp number + direction (a str or None)
+        .twp_num    -> Twp number (an int or None)
+        .twp_ns     -> Twp direction ('n', 's', or None)
+        .ns         -> same as `.twp_ns`
+        .twp_undef  -> whether the Twp was undefined. **
+        .rge        -> Rge number + direction (a str or None)
+        .rge_num    -> Rge num (an int or None)
+        .rge_ew     -> Rge direction ('e', 'w', or None)
+        .ew         -> same as `.rge_ew`
+        .rge_undef  -> whether the Rge was undefined. **
+        .sec_num    -> Sec number (an int or None)
+        .sec_undef  -> whether the Sec was undefined. **
 
-    ____ STREAMLINED OUTPUT OF THE PARSED TRACT DATA ____
-    These methods have the same effect as in PLSSDesc objects.
+    * Note that setting `.trs` will cause the other properties to be
+    recalculated. (Optionally set the `.trs` using the separate
+    Twp/Rge/Sec components with the `.set_twprgesec()` method.)
 
-    .quick_desc() -- Returns a string of the entire parsed description.
-
-    .tracts_to_dict() -- Compile the requested attributes for each Tract
-        into a dict, and returns a list of those dicts.
-
-    .tracts_to_list() -- Compile the requested attributes for each Tract
-        into a list, and returns a nested list of those list.
-
-    .iter_to_dict() -- Identical to `.tracts_to_dict()`, but returns a
-        generator of dicts for the Tract data.
-
-    .iter_to_list() -- Identical to `.tracts_to_list()`, but returns a
-        generator of lists for the Tract data.
-
-    .tracts_to_csv() -- Compile the requested attributes for each Tract
-        and write them to a .csv file, with one row per Tract.
-
-    .tracts_to_str() -- Compile the requested attributes for each Tract
-        into a string-based table, and return a single string of all
-        tables.
-
-    .list_trs() -- Return a list of all twp/rge/sec combinations,
-        optionally removing duplicates.
-
-
-    ____ SORTING / GROUPING / FILTERING TRACTS BY ATTRIBUTE VALUES ____
-    .sort_tracts() -- Custom sorting based on the Twp/Rge/Sec or
-    original creation order of each Tract. Can also take parameters from
-    the built-in ``list.sort()`` method.
-
-    .group() -- Group Tract objects into a dict of TractList objects,
-    based on their shared attribute values (e.g., by Twp/Rge), and
-    optionally sort them.
-
-    .filter() -- Get a new TractList of Tract objects that match some
-    condition, and optionally remove them from the original TractList.
-
-    .filter_errors() -- Get a new TractList of Tract objects whose Twp,
-    Rge, and/or Section were an error or undefined, and optionally
-    remove them from the original TractList.
+    ** Note that error parses do NOT qualify as 'undefined', but
+    undefined and error values are both stored as None. 'twp_undef',
+    'rge_undef', and 'sec_undef' are included to differentiate between
+    error vs. undefined, in case that distinction is needed.
     """
 
-    def __init__(self, iterable=()):
-        list.__init__(self, TractList._verify_iterable(iterable))
+    # Str representations of error Twp/Rge/Sec
+    _ERR_SEC = 'XX'
+    _ERR_TWP = 'XXXz'
+    _ERR_RGE = _ERR_TWP
+    _ERR_TWPRGE = f"{_ERR_TWP}{_ERR_RGE}"
+    _ERR_TRS = f"{_ERR_TWPRGE}{_ERR_SEC}"
 
-    @staticmethod
-    def _verify_iterable(iterable):
-        """Type-check the contents of an iterable, and unpack the
-        ``.tracts`` attribute of a PLSSDesc object (if found)."""
-        if isinstance(iterable, TractList):
-            return iterable
-        tmp = []
-        for elem in iterable:
-            if isinstance(elem, Tract):
-                tmp.append(elem)
-            elif isinstance(elem, (PLSSDesc, TractList)):
-                # Rely on the fact that we can iterate over PLSSDesc
-                # objects' (implicitly over the TractList in their
-                # `.tracts` attribute).
-                tmp.extend(elem)
-            else:
-                raise TractListTypeError(
-                    f"Iterable contained {type(elem)!r}.")
-        return tmp
+    # Str representations of undefined Twp/Rge/Sec
+    _UNDEF_SEC = '__'
+    _UNDEF_TWP = '___z'
+    _UNDEF_RGE = _UNDEF_TWP
+    _UNDEF_TWPRGE = f"{_UNDEF_TWP}{_UNDEF_RGE}"
+    _UNDEF_TRS = f"{_UNDEF_TWPRGE}{_UNDEF_SEC}"
 
-    @staticmethod
-    def _verify_type(obj):
-        """Type-check a single object."""
-        if not isinstance(obj, Tract):
-            raise TractListTypeError(
-                f"Cannot accept {type(obj)!r}.")
-        return obj
+    _ALL_ERR = (
+        _ERR_SEC,
+        _ERR_TWP,
+        _ERR_RGE,
+        _ERR_TWPRGE,
+        _ERR_TRS
+    )
+
+    _ALL_UNDEF = (
+        _UNDEF_SEC,
+        _UNDEF_TWP,
+        _UNDEF_RGE,
+        _UNDEF_TWPRGE,
+        _UNDEF_TRS
+    )
+
+    _ALL_ERR_UNDEF = tuple(list(_ALL_ERR) + list(_ALL_UNDEF))
+
+    # Regex patterns for unpacking Twp/Rge/Sec
+    _TWP_RGX = r"((?P<twp_num>\d{1,3})(?P<ns>[nsNS]))"
+    _RGE_RGX = r"((?P<rge_num>\d{1,3})(?P<ew>[ewEW]))"
+    _SEC_RGX = r"\d{2}"
+
+    # Based on the above, compile the regex pattern for unpacking
+    # Twp/Rge/Sec in this module.
+    _TRS_UNPACKER_REGEX = _compile_trs_unpacker_regex(
+        twp_rgx=_TWP_RGX,
+        err_twp=_ERR_TWP,
+        undef_twp=_UNDEF_TWP,
+        rge_rgx=_RGE_RGX,
+        err_rge=_ERR_RGE,
+        undef_rge=_UNDEF_RGE,
+        sec_rgx=_SEC_RGX,
+        err_sec=_ERR_SEC,
+        undef_sec=_UNDEF_SEC
+    )
+
+    # Whether to cache Twp/Rge/Sec dicts in TRS.__CACHE. If used, it
+    # will reuse the same dict for the same key in the `.__trs_dict`
+    # attribute each TRS object, and not bother breaking it down again.
+    # Note that the contents of a TRS object's ``.__trs_dict`` attribute
+    # are only ever accessed by properties that protect them (e.g.,
+    # ``Tract.twp``, ``TRS.twprge``, etc.) -- so in theory, somebody
+    # would really have to want to mess things up in order to do so.
+    _USE_CACHE = True
+    __CACHE = {}
+
+    def __init__(self, trs=None):
+        if trs in ["", None]:
+            trs = TRS._UNDEF_TRS
+        self.__trs_dict = None
+
+        # Setting `.trs` attribute populates `.__trs_dict`, from which
+        # twp, rge, twprge, sec, twp_num, twp_ns, rge_num, rge_ew, and
+        # sec_num can be pulled (as properties)
+        self.trs = trs
 
     def __str__(self):
-        return (
-            "TractList\nTotal Tracts: {0}\n"
-            "Tracts: {1}").format(
-                len(self), self.snapshot_inside())
+        return self.trs
+
+    @property
+    def trs(self):
+        return self.__trs_dict["trs"]
+
+    @trs.setter
+    def trs(self, new_trs):
+        # If we've already broken down this trs into a dict, just
+        # reuse it.
+        self.__trs_dict = TRS.__CACHE.get(new_trs, None)
+        if not self.__trs_dict:
+            self.__trs_dict = TRS._cache_trs_to_dict(new_trs)
+
+    @property
+    def twp(self):
+        return self.__trs_dict["twp"]
+
+    @property
+    def twp_num(self):
+        return self.__trs_dict["twp_num"]
+
+    @property
+    def twp_ns(self):
+        return self.__trs_dict["twp_ns"]
+
+    ns = twp_ns
+
+    @property
+    def rge(self):
+        return self.__trs_dict["rge"]
+
+    @property
+    def rge_num(self):
+        return self.__trs_dict["rge_num"]
+
+    @property
+    def rge_ew(self):
+        return self.__trs_dict["rge_ew"]
+
+    ew = rge_ew
+
+    @property
+    def twprge(self):
+        return f"{self.__trs_dict['twp']}{self.__trs_dict['rge']}"
+
+    def pretty_twprge(
+            self, t="T", delim="-", r="R", n=None, s=None, e=None, w=None,
+            undef="---X"):
+        """
+        Convert the Twp/Rge info into a clean str. By default, will
+        return in the format 'T154N-R97W', but control the output with
+        the various optional parameters.
+
+        :param t: How "Township" should appear. ('T' by default)
+        :param delim: How Twp should be separated from Rge. ('-' by
+        default)
+        :param r: How "Range" should appear. ("R" by default)
+        :param n: How "North" (if found) should appear.
+        :param s: How "South" (if found) should appear.
+        :param e: How "East" (if found) should appear.
+        :param w: How "West" (if found) should appear.
+        :param undef: How undefined (or error) Twp or Rge should be
+        represented, including the direction. ('---X' by default)
+        :return: A str of the clean Twp/Rge.
+        """
+        twp_num = self.twp_num
+        rge_num = self.rge_num
+        ns = self.ns
+        ew = self.ew
+        if not ns:
+            ns = ""
+        if not ew:
+            ew = ""
+        if twp_num is None:
+            twp_num = undef
+        if rge_num is None:
+            rge_num = undef
+
+        ns = ns.upper()
+        ew = ew.upper()
+
+        if n is not None and ns.lower().startswith('n'):
+            ns = n
+        if s is not None and ns.lower().startswith('s'):
+            ns = s
+        if e is not None and ew.lower().startswith('e'):
+            ew = e
+        if w is not None and ew.lower().startswith('w'):
+            ew = w
+
+        return f"{t}{twp_num}{ns}{delim}{r}{rge_num}{ew}"
+
+    @property
+    def sec(self):
+        return self.__trs_dict["sec"]
+
+    @property
+    def sec_num(self):
+        return self.__trs_dict["sec_num"]
+
+    @property
+    def twp_undef(self):
+        return self.__trs_dict["twp_undef"]
+
+    @property
+    def rge_undef(self):
+        return self.__trs_dict["rge_undef"]
+
+    @property
+    def sec_undef(self):
+        return self.__trs_dict["sec_undef"]
+
+    def set_twprgesec(
+            self, twp, rge, sec, default_ns=None, default_ew=None,
+            ocr_scrub=False):
+        """
+        Set the Twp/Rge/Sec of this TRS object by its component parts.
+        Returns the compiled `trs` string after setting the various
+        components to the appropriate attributes.
+
+        :param twp: Township (a str or int).
+        :param rge: Range (a str or int).
+        :param sec: Section (a str or int)
+        :param default_ns: (Optional) If `twp` wasn't specified as N or
+        S, assume `default_ns` (pass as 'n' or 's'). If not specified,
+        will fall back to PLSSDesc.MASTER_DEFAULT_NS (which is 'n'
+        unless configured otherwise).
+        :param default_ew: (Optional) If `rge` wasn't specified as E or
+        W, assume `default_ew` (pass as 'e' or 'w'). If not specified,
+        will fall back to PLSSDesc.MASTER_DEFAULT_EW (which is 'w'
+        unless configured otherwise).
+        :param ocr_scrub: A bool, whether to try to scrub common OCR
+        artifacts from the Twp, Rge, and Sec -- if any of them are
+        passed as a str. (Defaults to ``False``.)
+        :return: The compiled Twp/Rge/Sec in the pyTRS format.
+        """
+        trs = TRS.construct_trs(
+            twp, rge, sec, default_ns, default_ew, ocr_scrub)
+        self.trs = trs
+        return trs
+
+    @staticmethod
+    def from_twprgesec(
+            twp=None, rge=None, sec=None, default_ns=None, default_ew=None,
+            ocr_scrub=False):
+        """
+        Create and return a new TRS object by defining its Twp/Rge/Sec
+        from its component parts.
+
+        :param twp: Township (a str or int).
+        :param rge: Range (a str or int).
+        :param sec: Section (a str or int)
+        :param default_ns: (Optional) If `twp` wasn't specified as N or
+        S, assume `default_ns` (pass as 'n' or 's'). If not specified,
+        will fall back to PLSSDesc.MASTER_DEFAULT_NS (which is 'n'
+        unless configured otherwise).
+        :param default_ew: (Optional) If `rge` wasn't specified as E or
+        W, assume `default_ew` (pass as 'e' or 'w'). If not specified,
+        will fall back to PLSSDesc.MASTER_DEFAULT_EW (which is 'w'
+        unless configured otherwise).
+        :param ocr_scrub: A bool, whether to try to scrub common OCR
+        artifacts from the Twp, Rge, and Sec -- if any of them are
+        passed as a str. (Defaults to ``False``.)
+        :return: The new pyTRS.TRS object.
+        """
+        trs = TRS.construct_trs(
+            twp, rge, sec, default_ns, default_ew, ocr_scrub)
+        return TRS(trs)
+
+    @staticmethod
+    def construct_trs(
+            twp, rge, sec, default_ns=None, default_ew=None, ocr_scrub=False):
+        """
+        Build a Twp/Rge/Sec in the pyTRS format from component parts.
+        Get back a string of that Twp/Rge/Sec.
+
+        :param twp: Township (a str or int -- ``'154n'`` or ``154``).
+        :param rge: Range (a str or int -- ``'97w'`` or ``97``).
+        :param sec: Section (a str or int -- ``'14'`` or ``14``).
+        :param default_ns: (Optional) If `twp` wasn't specified as N or
+        S, assume `default_ns` (pass as 'n' or 's'). If not specified,
+        will fall back to PLSSDesc.MASTER_DEFAULT_NS (which is 'n'
+        unless configured otherwise).
+        :param default_ew: (Optional) If `rge` wasn't specified as E or
+        W, assume `default_ew` (pass as 'e' or 'w'). If not specified,
+        will fall back to PLSSDesc.MASTER_DEFAULT_EW (which is 'w'
+        unless configured otherwise).
+        :param ocr_scrub: A bool, whether to try to scrub common OCR
+        artifacts from the Twp, Rge, and Sec -- if any of them are
+        passed as a str. (Defaults to ``False``.)
+        :return: The compiled Twp/Rge/Sec in the pyTRS format.
+        """
+
+        if default_ns is None:
+            default_ns = PLSSDesc.MASTER_DEFAULT_NS
+        if default_ew is None:
+            default_ew = PLSSDesc.MASTER_DEFAULT_EW
+
+        # Ensure legal N/S and E/W values.
+        if default_ns.lower() not in PLSSDesc._LEGAL_NS:
+            raise DefaultNSError(default_ns)
+        if default_ew.lower() not in PLSSDesc._LEGAL_EW:
+            raise DefaultEWError(default_ew)
+
+        def scrub(twp_rge_or_section, ns_ew_sec):
+            """
+            Scrub the `twp`, `rge`, and `sec` from input into the
+            component parts. (Use `ocr_scrub` if appropriate.) Run
+            separately for twp, rge, and section.
+
+            :param twp_rge_or_section: A candidate `twp` or `rge`
+            :param ns_ew_sec: "ns" (if running Twp), "ew" (if running
+            Rge), or None (if running Sec)
+            :return: 2-tuple: (scrubbed Twp/Rge/Sec number, direction).
+            Note that direction will always be evaluated to None when
+            running this for Section.
+            """
+            twprgesec_num = twp_rge_or_section
+
+            # Determine whether we're running Twp, Rge, or Section.
+            # Default to Twp.
+            direction = default_ns
+            direction_options = PLSSDesc._LEGAL_NS
+            if ns_ew_sec == "ew":
+                # Rge.
+                direction = default_ew
+                direction_options = PLSSDesc._LEGAL_EW
+            elif ns_ew_sec is None:
+                # Sec.
+                direction = None
+
+            # If it's not a string, we don't need to ocr_scrub it.
+            if not isinstance(twp_rge_or_section, str):
+                return twprgesec_num, None
+
+            if (direction is not None
+                    and twp_rge_or_section.lower().endswith(direction_options)):
+                # Running Twp or Rge.
+                twprgesec_num = twp_rge_or_section[:-1]
+                direction = twp_rge_or_section[-1].lower()
+
+            if ocr_scrub:
+                twprgesec_num = _ocr_scrub_alpha_to_num(twprgesec_num)
+
+            return twprgesec_num, direction
+
+        twp, ns = scrub(twp, "ns")
+        rge, ew = scrub(rge, "ew")
+        sec, _ = scrub(sec, None)
+
+        if ns is None:
+            ns = default_ns
+        if ew is None:
+            ew = default_ew
+
+        if twp in [None, ""]:
+            twp = TRS._UNDEF_TWP
+        try:
+            twp = int(twp)
+        except ValueError:
+            # Str has encoded N/S data, or is an error or undefined Twp.
+            pass
+        if isinstance(twp, int):
+            twp = f"{twp}{ns.lower()}"
+        if twp != TRS._UNDEF_TWP and re.search(rf"\b{TRS._TWP_RGX}\b", twp) is None:
+            # Couch the pattern in '\b' to ensure we match the entire str.
+            twp = TRS._ERR_TWP
+
+        if rge in [None, ""]:
+            rge = TRS._UNDEF_RGE
+        try:
+            rge = int(rge)
+        except ValueError:
+            # Str has encoded E/W data, or is an error or undefined Rge.
+            pass
+        if isinstance(rge, int):
+            rge = f"{rge}{ew.lower()}"
+        if rge != TRS._UNDEF_RGE and re.search(rf"\b{TRS._RGE_RGX}\b", rge) is None:
+            rge = TRS._ERR_RGE
+
+        if sec is None:
+            sec = TRS._UNDEF_SEC
+        else:
+            sec = str(sec).rjust(2, '0')
+        if sec != TRS._UNDEF_SEC and re.search(rf"\b{TRS._SEC_RGX}\b", sec) is None:
+            sec = TRS._ERR_SEC
+
+        return f"{twp}{rge}{sec}"
+
+    @staticmethod
+    def _cache_trs_to_dict(trs) -> dict:
+        """
+        INTERNAL USE:
+        Identical to `TRS.trs_to_dict()`, but will also add the
+        resulting dict to the `TRS.__CACHE` (if `TRS._USE_CACHE` is
+        turned on).
+        """
+        # We do not add dicts to the cache when calling the public-
+        # facing method, in order to avoid changes to those dicts
+        # impacting TRS objects. This non-public method is only called
+        # by other non-public methods.
+        # Note that dicts in the cache are only ever accessed via
+        # protected attributes (e.g,. ``Tract.twp``, ``TRS.twprge``,
+        # etc.) -- although the cache itself could be accessed and
+        # modified.
+        dct = TRS.trs_to_dict(trs)
+        if TRS._USE_CACHE:
+            TRS.__CACHE[trs] = dct
+        return dct
+
+    @staticmethod
+    def trs_to_dict(trs) -> dict:
+        """
+        Take a compiled Twp/Rge/Sec (in the standard pyTRS format) and
+        break it into a dict, keyed as follows:
+            "twp"       -> Twp number + direction (a str or None)
+            "twp_num"   -> Twp number (an int or None);
+            "twp_ns"    -> Twp direction ('n', 's', or None);
+            "twp_undef" -> whether the Twp was undefined. **
+            "rge"       -> Rge number + direction (a str or None)
+            "rge_num"   -> Rge num (an int or None);
+            "rge_ew"    -> Rge direction ('e', 'w', or None)
+            "rge_undef" -> whether the Rge was undefined. **
+            "sec_num"   -> Sec number (an int or None)
+            "sec_undef" -> whether the Sec was undefined. **
+
+        ** Note that error parses do NOT qualify as 'undefined'.
+        Undefined and error values are both stored as None. 'twp_undef',
+        'rge_undef', and 'sec_undef' are included to differentiate
+        between error vs. undefined, in case that distinction is needed.
+
+        :param trs: The Twp/Rge/Sec (in the pyTRS format) to be broken
+        apart.
+        :return: A dict with the various elements.
+        """
+
+        if isinstance(trs, TRS):
+            trs = trs.trs
+
+        dct = {
+            "trs": TRS._ERR_TRS,
+            "twp": TRS._ERR_TWP,
+            "twp_num": None,
+            "twp_ns": None,
+            "twp_undef": False,
+            "rge": TRS._ERR_RGE,
+            "rge_num": None,
+            "rge_ew": None,
+            "rge_undef": False,
+            "sec": TRS._ERR_SEC,
+            "sec_num": None,
+            "sec_undef": False
+        }
+
+        # Default empty TRS to the undefined version (as opposed to an
+        # error version, which would result otherwise).
+        if trs in ["", None]:
+            trs = TRS._UNDEF_TRS
+
+        mo = TRS._TRS_UNPACKER_REGEX.search(trs)
+        if not mo:
+            return dct
+
+        # Break down Twp
+        if mo.group("twp_num") and mo.group("ns"):
+            dct["twp"] = mo.group("twp")
+            dct["twp_num"] = int(mo.group("twp_num"))
+            dct["twp_ns"] = mo.group("ns")
+        elif mo.group("twp") == TRS._UNDEF_TWP:
+            dct["twp"] = mo.group("twp")
+            dct["twp_undef"] = True
+
+        # Break down Rge
+        if mo.group("rge_num") and mo.group("ew"):
+            dct["rge"] = mo.group("rge")
+            dct["rge_num"] = int(mo.group("rge_num"))
+            dct["rge_ew"] = mo.group("ew")
+        elif mo.group("rge") == TRS._UNDEF_RGE:
+            dct["rge"] = mo.group("rge")
+            dct["rge_undef"] = True
+
+        # Break down Sec
+        sec = mo.group("sec")
+        try:
+            dct["sec_num"] = int(sec)
+        except (ValueError, TypeError):
+            if sec == TRS._UNDEF_SEC:
+                dct["sec_undef"] = True
+            else:
+                sec = TRS._ERR_SEC
+        finally:
+            dct["sec"] = sec
+
+        # Reconstruct TRS
+        dct["trs"] = f"{dct['twp']}{dct['rge']}{dct['sec']}"
+
+        return dct
+
+    @classmethod
+    def _clear_cache(cls):
+        """
+        INTERNAL USE:
+        Clear the ``TRS.__CACHE`` dict.
+        :return:
+        """
+        cls.__CACHE = {}
+        return None
+
+    @classmethod
+    def _recompile(cls):
+        """
+        EXPERIMENTAL
+
+        If any of the class attributes for error/undefined Township,
+        Range, and/or Section have changed (``TRS._ERR_TWP``,
+        ``TRS._UNDEF_TWP``, etc.) then the unpacker regex needs to be
+        recompiled to account for these.
+
+        Also recompiles and stores these class attributes:
+            TRS._ERR_TWPRGE
+            TRS._ERR_TRS
+            TRS._UNDEF_TWPRGE
+            TRS._UNDEF_TRS
+
+        WARNING: This functionality is not supported.  Many pieces of
+        this module rely on these attributes.  Thus, changing them is
+        liable to introduce bugs in other functionality.  However, with
+        care (and some limitations), it may be possible to change the
+        defaults for error/undefined Twp/Rge/Sec. (You would be well
+        advised to avoid using any characters that have any special
+        meaning in regex patterns, generally.)
+
+        :return: The newly compiled re.Pattern object (which will also
+        have been set to the ``TRS._TRS_UNPACKER_REGEX`` class
+        attribute).
+        """
+        new_rgx = _compile_trs_unpacker_regex(
+            twp_rgx=TRS._TWP_RGX,
+            err_twp=TRS._ERR_TWP,
+            undef_twp=TRS._UNDEF_TWP,
+            rge_rgx=TRS._RGE_RGX,
+            err_rge=TRS._ERR_RGE,
+            undef_rge=TRS._UNDEF_RGE,
+            sec_rgx=TRS._SEC_RGX,
+            err_sec=TRS._ERR_SEC,
+            undef_sec=TRS._UNDEF_SEC)
+        cls._TRS_UNPACKER_REGEX = new_rgx
+
+        cls._ERR_TWPRGE = f"{cls._ERR_TWP}{cls._ERR_RGE}"
+        cls._ERR_TRS = f"{cls._ERR_TWPRGE}{cls._ERR_SEC}"
+        cls._UNDEF_TWPRGE = f"{cls._UNDEF_TWP}{cls._UNDEF_RGE}"
+        cls._UNDEF_TRS = f"{cls._UNDEF_TWPRGE}{cls._UNDEF_SEC}"
+
+        # Clear the cache, because the same string would not necessarily
+        # result in the same output dict anymore.
+        cls._clear_cache()
+
+        return new_rgx
+
+
+class _TRSTractList(list):
+    """
+    INTERNAL USE:
+
+    This class is not used directly but is subclassed as `TractList` and
+    `TRSList`.
+
+    `TRSList` holds only `TRS` objects; and `TractList` holds only
+    `Tract` objects.
+
+    Both subclasses will sort / filter / group their respective element
+    types. But `TractList` has quite a bit of additional functionality
+    for streamlined extraction of data from `Tract` objects.
+    """
+
+    # These will be modified in the subclasses to determine what
+    # elements can be processed by each.
+    _ok_individuals = ()
+    _ok_iterables = ()
+    _typeerror_msg = ''
+
+    def __init__(self, iterable=()):
+        """
+        INTERNAL USE:
+        (Initialize a `TRSList` or `TractList` directly.)
+
+        :param iterable: Same as in `list()`
+        """
+        list.__init__(self, self._verify_iterable(iterable))
+
+    @classmethod
+    def _verify_iterable(cls, iterable, into=None):
+        """
+        INTERNAL USE:
+        Type-check the contents of an iterable. Return a plain list of
+        the elements in `iterable` if all are legal.
+        """
+        if isinstance(iterable, str):
+            # A string is technically iterable, and they are acceptable
+            # by a `TRSList` -- but NOT to be iterated over. If a
+            # TRSList iterates over a string, each character would be
+            # converted to an error `TRS` object, and nobody wants that.
+            raise TypeError("type 'str' is not an acceptable iterable.")
+        if into is None:
+            into = []
+        for elem in iterable:
+            if isinstance(elem, cls._ok_individuals):
+                into.append(cls._verify_individual(elem))
+            elif isinstance(elem, cls):
+                # Other instances of this class have already been
+                # appropriately type-checked.
+                into.extend(elem)
+            elif isinstance(elem, cls._ok_iterables):
+                for elem_deeper in elem:
+                    into.append(cls._verify_individual(elem_deeper))
+            else:
+                raise TypeError(
+                    f"{cls._typeerror_msg} Iterable contained {type(elem)!r}.")
+        return into
+
+    @classmethod
+    def _verify_individual(cls, obj):
+        """INTERNAL USE: Type-check a single object."""
+        if not isinstance(obj, cls._ok_individuals):
+            raise TypeError(
+                f"{cls._typeerror_msg} Cannot accept {type(obj)!r}.")
+        return cls._handle_type_specially(obj)
+
+    @classmethod
+    def _handle_type_specially(cls, obj):
+        """INTERNAL USE: (For subclassing purposes.)"""
+        return obj
 
     def __setitem__(self, index, value):
-        list.__setitem__(self, index, TractList._verify_type(value))
+        list.__setitem__(self, index, self._verify_individual(value))
 
     def extend(self, iterable):
-        list.extend(self, TractList._verify_iterable(iterable))
+        list.extend(self, self._verify_iterable(iterable))
 
-    def append(self, object):
-        if isinstance(object, PLSSDesc):
-            self.extend(object.tracts)
-        else:
-            list.append(self, TractList._verify_type(object))
+    def append(self, obj):
+        list.append(self, self._verify_individual(obj))
 
     def __iadd__(self, other):
-        list.__iadd__(self, TractList._verify_iterable(other))
+        list.__iadd__(self, self._verify_iterable(other))
 
     def copy(self):
-        return TractList(list.copy(self))
-
-    def config_tracts(self, config):
-        """
-        Reconfigure all of the Tract objects in this TractList.
-
-        :param config: Either a pytrs.Config object, or a string of
-        parameters to configure how the Tract object should be parsed.
-        (See documentation on pytrs.Config objects for optional config
-        parameters.)
-        :return: None
-        """
-        for tract in self:
-            tract.config = config
-        return None
-
-    def parse_tracts(
-            self,
-            config=None,
-            clean_qq=None,
-            include_lot_divs=None,
-            qq_depth_min=None,
-            qq_depth_max=None,
-            qq_depth=None,
-            break_halves=None):
-        """
-        Parse (or re-parse) all of the Tract objects in this TractList
-        into lots/QQ's using the specified parameters. Will pull parsing
-        parameters from each Tract object's own ``.config`` (unless
-        otherwise configured here).  Optionally reconfigure each Tract
-        object prior to parsing into lots/QQs by using the ``config=``
-        parameter here, or other kwargs.  (The named kwargs will take
-        priority over ``config``, if there is a conflict.)
-
-        The parsed data will be committed to the Tract objects'
-        attributes, overwriting data from a prior parse.
-
-        :param config: (Optional) New Config parameters to apply to each
-        Tract before parsing. (If there is a conflict
-        :param clean_qq: Same as in ``Tract.parse()`` method.
-        :param include_lot_divs: Same as in ``Tract.parse()`` method.
-        :param qq_depth_min: Same as in ``Tract.parse()`` method.
-        :param qq_depth_max: Same as in ``Tract.parse()`` method.
-        :param qq_depth: Same as in ``Tract.parse()`` method.
-        :param break_halves: Same as in ``Tract.parse()`` method.
-        :return: None
-        """
-        if config:
-            self.config_tracts(config)
-        for t in self:
-            t.parse(
-                clean_qq=clean_qq,
-                include_lot_divs=include_lot_divs,
-                qq_depth_min=qq_depth_min,
-                qq_depth_max=qq_depth_max,
-                qq_depth=qq_depth,
-                break_halves=break_halves)
-        return None
+        return self.__class__(list.copy(self))
 
     def filter(self, key, drop=False):
         """
-        Extract from this TractList all Tract objects that match the
-        `key` (a lambda function that returns a bool or bool-like
-        value when applied to each Tract object).
+        Extract from this custom list all elements that match the `key`
+        (a lambda function that returns a bool or bool-like value when
+        applied to each element).
 
-        Returns a new TractList of all of the selected Tract objects.
+        Returns a new `TractList` of all of the selected `Tract` objects
+        (or a `TRSList` of the selected `TRS` objects, if called as a
+        `TRSList` method).
 
         :param key: a lambda function that returns a bool or bool-like
-        value when applied to a Tract object in this TractList. (True or
+        value when applied to an element in this list. (True or
         True-like returned values will result in the inclusion of that
-        Tract).
-        :param drop: Whether to drop the matching Tracts from the
-        original TractList. (Defaults to ``False``)
-        :return: A new TractList of the selected Tract objects. (The
-        original TractList will still hold all other Tract objects,
+        element).
+
+        :param drop: Whether to drop the matching elements from the
+        original list. (Defaults to ``False``)
+
+        :return: A new `TractList` (or `TRSList`) of the selected
+        elements. (The original list will still hold all other elements,
         unless ``drop=True`` was passed.)
         """
         indexes_to_include = []
-        for i, tract in enumerate(self):
-            if key(tract):
+        for i, element in enumerate(self):
+            if key(element):
                 indexes_to_include.append(i)
         return self._new_list_from_self(indexes_to_include, drop)
 
-    # Alias to mirror `sort_tracts`
-    filter_tracts = filter
-
     def filter_errors(self, twp=True, rge=True, sec=True, undef=False, drop=False):
         """
-        Extract from this TractList all Tract objects that were parsed
+        Extract from this custom list all elements that were parsed
         with an error. Specifically extract Twp/Rge errors with
-        ``twprge=True`` (on by default); and get Sec errors with
-        ``sec=True`` (on by default).
+        ``twp=True`` and ``rge=True``; and get Sec errors with
+        ``sec=True`` (all of which are on by default).
 
-        Returns a new TractList of all of the selected Tract objects.
+        Returns a new `TractList` (or `TRSList`, as applicable) of all
+        of the selected elements.
 
         :param twp: a bool, whether to get Twp errors. (Defaults to
         ``True``)
+
         :param rge: a bool, whether to get Rge errors. (Defaults to
         ``True``)
+
         :param sec: a bool, whether to get Sec errors. (Defaults to
         ``True``)
+
         :param undef: a bool, whether to get consider Twps, Rges, or
         Sections that were UNDEFINED to also be errors. (Defaults to
         ``False``)
-        :param drop: Whether to drop the selected Tracts from the
-        original TractList. (Defaults to ``False``)
-        :return: A new TractList containing all of the selected Tract
-        objects.
+
+        :param drop: Whether to drop the selected elements from the
+        original list. (Defaults to ``False``)
+
+        :return: A new `TractList` (or `TRSList`, as applicable)
+        containing all of the selected elements.
         """
 
-        def match_by(tract_obj, controller, var, undef_var):
-            # Note: `undef_var` is the Tract attribute (or rather,
+        def match_by(elem, controller, var, undef_var):
+            # Note: `undef_var` is the Tract/TRS attribute (or rather,
             # property) that says whether the corresponding `var` was
             # undefined. If it is False, then that means that particular
             # `var` was defined but ended up being an error.
             # For example, `match_by("twp_num", "twp_undef")`...
 
-            bad = getattr(tract_obj, var) is None
+            bad = getattr(elem, var) is None
             if bad:
                 # The `undef` parameter means cull any `None` values,
                 # regardless of whether it was undefined or an error.
                 # Either way, cull the var that was NOT undefined (i.e.
                 # was an error.)
-                bad = undef or not getattr(tract_obj, undef_var)
+                bad = undef or not getattr(elem, undef_var)
             return bad and controller
 
         indexes_to_include = []
-        for i, tract in enumerate(self):
-            if (match_by(tract, twp, "twp_num", "twp_undef")
-                    or match_by(tract, rge, "rge_num", "rge_undef")
-                    or match_by(tract, sec, "sec_num", "sec_undef")):
+        for i, trs_or_tract in enumerate(self):
+            if (match_by(trs_or_tract, twp, "twp_num", "twp_undef")
+                    or match_by(trs_or_tract, rge, "rge_num", "rge_undef")
+                    or match_by(trs_or_tract, sec, "sec_num", "sec_undef")):
                 indexes_to_include.append(i)
         return self._new_list_from_self(indexes_to_include, drop)
 
-    # Alias to mirror `sort_tracts`
-    filter_tracts_errors = filter_errors
-
-    def filter_duplicates(self, method='instance', drop=False):
+    def filter_duplicates(self, method='default', drop=False):
         """
-        Find the duplicate Tracts from this TractList, get a new
-        TractList of those Tract objects that were duplicates, and
-        optionally `drop` the duplicates from the original TractList.
+        Find the duplicate Tracts (or `TRS` objects) in this custom
+        list, get a new custom list of the elements that were
+        duplicates, and optionally `drop` the duplicates from the
+        original list.
+
         (To be clear, if there are THREE identical Tracts in the
         ``TractList``, the returned ``TractList`` will contain only TWO
         Tracts, and the original ``TractList`` will still have one.)
 
-        Control how to assess whether `Tract` objects are duplicates by
-        ONE of the following methods:
+        Control how to assess whether elements in the list are
+        duplicates by ONE of the following methods:
 
-        `method='instance'` (the default) -> Whether two objects are
-        actually the same instance -- i.e. literally the same object.
-        (By definition, this will also apply even if one of the other
-        two methods is used.)
+        `method='instance'` -> Whether two objects are actually the same
+        instance -- i.e. literally the same object. (By definition, this
+        will also apply even if one of the other methods is used.)
 
         `method='lots_qqs'`  -> Whether the `.lots_qqs` attribute
         contains the same lots/aliquots (after removing duplicates
         there).  NOTE: Lots/aliquots must have been parsed for a given
-        Tract object, or it will NOT match as a duplicate with this
+        `Tract` object, or it will NOT match as a duplicate with this
         parameter.
                 Ex: Will match these as duplicate tracts, assuming they
                 were parsed with identical `config` settings:
                     `154n97w14: Lots 1 - 3, S/2NE/4`
                     `154n97w14: Lot 3, S/2NE/4, Lots 1, 2`
+        NOTE: `'lots_qqs'` option has no effect when used on a `TRSList`
+        object.
 
         `method='desc'` -> Whether the `.trs` and `.pp_desc` (i.e.
         preprocessed description) combine to form an identical tract.
                 Ex: Will match these as duplicate tracts:
                     `154n97w14: NE/4`
                     `154n97w14: Northeast Quarter`
+        NOTE: `'desc'` option has no effect when used on a `TRSList`
+        object.
 
-        :param method: Specify how to assess whether Tract objects are
-        duplicates (either 'instance', 'lots_qqs', or 'desc'). See above
-        for example behavior of each.
+        `method='trs'` -> Unique `.trs` attributes.
+        WARNING: This option is NOT recommended when calling the method
+        on a `TractList` object. This is more appropriate when calling
+        it on a `TRSList` object.
+
+        `method='default'` -> Use `'instance'` if working with a
+        `TractList` object, or `'trs'` if working with a `TRSList`
+        object.  (This is the default behavior.)
+
+        :param method: Specify how to assess whether `Tract` (or `TRS`)
+        objects are duplicates (either 'instance', 'lots_qqs', 'desc',
+        'trs', or 'default'). See above for example behavior of each.
+
         :param drop: Whether to remove the identified duplicates from
         the original list.
-        :return: A new TractList.
+
+        :return: A new `TractList` (or `TRSList`, as applicable).
         """
         unique = set()
         indexes_to_include = []
 
-        options = ('instance', 'lots_qqs', 'desc')
+        if method == 'default':
+            method = 'instance'
+            if isinstance(self, TRSList):
+                method = 'trs'
+        options = ('instance', 'lots_qqs', 'desc', 'trs')
         if method not in options:
             raise ValueError(f"`method` must be one of {options}")
         lots_qqs = method == 'lots_qqs'
         desc = method == 'desc'
-        only_by_instance = not (lots_qqs or desc)
+        trs = method == 'trs'
+        only_by_instance = not (lots_qqs or desc or trs)
 
-        for i, tract in enumerate(self):
+        for i, element in enumerate(self):
             # Always find duplicate instances (because not all Tract
             # objects are parsed into lots/qqs).
-            if tract not in unique:
-                unique.add(tract)
-            else:
+            if element in unique:
                 indexes_to_include.append(i)
+            unique.add(element)
             if only_by_instance:
                 continue
 
-            to_check = tract
+            to_check = element
             if lots_qqs:
-                if not tract.parse_complete:
+                if not isinstance(element, Tract):
                     continue
-                lq = sorted(set(tract.lots_qqs))
-                to_check = f"{tract.trs}_{lq}"
+                if not element.parse_complete:
+                    continue
+                lq = sorted(set(element.lots_qqs))
+                to_check = f"{element.trs}_{lq}"
             if desc:
-                to_check = f"{tract.trs}_{tract.pp_desc.strip()}"
+                if not isinstance(element, Tract):
+                    continue
+                to_check = f"{element.trs}_{element.pp_desc.strip()}"
+            if trs:
+                to_check = element.trs
 
             if to_check not in unique:
                 unique.add(to_check)
@@ -2562,28 +3063,30 @@ class TractList(list):
         """
         INTERNAL USE:
 
-        Get a new ``TractList`` of the elements at the specified
-        ``indexes``.  Optionally remove them from the original
-        ``TractList`` with ``drop=True``.
+        Get a new ``TractList`` (or ``TRSList``, as applicable) of the
+        elements at the specified ``indexes``.  Optionally remove them
+        from the original list with ``drop=True``.
 
         :param indexes: Indexes of the elements to include in the new
-        ``TractList``.
-        :param drop: a bool, whether to drop those Tract objects from
-        the original TractList.
-        :return: The new TractList.
+        ``TractList`` (or ``TRSList``).
+        :param drop: a bool, whether to drop those elements from the
+        original list.
+        :return: The new `TractList` (or `TRSList`).
         """
-        new_list = TractList()
-        indexes.reverse()
-        for i in indexes:
-            new_list.append(self[i])
+        new_list = self.__class__()
+        # Populate the new list in reverse order, in order to remove the
+        # intended elements from the original list if requested.
+        for i in range(len(indexes) - 1, -1, -1):
+            ind = indexes[i]
+            new_list.append(self[ind])
             if drop:
-                self.pop(i)
+                self.pop(ind)
         new_list.reverse()
         return new_list
 
-    def sort_tracts(self, key='i,s,r,t', reverse=False):
+    def custom_sort(self, key='i,s,r,t', reverse=False):
         """
-        Sort the Tract objects stored in this TractList, in-situ.
+        Sort the elements in this `TractList` (or `TRSList`), in place.
         The standard ``list.sort(key=<lambda>, reverse=<bool>)``
         parameters can be used here. But this method has additional
         customized key options.  (Note that the parameter
@@ -2592,7 +3095,9 @@ class TractList(list):
 
         Customized key options:
 
-        'i' -> Sort by the original order they were created.
+        'i' -> Sort by the original order the `Tract` objects were
+                created.  (NOTE: 'i' sorting has no effect in `TRSList`
+                objects.)
 
         't' -> Sort by Township.
                't.num'  --> Sort by raw number, ignoring N/S. (default)
@@ -2613,10 +3118,10 @@ class TractList(list):
         Use as many sort keys as you want. They will be applied in order
         from left-to-right, so place the highest 'priority' sort last.
 
-        Twp/Rge's that are errors (i.e. 'XXXzXXXz') will be sorted to
+        Twp/Rge's that are errors (i.e. `'XXXzXXXz'`) will be sorted to
         the end of the list when sorting on Twp and/or Rge (whether by
         number, north-to-south, south-to-north, east-to-west, or west-
-        to-east).  Similarly, error Sections (i.e. 'XX') will be
+        to-east).  Similarly, error Sections (i.e. `'XX'`) will be
         sorted to the end of the list when sorting on section.  (The
         exception is if the sort is reversed, in which case, they come
         first.)
@@ -2669,7 +3174,7 @@ class TractList(list):
         length to ``key`` (i.e. the values in ``key`` and ``reverse``
         will be matched up one-to-one).
 
-        :return: None. (TractList is sorted in-situ.)
+        :return: None. (The original list is sorted in place.)
         """
         if not key:
             return None
@@ -2692,37 +3197,34 @@ class TractList(list):
         if is_multi_key:
             # If multiple sorts, do each.
             for sk, rv in zip(key, reverse):
-                self.sort_tracts(key=sk, reverse=rv)
+                self.custom_sort(key=sk, reverse=rv)
         elif isinstance(key, str):
             # `._sort_custom` takes str-type sort keys.
             self._sort_custom(key)
         else:
             # Otherwise, assume it's a lambda. Use builtin `sort()`.
             self.sort(key=key, reverse=reverse)
-
         return None
 
     def _sort_custom(self, key: str = 'i,s,r,t'):
         """
         INTERNAL USE:
-        (You should use the public ``.sort_tracts()`` method instead.)
 
         Apply the custom str-type sort keys detailed in
-        ``.sort_tracts()``.
+        ``.custom_sort()``.
 
         NOTE: Documentation on the str-type sort keys is maintained in
-        ``.sort_tracts()``.
+        ``.custom_sort()``.
 
         :param key: A str, specifying which sort(s) should be done, and
         in which order.
-        :return: None. (TractList is sorted in-situ.)
+        :return: None. (list is sorted in-situ.)
         """
 
         def get_max(var):
             """
             Get the largest value of the matching var in the of any
-            Tract in this TractList. If there are no valid ints, return
-            0.
+            element in this list. If there are no valid ints, return 0.
             """
             nums = [getattr(t, var) for t in self if getattr(t, var) is not None]
             if nums:
@@ -2754,14 +3256,26 @@ class TractList(list):
         }
 
         def extract_safe_num(tract, var):
-
             val = getattr(tract, var)
             if val is None:
                 val = assume[var]
             return val
 
+        def i_sort_evaluate(list_element):
+            """
+            If the element is a `Tract` object, extract and return its
+            internal UID. Otherwise, return 0.
+            (This function exists so that the sort method works on a
+            list of Tract objects as well as a list of TRS objects, the
+            latter of which do not have a `._Tract__uid` attribute.)
+            """
+            if isinstance(list_element, Tract):
+                return list_element._Tract__uid
+            else:
+                return 0
+
         sort_defs = {
-            'i.num': lambda x: x._Tract__uid,
+            'i.num': i_sort_evaluate,
             't.num': lambda x: extract_safe_num(x, "twp_num"),
             't.ns': lambda x: n_to_s(x),
             't.sn': lambda x: n_to_s(x, reverse=True),
@@ -2771,7 +3285,7 @@ class TractList(list):
             's.num': lambda x: extract_safe_num(x, "sec_num")
         }
 
-        def n_to_s(tract, reverse=False):
+        def n_to_s(element, reverse=False):
             """
             Convert Twp number and direction to a positive or negative
             int, depending on direction. North townships are negative;
@@ -2779,8 +3293,8 @@ class TractList(list):
             behavior of ``list.sort()`` -- i.e. smallest to largest).
             ``reverse=True`` to inverse the positive and negative.
             """
-            num = tract.twp_num
-            ns = tract.twp_ns
+            num = element.twp_num
+            ns = element.twp_ns
 
             multiplier = 1
             if num is None:
@@ -2798,7 +3312,7 @@ class TractList(list):
                 multiplier *= -1 if reverse else 1
             return multiplier * num
 
-        def w_to_e(tract, reverse=False):
+        def w_to_e(element, reverse=False):
             """
             Convert Rge number and direction to a positive or negative
             int, depending on direction. East townships are positive;
@@ -2806,8 +3320,8 @@ class TractList(list):
             of ``list.sort()`` -- i.e. smallest to largest).
             ``reverse=True`` to inverse the positive and negative.
             """
-            num = tract.rge_num
-            ew = tract.rge_ew
+            num = element.rge_num
+            ew = element.rge_ew
 
             multiplier = 1
             if num is None:
@@ -2863,25 +3377,30 @@ class TractList(list):
             self, by_attribute="twprge", into: dict = None,
             sort_key=None, sort_reverse=False):
         """
-        Filter the Tract objects in this TractList into a dict of
-        TractLists, keyed by unique values of ``by_attribute``. By
-        default, will filter into groups of Tracts that share Twp/Rge
-        (i.e. ``'twprge'``). Pass ``by_attribute`` as a list of
-        attributes to group by multiple attributes, and get a NESTED
-        dict back. (Each consecutive attribute in the list will be
-        another layer of nesting.)
+        Filter the elements in this list into a dict, keyed by unique
+        values of ``by_attribute``, whose values are a custom list of
+        the same type as the original (either a `TRSList` or
+        `TractList`) of the grouped objects. By default, will filter
+        into groups of Tracts (or TRS objects, if working with a
+        `TRSList` object) that share Twp/Rge (i.e. ``'twprge'``).
 
-        :param by_attribute: The str name of an attribute of Tract
-        objects. (Defaults to ``'twprge'``). NOTE: Must be a hashable
-        type!  (Optionally pass as a list of str names of attributes to
-        do multiple groupings.)
+        Pass ``by_attribute`` as a list of attributes to group by
+        multiple attributes, and get a NESTED dict back. (Each
+        consecutive attribute in the list will be another layer of
+        nesting.)
+
+        :param by_attribute: The str name of an attribute of `Tract` (or
+        `TRS`) objects. (Defaults to ``'twprge'``). NOTE: Must be a
+        hashable type!  (Optionally pass as a list of str names of
+        attributes to do multiple groupings.)
 
         :param into: (Optional) An existing dict into which to group the
-        Tracts. If not specified, will create a new dict. Use this arg if
-        you need to continue adding Tracts to an existing grouped dict.
+        Tracts (or `TRS` objects). If not specified, will create a new
+        dict. Use this arg if you need to continue adding Tracts (or
+        `TRS` objects) to an existing grouped dict.
 
-        :param sort_key: (Optional) How to sort each grouped TractList
-        in the returned dict. Use a string that works with the
+        :param sort_key: (Optional) How to sort each grouped list in the
+        returned dict. Use a string that works with the
         ``.sort_tracts(key=<str>)`` method (e.g., 'i, s, r.ew, t.ns') or
         a lambda function, as you would with the builtin
         ``list.sort(key=<lambda>)`` method. (Defaults to ``None``, i.e.
@@ -2902,11 +3421,15 @@ class TractList(list):
         values in ``sort_key`` and ``sort_reverse`` will be matched up
         one-to-one).
 
-        :return: A dict of TractList objects, each containing the Tracts
-        with matching values of the ``by_attribute``.  (If
+        :return: Depends on which subclass this is method called by. If
+        this method is called on a ``TRSList``, will return a dict of
+        `TRSList` objects, each containing the ``TRS`` objects with
+        matching values of the ``by_attribute``.   If this method is
+        called on a ``TractList``, will return a dict of ``TractList``
+        objects containing grouped `Tract` objects instead.  (If
         ``by_attribute`` was passed as a list of attribute names, then
-        this will return a nested dict, with TractList objects being the
-        deepest values.)
+        this will return a nested dict, with ``TractList`` objects (or
+        ``TRSList`` objects, as applicable) being the deepest values.)
         """
         # Determine whether it's a single-attribute grouping, or multiple.
         this_attribute = by_attribute
@@ -2920,7 +3443,7 @@ class TractList(list):
 
         if not is_multi_group:
             # The `._group()` method handles single-attribute groupings.
-            return TractList._group(
+            return self._group(
                 self, this_attribute, into, sort_key, sort_reverse)
 
         def add_to_existing_dict(dct_, into_=into):
@@ -2931,12 +3454,12 @@ class TractList(list):
                 return dct_
             for k_, v_ in dct_.items():
                 # This will always be one of two pairs:
-                #   a key/TractList pair (in which case we have reached
-                #       the bottom); OR
+                #   a key/TractList (or TRSList) pair (in which case we
+                #       have reached the bottom); OR
                 #   a key/dict pair (in which case, we need to do
                 #       another recursion)
-                if isinstance(v_, TractList):
-                    into_.setdefault(k_, TractList())
+                if isinstance(v_, self.__class__):
+                    into_.setdefault(k_, self.__class__())
                     into_[k_].extend(v_)
                 else:
                     into_.setdefault(k_, {})
@@ -2944,43 +3467,47 @@ class TractList(list):
             return into_
 
         # Do a single-attribute grouping as our first pass.
-        dct = TractList._group(self, this_attribute)
+        dct = self._group(self, this_attribute)
 
         # We have at least one more grouping to do, so recursively group
-        # each current TractList object.
+        # each current TractList/TRSList object.
         dct_2 = {}
-        for k, tractlist in dct.items():
-            dct_2[k] = TractList.group(
-                tractlist, into=None, by_attribute=by_attribute)
+        for k, tlist in dct.items():
+            dct_2[k] = tlist.group_nested(by_attribute=by_attribute, into=None)
 
         # Unpack dct_2 into the existing dict (`into`), sort, and return.
         dct = add_to_existing_dict(dct_2, into)
-        TractList.sort_grouped_tracts(dct, sort_key, sort_reverse)
+        self.sort_grouped(dct, sort_key, sort_reverse)
         return dct
 
     def group(
             self, by_attribute="twprge", into: dict = None, sort_key=None,
             sort_reverse=False):
         """
-        Filter the Tract objects in this TractList into a dict of
-        TractLists, keyed by unique values of ``by_attribute``. By
-        default, will filter into groups of Tracts that share Twp/Rge
-        (i.e. ``'twprge'``). Pass ``by_attribute`` as a list of
-        attributes to group by multiple attributes, in which case the
-        keys of the returned dict will be a tuple whose elements line up
-        with the attributes listed in ``by_attribute``.
+        Filter the elements in this list into a dict, keyed by unique
+        values of ``by_attribute``, whose values are a custom list of
+        the same type as the original (either a `TRSList` or
+        `TractList`) of the grouped objects. By default, will filter
+        into groups of Tracts (or TRS objects, if working with a
+        `TRSList` object) that share Twp/Rge (i.e. ``'twprge'``).
 
-        :param by_attribute: The str name of an attribute of Tract
-        objects. (Defaults to ``'twprge'``). NOTE: Attributes must be a
-        hashable type!  (Optionally pass as a list of str names of
-        attributes to do multiple groupings.)
+        Pass ``by_attribute`` as a list of attributes to group by
+        multiple attributes, in which case the keys of the returned dict
+        will be a tuple whose elements line up with the attributes
+        listed in ``by_attribute``.
+
+        :param by_attribute: The str name of an attribute of `Tract` (or
+        `TRS`) objects. (Defaults to ``'twprge'``). NOTE: Attributes
+        must be a hashable type!  (Optionally pass as a list of str
+        names of attributes to do multiple groupings.)
 
         :param into: (Optional) An existing dict into which to group the
-        Tracts. If not specified, will create a new dict. Use this arg if
-        you need to continue adding Tracts to an existing grouped dict.
+        Tracts (or `TRS` objects). If not specified, will create a new
+        dict. Use this arg if you need to continue adding Tracts (or
+        `TRS` objects) to an existing grouped dict.
 
-        :param sort_key: (Optional) How to sort each grouped TractList
-        in the returned dict. Use a string that works with the
+        :param sort_key: (Optional) How to sort each grouped list in the
+        returned dict. Use a string that works with the
         ``.sort_tracts(key=<str>)`` method (e.g., 'i, s, r.ew, t.ns') or
         a lambda function, as you would with the builtin
         ``list.sort(key=<lambda>)`` method. (Defaults to ``None``, i.e.
@@ -3001,13 +3528,13 @@ class TractList(list):
         values in ``sort_key`` and ``sort_reverse`` will be matched up
         one-to-one).
 
-        :return: A dict of TractList objects, each containing the Tracts
-        with matching values of the ``by_attribute``.  (If
-        ``by_attribute`` was passed as a list of attribute names, then
-        the keys in the returned dict will be a tuple whose values
-        line up with the list passed as ``by_attribute``.)
+        :return: A dict of `TractList` (or `TRSList`) objects, each
+        containing the objects with matching values of the
+        ``by_attribute``.  (If ``by_attribute`` was passed as a list of
+        attribute names, then the keys in the returned dict will be a
+        tuple whose values line up with the list passed as
+        ``by_attribute``.)
         """
-
         # Determine whether it's a single-attribute grouping, or multiple.
         first_attribute = by_attribute
         is_multi_group = isinstance(by_attribute, list)
@@ -3020,7 +3547,7 @@ class TractList(list):
 
         if not is_multi_group:
             # The `._group()` method handles single-attribute groupings.
-            return TractList._group(
+            return self._group(
                 self, first_attribute, into, sort_key, sort_reverse)
 
         def get_keybase(key_):
@@ -3035,13 +3562,13 @@ class TractList(list):
             else:
                 return [key_]
 
-        dct = TractList._group(self, first_attribute)
+        dct = self._group(self, first_attribute)
         while by_attribute:
             dct_new = {}
             grp_att = by_attribute.pop(0)
             for k1, v1 in dct.items():
                 k1_base = get_keybase(k1)
-                dct_2 = TractList._group(self, grp_att)
+                dct_2 = self._group(v1, grp_att)
                 for k2, v2 in dct_2.items():
                     dct_new[tuple(k1_base + [k2])] = v2
             dct = dct_new
@@ -3049,58 +3576,348 @@ class TractList(list):
         # Unpack `dct` into the existing dict (`into`), if applicable.
         if isinstance(into, dict):
             for k, tl in dct.items():
-                into.setdefault(k, TractList())
+                into.setdefault(k, self.__class__())
                 into[k].extend(tl)
             dct = into
 
         # Sort and return.
-        TractList.sort_grouped_tracts(dct, sort_key, sort_reverse)
+        self.sort_grouped(dct, sort_key, sort_reverse)
         return dct
 
-    # Alias to mirror `sort_tracts`
-    group_tracts = group
-
-    @staticmethod
+    @classmethod
     def _group(
-            tractlist, by_attribute="twprge", into: dict = None,
+            cls, trstractlist, by_attribute="twprge", into: dict = None,
             sort_key=None, sort_reverse=False):
         """
         INTERNAL USE:
         (Use the public-facing ``.group()`` method.)
 
-        Group the Tract objects in this TractList into a dict of
-        TractLists, keyed by unique values of ``by_attribute``. By
-        default, will filter into groups of Tracts that share Twp/Rge
-        (i.e. `'twprge'`).
+        Group the elements in this custom list into a dict of custom
+        lists of the same type, keyed by unique values of
+        ``by_attribute``. By default, will filter into groups of objects
+        that share Twp/Rge (i.e. `'twprge'`).
+
+        :trstractlist: A `TRSList` or `TractList` to be grouped.
 
         :param by_attribute: Same as for ``.group()`, but MUST BE A STR
         FOR THIS METHOD!
+
         :param into: Same as for ``.group()``.
+
         :param sort_key: Same as for ``.group()``.
+
         :param sort_reverse:  Same as for ``.group()``.
-        :return: A dict of TractList objects, each containing the Tracts
-        with matching values of the `by_attribute`.  (Will NOT be a
-        nested dict.)
+
+        :return: A dict of custom list objects (each the same type as
+        the passed `trstractlist`), each containing the objects with
+        matching values of the `by_attribute`.  (Will NOT be a nested
+        dict.)
         """
         dct = {}
-        for t in tractlist:
-            val = getattr(t, by_attribute)
-            dct.setdefault(val, TractList())
+        for t in trstractlist:
+            val = getattr(t, by_attribute, f"{by_attribute}: n/a")
+            dct.setdefault(val, cls())
             dct[val].append(t)
-
         if isinstance(into, dict):
             for k, tl in dct.items():
-                into.setdefault(k, TractList())
+                into.setdefault(k, cls())
                 into[k].extend(tl)
             dct = into
-
         if not sort_key:
             return dct
-
         for tl in dct.values():
-            tl.sort_tracts(key=sort_key, reverse=sort_reverse)
-
+            tl.custom_sort(key=sort_key, reverse=sort_reverse)
         return dct
+
+    @classmethod
+    def sort_grouped(cls, group_dict, sort_key, reverse=False) -> dict:
+        """
+        Sort the `TractList` objects (or `TRSList` objects) within a
+        grouped dict.
+
+        Returns the original ``group_dict``, but with the `TractList`
+        (or `TRSList`) objects having been sorted in place.
+
+        :param group_dict: A dict, as returned by a `TractList` or
+        `TRSList` grouping method or function (e.g., ``.group()``,
+        ``.group_tracts()``, or ``.group_trs()``).
+
+        :param sort_key: How to sort the elements in the lists. (Can be
+        any value acceptable to the ``.custom_sort()`` method.)
+
+        :param reverse: (Optional) Whether to reverse lambda sorts.
+        (More detail provided in the docs for ``.custom_sort()``.)
+
+        :return: The original ``group_dict``, with the lists inside it
+        having been sorted in place.
+        """
+        if not sort_key:
+            return group_dict
+        for k, v in group_dict.items():
+            if isinstance(v, dict):
+                cls.sort_grouped(v, sort_key, reverse)
+            else:
+                v.custom_sort(key=sort_key, reverse=reverse)
+        return group_dict
+
+    @classmethod
+    def unpack_group(cls, group_dict: dict, sort_key=None, reverse=False):
+        """
+        Convert a grouped dict (or nested group dict) of ``TRSList`` or
+        ``TractList`` objects into a new single ``TRSList`` or
+        ``TractList`` object.
+
+        NOTE: If ``group_dict`` contains ``TRSList`` objects, this
+        method must be called as ``TRSList.unpack_group()``.
+        Conversely, if ``group_dict`` contains ``TractList`` objects,
+        this method must be called as ``TractList.unpack_group()``.
+
+        :param group_dict: A dict, as returned by ``.group()`` or
+        ``.group_nested()`` (or a nested dict inside what was returned
+        by ``.group_nested()``).
+
+        :param sort_key: (Optional) How to sort the elements in the
+        returned list.  NOT applied to the original lists inside the
+        dict.  (Can be any value acceptable to the ``.custom_sort()``
+        method.)
+
+        :param reverse: (Optional) Whether to reverse lambda sorts.
+        (More detail provided in the docs for ``.custom_sort()``.)
+
+        :return: A new `TractList` (or `TRSList`, as applicable).
+        """
+        tl = cls()
+
+        def unpack(dct):
+            # We place recursion within the `unpack_group()` method
+            # itself to avoid creating multiple `tl` instances.
+            for v_ in dct.values():
+                if isinstance(v_, dict):
+                    # Recursively unpack nested dicts.
+                    unpack(v_)
+                else:
+                    # Add the elements of this list.
+                    tl.extend(v_)
+        unpack(group_dict)
+        if sort_key:
+            tl.custom_sort(sort_key, reverse)
+        return tl
+
+    @classmethod
+    def _from_multiple(cls, *objects, into=None):
+        """
+        INTERNAL USE:
+
+        Create a `TractList` or `TRSList` from multiple sources of
+        varying types.
+
+        :param objects: For `TractList` objects, may pass any number or
+        combination of Tract, PLSSDesc, and/or TractList objects (or
+        other list-like element holding any of those object types).
+        For `TRSList` objects, may pass any number of `TRS` objects or
+        strings in the pyTRS standardized Twp/Rge/Sec format, or
+        `TRSList` objects.
+
+        :param into: A new (unused) `TRSList` or `TractList` object.
+
+        :return: The list originally passed as `into`, now containing
+        the extracted `Tract` or `TRS` objects.
+        """
+        if into is None:
+            into = cls()
+        for obj in objects:
+            if isinstance(obj, cls._ok_individuals):
+                into.append(obj)
+            elif isinstance(obj, cls):
+                # Other instances of this class have already been
+                # appropriately type-checked.
+                into.extend(obj)
+            elif isinstance(obj, cls._ok_iterables):
+                for obj_deeper in obj:
+                    into.append(obj_deeper)
+            else:
+                # Assume it's another list-like object.
+                for obj_deeper in obj:
+                    # Elements are appended in place, no need to store var.
+                    cls._from_multiple(obj_deeper, into=into)
+        return into
+
+    @classmethod
+    def _iter_from_multiple(cls, *objects):
+        """
+        INTERNAL USE:
+
+        Create from multiple elements a generator of `Tract` objects or
+        `TRS` objects.
+
+        (Identical to `.from_multiple()`, but returns a generator of
+        `Tract` objects or `TRS` objects, rather than a `TractList` or
+        `TRSList`.)
+
+        :param objects: For `TractList` objects, may pass any number or
+        combination of Tract, PLSSDesc, and/or TractList objects (or
+        other list-like element holding any of those object types).
+        For `TRSList` objects, may pass any number of `TRS` objects or
+        strings in the pyTRS standardized Twp/Rge/Sec format, or
+        `TRSList` objects.
+
+        :return: A generator of `Tract` objects (or `TRS` objects, as
+        applicable).
+        """
+        for obj in objects:
+            if isinstance(obj, cls._ok_individuals):
+                yield cls._verify_individual(obj)
+            elif isinstance(obj, cls):
+                # Other instances of this class have already been
+                # appropriately type-checked.
+                yield from obj
+            elif isinstance(obj, cls._ok_iterables):
+                for obj_deeper in obj:
+                    yield cls._verify_individual(obj_deeper)
+            else:
+                # Assume it's another list-like object.
+                for obj_deeper in obj:
+                    yield from cls._iter_from_multiple(obj_deeper)
+
+
+class TractList(_TRSTractList):
+    """
+    A specialized ``list`` for Tract objects, with added methods for
+    compiling and manipulating the data inside the contained Tract
+    objects, and for sorting, grouping, and filtering the Tract objects
+    themselves.
+
+    NOTE: `TractList` and `TRSList` are subclassed from the same
+    superclass and have some of the same functionality for sorting,
+    grouping, and filtering.  In the docstrings for many of the methods,
+    there will be references to either `TRS` or `Tract` objects, and to
+    `TRSList` or `TractList` objects.  To be clear, `TRSList` objects
+    hold only `TRS` objects, and `TractList` objects hold only `Tract`
+    objects.
+
+    ____ STREAMLINED OUTPUT OF THE PARSED TRACT DATA ____
+    These methods have the same effect as in PLSSDesc objects.
+
+    .quick_desc() -- Returns a string of the entire parsed description.
+
+    .tracts_to_dict() -- Compile the requested attributes for each Tract
+        into a dict, and returns a list of those dicts.
+
+    .tracts_to_list() -- Compile the requested attributes for each Tract
+        into a list, and returns a nested list of those list.
+
+    .iter_to_dict() -- Identical to `.tracts_to_dict()`, but returns a
+        generator of dicts for the Tract data.
+
+    .iter_to_list() -- Identical to `.tracts_to_list()`, but returns a
+        generator of lists for the Tract data.
+
+    .tracts_to_csv() -- Compile the requested attributes for each Tract
+        and write them to a .csv file, with one row per Tract.
+
+    .tracts_to_str() -- Compile the requested attributes for each Tract
+        into a string-based table, and return a single string of all
+        tables.
+
+    .list_trs() -- Return a list of all twp/rge/sec combinations,
+        optionally removing duplicates.
+
+
+    ____ SORTING / GROUPING / FILTERING TRACTS BY ATTRIBUTE VALUES ____
+    .sort_tracts() -- Custom sorting based on the Twp/Rge/Sec or
+    original creation order of each Tract. Can also take parameters from
+    the built-in ``list.sort()`` method.
+
+    .group() -- Group Tract objects into a dict of TractList objects,
+    based on their shared attribute values (e.g., by Twp/Rge), and
+    optionally sort them.
+
+    .filter() -- Get a new TractList of Tract objects that match some
+    condition, and optionally remove them from the original TractList.
+
+    .filter_errors() -- Get a new TractList of Tract objects whose Twp,
+    Rge, and/or Section were an error or undefined, and optionally
+    remove them from the original TractList.
+    """
+
+    # A TractList holds only Tract objects. But Tract objects can be
+    # extracted from these types and added to the list.
+    _ok_individuals = (Tract,)
+    _ok_iterables = (PLSSDesc,)
+    _typeerror_msg = "TractList will accept only type `pytrs.Tract`."
+
+    def __init__(self, iterable=()):
+        """
+        :param iterable: An iterable (or `PLSSDesc`) containing `Tract`
+        objects.
+        """
+        _TRSTractList.__init__(self, iterable)
+
+    def __str__(self):
+        return f"TractList ({len(self)}): {self.snapshot_inside()}"
+
+    def config_tracts(self, config):
+        """
+        Reconfigure all of the Tract objects in this TractList.
+
+        :param config: Either a pytrs.Config object, or a string of
+        parameters to configure how the Tract object should be parsed.
+        (See documentation on pytrs.Config objects for optional config
+        parameters.)
+        :return: None
+        """
+        for tract in self:
+            tract.config = config
+        return None
+
+    def parse_tracts(
+            self,
+            config=None,
+            clean_qq=None,
+            include_lot_divs=None,
+            qq_depth_min=None,
+            qq_depth_max=None,
+            qq_depth=None,
+            break_halves=None):
+        """
+        Parse (or re-parse) all of the Tract objects in this TractList
+        into lots/QQ's using the specified parameters. Will pull parsing
+        parameters from each Tract object's own ``.config`` (unless
+        otherwise configured here).  Optionally reconfigure each Tract
+        object prior to parsing into lots/QQs by using the ``config=``
+        parameter here, or other kwargs.  (The named kwargs will take
+        priority over ``config``, if there is a conflict.)
+
+        The parsed data will be committed to the Tract objects'
+        attributes, overwriting data from a prior parse.
+
+        :param config: (Optional) New Config parameters to apply to each
+        Tract before parsing.
+        :param clean_qq: Same as in ``Tract.parse()`` method.
+        :param include_lot_divs: Same as in ``Tract.parse()`` method.
+        :param qq_depth_min: Same as in ``Tract.parse()`` method.
+        :param qq_depth_max: Same as in ``Tract.parse()`` method.
+        :param qq_depth: Same as in ``Tract.parse()`` method.
+        :param break_halves: Same as in ``Tract.parse()`` method.
+        :return: None
+        """
+        if config:
+            self.config_tracts(config)
+        for t in self:
+            t.parse(
+                clean_qq=clean_qq,
+                include_lot_divs=include_lot_divs,
+                qq_depth_min=qq_depth_min,
+                qq_depth_max=qq_depth_max,
+                qq_depth=qq_depth,
+                break_halves=break_halves)
+        return None
+
+    sort_tracts = _TRSTractList.custom_sort
+    # Aliases to mirror `sort_tracts`
+    filter_tracts = _TRSTractList.filter
+    filter_tracts_errors = _TRSTractList.filter_errors
+    group_tracts = _TRSTractList.group
 
     @staticmethod
     def sort_grouped_tracts(tracts_dict, sort_key, reverse=False) -> dict:
@@ -3122,14 +3939,8 @@ class TractList(list):
         :return: The original ``tracts_dict``, with the TractList
         objects having been sorted in-situ.
         """
-        if not sort_key:
-            return tracts_dict
-        for k, v in tracts_dict.items():
-            if isinstance(v, dict):
-                sort_grouped_tracts(v, sort_key, reverse)
-            else:
-                v.sort_tracts(key=sort_key, reverse=reverse)
-        return tracts_dict
+        return _TRSTractList.sort_grouped(
+            group_dict=tracts_dict, sort_key=sort_key, reverse=reverse)
 
     def tracts_to_dict(self, *attributes) -> list:
         """
@@ -3163,9 +3974,7 @@ class TractList(list):
             'qqs': ['NENW', 'NWNW', 'SENW', 'SWNW', 'NESW', 'NWSW']}
             ]
         """
-
         attributes = _clean_attributes(attributes)
-
         return [t.to_dict(attributes) for t in self]
 
     def tracts_to_list(self, *attributes) -> list:
@@ -3199,9 +4008,7 @@ class TractList(list):
                 ['NENW', 'NWNW', 'SENW', 'SWNW', 'NESW', 'NWSW']]
             ]
         """
-
         attributes = _clean_attributes(attributes)
-
         return [t.to_list(attributes) for t in self]
 
     def tracts_to_str(self, *attributes) -> str:
@@ -3235,12 +4042,10 @@ class TractList(list):
             desc : Northwest Quarter, North Half South West Quarter
             qqs  : NENW, NWNW, SENW, SWNW, NESW, NWSW
         """
-
         attributes = _clean_attributes(attributes)
 
         # How far to justify the attribute names in the output str:
         jst = max([len(att) for att in attributes]) + 1
-
         # For justifying linebreaks within a value.
         jst_linebreak = f"\n{' ' * (jst + 2)}"
 
@@ -3257,9 +4062,7 @@ class TractList(list):
                 v = str(v).replace("\n", jst_linebreak)
                 # Justify attribute name and report its value
                 tract_data = f"{tract_data}\n{att_name.ljust(jst, ' ')}: {v}"
-
             all_tract_data = f"{all_tract_data}{tract_data}"
-
         return all_tract_data
 
     def tracts_to_csv(
@@ -3292,7 +4095,6 @@ class TractList(list):
         """
         if not fp:
             raise ValueError("`fp` must be a filepath")
-
         from pathlib import Path
         fp = Path(fp)
         headers = True
@@ -3301,7 +4103,6 @@ class TractList(list):
 
         import csv
         attributes = _clean_attributes(attributes)
-
         header_row = Tract.get_headers(attributes, nice_headers)
 
         def scrub_row(data):
@@ -3317,7 +4118,6 @@ class TractList(list):
 
         with open(fp, mode=mode, newline="") as file:
             writer = csv.writer(file)
-
             if headers:
                 writer.writerow(header_row)
             for tract in self:
@@ -3419,7 +4219,6 @@ class TractList(list):
         :param newline: Specify what separates Tracts from one another.
         (defaults to '\n').
         """
-
         print(self.quick_desc(delim=delim, newline=newline))
 
     def pretty_desc(self, word_sec="Sec ", justify_linebreaks=None):
@@ -3492,8 +4291,8 @@ class TractList(list):
 
     def list_trs(self, remove_duplicates=False):
         """
-        Return a list all the TRS's in this TractList. Optionally remove
-        duplicates with remove_duplicates=True.
+        Return a list all the TRS's in this `TractList`. Optionally
+        remove duplicates with remove_duplicates=True.
         """
         unique_trs = []
         all_trs = []
@@ -3505,61 +4304,201 @@ class TractList(list):
             return unique_trs
         return all_trs
 
-    @staticmethod
-    def from_multiple(*objects):
+    @classmethod
+    def from_multiple(cls, *objects):
         """
-        Create a TractList from multiple elements, which may be any
-        number and combination of Tract, PLSSDesc, and TractList
-        objects (or other list-like element holding any of those object
-        types).
+        Create a `TractList` from multiple sources, which may be any
+        number and combination of `Tract`, `PLSSDesc`, and `TractList`
+        objects (or other iterable holding any of those object types).
 
-        :param objects: Any number or combination of Tract, PLSSDesc,
-        and/or TractList objects (or other list-like element holding
-        any of those object types).
+        :param objects: Any number or combination of `Tract`,
+        `PLSSDesc`, and/or `TractList` objects (or other iterable
+        holding any of those object types).
+
         :return: A new `TractList` object containing all of the
         extracted `Tract` objects.
         """
-        tl = TractList()
-        for obj in objects:
-            if isinstance(obj, Tract):
-                tl.append(obj)
-            elif isinstance(obj, (PLSSDesc, TractList)):
-                # Rely on the fact that we can iterate over PLSSDesc
-                # objects' (implicitly over the TractList in their
-                # `.tracts` attribute).
-                tl.extend(obj)
-            else:
-                # Assume it's another list-like object.
-                for obj_deeper in obj:
-                    tl.extend(TractList.from_multiple(obj_deeper))
-        return tl
+        # This is (re-)defined from the superclass only in order to have
+        # an accurate docstring (and to simplify the signature).
+        return cls._from_multiple(objects)
 
-    @staticmethod
-    def iter_from_multiple(*objects):
+    @classmethod
+    def iter_from_multiple(cls, *objects):
         """
-        Create from multiple elements a generator of Tract objects.
+        Create from multiple sources a generator of `Tract` objects.
 
         (Identical to `.from_multiple()`, but returns a generator of
         `Tract` objects, rather than a `TractList`.)
 
-        :param objects: Any number or combination of Tract, PLSSDesc,
-        and/or TractList objects (or other list-like element holding
-        any of those object types).
+        :param objects: Any number or combination of `Tract`,
+        `PLSSDesc`, and/or `TractList` objects (or other iterable
+        holding any of those object types).
+
         :return: A generator of Tract objects.
         """
-        for obj in objects:
-            if isinstance(obj, Tract):
-                yield obj
-            elif isinstance(obj, (PLSSDesc, TractList)):
-                # Rely on the fact that we can iterate over PLSSDesc
-                # objects' (implicitly over the TractList in their
-                # `.tracts` attribute).
-                for tract in obj:
-                    yield tract
-            else:
-                # Assume it's another list-like object.
-                for obj_deeper in obj:
-                    yield from TractList.iter_from_multiple(obj_deeper)
+        # This is (re-)defined from the superclass only in order to have
+        # an accurate docstring.
+        yield from cls._iter_from_multiple(objects)
+
+
+class TRSList(_TRSTractList):
+    """
+    A specialized ``list`` for ``TRS`` objects, with added methods for
+    sorting, grouping, and filtering the ``TRS`` objects.
+
+    NOTE: `TRSList` and `TractList` are subclassed from the same
+    superclass and have some of the same functionality for sorting,
+    grouping, and filtering.  In the docstrings for many of the methods,
+    there will be references to either `TRS` or `Tract` objects, and to
+    `TRSList` or `TractList` objects.  To be clear, `TRSList` objects
+    hold only `TRS` objects, and `TractList` objects hold only `Tract`
+    objects.
+
+    ____ ADDING TWP/RGE/SEC's TO THE TRSLIST ____
+    A ``TRSList`` will hold only ``TRS`` objects. However, if you try to
+    add a string to it, it will first be converted to a ``TRS`` object.
+    Similarly, if you try to add a ``Tract`` object, its ``.trs``
+    attribute will be extracted and converted to a ``TRS`` object, which
+    then gets added to the list (the original ``Tract`` itself is not).
+
+    ``TRSList`` can also be created from a ``PLSSDesc``, ``TractList``,
+    or other iterable containing ``Tract`` objects (the ``.trs``
+    attribute for each ``Tract`` will be extracted and converted to a
+    ``TRS`` object then added to the resulting ``TRSList``).
+
+    These are all acceptable:
+        ```
+        trs_list1 = pytrs.TRSList(['154n97w14', '154n97w15'])
+        trs_list2 = pytrs.TRSList([pytrs.TRS('154n97w14')])
+        trs_list3 = pytrs.TRSList([tract_object_1, tract_object_2])
+        trs_list4 = pytrs.TRSList(plssdesc_obj)
+        ```
+    (Note that the ``PLSSDesc`` object is passed directly, rather than
+    inside a list.)
+
+    To robustly create a list of ``TRS`` objects from multiple objects
+    of different types, look into ``TRS.from_multiple()``.
+
+        ```
+        trs_list5 = pytrs.TRSList.from_multiple(
+            '154n97w14',
+            pytrs.TRS('154n97w15'),
+            tract_object_1,
+            some_tract_list,
+            some_other_trs_list)
+        ```
+
+    ____ STREAMLINED OUTPUT OF THE TWP/RGE/SEC DATA ____
+    .to_strings() -- Return a plain list of all ``TRS`` objects,
+    converted to strings.
+
+    ____ SORTING / GROUPING / FILTERING ``TRS`` BY ATTRIBUTE VALUES ____
+    .sort_trs() -- Custom sorting based on the Twp/Rge/Sec. Can also
+    take parameters from the built-in ``list.sort()`` method.
+
+    .group() -- Group ``TRS`` objects into a dict of ``TRSList``
+    objects, based on their shared attribute values (e.g., by Twp/Rge),
+    and optionally sort them.
+
+    .filter() -- Get a new ``TRSList`` of ``TRS`` objects that match
+    some condition, and optionally remove them from the original
+    ``TRSList``.
+
+    .filter_errors() -- Get a new ``TRSList`` of ``TRS`` objects whose
+    Twp, Rge, and/or Section were an error or undefined, and optionally
+    remove them from the original ``TRSList``.
+    """
+
+    # A TRSList holds only TRS objects. But these types can be processed
+    # into individual TRS objects, which are then added.
+    _ok_individuals = (str, TRS, Tract)
+    _ok_iterables = (TractList, PLSSDesc)
+    _typeerror_msg = (
+        "TRSList will accept only types (`str`, `pytrs.TRS`, `pytrs.Tract`)."
+    )
+
+    def __init__(self, iterable=()):
+        """
+        :param iterable: An iterable (or `PLSSDesc`) containing any of
+        the following:
+        -- `TRS` objects
+        -- strings (which will be converted to `TRS` objects)
+        -- `Tract` objects (from which the `TRS` will be extracted and
+            added to the list)
+        """
+        _TRSTractList.__init__(self, iterable)
+
+    @classmethod
+    def _handle_type_specially(cls, obj):
+        """
+        INTERNAL USE:
+        
+        -- Pass `TRS` objects through.
+        -- Convert encountered strings to `TRS` objects.
+        -- Extract from encountered `Tract` objects the `.trs` attribute
+            and convert it to `TRS` object.
+        """
+        if isinstance(obj, TRS):
+            return obj
+        if isinstance(obj, str):
+            return TRS(obj)
+        if isinstance(obj, Tract):
+            return TRS(obj.trs)
+        raise TypeError(f"{cls._typeerror_msg} Cannot accept {type(obj)}")
+    
+    def __str__(self):
+        return f"TRSList ({len(self)}): {str([elem.trs for elem in self])}"
+
+    def to_strings(self):
+        """
+        Get the Twp/Rge/Sec as a string from each element in this list.
+        :return: A new (plain) list containing the Twp/Rge/Sec's as
+        strings.
+        """
+        return [trs_obj.trs for trs_obj in self]
+
+    sort_trs = _TRSTractList.custom_sort
+    # Aliases to mirror `sort_trs`
+    filter_trs = _TRSTractList.filter
+    filter_trs_errors = _TRSTractList.filter_errors
+    group_trs = _TRSTractList.group
+    sort_grouped_trs = _TRSTractList.sort_grouped
+
+    @classmethod
+    def from_multiple(cls, *objects):
+        """
+        Create a `TRSList` from multiple sources.
+
+        :param objects: May pass any number or combination of `TRS`
+        objects or strings in the pyTRS standardized Twp/Rge/Sec format,
+        or `TRSList` objects, or other list-like objects containing
+        those object types.  (Any strings will be interpreted as
+        Twp/Rge/Sec and converted to `TRS` objects.)
+
+        :return: A `TRSList` containing the `TRS` objects.
+        """
+        # This is (re-)defined from the superclass only in order to have
+        # an accurate docstring (and to simplify the signature).
+        return cls._from_multiple(objects)
+
+    @classmethod
+    def iter_from_multiple(cls, *objects):
+        """
+        Create from multiple sources a generator of `TRS` objects.
+
+        (Identical to `.from_multiple()`, but returns a generator of
+        `TRS` objects, rather than a `TRSList`.)
+
+        :param objects: May pass any number or combination of `TRS`
+        objects or strings in the pyTRS standardized Twp/Rge/Sec format,
+        or `TRSList` objects, or other list-like objects containing
+        those object types.
+
+        :return: A generator of `TRS` objects.
+        """
+        # This is (re-)defined from the superclass only in order to have
+        # an accurate docstring.
+        yield from cls._iter_from_multiple(objects)
 
 
 class Config:
@@ -7116,551 +8055,6 @@ def trs_to_dict(trs) -> dict:
     return TRS.trs_to_dict(trs)
 
 
-class TRS:
-    """
-    A container for Twp/Rge/Section in the standard pyTRS format.
-    Automatically breaks the TRS down into its component parts, which
-    can be accessed as properties:
-        .trs        -> The full Twp/Rge/Sec combination. *
-        .twp        -> Twp number + direction (a str or None)
-        .twp_num    -> Twp number (an int or None)
-        .twp_ns     -> Twp direction ('n', 's', or None)
-        .ns         -> same as `.twp_ns`
-        .twp_undef  -> whether the Twp was undefined. **
-        .rge        -> Rge number + direction (a str or None)
-        .rge_num    -> Rge num (an int or None)
-        .rge_ew     -> Rge direction ('e', 'w', or None)
-        .ew         -> same as `.rge_ew`
-        .rge_undef  -> whether the Rge was undefined. **
-        .sec_num    -> Sec number (an int or None)
-        .sec_undef  -> whether the Sec was undefined. **
-
-    * Note that setting `.trs` will cause the other properties to be
-    recalculated. (Optionally set the `.trs` using the separate
-    Twp/Rge/Sec components with the `.set_twprgesec()` method.)
-
-    ** Note that error parses do NOT qualify as 'undefined', but
-    undefined and error values are both stored as None. 'twp_undef',
-    'rge_undef', and 'sec_undef' are included to differentiate between
-    error vs. undefined, in case that distinction is needed.
-    """
-
-    # Str representations of error Twp/Rge/Sec
-    _ERR_SEC = 'XX'
-    _ERR_TWP = 'XXXz'
-    _ERR_RGE = _ERR_TWP
-    _ERR_TWPRGE = f"{_ERR_TWP}{_ERR_RGE}"
-    _ERR_TRS = f"{_ERR_TWPRGE}{_ERR_SEC}"
-
-    # Str representations of undefined Twp/Rge/Sec
-    _UNDEF_SEC = '__'
-    _UNDEF_TWP = '___z'
-    _UNDEF_RGE = _UNDEF_TWP
-    _UNDEF_TWPRGE = f"{_UNDEF_TWP}{_UNDEF_RGE}"
-    _UNDEF_TRS = f"{_UNDEF_TWPRGE}{_UNDEF_SEC}"
-
-    # Regex patterns for unpacking Twp/Rge/Sec
-    _TWP_RGX = r"((?P<twp_num>\d{1,3})(?P<ns>[nsNS]))"
-    _RGE_RGX = r"((?P<rge_num>\d{1,3})(?P<ew>[ewEW]))"
-    _SEC_RGX = r"\d{2}"
-
-    # Based on the above, compile the regex pattern for unpacking
-    # Twp/Rge/Sec in this module.
-    _TRS_UNPACKER_REGEX = _compile_trs_unpacker_regex(
-        twp_rgx=_TWP_RGX,
-        err_twp=_ERR_TWP,
-        undef_twp=_UNDEF_TWP,
-        rge_rgx=_RGE_RGX,
-        err_rge=_ERR_RGE,
-        undef_rge=_UNDEF_RGE,
-        sec_rgx=_SEC_RGX,
-        err_sec=_ERR_SEC,
-        undef_sec=_UNDEF_SEC
-    )
-
-    # Whether to cache Twp/Rge/Sec dicts in TRS.__CACHE. If used, it
-    # will reuse the same dict for the same key in the `.__trs_dict`
-    # attribute each TRS object, and not bother breaking it down again.
-    # Note that the contents of a TRS object's ``.__trs_dict`` attribute
-    # are only ever accessed by properties that protect them (e.g.,
-    # ``Tract.twp``, ``TRS.twprge``, etc.) -- so in theory, somebody
-    # would really have to want to mess things up in order to do so.
-    _USE_CACHE = True
-    __CACHE = {}
-
-    def __init__(self, trs=None):
-        if trs in ["", None]:
-            trs = TRS._UNDEF_TRS
-        self.__trs_dict = None
-
-        # Setting `.trs` attribute populates `.__trs_dict`, from which
-        # twp, rge, twprge, sec, twp_num, twp_ns, rge_num, rge_ew, and
-        # sec_num can be pulled (as properties)
-        self.trs = trs
-
-    def __str__(self):
-        return self.trs
-
-    @property
-    def trs(self):
-        return self.__trs_dict["trs"]
-
-    @trs.setter
-    def trs(self, new_trs):
-        # If we've already broken down this trs into a dict, just
-        # reuse it.
-        self.__trs_dict = TRS.__CACHE.get(new_trs, None)
-        if not self.__trs_dict:
-            self.__trs_dict = TRS._cache_trs_to_dict(new_trs)
-
-    @property
-    def twp(self):
-        return self.__trs_dict["twp"]
-
-    @property
-    def twp_num(self):
-        return self.__trs_dict["twp_num"]
-
-    @property
-    def twp_ns(self):
-        return self.__trs_dict["twp_ns"]
-
-    ns = twp_ns
-
-    @property
-    def rge(self):
-        return self.__trs_dict["rge"]
-
-    @property
-    def rge_num(self):
-        return self.__trs_dict["rge_num"]
-
-    @property
-    def rge_ew(self):
-        return self.__trs_dict["rge_ew"]
-
-    ew = rge_ew
-
-    @property
-    def twprge(self):
-        return f"{self.__trs_dict['twp']}{self.__trs_dict['rge']}"
-
-    def pretty_twprge(
-            self, t="T", delim="-", r="R", n=None, s=None, e=None, w=None,
-            undef="---X"):
-        """
-        Convert the Twp/Rge info into a clean str. By default, will
-        return in the format 'T154N-R97W', but control the output with
-        the various optional parameters.
-
-        :param t: How "Township" should appear. ('T' by default)
-        :param delim: How Twp should be separated from Rge. ('-' by
-        default)
-        :param r: How "Range" should appear. ("R" by default)
-        :param n: How "North" (if found) should appear.
-        :param s: How "South" (if found) should appear.
-        :param e: How "East" (if found) should appear.
-        :param w: How "West" (if found) should appear.
-        :param undef: How undefined (or error) Twp or Rge should be
-        represented, including the direction. ('---X' by default)
-        :return: A str of the clean Twp/Rge.
-        """
-        twp_num = self.twp_num
-        rge_num = self.rge_num
-        ns = self.ns
-        ew = self.ew
-        if not ns:
-            ns = ""
-        if not ew:
-            ew = ""
-        if twp_num is None:
-            twp_num = undef
-        if rge_num is None:
-            rge_num = undef
-
-        ns = ns.upper()
-        ew = ew.upper()
-
-        if n is not None and ns.lower().startswith('n'):
-            ns = n
-        if s is not None and ns.lower().startswith('s'):
-            ns = s
-        if e is not None and ew.lower().startswith('e'):
-            ew = e
-        if w is not None and ew.lower().startswith('w'):
-            ew = w
-
-        return f"{t}{twp_num}{ns}{delim}{r}{rge_num}{ew}"
-
-    @property
-    def sec(self):
-        return self.__trs_dict["sec"]
-
-    @property
-    def sec_num(self):
-        return self.__trs_dict["sec_num"]
-
-    @property
-    def twp_undef(self):
-        return self.__trs_dict["twp_undef"]
-
-    @property
-    def rge_undef(self):
-        return self.__trs_dict["rge_undef"]
-
-    @property
-    def sec_undef(self):
-        return self.__trs_dict["sec_undef"]
-
-    def set_twprgesec(
-            self, twp, rge, sec, default_ns=None, default_ew=None,
-            ocr_scrub=False):
-        """
-        Set the Twp/Rge/Sec of this TRS object by its component parts.
-        Returns the compiled `trs` string after setting the various
-        components to the appropriate attributes.
-
-        :param twp: Township (a str or int).
-        :param rge: Range (a str or int).
-        :param sec: Section (a str or int)
-        :param default_ns: (Optional) If `twp` wasn't specified as N or
-        S, assume `default_ns` (pass as 'n' or 's'). If not specified,
-        will fall back to PLSSDesc.MASTER_DEFAULT_NS (which is 'n'
-        unless configured otherwise).
-        :param default_ew: (Optional) If `rge` wasn't specified as E or
-        W, assume `default_ew` (pass as 'e' or 'w'). If not specified,
-        will fall back to PLSSDesc.MASTER_DEFAULT_EW (which is 'w'
-        unless configured otherwise).
-        :param ocr_scrub: A bool, whether to try to scrub common OCR
-        artifacts from the Twp, Rge, and Sec -- if any of them are
-        passed as a str. (Defaults to ``False``.)
-        :return: The compiled Twp/Rge/Sec in the pyTRS format.
-        """
-        trs = TRS.construct_trs(
-            twp, rge, sec, default_ns, default_ew, ocr_scrub)
-        self.trs = trs
-        return trs
-
-    @staticmethod
-    def from_twprgesec(
-            twp=None, rge=None, sec=None, default_ns=None, default_ew=None,
-            ocr_scrub=False):
-        """
-        Create and return a new TRS object by defining its Twp/Rge/Sec
-        from its component parts.
-
-        :param twp: Township (a str or int).
-        :param rge: Range (a str or int).
-        :param sec: Section (a str or int)
-        :param default_ns: (Optional) If `twp` wasn't specified as N or
-        S, assume `default_ns` (pass as 'n' or 's'). If not specified,
-        will fall back to PLSSDesc.MASTER_DEFAULT_NS (which is 'n'
-        unless configured otherwise).
-        :param default_ew: (Optional) If `rge` wasn't specified as E or
-        W, assume `default_ew` (pass as 'e' or 'w'). If not specified,
-        will fall back to PLSSDesc.MASTER_DEFAULT_EW (which is 'w'
-        unless configured otherwise).
-        :param ocr_scrub: A bool, whether to try to scrub common OCR
-        artifacts from the Twp, Rge, and Sec -- if any of them are
-        passed as a str. (Defaults to ``False``.)
-        :return: The new pyTRS.TRS object.
-        """
-        trs = TRS.construct_trs(
-            twp, rge, sec, default_ns, default_ew, ocr_scrub)
-        return TRS(trs)
-
-    @staticmethod
-    def construct_trs(
-            twp, rge, sec, default_ns=None, default_ew=None, ocr_scrub=False):
-        """
-        Build a Twp/Rge/Sec in the pyTRS format from component parts.
-        Get back a string of that Twp/Rge/Sec.
-
-        :param twp: Township (a str or int -- ``'154n'`` or ``154``).
-        :param rge: Range (a str or int -- ``'97w'`` or ``97``).
-        :param sec: Section (a str or int -- ``'14'`` or ``14``).
-        :param default_ns: (Optional) If `twp` wasn't specified as N or
-        S, assume `default_ns` (pass as 'n' or 's'). If not specified,
-        will fall back to PLSSDesc.MASTER_DEFAULT_NS (which is 'n'
-        unless configured otherwise).
-        :param default_ew: (Optional) If `rge` wasn't specified as E or
-        W, assume `default_ew` (pass as 'e' or 'w'). If not specified,
-        will fall back to PLSSDesc.MASTER_DEFAULT_EW (which is 'w'
-        unless configured otherwise).
-        :param ocr_scrub: A bool, whether to try to scrub common OCR
-        artifacts from the Twp, Rge, and Sec -- if any of them are
-        passed as a str. (Defaults to ``False``.)
-        :return: The compiled Twp/Rge/Sec in the pyTRS format.
-        """
-
-        if default_ns is None:
-            default_ns = PLSSDesc.MASTER_DEFAULT_NS
-        if default_ew is None:
-            default_ew = PLSSDesc.MASTER_DEFAULT_EW
-
-        # Ensure legal N/S and E/W values.
-        if default_ns.lower() not in PLSSDesc._LEGAL_NS:
-            raise DefaultNSError(default_ns)
-        if default_ew.lower() not in PLSSDesc._LEGAL_EW:
-            raise DefaultEWError(default_ew)
-
-        def scrub(twp_rge_or_section, ns_ew_sec):
-            """
-            Scrub the `twp`, `rge`, and `sec` from input into the
-            component parts. (Use `ocr_scrub` if appropriate.) Run
-            separately for twp, rge, and section.
-
-            :param twp_rge_or_section: A candidate `twp` or `rge`
-            :param ns_ew_sec: "ns" (if running Twp), "ew" (if running
-            Rge), or None (if running Sec)
-            :return: 2-tuple: (scrubbed Twp/Rge/Sec number, direction).
-            Note that direction will always be evaluated to None when
-            running this for Section.
-            """
-            twprgesec_num = twp_rge_or_section
-
-            # Determine whether we're running Twp, Rge, or Section.
-            # Default to Twp.
-            direction = default_ns
-            direction_options = PLSSDesc._LEGAL_NS
-            if ns_ew_sec == "ew":
-                # Rge.
-                direction = default_ew
-                direction_options = PLSSDesc._LEGAL_EW
-            elif ns_ew_sec is None:
-                # Sec.
-                direction = None
-
-            # If it's not a string, we don't need to ocr_scrub it.
-            if not isinstance(twp_rge_or_section, str):
-                return twprgesec_num, None
-
-            if (direction is not None
-                    and twp_rge_or_section.lower().endswith(direction_options)):
-                # Running Twp or Rge.
-                twprgesec_num = twp_rge_or_section[:-1]
-                direction = twp_rge_or_section[-1].lower()
-
-            if ocr_scrub:
-                twprgesec_num = _ocr_scrub_alpha_to_num(twprgesec_num)
-
-            return twprgesec_num, direction
-
-        twp, ns = scrub(twp, "ns")
-        rge, ew = scrub(rge, "ew")
-        sec, _ = scrub(sec, None)
-
-        if ns is None:
-            ns = default_ns
-        if ew is None:
-            ew = default_ew
-
-        if twp in [None, ""]:
-            twp = TRS._UNDEF_TWP
-        try:
-            twp = int(twp)
-        except ValueError:
-            # Str has encoded N/S data, or is an error or undefined Twp.
-            pass
-        if isinstance(twp, int):
-            twp = f"{twp}{ns.lower()}"
-        if twp != TRS._UNDEF_TWP and re.search(rf"\b{TRS._TWP_RGX}\b", twp) is None:
-            # Couch the pattern in '\b' to ensure we match the entire str.
-            twp = TRS._ERR_TWP
-
-        if rge in [None, ""]:
-            rge = TRS._UNDEF_RGE
-        try:
-            rge = int(rge)
-        except ValueError:
-            # Str has encoded E/W data, or is an error or undefined Rge.
-            pass
-        if isinstance(rge, int):
-            rge = f"{rge}{ew.lower()}"
-        if rge != TRS._UNDEF_RGE and re.search(rf"\b{TRS._RGE_RGX}\b", rge) is None:
-            rge = TRS._ERR_RGE
-
-        if sec is None:
-            sec = TRS._UNDEF_SEC
-        else:
-            sec = str(sec).rjust(2, '0')
-        if sec != TRS._UNDEF_SEC and re.search(rf"\b{TRS._SEC_RGX}\b", sec) is None:
-            sec = TRS._ERR_SEC
-
-        return f"{twp}{rge}{sec}"
-
-    @staticmethod
-    def _cache_trs_to_dict(trs) -> dict:
-        """
-        INTERNAL USE:
-        Identical to `TRS.trs_to_dict()`, but will also add the
-        resulting dict to the `TRS.__CACHE` (if `TRS._USE_CACHE` is
-        turned on).
-        """
-        # We do not add dicts to the cache when calling the public-
-        # facing method, in order to avoid changes to those dicts
-        # impacting TRS objects. This non-public method is only called
-        # by other non-public methods.
-        # Note that dicts in the cache are only ever accessed via
-        # protected attributes (e.g,. ``Tract.twp``, ``TRS.twprge``,
-        # etc.) -- although the cache itself could be accessed and
-        # modified.
-        dct = TRS.trs_to_dict(trs)
-        if TRS._USE_CACHE:
-            TRS.__CACHE[trs] = dct
-        return dct
-
-
-    @staticmethod
-    def trs_to_dict(trs) -> dict:
-        """
-        Take a compiled Twp/Rge/Sec (in the standard pyTRS format) and
-        break it into a dict, keyed as follows:
-            "twp"       -> Twp number + direction (a str or None)
-            "twp_num"   -> Twp number (an int or None);
-            "twp_ns"    -> Twp direction ('n', 's', or None);
-            "twp_undef" -> whether the Twp was undefined. **
-            "rge"       -> Rge number + direction (a str or None)
-            "rge_num"   -> Rge num (an int or None);
-            "rge_ew"    -> Rge direction ('e', 'w', or None)
-            "rge_undef" -> whether the Rge was undefined. **
-            "sec_num"   -> Sec number (an int or None)
-            "sec_undef" -> whether the Sec was undefined. **
-
-        ** Note that error parses do NOT qualify as 'undefined'.
-        Undefined and error values are both stored as None. 'twp_undef',
-        'rge_undef', and 'sec_undef' are included to differentiate
-        between error vs. undefined, in case that distinction is needed.
-
-        :param trs: The Twp/Rge/Sec (in the pyTRS format) to be broken
-        apart.
-        :return: A dict with the various elements.
-        """
-
-        if isinstance(trs, TRS):
-            trs = trs.trs
-
-        dct = {
-            "trs": TRS._ERR_TRS,
-            "twp": TRS._ERR_TWP,
-            "twp_num": None,
-            "twp_ns": None,
-            "twp_undef": False,
-            "rge": TRS._ERR_RGE,
-            "rge_num": None,
-            "rge_ew": None,
-            "rge_undef": False,
-            "sec": TRS._ERR_SEC,
-            "sec_num": None,
-            "sec_undef": False
-        }
-
-        # Default empty TRS to the undefined version (as opposed to an
-        # error version, which would result otherwise).
-        if trs in ["", None]:
-            trs = TRS._UNDEF_TRS
-
-        mo = TRS._TRS_UNPACKER_REGEX.search(trs)
-        if not mo:
-            return dct
-
-        # Break down Twp
-        if mo.group("twp_num") and mo.group("ns"):
-            dct["twp"] = mo.group("twp")
-            dct["twp_num"] = int(mo.group("twp_num"))
-            dct["twp_ns"] = mo.group("ns")
-        elif mo.group("twp") == TRS._UNDEF_TWP:
-            dct["twp"] = mo.group("twp")
-            dct["twp_undef"] = True
-
-        # Break down Rge
-        if mo.group("rge_num") and mo.group("ew"):
-            dct["rge"] = mo.group("rge")
-            dct["rge_num"] = int(mo.group("rge_num"))
-            dct["rge_ew"] = mo.group("ew")
-        elif mo.group("rge") == TRS._UNDEF_RGE:
-            dct["rge"] = mo.group("rge")
-            dct["rge_undef"] = True
-
-        # Break down Sec
-        sec = mo.group("sec")
-        try:
-            dct["sec_num"] = int(sec)
-        except (ValueError, TypeError):
-            if sec == TRS._UNDEF_SEC:
-                dct["sec_undef"] = True
-            else:
-                sec = TRS._ERR_SEC
-        finally:
-            dct["sec"] = sec
-
-        # Reconstruct TRS
-        dct["trs"] = f"{dct['twp']}{dct['rge']}{dct['sec']}"
-
-        return dct
-
-    @classmethod
-    def _clear_cache(cls):
-        """
-        INTERNAL USE:
-        Clear the ``TRS.__CACHE`` dict.
-        :return:
-        """
-        cls.__CACHE = {}
-        return None
-
-    @classmethod
-    def _recompile(cls):
-        """
-        EXPERIMENTAL
-
-        If any of the class attributes for error/undefined Township,
-        Range, and/or Section have changed (``TRS._ERR_TWP``,
-        ``TRS._UNDEF_TWP``, etc.) then the unpacker regex needs to be
-        recompiled to account for these.
-
-        Also recompiles and stores these class attributes:
-            TRS._ERR_TWPRGE
-            TRS._ERR_TRS
-            TRS._UNDEF_TWPRGE
-            TRS._UNDEF_TRS
-
-        WARNING: This functionality is not supported.  Many pieces of
-        this module rely on these attributes.  Thus, changing them is
-        liable to introduce bugs in other functionality.  However, with
-        care (and some limitations), it may be possible to change the
-        defaults for error/undefined Twp/Rge/Sec. (You would be well
-        advised to avoid using any characters that have any special
-        meaning in regex patterns, generally.)
-
-        :return: The newly compiled re.Pattern object (which will also
-        have been set to the ``TRS._TRS_UNPACKER_REGEX`` class
-        attribute).
-        """
-        new_rgx = _compile_trs_unpacker_regex(
-            twp_rgx=TRS._TWP_RGX,
-            err_twp=TRS._ERR_TWP,
-            undef_twp=TRS._UNDEF_TWP,
-            rge_rgx=TRS._RGE_RGX,
-            err_rge=TRS._ERR_RGE,
-            undef_rge=TRS._UNDEF_RGE,
-            sec_rgx=TRS._SEC_RGX,
-            err_sec=TRS._ERR_SEC,
-            undef_sec=TRS._UNDEF_SEC)
-        cls._TRS_UNPACKER_REGEX = new_rgx
-
-        cls._ERR_TWPRGE = f"{cls._ERR_TWP}{cls._ERR_RGE}"
-        cls._ERR_TRS = f"{cls._ERR_TWPRGE}{cls._ERR_SEC}"
-        cls._UNDEF_TWPRGE = f"{cls._UNDEF_TWP}{cls._UNDEF_RGE}"
-        cls._UNDEF_TRS = f"{cls._UNDEF_TWPRGE}{cls._UNDEF_SEC}"
-
-        # Clear the cache, because the same string would not necessarily
-        # result in the same output dict anymore.
-        cls._clear_cache()
-
-        return new_rgx
-
-
 def find_sec(text):
     """
     Returns a list of all identified individual Section numbers in the
@@ -7846,6 +8240,7 @@ __all__ = [
     Tract,
     TractList,
     TRS,
+    TRSList,
     Config,
     IMPLEMENTED_LAYOUTS,
     IMPLEMENTED_LAYOUT_EXAMPLES,

@@ -14,7 +14,7 @@ __Note also:__ These guides are not intended to cover all of the functionality o
 | [plssdesc.md](https://github.com/JamesPImes/pyTRS/blob/master/guides/guides/plssdesc.md)       | Parsing PLSS land descriptions into tracts. | `PLSSDesc`       |
 | [tract_attributes.md](https://github.com/JamesPImes/pyTRS/blob/master/guides/guides/tract_attributes.md) | The names of data fields of parsed descriptions (i.e. `Tract` <br> attributes). | `Tract` |
 | [tract.md](https://github.com/JamesPImes/pyTRS/blob/master/guides/guides/tract.md)          | Parsing tracts into lots/aliquots.          | `Tract`          |
-| [trs.md](https://github.com/JamesPImes/pyTRS/blob/master/guides/guides/trs.md)     | The pyTRS standard format for Twp/Rge/Sec     | `TRS` |
+| [trs.md](https://github.com/JamesPImes/pyTRS/blob/master/guides/guides/trs.md)     | The pyTRS standard format for Twp/Rge/Sec     | `TRS`, `TRSList` |
 | [config.md](https://github.com/JamesPImes/pyTRS/blob/master/guides/guides/config.md)    | Configuring how the descriptions and lots/aliquots are parsed | `PLSSDesc`, `Tract` |
 | [extracting_data.md](https://github.com/JamesPImes/pyTRS/blob/master/guides/guides/extracting_data.md) | Extracting data fields (e.g., township, range, section, description, <br>lots, aliquots, etc.) from tracts and land descriptions in bulk. | `Tract`, `TractList`, (`PLSSDesc`\*\*) |
 | [tractlist.md](https://github.com/JamesPImes/pyTRS/blob/master/guides/guides/tractlist.md) | Working with tracts that were parsed from multiple land <br> descriptions, and/or multiple individually-created tracts. | `TractList` (`PLSSDesc`\*\*) |
