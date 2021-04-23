@@ -2870,6 +2870,14 @@ class _TRSTractList(list):
     def __setitem__(self, index, value):
         list.__setitem__(self, index, self._verify_individual(value))
 
+    def __getitem__(self, item):
+        if isinstance(item, slice):
+            return self.__class__(list.__getitem__(self, item))
+        return list.__getitem__(self, item)
+
+    def __repr__(self):
+        return str(self)
+
     def extend(self, iterable):
         list.extend(self, self._verify_iterable(iterable))
 
