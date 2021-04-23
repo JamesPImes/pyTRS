@@ -106,16 +106,10 @@ grouped_tracts = t_list.group(by_attribute='twprge')
 It's hard to depict, but the dict stored above to var `grouped_tracts` looks like this, with each key being a unique `twprge` value among the tracts in the original `TractList`:
 ```
 {
-    '154n97w': [
-            <pytrs.parser.parser.Tract object at 0x04660B08>,
-            <pytrs.parser.parser.Tract object at 0x04660B80>,
-            <pytrs.parser.parser.Tract object at 0x04660C10>,
-            <pytrs.parser.parser.Tract object at 0x04660C58>
-    ],
-    '155n98w': [
-            <pytrs.parser.parser.Tract object at 0x04660CA0>,
-            <pytrs.parser.parser.Tract object at 0x04660CE8>
-    ],
+    '154n97w': 
+        TractList(4)<['154n97w14: NE/4', '154n97w15: W/2', '154n97w16: W/2', '154n97w17: W/2']>,
+    '155n97w':
+        TractList(2)<['155n97w01: Lots 1 - 3, S/2N/2', '155n97w02: Lots 2, 4, SE/4']>,
     <etc.>
 }
 ```
@@ -170,24 +164,14 @@ grouped_tracts = t_list.group(by_attribute=['twp', 'rge'])
 Again, it's hard to depict, but the dict stored to variable `grouped_tracts` looks like this, keyed by unique tuples of (`.twp`, `.rge` value pairs). Each value is still a `TractList` of the `Tract` objects whose corresponding attributes match the key tuple.
 ```
 {
-    ('154n', '97w'): [
-        <pytrs.parser.parser.Tract object at 0x042871D8>,
-        <pytrs.parser.parser.Tract object at 0x042876E8>,
-        <pytrs.parser.parser.Tract object at 0x04287E38>,
-        <pytrs.parser.parser.Tract object at 0x04287E08>
-        ],
-    ('154n', '96w'): [
-        <pytrs.parser.parser.Tract object at 0x042A6E20>,
-        <pytrs.parser.parser.Tract object at 0x042871C0>,
-        <pytrs.parser.parser.Tract object at 0x042A6E68>
-        ],
-    ('155n', '98w'): [
-        <pytrs.parser.parser.Tract object at 0x042A62C8>,
-        <pytrs.parser.parser.Tract object at 0x042A6AA8>
-        ],
-    ('155n', '96w'): [
-        <pytrs.parser.parser.Tract object at 0x042A6C28>
-        ],
+    ('154n', '97w'):
+        TractList(4)<['154n97w14: NE/4', '154n97w15: W/2', '154n97w16: W/2', '154n97w17: W/2']>, 
+    ('155n', '97w'):
+        TractList(2)<['155n97w01: Lots 1 - 3, S/2N/2', '155n97w02: Lots 2, 4, SE/4']>, 
+    ('155n', '98w'):
+        TractList(2)<['155n98w31: SW/4NE/4', '155n98w32: SE/4NW/4']>, 
+    ('155n', '96w'):
+        TractList(1)<['155n96w27: ALL']>,
     <etc.>
 }
 ```
