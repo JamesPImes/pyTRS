@@ -4261,7 +4261,7 @@ class TractList(_TRSTractList):
         :return: a str of the compiled description.
         """
         jst = " " * (len(word_sec) + 4)
-        if justify_linebreaks:
+        if justify_linebreaks is not None:
             jst = justify_linebreaks
         if not self:
             return None
