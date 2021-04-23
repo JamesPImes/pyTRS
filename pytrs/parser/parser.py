@@ -1086,7 +1086,7 @@ class PLSSDesc:
         self.tracts.print_desc(delim=delim, newline=newline)
 
     def pretty_desc(self, word_sec='Sec ', justify_linebreaks=None):
-        """
+        r"""
         Get a neatened-up description of all of the Tract objects in
         ``.tracts``. (Does not access this PLSSDesc object's
         description. Instead, compiles a cleaned-up description from the
@@ -1097,10 +1097,12 @@ class PLSSDesc:
 
         :param word_sec: How the word 'Section' should appear, INCLUDING
         the following white space (if any). (Defaults to ``'Sec '``).
+
         :param justify_linebreaks: (Optional) A string specifying how to
         justify new lines after a linebreak (e.g., ``'\t'`` for a tab).
         If not specified, will align new lines with the line above. To
         use no justification at all, pass an empty string.
+
         :return: a str of the compiled description.
         """
         return self.tracts.pretty_desc(word_sec, justify_linebreaks)
@@ -4287,7 +4289,7 @@ class TractList(_TRSTractList):
         return dsc.strip()
 
     def pretty_print_desc(self, word_sec="Sec ", justify_linebreaks=None):
-        """
+        r"""
         Print a neatened-up description of all of the Tract objects in
         this TractList.
 
@@ -4296,10 +4298,12 @@ class TractList(_TRSTractList):
 
         :param word_sec: How the word 'Section' should appear, INCLUDING
         the following white space (if any). (Defaults to ``'Sec '``).
+
         :param justify_linebreaks: (Optional) A string specifying how to
         justify new lines after a linebreak (e.g., ``'\t'`` for a tab).
         If not specified, will align new lines with the line above. To
         use no justification at all, pass an empty string.
+
         :return: None (prints to console).
         """
         print(self.pretty_desc(word_sec, justify_linebreaks))
