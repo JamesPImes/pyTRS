@@ -467,14 +467,13 @@ class PLSSDesc:
             self.preprocess(commit=True)
 
     def __str__(self):
-        pt = len(self.tracts)
-        return (
-            f"PLSSDesc ({'Unparsed' if pt == 0 else 'Parsed'})\n"
-            f"Source: {self.source}\n"
-            f"Tracts ({'n/a' if pt == 0 else pt}): "
-            f"{self.tracts.snapshot_inside()}\n"
-            "Original description:\n"
-            f"{self.orig_desc}")
+        return self.orig_desc
+
+    def __repr__(self):
+        dsc = self.orig_desc
+        if len(dsc) > 30:
+            dsc = f"{dsc[:27]}..."
+        return f"PLSSDesc({len(self.tracts)})<{dsc!r}>".replace("\n", r"\n")
 
     def __getitem__(self, item):
         """
@@ -1718,14 +1717,13 @@ class Tract:
             self.preprocess(commit=True)
 
     def __str__(self):
+        return self.quick_desc()
+
+    def __repr__(self):
         return (
-            "Tract ({0})\n"
-            "{1}\n"
-            "Total Lots, QQs: {3}, {2}\n").format(
-                "Parsed" if self.parse_complete else "Unparsed",
-                self.quick_desc() if self.trs not in ("", None) else self.desc,
-                len(self.qqs) if self.parse_complete else "n/a",
-                len(self.lots) if self.parse_complete else "n/a")
+            f"Tract({'' if self.parse_complete else 'un'}parsed)"
+            f"<{self.quick_desc_short(max_len=20)!r}>"
+        ).replace('\n', r'\n')
 
     @property
     def trs(self):
@@ -2325,6 +2323,9 @@ class TRS:
 
     def __str__(self):
         return self.trs
+
+    def __repr__(self):
+        return f"TRS<{self.trs!r}>"
 
     def __eq__(self, other):
         """
@@ -3871,7 +3872,10 @@ class TractList(_TRSTractList):
         _TRSTractList.__init__(self, iterable)
 
     def __str__(self):
-        return f"TractList ({len(self)}): {self.snapshot_inside()}"
+        return str(self.snapshot_inside()).replace('\n', r'\n')
+
+    def __repr__(self):
+        return f"TractList({len(self)})<{str(self)}>"
 
     def config_tracts(self, config):
         """
@@ -4239,7 +4243,7 @@ class TractList(_TRSTractList):
         print(self.quick_desc(delim=delim, newline=newline))
 
     def pretty_desc(self, word_sec="Sec ", justify_linebreaks=None):
-        """
+        r"""
         Get a neatened-up description of all of the Tract objects in
         this TractList.
 
@@ -4248,10 +4252,12 @@ class TractList(_TRSTractList):
 
         :param word_sec: How the word 'Section' should appear, INCLUDING
         the following white space (if any). (Defaults to ``'Sec '``).
+
         :param justify_linebreaks: (Optional) A string specifying how to
         justify new lines after a linebreak (e.g., ``'\t'`` for a tab).
         If not specified, will align new lines with the line above. To
         use no justification at all, pass an empty string.
+
         :return: a str of the compiled description.
         """
         jst = " " * (len(word_sec) + 4)
@@ -4464,7 +4470,10 @@ class TRSList(_TRSTractList):
         raise TypeError(f"{cls._typeerror_msg} Cannot accept {type(obj)}")
     
     def __str__(self):
-        return f"TRSList ({len(self)}): {str([elem.trs for elem in self])}"
+        return str([elem.trs for elem in self])
+
+    def __repr__(self):
+        return f"TRSList({len(self)})<{str(self)}>"
 
     def to_strings(self):
         """
@@ -4742,6 +4751,9 @@ class Config:
 
     def __str__(self):
         return self.decompile_to_text()
+
+    def __repr__(self):
+        return f"Config<{self.decompile_to_text()!r}>"
 
     @staticmethod
     def from_parent(parent, config_name='', suppress_layout=False):
