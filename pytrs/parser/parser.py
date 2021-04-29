@@ -2888,10 +2888,11 @@ class _TRSTractList(list):
         list.append(self, self._verify_individual(obj))
 
     def __iadd__(self, other):
-        list.__iadd__(self, self._verify_iterable(other))
+        self.extend(other)
+        return self
 
     def __add__(self, value):
-        list.__add__(self, self._verify_iterable(value))
+        return self.__class__(list.__add__(self, value))
 
     def copy(self):
         return self.__class__(list.copy(self))
