@@ -3016,18 +3016,11 @@ class _TRSTractList(list):
         """
 
         indexes_to_include = []
-        try:
-            # Assume it's a list of TRS objects (i.e. TRSList).
-            for i, element in enumerate(self):
-                if ((undef and element.is_undef(twp, rge, sec))
-                        or element.is_error(twp, rge, sec)):
-                    indexes_to_include.append(i)
-        except AttributeError:
-            # List of Tract objects (i.e. TractList).
-            for i, element in enumerate(self):
-                if ((undef and element.trs_is_undef(twp, rge, sec))
-                        or element.trs_is_error(twp, rge, sec)):
-                    indexes_to_include.append(i)
+        for i, element in enumerate(self):
+            trs = TRS(element.trs)
+            if ((undef and trs.is_undef(twp, rge, sec))
+                    or trs.is_error(twp, rge, sec)):
+                indexes_to_include.append(i)
         return self._new_list_from_self(indexes_to_include, drop)
 
     def filter_duplicates(self, method='default', drop=False):
