@@ -3015,28 +3015,19 @@ class _TRSTractList(list):
         containing all of the selected elements.
         """
 
-        def match_by(elem, controller, var, undef_var):
-            # Note: `undef_var` is the Tract/TRS attribute (or rather,
-            # property) that says whether the corresponding `var` was
-            # undefined. If it is False, then that means that particular
-            # `var` was defined but ended up being an error.
-            # For example, `match_by("twp_num", "twp_undef")`...
-
-            bad = getattr(elem, var) is None
-            if bad:
-                # The `undef` parameter means cull any `None` values,
-                # regardless of whether it was undefined or an error.
-                # Either way, cull the var that was NOT undefined (i.e.
-                # was an error.)
-                bad = undef or not getattr(elem, undef_var)
-            return bad and controller
-
         indexes_to_include = []
-        for i, trs_or_tract in enumerate(self):
-            if (match_by(trs_or_tract, twp, "twp_num", "twp_undef")
-                    or match_by(trs_or_tract, rge, "rge_num", "rge_undef")
-                    or match_by(trs_or_tract, sec, "sec_num", "sec_undef")):
-                indexes_to_include.append(i)
+        try:
+            # Assume it's a list of TRS objects (i.e. TRSList).
+            for i, element in enumerate(self):
+                if ((undef and element.is_undef(twp, rge, sec))
+                        or element.is_error(twp, rge, sec)):
+                    indexes_to_include.append(i)
+        except AttributeError:
+            # List of Tract objects (i.e. TractList).
+            for i, element in enumerate(self):
+                if ((undef and element.trs_is_undef(twp, rge, sec))
+                        or element.trs_is_error(twp, rge, sec)):
+                    indexes_to_include.append(i)
         return self._new_list_from_self(indexes_to_include, drop)
 
     def filter_duplicates(self, method='default', drop=False):
