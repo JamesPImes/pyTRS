@@ -1862,6 +1862,33 @@ class Tract:
     def sec_undef(self):
         return self.__trs.sec_undef
 
+    def trs_is_undef(self, twp=True, rge=True, sec=True):
+        """
+        Check if any component of this Tract's Twp/Rge/Sec is undefined.
+        (Checks against Twp, Rge, and Sec by default, and returns True
+        if any is undefined.)
+
+        :param twp: Check if Twp is undefined.
+        :param rge: Check if Rge is undefined.
+        :param sec: Check if Sec is undefined.
+        :return: A bool, whether ANY of the checked values are
+        undefined.
+        """
+        return self.__trs.is_undef(twp, rge, sec)
+
+    def trs_is_error(self, twp=True, rge=True, sec=True):
+        """
+        Check if any component of this Tract's Twp/Rge/Sec is an error.
+        (Checks against Twp, Rge, and Sec by default, and returns True
+        if any is an error.)
+
+        :param twp: Check if Twp is an error.
+        :param rge: Check if Rge is an error.
+        :param sec: Check if Sec is an error.
+        :return: A bool, whether ANY of the checked values are errors.
+        """
+        return self.__trs.is_error(twp, rge, sec)
+
     @property
     def lots_qqs(self):
         """A combined list of lots + QQs."""
@@ -2473,11 +2500,10 @@ class TRS:
 
         For this method, undefined values do NOT count as an error.
 
-        :param twp: Check if Twp is undefined.
-        :param rge: Check if Rge is undefined.
-        :param sec: Check if Sec is undefined.
-        :return: A bool, whether ANY of the checked values are
-        undefined.
+        :param twp: Check if Twp is an error.
+        :param rge: Check if Rge is an error.
+        :param sec: Check if Sec is an error.
+        :return: A bool, whether ANY of the checked values are errors.
         """
         return ((twp and self.twp_num is None and not self.twp_undef)
                 or (rge and self.rge_num is None and not self.rge_undef)
