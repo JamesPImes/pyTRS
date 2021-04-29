@@ -2449,6 +2449,40 @@ class TRS:
     def sec_undef(self):
         return self.__trs_dict["sec_undef"]
 
+    def is_undef(self, twp=True, rge=True, sec=True) -> bool:
+        """
+        Check if any component of this TRS is undefined.  (Checks
+        against Twp, Rge, and Sec by default, and returns True if any
+        is undefined.)
+
+        :param twp: Check if Twp is undefined.
+        :param rge: Check if Rge is undefined.
+        :param sec: Check if Sec is undefined.
+        :return: A bool, whether ANY of the checked values are
+        undefined.
+        """
+        return ((twp and self.twp_undef)
+                or (rge and self.rge_undef)
+                or (sec and self.sec_undef))
+
+    def is_error(self, twp=True, rge=True, sec=True) -> bool:
+        """
+        Check if any component of this TRS is an error.  (Checks
+        against Twp, Rge, and Sec by default, and returns True if any
+        is an error.)
+
+        For this method, undefined values do NOT count as an error.
+
+        :param twp: Check if Twp is undefined.
+        :param rge: Check if Rge is undefined.
+        :param sec: Check if Sec is undefined.
+        :return: A bool, whether ANY of the checked values are
+        undefined.
+        """
+        return ((twp and self.twp_num is None and not self.twp_undef)
+                or (rge and self.rge_num is None and not self.rge_undef)
+                or (sec and self.sec_num is None and not self.sec_undef))
+
     def set_twprgesec(
             self, twp, rge, sec, default_ns=None, default_ew=None,
             ocr_scrub=False):
