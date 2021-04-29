@@ -2890,6 +2890,9 @@ class _TRSTractList(list):
     def __iadd__(self, other):
         list.__iadd__(self, self._verify_iterable(other))
 
+    def __add__(self, value):
+        list.__add__(self, self._verify_iterable(value))
+
     def copy(self):
         return self.__class__(list.copy(self))
 
