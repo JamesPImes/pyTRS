@@ -3014,7 +3014,6 @@ class _TRSTractList(list):
         :return: A new `TractList` (or `TRSList`, as applicable)
         containing all of the selected elements.
         """
-
         indexes_to_include = []
         for i, element in enumerate(self):
             trs = TRS(element.trs)
@@ -5557,8 +5556,7 @@ class PLSSParser:
 
         # Get a list of all of the keys, then sort them, so that we're pulling
         # first-to-last (vis-a-vis the original text of this segment):
-        markers_list = list(markers_dict.keys())
-        markers_list.sort()
+        markers_list = sorted(markers_dict.keys())
 
         # Cache these for access by the parser algorithm that is
         # appropriate for the layout.
@@ -5717,7 +5715,7 @@ class PLSSParser:
                 # and working_sec, and with the desc being the text
                 # between this marker and the next.
                 tract_identified = {
-                    "desc": text_block[markers_list[i]:markers_list[i + 1]].strip(),
+                    "desc": text_block[marker_pos:next_marker_pos].strip(),
                     "sec": working_sec,
                     "twprge": working_twprge
                 }
@@ -5736,7 +5734,7 @@ class PLSSParser:
                 # between this marker and the next.
                 for sec in working_multisec:
                     tract_identified = {
-                        "desc": text_block[markers_list[i]:markers_list[i + 1]].strip(),
+                        "desc": text_block[marker_pos:next_marker_pos].strip(),
                         "sec": sec,
                         "twprge": working_twprge
                     }
@@ -5757,7 +5755,7 @@ class PLSSParser:
                 # we're apparently dealing with a secError, and we'll need
                 # to make a flawed Tract object with that secError.
                 tract_identified = {
-                    "desc": text_block[sec_err_write_back_to_pos:markers_list[i + 1]].strip(),
+                    "desc": text_block[sec_err_write_back_to_pos:next_marker_pos].strip(),
                     "sec": TRS._ERR_SEC,
                     "twprge": working_twprge
                 }
@@ -5786,7 +5784,7 @@ class PLSSParser:
                     # Whenever we come across a Section end, the next thing must
                     # be either a SEC_START, MULTISEC_START, or TR_START.
                     # We'll create a warning flag if that's not true.
-                    new_unused = text_block[markers_list[i]:markers_list[i + 1]].strip()
+                    new_unused = text_block[marker_pos:next_marker_pos].strip()
                     unused_text.append(new_unused)
                     unused_with_context.append(new_unused)
 
@@ -5806,7 +5804,7 @@ class PLSSParser:
                 # multi-Section, the next thing must be either a SEC_START,
                 # MULTISEC_START, or TR_START. Hence the warning flag, if that's
                 # not true.
-                new_unused = text_block[markers_list[i]:markers_list[i + 1]].strip()
+                new_unused = text_block[marker_pos:next_marker_pos].strip()
                 unused_text.append(new_unused)
                 unused_with_context.append(new_unused)
 
@@ -5916,7 +5914,7 @@ class PLSSParser:
                 # and working_sec, and with the desc being the text
                 # between this marker and the next.
                 tract_identified = {
-                    "desc": text_block[markers_list[i]:markers_list[i + 1]].strip(),
+                    "desc": text_block[marker_pos:next_marker_pos].strip(),
                     "sec": working_sec,
                     "twprge": working_twprge
                 }
@@ -5931,7 +5929,7 @@ class PLSSParser:
                 # between this marker and the next.
                 for sec in working_multisec:
                     tract_identified = {
-                        "desc": text_block[markers_list[i]:markers_list[i + 1]].strip(),
+                        "desc": text_block[marker_pos:next_marker_pos].strip(),
                         "sec": sec,
                         "twprge": working_twprge
                     }
