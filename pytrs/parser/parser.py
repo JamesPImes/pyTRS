@@ -5487,8 +5487,15 @@ class PLSSParser:
         def new_tract(desc, sec, twprge) -> Tract:
             """Create and return a new Tract object"""
             desc = clean_as_needed(desc)
-            return Tract(
-                desc=desc, trs=f"{twprge}{sec}", config=handed_down_config)
+            trs = f"{twprge}{sec}"
+            new = Tract(
+                desc=desc, trs=trs, config=handed_down_config)
+            if not desc.strip():
+                # Flag tracts for which the description was empty.
+                flag = 'empty_tract'
+                new.e_flags.append(flag)
+                new.e_flag_lines.append((flag, f"<{trs}>"))
+            return new
 
         def flag_unused(unused_text, context):
             """
