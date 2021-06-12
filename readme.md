@@ -51,7 +51,7 @@ pyTRS, together with all accompanying programs and modules, is licensed under a 
 pip install git+https://github.com/JamesPImes/pyTRS.git@master
 ```
 
-(To install a specific release, use `...pyTRS.git@<version>`, i.e. `...JamesPImes/pyTRS.git@v1.1.0`.)
+(To install a specific release, use `...pyTRS.git@<version>`, i.e. `...JamesPImes/pyTRS.git@v1.1.2`.)
 
 
 ## Quickstart Guide
