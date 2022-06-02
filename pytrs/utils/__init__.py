@@ -238,7 +238,7 @@ def gen_uid(num, sub, total_sub, just=4):
     Generate a unique ID string in the format:  "0001.a-d"
 
     :example:  ``gen_uid(1, 1, 4)`` --> "0001.a-d"
-    :example:  ``gen_uid(234, 3, 11)`` --> "0001.c-k"
+    :example:  ``gen_uid(234, 3, 11)`` --> "0234.c-k"
 
     :param num: The number to appear left of the period.
     :param sub: An int, indicating which entry this is for ``num``.
