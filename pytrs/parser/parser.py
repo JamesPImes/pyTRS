@@ -2756,6 +2756,9 @@ class TRS:
         if trs in ["", None]:
             trs = TRS._UNDEF_TRS
 
+        # Enforce lowercase to match pyTRS standard.
+        trs = str(trs).lower()
+
         mo = TRS._TRS_UNPACKER_REGEX.search(trs)
         if not mo:
             return dct
