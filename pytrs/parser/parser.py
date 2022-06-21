@@ -4618,13 +4618,16 @@ class Config:
     A class to configure how PLSSDesc and Tract objects should be
     parsed.
 
-    For a list of all parameter options, printed to console:
+    For a list of all parameter options, printed to console (must first
+    import `pytrs.utils`):
         `pytrs.utils.config_parameters()`
 
-    Or launch the Config GUI application:
-        `pytrs.utils.config_util()`
+    Or launch the Config GUI application (must first import
+    `pytrs.interface_tools`):
+        `pytrs.interface_tools.prompt_config()`
 
-    For a guide to using Config objects general, printed to console:
+    For a guide to using Config objects general, printed to console
+    (must first import `pytrs.utils`):
         `pytrs.utils.config_help()`
 
     All possible parameters (call `pytrs.utils.config_parameters()` for
