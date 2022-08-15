@@ -11,7 +11,7 @@ Takes a [.csv file](https://github.com/JamesPImes/pyTRS/tree/master/samples/csv_
 
 #### Quick note
 
-A version of this application had previously been included as a package of `pytrs` before the `v1.0.0` release, but I decided it wasn't worth maintaining as an official part of the library, so I'm including it here as a sample implementation. If nothing else, it demonstrates how the `pytrs.interface_tools` package can be used in a GUI application.
+A version of this application had previously been included as a package of `pytrs` before the `v1.0.0` release, but I decided it wasn't worth maintaining as an official part of the library, so I'm including it here as an example. If nothing else, it demonstrates how the `pytrs.interface_tools` package can be used in a GUI application.
 
 
 #### Note regarding sample data

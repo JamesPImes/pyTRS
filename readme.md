@@ -34,7 +34,7 @@ If you've ever received a database or spreadsheet with land descriptions in it, 
 
 Basically, it's intended for land professionals (right-of-way agents, petroleum land managers, GIS analysts, etc.), land records personnel, or anybody who might work with large datasets of land descriptions that would be more usefully broken out into a table or spreadsheet of township, range, section, description, lots, aliquots, etc.
 
-A few notable implementations [are showcased here](https://github.com/JamesPImes/pyTRS/blob/master/guides/guides/implementations.md).
+A few uses and examples [are showcased here](https://github.com/JamesPImes/pyTRS/blob/master/guides/guides/examples.md).
 
 
 ## License
@@ -76,4 +76,4 @@ Be sure to read the full disclaimer in `LICENSE.txt`. However, some non-obvious 
 ## Requirements
 The pyTRS library is pure Python and should work with Python 3.6+.
 
-*(NOTE: pyTRS was written and tested in Python version 3.8.2, but is expected to work with all versions of Python more recent than 3.6. It's been tested in a Windows 10 environment; and has not been tested on macOS or Linux. I'd be interested in hearing any issues you run into.)*
+*(NOTE: pyTRS was written and tested in Python version 3.8.2, but is expected to work with all versions of Python more recent than 3.6. It's been tested in a Windows 10 and Windows 11 environment; and has not been tested on macOS or Linux. I'd be interested in [hearing about](mailto:jamesimes@gmail.com) any issues you run into.)*

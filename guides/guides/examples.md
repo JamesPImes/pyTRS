@@ -2,7 +2,7 @@
 
 
 ## Example Use #1 - Generating Plats:
-As an example of how this library can be used, I built the [`pyTRSplat` module](https://github.com/JamesPImes/pyTRSplat) which uses on `pytrs` parsing to generate plats from raw text. For example, this text...
+I created the [`pyTRSplat` module](https://github.com/JamesPImes/pyTRSplat), which builds on `pytrs` to generate plats from raw text. For example, this text...
 
 ```
 Township 154 North, Range 97 West
@@ -18,7 +18,7 @@ Section 14: NE/4
 
 Use it as a module (imported as `pytrsplat`), or use [the GUI application](https://github.com/JamesPImes/pyTRSplat#included-gui-application):
 
-![pyTRSplat 02](assets/plat_gui_01.png)
+![pyTRSplat 02](assets/plat_gui_01.gif)
 
 Presumably, pyTRS could also be used with professional GIS software to generate more meaningful maps/insights.
 
