@@ -27,7 +27,7 @@ Access these `Tract` attributes directly, or [compile them in bulk](https://gith
 | `.w_flags`        | a list of warning flags                                               | list of strings  	| 3        |
 | `.w_flag_lines`   | list of 2-tuples (warning flags, and their context)                   | list of tuples   	| 3        |
 | `.e_flags`        | a list of error flags                                                 | list of strings  	| 3        |
-| `.e_flag_lines`   | list of 2-tuples (warning flags, and their context)                   | list of tuples   	| 3        |
+| `.e_flag_lines`   | list of 2-tuples (error flags, and their context)                     | list of tuples   	| 3        |
 | `.flags`        	| a list of warning + error flags                                       | list of strings  	| 3        |
 | `.flag_lines`     | list of 2-tuples (warning + error flags, and their context)           | list of tuples   	| 3        |
 | `.desc_is_flawed` | If a fatal flaw was found during parsing of parent `PLSSDesc`         | bool             	| 4        |
