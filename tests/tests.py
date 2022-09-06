@@ -3,10 +3,18 @@ import unittest
 
 try:
     import pytrs
+    from pytrs.parser.parser import (
+        PLSSParser,
+        PLSSPreprocessor,
+    )
 except ImportError:
     import sys
     sys.path.append('../')
     import pytrs
+    from pytrs.parser.parser import (
+        PLSSParser,
+        PLSSPreprocessor,
+    )
 
 
 class UnitTest(unittest.TestCase):
@@ -137,6 +145,19 @@ class UnitTest(unittest.TestCase):
         # Confirm reset.
         d = pytrs.PLSSDesc("T154N-R97 Sec 14: NE/4")
         self.assertEqual(d.tracts[0].trs, nw)
+
+    def test_preprocess_trs(self):
+        """PLSSPreprocessor TRS standardizing."""
+        raw = '154n-97w Sec 14: NE/4, 155n 97w Sec 19: W/2'
+        intended = 'T154N-R97W Sec 14: NE/4 T155N-R97W Sec 19: W/2'
+        pp = PLSSPreprocessor(raw, default_ns='n', default_ew='w')
+        self.assertEqual(intended, pp.text)
+
+        raw2 = 'Township 154 North, Range 97 West, 5th P.M. Sec 14: NE/4'
+        intended2 = 'T154N-R97W Sec 14: NE/4'
+        pp = PLSSPreprocessor(raw2, default_ns='n', default_ew='w')
+        self.assertEqual(intended2, pp.text)
+        return None
 
 
 if __name__ == '__main__':
