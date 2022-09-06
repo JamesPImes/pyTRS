@@ -85,6 +85,7 @@ class UnitTest(unittest.TestCase):
         self._test_multisec(self.TEST_DESC_MULTI_TR_DESC_S)
 
     def test_plssdesc_default_nsew(self):
+        """Verify default_ns and default_ew in PLSSDesc objects."""
         nw = '154n97w14'
         ne = '154n97e14'
         sw = '154s97w14'
