@@ -161,5 +161,31 @@ class UnitTest(unittest.TestCase):
         return None
 
 
+class TractUnitTest(unittest.TestCase):
+
+    TRACT_DESC_1 = (
+        'NE/4, Lots 1, 2, and 4 - 9, S/2SE/4, S/2 of Lot 13, '
+        'and that part lying south of the railroad'
+    )
+
+    def test_qqs_basic(self):
+        t = pytrs.Tract(desc=self.TRACT_DESC_1, parse_qq=True)
+        expected = ['NENE', 'NWNE', 'SENE', 'SWNE', 'SESE', 'SWSE']
+        self.assertEqual(t.qqs, expected)
+
+    def test_lots_basic(self):
+        t = pytrs.Tract(desc=self.TRACT_DESC_1, parse_qq=True)
+        expected = ['L1', 'L2', 'L4', 'L5', 'L6', 'L7', 'L8', 'L9', 'S2 of L13']
+        self.assertEqual(t.lots, expected)
+
+    def test_lots_discard_halves(self):
+        t = pytrs.Tract(
+            desc=self.TRACT_DESC_1,
+            parse_qq=True,
+            config='include_lot_divs.False')
+        expected = ['L1', 'L2', 'L4', 'L5', 'L6', 'L7', 'L8', 'L9', 'L13']
+        self.assertEqual(t.lots, expected)
+
+
 if __name__ == '__main__':
     unittest.main()
