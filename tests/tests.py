@@ -303,11 +303,11 @@ class TRSUnitTest(unittest.TestCase):
             for (ns, ew) in nsew_combos:
                 exp_twp = f"{twp}{ns}"
                 if ns is None:
-                    # If default_ns is specified, will expect 'n'.
+                    # If default_ns is not specified, will expect 'n'.
                     exp_twp = f"{twp}n"
                 exp_rge = f"{rge}{ew}"
                 if ew is None:
-                    # If default_ns is specified, will expect 'w'.
+                    # If default_ew is not specified, will expect 'w'.
                     exp_rge = f"{rge}w"
                 # Expect '01' regardless how `sec` is passed.
                 exp_sec = "01"
