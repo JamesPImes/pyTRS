@@ -2677,7 +2677,7 @@ class TRS:
         if rge != TRS._UNDEF_RGE and re.search(rf"\b{TRS._RGE_RGX}\b", rge) is None:
             rge = TRS._ERR_RGE
 
-        if sec is None:
+        if sec in (None, ''):
             sec = TRS._UNDEF_SEC
         else:
             sec = str(sec).rjust(2, '0')
