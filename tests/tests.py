@@ -189,6 +189,16 @@ class TractUnitTest(unittest.TestCase):
         expected = ['L1', 'L2', 'L4', 'L5', 'L6', 'L7', 'L8', 'L9', 'L13']
         self.assertEqual(t.lots, expected)
 
+    def test_clean_qq(self):
+        desc = 'Lot 1, NE, Lot 2'
+        # Without clean_qq, should identify no QQ's.
+        t1 = pytrs.Tract(desc, parse_qq=True)
+        self.assertEqual([], t1.qqs)
+
+        # With clean_qq, should identify NE/4.
+        t2 = pytrs.Tract(desc, parse_qq=True, config='clean_qq')
+        self.assertEqual(['NENE', 'NWNE', 'SENE', 'SWNE'], t2.qqs)
+
 
 if __name__ == '__main__':
     unittest.main()
