@@ -174,12 +174,12 @@ class TractUnitTest(unittest.TestCase):
     def test_qqs_basic(self):
         t = pytrs.Tract(desc=self.TRACT_DESC_1, parse_qq=True)
         expected = ['NENE', 'NWNE', 'SENE', 'SWNE', 'SESE', 'SWSE']
-        self.assertEqual(t.qqs, expected)
+        self.assertEqual(expected, t.qqs)
 
     def test_lots_basic(self):
         t = pytrs.Tract(desc=self.TRACT_DESC_1, parse_qq=True)
         expected = ['L1', 'L2', 'L4', 'L5', 'L6', 'L7', 'L8', 'L9', 'S2 of L13']
-        self.assertEqual(t.lots, expected)
+        self.assertEqual(expected, t.lots)
 
     def test_lots_discard_halves(self):
         t = pytrs.Tract(
@@ -187,7 +187,7 @@ class TractUnitTest(unittest.TestCase):
             parse_qq=True,
             config='include_lot_divs.False')
         expected = ['L1', 'L2', 'L4', 'L5', 'L6', 'L7', 'L8', 'L9', 'L13']
-        self.assertEqual(t.lots, expected)
+        self.assertEqual(expected, t.lots)
 
     def test_clean_qq(self):
         desc = 'Lot 1, NE, Lot 2'
