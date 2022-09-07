@@ -200,5 +200,128 @@ class TractUnitTest(unittest.TestCase):
         self.assertEqual(['NENE', 'NWNE', 'SENE', 'SWNE'], t2.qqs)
 
 
+class TRSUnitTest(unittest.TestCase):
+
+    TRS_1 = '154n97w14'
+    TRS_2 = '9s67e01'
+    TRS_3 = '154n97e14'
+    TRS_4 = '9n67w01'
+
+    def test_trs_basic(self):
+        """Basic TRS parsing."""
+
+        sources = [
+            {'twp': '154n', 'rge': '97w', 'sec': '14'},
+            {'twp': '9s', 'rge': '67e', 'sec': '01'},
+            {'twp': '154n', 'rge': '97e', 'sec': '14'},
+            {'twp': '9n', 'rge': '67w', 'sec': '01'},
+        ]
+        for source in sources:
+            twp = source['twp']
+            rge = source['rge']
+            sec = source['sec']
+            unparsed = f"{twp}{rge}{sec}"
+            trs = pytrs.TRS(unparsed)
+            self.assertEqual(unparsed, trs.trs)
+            self.assertEqual(twp, trs.twp)
+            self.assertEqual(rge, trs.rge)
+            self.assertEqual(sec, trs.sec)
+            self.assertEqual(twp + rge, trs.twprge)
+            self.assertEqual(int(sec), trs.sec_num)
+
+    def test_trs_undef(self):
+        """Undefined TRS."""
+
+        undef_expected = '___z___z__'
+
+        # Create Tract without specifying TRS.
+        t = pytrs.Tract(desc='NE/4')
+        self.assertEqual(undef_expected, t.trs)
+
+        # Create TRS without specifying.
+        trs_undef = pytrs.TRS('')
+        self.assertEqual(undef_expected, trs_undef.trs)
+
+        # Each component undefined.
+        trs_undef = pytrs.TRS.from_twprgesec('', '', '')
+        self.assertEqual(undef_expected, trs_undef.trs)
+
+        # Specify twp and rge, but not sec.
+        pt_undef = pytrs.TRS.from_twprgesec('154n', '97w')
+        self.assertEqual('154n97w__', pt_undef.trs)
+
+        # Specify twp and sec, but not rge.
+        pt_undef = pytrs.TRS.from_twprgesec(twp='154n', rge=None, sec=14)
+        self.assertEqual('154n___z14', pt_undef.trs)
+
+        # Specify rge and sec, but not twp.
+        pt_undef = pytrs.TRS.from_twprgesec(twp=None, rge='97w', sec=14)
+        self.assertEqual('___z97w14', pt_undef.trs)
+
+        # Specify sec only.
+        pt_undef = pytrs.TRS.from_twprgesec(twp=None, rge=None, sec=14)
+        self.assertEqual('___z___z14', pt_undef.trs)
+
+    def test_trs_error(self):
+        """Error TRS parsing."""
+
+        error_expected = 'XXXzXXXzXX'
+
+        # Create Tract without specifying TRS.
+        t = pytrs.Tract(desc='NE/4', trs='asdf')
+        self.assertEqual(error_expected, t.trs)
+
+        # Create TRS without specifying.
+        trs_error = pytrs.TRS('asdf')
+        self.assertEqual(error_expected, trs_error.trs)
+
+        # Each component is error.
+        trs_error = pytrs.TRS.from_twprgesec('asdf', 'asdf', 'asdf')
+        self.assertEqual(error_expected, trs_error.trs)
+
+        # Specify twp and rge, and error sec.
+        pt_undef = pytrs.TRS.from_twprgesec('154n', '97w', 'asdf')
+        self.assertEqual('154n97wXX', pt_undef.trs)
+
+    def test_from_twprgesec(self):
+        """TRS.from_twprgesec() and default_ns and default_ew."""
+
+        sources = [
+            {'twp': '154', 'rge': '97', 'sec': '01'},
+            {'twp': 154, 'rge': 97, 'sec': 1},
+        ]
+        nsew_combos = [
+            (None, None),
+            ('n', 'w'),
+            ('n', 'e'),
+            ('s', 'w'),
+            ('s', 'e')
+        ]
+        for source in sources:
+            twp = source['twp']
+            rge = source['rge']
+            sec = source['sec']
+            for (ns, ew) in nsew_combos:
+                exp_twp = f"{twp}{ns}"
+                if ns is None:
+                    # If default_ns is specified, will expect 'n'.
+                    exp_twp = f"{twp}n"
+                exp_rge = f"{rge}{ew}"
+                if ns is None:
+                    # If default_ns is specified, will expect 'w'.
+                    exp_rge = f"{rge}w"
+                # Expect '01' regardless how `sec` is passed.
+                exp_sec = "01"
+
+                trs = pytrs.TRS.from_twprgesec(
+                    twp, rge, sec, default_ns=ns, default_ew=ew)
+                self.assertEqual(f"{exp_twp}{exp_rge}{exp_sec}", trs.trs)
+                self.assertEqual(exp_twp, trs.twp)
+                self.assertEqual(exp_rge, trs.rge)
+                self.assertEqual(exp_sec, trs.sec)
+                self.assertEqual(exp_twp + exp_rge, trs.twprge)
+                self.assertEqual(int(sec), trs.sec_num)
+
+
 if __name__ == '__main__':
     unittest.main()
