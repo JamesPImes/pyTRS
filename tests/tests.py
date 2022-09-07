@@ -40,18 +40,18 @@ class PLSSDescUnitTest(unittest.TestCase):
         d = pytrs.PLSSDesc(desc)
         # Test first and last tracts.
         tract = d.tracts.pop(0)
-        self.assertEqual(tract.trs, '154n97w20')
-        self.assertEqual(tract.desc, 'W/2')
+        self.assertEqual('154n97w20', tract.trs)
+        self.assertEqual('W/2', tract.desc)
         tract = d.tracts.pop(-1)
-        self.assertEqual(tract.trs, '154n97w28')
-        self.assertEqual(tract.desc, 'N/2')
+        self.assertEqual('154n97w28', tract.trs)
+        self.assertEqual('N/2', tract.desc)
         # Test the multi-section.
         trs_expected = [f"154n97w{sec:02d}" for sec in range(24, 28)]
         i = -2
         for i, tract in enumerate(d.tracts):
             compare_trs = trs_expected[i]
-            self.assertEqual(tract.trs, compare_trs)
-            self.assertEqual(tract.desc, 'S/2')
+            self.assertEqual(compare_trs, tract.trs)
+            self.assertEqual('S/2', tract.desc)
         # Ensure all TRS were found.
         self.assertTrue(len(trs_expected) == i + 1)
         return None
@@ -93,59 +93,59 @@ class PLSSDescUnitTest(unittest.TestCase):
 
         # Test default n.
         d = pytrs.PLSSDesc("T154-R97W Sec 14: NE/4")
-        self.assertEqual(d.tracts[0].trs, nw)
+        self.assertEqual(nw, d.tracts[0].trs)
         # Test explicit n.
         d = pytrs.PLSSDesc("T154-R97W Sec 14: NE/4", config='n')
-        self.assertEqual(d.tracts[0].trs, nw)
+        self.assertEqual(nw, d.tracts[0].trs)
         # Test explicit s.
         d = pytrs.PLSSDesc("T154-R97W Sec 14: NE/4", config='s')
-        self.assertEqual(d.tracts[0].trs, sw)
+        self.assertEqual(sw, d.tracts[0].trs)
         # Test default w.
         d = pytrs.PLSSDesc("T154N-R97 Sec 14: NE/4")
-        self.assertEqual(d.tracts[0].trs, nw)
+        self.assertEqual(nw, d.tracts[0].trs)
         # Test explicit w.
         d = pytrs.PLSSDesc("T154N-R97 Sec 14: NE/4", config='w')
-        self.assertEqual(d.tracts[0].trs, nw)
+        self.assertEqual(nw, d.tracts[0].trs)
         # Test explicit w.
         d = pytrs.PLSSDesc("T154N-R97 Sec 14: NE/4", config='e')
-        self.assertEqual(d.tracts[0].trs, ne)
+        self.assertEqual(ne, d.tracts[0].trs)
         # Test default n,w.
         d = pytrs.PLSSDesc("T154-R97 Sec 14: NE/4")
-        self.assertEqual(d.tracts[0].trs, nw)
+        self.assertEqual(nw, d.tracts[0].trs)
         # Test explicit n,w.
         d = pytrs.PLSSDesc("T154-R97 Sec 14: NE/4", config='n,w')
-        self.assertEqual(d.tracts[0].trs, nw)
+        self.assertEqual(nw, d.tracts[0].trs)
         # Test explicit n,e.
         d = pytrs.PLSSDesc("T154-R97 Sec 14: NE/4", config='n,e')
-        self.assertEqual(d.tracts[0].trs, ne)
+        self.assertEqual(ne, d.tracts[0].trs)
         # Test explicit s,e.
         d = pytrs.PLSSDesc("T154-R97 Sec 14: NE/4", config='s,e')
-        self.assertEqual(d.tracts[0].trs, se)
+        self.assertEqual(se, d.tracts[0].trs)
         # Test explicit s,w.
         d = pytrs.PLSSDesc("T154-R97 Sec 14: NE/4", config='s,w')
-        self.assertEqual(d.tracts[0].trs, sw)
+        self.assertEqual(sw, d.tracts[0].trs)
 
         # Test master NS.
         pytrs.PLSSDesc.MASTER_DEFAULT_NS = 's'
         # Confirm default s.
         d = pytrs.PLSSDesc("T154-R97W Sec 14: NE/4")
-        self.assertEqual(d.tracts[0].trs, sw)
+        self.assertEqual(sw, d.tracts[0].trs)
         # Reset master NS.
         pytrs.PLSSDesc.MASTER_DEFAULT_NS = 'n'
         # Confirm reset.
         d = pytrs.PLSSDesc("T154-R97W Sec 14: NE/4")
-        self.assertEqual(d.tracts[0].trs, nw)
+        self.assertEqual(nw, d.tracts[0].trs)
 
         # Test master EW.
         pytrs.PLSSDesc.MASTER_DEFAULT_EW = 'e'
         # Confirm default e.
         d = pytrs.PLSSDesc("T154N-R97 Sec 14: NE/4")
-        self.assertEqual(d.tracts[0].trs, ne)
+        self.assertEqual(ne, d.tracts[0].trs)
         # Reset master EW.
         pytrs.PLSSDesc.MASTER_DEFAULT_EW = 'w'
         # Confirm reset.
         d = pytrs.PLSSDesc("T154N-R97 Sec 14: NE/4")
-        self.assertEqual(d.tracts[0].trs, nw)
+        self.assertEqual(nw, d.tracts[0].trs)
 
 
 class PLSSPreprocessorUnitTest(unittest.TestCase):
