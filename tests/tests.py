@@ -172,16 +172,19 @@ class TractUnitTest(unittest.TestCase):
     )
 
     def test_qqs_basic(self):
+        """Identify QQ's with default behavior."""
         t = pytrs.Tract(desc=self.TRACT_DESC_1, parse_qq=True)
         expected = ['NENE', 'NWNE', 'SENE', 'SWNE', 'SESE', 'SWSE']
         self.assertEqual(expected, t.qqs)
 
     def test_lots_basic(self):
+        """Identify lots with default behavior."""
         t = pytrs.Tract(desc=self.TRACT_DESC_1, parse_qq=True)
         expected = ['L1', 'L2', 'L4', 'L5', 'L6', 'L7', 'L8', 'L9', 'S2 of L13']
         self.assertEqual(expected, t.lots)
 
     def test_lots_discard_halves(self):
+        """Identify lots and discard halves."""
         t = pytrs.Tract(
             desc=self.TRACT_DESC_1,
             parse_qq=True,
@@ -190,6 +193,7 @@ class TractUnitTest(unittest.TestCase):
         self.assertEqual(expected, t.lots)
 
     def test_clean_qq(self):
+        """Identify QQ's with clean_qq."""
         desc = 'Lot 1, NE, Lot 2'
         # Without clean_qq, should identify no QQ's.
         t1 = pytrs.Tract(desc, parse_qq=True)
@@ -201,11 +205,6 @@ class TractUnitTest(unittest.TestCase):
 
 
 class TRSUnitTest(unittest.TestCase):
-
-    TRS_1 = '154n97w14'
-    TRS_2 = '9s67e01'
-    TRS_3 = '154n97e14'
-    TRS_4 = '9n67w01'
 
     def test_trs_basic(self):
         """Basic TRS parsing."""
@@ -307,7 +306,7 @@ class TRSUnitTest(unittest.TestCase):
                     # If default_ns is specified, will expect 'n'.
                     exp_twp = f"{twp}n"
                 exp_rge = f"{rge}{ew}"
-                if ns is None:
+                if ew is None:
                     # If default_ns is specified, will expect 'w'.
                     exp_rge = f"{rge}w"
                 # Expect '01' regardless how `sec` is passed.
