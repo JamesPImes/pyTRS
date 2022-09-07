@@ -17,7 +17,7 @@ except ImportError:
     )
 
 
-class UnitTest(unittest.TestCase):
+class PLSSDescUnitTest(unittest.TestCase):
 
     TEST_DESC_1 = "T154N-R97W Sec 1: Lots 1 - 3, S/2N/2"
 
@@ -146,6 +146,9 @@ class UnitTest(unittest.TestCase):
         # Confirm reset.
         d = pytrs.PLSSDesc("T154N-R97 Sec 14: NE/4")
         self.assertEqual(d.tracts[0].trs, nw)
+
+
+class PLSSPreprocessorUnitTest(unittest.TestCase):
 
     def test_preprocess_trs(self):
         """PLSSPreprocessor TRS standardizing."""
