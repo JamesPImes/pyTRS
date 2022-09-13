@@ -12,6 +12,7 @@ try:
         twprge_regex_rge2,
         pp_twprge_no_nswe,
         pp_twprge_no_nsr,
+        pp_twprge_no_ewt,
     )
 except ImportError:
     import sys
@@ -26,6 +27,7 @@ except ImportError:
         twprge_regex_rge2,
         pp_twprge_no_nswe,
         pp_twprge_no_nsr,
+        pp_twprge_no_ewt,
     )
 
 
@@ -150,6 +152,20 @@ class TwpRgeUnitTest(unittest.TestCase):
         }
         self._test_twprge(pp_twprge_no_nsr, txts, expected)
 
+    def test_pp_twprge_no_ewt(self):
+        txts = (
+            '154N-R97',
+            '154 North, Range 97',
+            '154 N., Rge. 97',
+            '154-N-R-97'
+        )
+        expected = {
+            'twpnum': '154',
+            'ns': 'n',
+            'rgenum': '97',
+            'ew': None
+        }
+        self._test_twprge(pp_twprge_no_ewt, txts, expected)
 
 if __name__ == '__main__':
     unittest.main()
