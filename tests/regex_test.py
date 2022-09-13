@@ -1,0 +1,79 @@
+
+import unittest
+
+try:
+    import pytrs
+    from pytrs.parser.parser import (
+        PLSSParser,
+        PLSSPreprocessor,
+    )
+    from pytrs.parser.regexlib2 import (
+        twprge_regex,
+        twprge_regex_rge2,
+    )
+except ImportError:
+    import sys
+    sys.path.append('../')
+    import pytrs
+    from pytrs.parser.parser import (
+        PLSSParser,
+        PLSSPreprocessor,
+    )
+    from pytrs.parser.regexlib2 import (
+        twprge_regex,
+        twprge_regex_rge2,
+    )
+
+
+class TwpRgeUnitTest(unittest.TestCase):
+    BASIC_NW = (
+        'T154N-R97W',
+        'Township 154 North, Range 97 West',
+        'Twp. 154 N., Rge. 97 W.',
+        'T-154-N-R-97-W',
+        't154nr97w',
+        '154N-97W'
+    )
+    BASIC_NW_EXPECTED = {
+        'twpnum': '154',
+        'ns': 'n',
+        'rgenum': '97',
+        'ew': 'w'
+    }
+    BASIC_SE = (
+        'T154S-R97E',
+        'Township 154 South, Range 97 East',
+        'Twp. 154 S., Rge. 97 E.',
+        'T-154-S-R-97-E',
+        't154sr97e',
+        '154S-97E'
+    )
+    BASIC_SE_EXPECTED = {
+        'twpnum': '154',
+        'ns': 's',
+        'rgenum': '97',
+        'ew': 'e'
+    }
+
+    def _test_basic(self, rgx, txts: tuple, expected: dict):
+        for txt in txts:
+            self.assertRegex(txt, rgx)
+            mo = rgx.search(txt)
+            if mo:
+                groups = mo.groupdict()
+                # We can compare lowercase values, since case won't matter.
+                self.assertEqual(expected['twpnum'], groups['twpnum'].lower())
+                self.assertEqual(expected['rgenum'], groups['rgenum'].lower())
+                # Only first letter of N/S and E/W will matter.
+                self.assertEqual(expected['ns'], groups['ns'][0].lower())
+                self.assertEqual(expected['ew'], groups['ew'][0].lower())
+
+    def test_twprge_regex_nw(self):
+        self._test_basic(twprge_regex, self.BASIC_NW, self.BASIC_NW_EXPECTED)
+
+    def test_twprge_regex_se(self):
+        self._test_basic(twprge_regex, self.BASIC_SE, self.BASIC_SE_EXPECTED)
+
+
+if __name__ == '__main__':
+    unittest.main()
