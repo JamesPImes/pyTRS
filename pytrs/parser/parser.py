@@ -62,6 +62,13 @@ from .regexlib import (
     twprge_pm_regex,
     sec_within_desc_regex
 )
+from .regexlib2 import (
+    twprge_regex,
+    pp_twprge_no_nswe,
+    pp_twprge_no_nsr,
+    pp_twprge_no_ewt,
+    pp_twprge_ocr_scrub
+)
 
 # All current layouts
 TRS_DESC = "TRS_desc"
@@ -6572,39 +6579,34 @@ class PLSSParser:
         if not default_ew:
             default_ew = PLSSDesc.MASTER_DEFAULT_EW
 
-        twp_num = mo[2]
+        groups = mo.groupdict()
+
+        twp_num = groups['twpnum']
         if ocr_scrub:
             twp_num = _ocr_scrub_alpha_to_num(twp_num)
         # Clean up any leading '0's in twp_num.
-        # (Try/except is used to handle twprge_ocr_scrub_regex mo's, which
-        # can contain alpha characters in `twp_num`.)
+        # (Try/except is used to handle twprge_ocr_scrub_regex mo's,
+        # which can contain alpha characters in `twp_num`.)
         try:
             twp_num = str(int(twp_num))
         except ValueError:
             pass
 
-        # if mo[4] is None:
-        if mo.group(3) == '':
-            ns = default_ns
-        else:
-            ns = mo[3][0].lower()
+        ns = default_ns
+        if groups['ns'] is not None:
+            ns = mo['ns'][0].lower()
 
-        if len(mo.groups()) > 10:
-            # Only some of the `twprge_regex` variations generate this many
-            # groups. Those that do may have Rge number in groups 6 /or/ 12,
-            # and range direction in group 7 /or/ 13.
-            # So we handle those ones with extra if/else...
-            if mo[12] is None:
-                rge_num = mo[6]
-            else:
-                rge_num = mo[12]
-        else:
-            rge_num = mo[6]
-
+        rge_num = groups['rgenum']
+        if rge_num is None:
+            # Weird edge case for "Range 2 [East/West]", because it
+            # alone requires "Range" be specified before the number, to
+            # avoid over-matching "Lot 2, N2 W2" as <'T2N-R2W'> (for
+            # example).
+            rge_num = groups['rgenum_edgecase_rge2']
         # --------------------------------------
         # Clean up any leading '0's in rge_num.
-        # (Try/except is used to handle twprge_ocr_scrub_regex mo's, which
-        # can contain alpha characters in `rge_num`.)
+        # (Try/except is used to handle twprge_ocr_scrub_regex mo's,
+        # which can contain alpha characters in `rge_num`.)
         if ocr_scrub:
             rge_num = _ocr_scrub_alpha_to_num(rge_num)
         try:
@@ -6612,23 +6614,9 @@ class PLSSParser:
         except ValueError:
             pass
 
-        if len(mo.groups()) > 10:
-            # Only some of the `twprge_regex` variations generate this many
-            # groups. Those that do may have Rge number in groups 6 /or/ 12,
-            # and range direction in group 7 /or/ 13.
-            # So we handle those ones with extra if/else...
-            if mo[13] is None:
-                if mo[7] in ['', None]:
-                    ew = default_ew
-                else:
-                    ew = mo[7][0].lower()
-            else:
-                ew = mo[13][0].lower()
-        else:
-            if mo[7] in ['', None]:
-                ew = default_ew
-            else:
-                ew = mo[7][0].lower()
+        ew = default_ew
+        if groups['ew'] is not None:
+            ew = mo['ew'][0].lower()
 
         return f"{twp_num}{ns}{rge_num}{ew}"
 
@@ -6789,14 +6777,14 @@ class PLSSPreprocessor:
 
     SCRUBBER_REGEXES = (
         twprge_regex,
-        preproTR_noNSWE_regex,
-        preproTR_noR_noNS_regex,
-        preproTR_noT_noWE_regex,
-        twprge_pm_regex
+        pp_twprge_no_nswe,
+        pp_twprge_no_nsr,
+        pp_twprge_no_ewt,
+        # TODO: add pp_twprge_pm
     )
 
     # Turn this one on with `ocr_scrub=True`
-    OCR_SCRUBBER = twprge_ocr_scrub_regex
+    OCR_SCRUBBER = pp_twprge_ocr_scrub
 
     def __init__(self, text, default_ns=None, default_ew=None, ocr_scrub=False):
         """
@@ -6890,7 +6878,7 @@ class PLSSPreprocessor:
                 # Need some additional context to rule out 'Lots 6, 7, East'
                 # as matching as "T6S-R7E" (i.e. the 'ts' in 'Lots' as being
                 # picked up as 'Township'):
-                if pp_rgx == preproTR_noR_noNS_regex:
+                if pp_rgx == pp_twprge_no_nsr:
                     # We'll look behind this many characters:
                     lk_back = 3
                     if lk_back > tr_mo.start():
