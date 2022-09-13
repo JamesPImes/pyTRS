@@ -23,3 +23,25 @@ twprge_regex = re.compile(
     )
     """, re.IGNORECASE | re.VERBOSE)
 
+
+# Preprocessing Twp/Rge regexes.
+
+twprge_regex_rge2 = re.compile(
+    r"""
+    (T[ownship]{0,9})?      # The word or symbol for "Township".
+    [\.\-–—,\s]*            # Deadspace between "Township" and twpnum.
+    (?P<twpnum>\d{1,3})     # twpnum
+    [\.\-–—,\s]*            # Deadspace between twpnum and n/s.
+    (?P<ns>N[orth]{0,5}|S[outh]{0,5})   # n/s.
+    [\.\-–—,;\|_~\s]*       # Deadspace between Twp and Rge.
+    
+    # Unlike `twprge_regex`, allow range of singular '2', but require
+    # 'R' (or 'Range') beforehand.
+    (
+    (R[ange]{0,6})          # The word or symbol for "Range".
+    [\.\-–—,\s]*            # Deadspace between "Range" and rgenum.
+    (?P<rgenum>2)           # rgenum
+    [\.\-–—,\s]*            # Deadspace between rgenum and e/w.
+    (?P<ew>(W[est]{0,3})|(E[ast]{0,3}))     # e/w.
+    )
+    """, re.IGNORECASE | re.VERBOSE)
