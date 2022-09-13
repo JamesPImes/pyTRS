@@ -13,6 +13,7 @@ try:
         pp_twprge_no_nswe,
         pp_twprge_no_nsr,
         pp_twprge_no_ewt,
+        pp_twprge_ocr_scrub,
     )
 except ImportError:
     import sys
@@ -28,6 +29,7 @@ except ImportError:
         pp_twprge_no_nswe,
         pp_twprge_no_nsr,
         pp_twprge_no_ewt,
+        pp_twprge_ocr_scrub,
     )
 
 
@@ -167,7 +169,6 @@ class TwpRgeUnitTest(unittest.TestCase):
         }
         self._test_twprge(pp_twprge_no_nsr, txts, expected)
 
-
     def test_pp_twprge_no_ewt(self):
         txts = (
             '154N-R97',
@@ -182,6 +183,25 @@ class TwpRgeUnitTest(unittest.TestCase):
             'ew': None
         }
         self._test_twprge(pp_twprge_no_ewt, txts, expected)
+
+    def test_pp_twprge_ocr_scrub(self):
+        # Will be equivalent to T151N-R110W, after preprocessing.
+        txts = (
+            'TISlN-RIL0W',
+            'Township ISl North, Range IL0 West',
+            'T0wnship ISl North, Range IL0 West',
+            'T0wnshlp ISl North, Range IL0 West',
+            'T0wn5h1p ISl North, Range IL0 West',
+            'Twp. ISl N., Rge. IL0 W.',
+            'T-ISl-N-R-IL0-W'
+        )
+        expected = {
+            'twpnum': 'isl',
+            'ns': 'n',
+            'rgenum': 'il0',
+            'ew': 'w'
+        }
+        self._test_twprge(pp_twprge_ocr_scrub, txts, expected)
 
 
 if __name__ == '__main__':

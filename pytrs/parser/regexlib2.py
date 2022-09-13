@@ -153,3 +153,45 @@ pp_twprge_no_ewt = re.compile(
     [\.\-–—,\s]*            # Deadspace between rgenum and e/w
     (?P<ew>W[est]{0,3}|E[ast]{0,3})?    # e/w (optional).
     """, re.IGNORECASE | re.VERBOSE)
+
+# With enough context, will capture T&R's with OCR artifacts (e.g.
+# "TIS4N-R97W" instead of intended "T154N-R97W").
+twprge_ocr_scrub_regex = re.compile(
+    r"""
+    # The word or symbol for "Township". (At least "T" is required.)
+    T(
+    w\.?|
+    wp\.?|                                                 # Note that many characters are 
+    [o0]{0,2}w{0,2}n{0,2}[s5]{1,2}h{1,2}[Il1]{0,2}p{0,2}|  #    interchangeable here:
+    w{1,2}[o0]{1,2}n{1,2}s{1,2}h{1,2}[Il1]{0,2}p{0,2}|     #       'o' / '0', and
+    [o0]{1,2}w{1,2}n{1,2}s{1,2}h{1,2}[Il1]{0,2}p{0,2}|     #       '1' / 'l' / 'I'
+    [o0]{1,2}w{1,2}s{1,2}n{1,2}h{1,2}[Il1]{0,2}p{0,2}|     #       '5' / 'S'
+    [o0]{1,2}w{1,2}n{1,2}h{1,2}s{1,2}[Il1]{0,2}p{0,2}|     # (These are commonly swapped 
+    [o0]{1,2}w{1,2}n{1,2}s{1,2}[Il1]{0,2}h{1,2}p{0,2}      #    by OCR.)
+    )?
+    
+    [\.\-–—,\s]*            # Deadspace between "Township" and twpnum.
+    (?P<twpnum>[0-9SOIl\]\|]{1,3})      # twpnum, but capturing some OCR 
+                                        # non-numeric letters / symbols.
+    [\.\-–—,\s]*            # Deadspace between twpnum and n/s.
+    (?P<ns>N[orth]{0,5}|S[outh]{0,5})   # n/s (required)
+    
+    [\.\-–—,;\|_~\s]*       # Deadspace between Twp and Rge
+    
+    # Note: We DISALLOW a rgenum of singular '2'. This is to prevent
+    # over-matching "Lot 2, N2 W2" as <'T2N-R2W'> (for example).
+    # Otherwise, we are liable to have some aliquots break out T&R
+    # capturing, and vice-versa.
+    
+    (R[ange]{0,6})?         # The word or symbol "Range" (optional).
+    [\.\-–—,\s]*            # Deadspace between "Range" and rgenum.
+    
+    # rgenum, but capturing some OCR non-numeric letters / symbols.
+    (?P<rgenum>[0-9SOIl\]\|]{2,3}|[013-9SOIl\]\|]) # (Note that singular '2' not allowed).
+    
+    [\.\-–—,\s]*            # Deadspace between rgenum and e/w. 
+    (?P<ew>W[est]{0,3}|E[ast]{0,3})     # e/w (required).
+    """,
+    re.IGNORECASE | re.VERBOSE)
+
+# TODO: ocr_scrub regex that captures edge case "Range 2".
