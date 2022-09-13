@@ -8212,22 +8212,20 @@ def find_multisec(text, flat=True) -> list:
     return unpacked_multisec_list
 
 
-def flatten(list_or_tuple=None) -> list:
+def flatten(list_or_tuple):
     """
-    Unpack the elements in a nested list or tuple into a flattened list.
+    Flatten a list or tuple into a 1-dimensional copy of the same type.
     """
-    if list_or_tuple is None:
-        return []
-    if not isinstance(list_or_tuple, (list, tuple)):
-        return [list_or_tuple]
-    else:
-        flattened = []
+    cast_result_as = type(list_or_tuple)
+    while any((isinstance(e, (list, tuple)) for e in list_or_tuple)):
+        unpacked = []
         for element in list_or_tuple:
-            if not isinstance(element, (list, tuple)):
-                flattened.append(element)
+            if isinstance(element, (list, tuple)):
+                unpacked.extend(element)
             else:
-                flattened.extend(flatten(element))
-    return flattened
+                unpacked.append(element)
+        list_or_tuple = unpacked
+    return cast_result_as(list_or_tuple)
 
 
 def group_tracts(
