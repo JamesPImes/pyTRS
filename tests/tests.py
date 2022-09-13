@@ -19,8 +19,6 @@ except ImportError:
 
 class PLSSDescUnitTest(unittest.TestCase):
 
-    TEST_DESC_1 = "T154N-R97W Sec 1: Lots 1 - 3, S/2N/2"
-
     # All four of these have the same tracts.
     TEST_DESC_MULTI_TRS_DESC = (
         "T154N-R97W Sec 20: W/2, Sec 24 - 27: S/2, Sec 28: N/2")
