@@ -55,7 +55,7 @@ class TwpRgeUnitTest(unittest.TestCase):
         'ew': 'e'
     }
 
-    def _test_basic(self, rgx, txts: tuple, expected: dict):
+    def _test_twprge(self, rgx, txts: tuple, expected: dict):
         """
         Test a Twp/Rge regex that matches all 4 components:
         twpnum, ns, rgenum, ew
@@ -68,15 +68,23 @@ class TwpRgeUnitTest(unittest.TestCase):
                 # We can compare lowercase values, since case won't matter.
                 self.assertEqual(expected['twpnum'], groups['twpnum'].lower())
                 self.assertEqual(expected['rgenum'], groups['rgenum'].lower())
-                # Only first letter of N/S and E/W will matter.
-                self.assertEqual(expected['ns'], groups['ns'][0].lower())
-                self.assertEqual(expected['ew'], groups['ew'][0].lower())
+                # Only first letter of N/S and E/W will matter, but check
+                # if None is expected (e.g., in preprocessing regexes).
+                if expected['ns'] is None:
+                    self.assertEqual(None, groups['ns'])
+                else:
+                    self.assertEqual(expected['ns'], groups['ns'][0].lower())
+
+                if expected['ew'] is None:
+                    self.assertEqual(None, groups['ew'])
+                else:
+                    self.assertEqual(expected['ew'], groups['ew'][0].lower())
 
     def test_twprge_regex_nw(self):
-        self._test_basic(twprge_regex, self.BASIC_NW, self.BASIC_NW_EXPECTED)
+        self._test_twprge(twprge_regex, self.BASIC_NW, self.BASIC_NW_EXPECTED)
 
     def test_twprge_regex_se(self):
-        self._test_basic(twprge_regex, self.BASIC_SE, self.BASIC_SE_EXPECTED)
+        self._test_twprge(twprge_regex, self.BASIC_SE, self.BASIC_SE_EXPECTED)
 
     def test_twprge_regex_rge2_nw(self):
         """
@@ -91,7 +99,7 @@ class TwpRgeUnitTest(unittest.TestCase):
             'ew': 'w'
         }
         self.assertNotRegex(no_good, twprge_regex_rge2)
-        self._test_basic(twprge_regex_rge2, (ok,), expected)
+        self._test_twprge(twprge_regex_rge2, (ok,), expected)
 
     def test_twprge_regex_rge2_se(self):
         """
@@ -106,7 +114,7 @@ class TwpRgeUnitTest(unittest.TestCase):
             'ew': 'e'
         }
         self.assertNotRegex(no_good, twprge_regex_rge2)
-        self._test_basic(twprge_regex_rge2, (ok,), expected)
+        self._test_twprge(twprge_regex_rge2, (ok,), expected)
 
 
 if __name__ == '__main__':
