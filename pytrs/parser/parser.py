@@ -67,7 +67,8 @@ from .regexlib2 import (
     pp_twprge_no_nswe,
     pp_twprge_no_nsr,
     pp_twprge_no_ewt,
-    pp_twprge_ocr_scrub
+    pp_twprge_pm,
+    pp_twprge_ocr_scrub,
 )
 
 # All current layouts
@@ -6780,7 +6781,7 @@ class PLSSPreprocessor:
         pp_twprge_no_nswe,
         pp_twprge_no_nsr,
         pp_twprge_no_ewt,
-        # TODO: add pp_twprge_pm
+        pp_twprge_pm,
     )
 
     # Turn this one on with `ocr_scrub=True`
