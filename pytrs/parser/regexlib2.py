@@ -3,24 +3,39 @@ import re
 
 twprge_regex = re.compile(
     r"""
-    (T[ownship]{0,9})?      # The word or symbol for "Township".
+    (T[ownship]{0,9})?      # The word or symbol for "Township" (optional).
     [\.\-–—,\s]*            # Deadspace between "Township" and twpnum.
     (?P<twpnum>\d{1,3})     # twpnum
     [\.\-–—,\s]*            # Deadspace between twpnum and n/s.
     (?P<ns>N[orth]{0,5}|S[outh]{0,5})   # n/s.
     [\.\-–—,;\|_~\s]*       # Deadspace between Twp and Rge.
-    
-    # Note: if 'R' (or 'Range') does not appear, then we DISALLOW a
-    # range of singular '2'. This is to prevent over-matching "Lot 2,
-    # N2 W2" as <'T2N-R2W'> (for example). Otherwise, we are lible to
-    # have some aliquots break out T&R capturing, and vice-versa.
-    (
-    (R[ange]{0,6})?         # The word or symbol for "Range".
-    [\.\-–—,\s]*            # Deadspace between "Range" and rgenum.
-    (?P<rgenum>\d{2,3}|[013-9])     # rgenum
-    [\.\-–—,\s]*            # Deadspace between rgenum and e/w.
-    (?P<ew>(W[est]{0,3})|(E[ast]{0,3}))     # e/w.
+        
+    ((
+        # Range Version 1 (all cases EXCEPT "Range 2") --
+        # Note: We DISALLOW a rgenum of singular '2'. This is to prevent
+        # over-matching "Lot 2, N2 W2" as <'T2N-R2W'> (for example).
+        # Otherwise, we are liable to have some aliquots break out T&R
+        # capturing, and vice-versa.
+        
+        (R[ange]{0,6})?         # The word or symbol for "Range"  (optional).
+        [\.\-–—,\s]*            # Deadspace between "Range" and rgenum.
+        (?P<rgenum>\d{2,3}|[013-9])     # rgenum
     )
+    
+    |
+    
+    (
+        # Range Version 2 (edge case "Range 2") --
+        # This time, allow singular rgenum '2', because we specified 'R'
+        # (or 'Range') beforehand.
+        
+        (R[ange]{0,6})          # The word or symbol for "Range" (required).
+        [\.\-–—,\s]*            # Deadspace between "Range" and rgenum.
+        (?P<rgenum_edgecase_rge2>2)    # rgenum (edge case).
+    ))
+    
+    [\.\-–—,\s]*            # Deadspace between rgenum and e/w.
+    (?P<ew>W[est]{0,3}|E[ast]{0,3})    # e/w.
     """, re.IGNORECASE | re.VERBOSE)
 
 
@@ -28,41 +43,20 @@ twprge_regex = re.compile(
 # twprge_broad_regex
 
 
-# Preprocessing Twp/Rge regexes.
-
-# TODO: Put this regex pattern into appropriate preprocess list.
-twprge_regex_rge2 = re.compile(
-    r"""
-    (T[ownship]{0,9})?      # The word or symbol for "Township".
-    [\.\-–—,\s]*            # Deadspace between "Township" and twpnum.
-    (?P<twpnum>\d{1,3})     # twpnum
-    [\.\-–—,\s]*            # Deadspace between twpnum and n/s.
-    (?P<ns>N[orth]{0,5}|S[outh]{0,5})   # n/s.
-    [\.\-–—,;\|_~\s]*       # Deadspace between Twp and Rge.
-    
-    # Unlike `twprge_regex`, allow range of singular '2', but require
-    # 'R' (or 'Range') beforehand.
-    (
-    (R[ange]{0,6})          # The word or symbol for "Range".
-    [\.\-–—,\s]*            # Deadspace between "Range" and rgenum.
-    (?P<rgenum>2)           # rgenum
-    [\.\-–—,\s]*            # Deadspace between rgenum and e/w.
-    (?P<ew>(W[est]{0,3})|(E[ast]{0,3}))     # e/w.
-    )
-    """, re.IGNORECASE | re.VERBOSE)
-
-
 ########################################################################
 # prepro regexes...
 #
 # Broader Twp/Rge captures for the description preprocessing algorithm.
 # They're mostly the same as the normal twprge_regex, but with some
-# characters being allowed outside various groupings i.e. some don't
-# REQUIRE 'T', but will still match it if it's there). kwargs or config
+# characters being allowed outside various groupings (i.e. some don't
+# require 'T', but will still match it if it's there). kwargs or config
 # for default_ns='n' and default_ew='w' will fill in the township and
 # range letters, as needed. Abbreviations and typos for 'Township' have
 # also been locked down somewhat, to avoid excessive false matches.
 ########################################################################
+
+# Preprocessing Twp/Rge regexes.
+
 
 # Require 'T' (Twp) and 'R' (Rge), but not n/s or e/w.
 pp_twprge_no_nswe = re.compile(

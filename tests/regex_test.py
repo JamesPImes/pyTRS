@@ -9,7 +9,6 @@ try:
     )
     from pytrs.parser.regexlib2 import (
         twprge_regex,
-        twprge_regex_rge2,
         pp_twprge_no_nswe,
         pp_twprge_no_nsr,
         pp_twprge_no_ewt,
@@ -25,7 +24,6 @@ except ImportError:
     )
     from pytrs.parser.regexlib2 import (
         twprge_regex,
-        twprge_regex_rge2,
         pp_twprge_no_nswe,
         pp_twprge_no_nsr,
         pp_twprge_no_ewt,
@@ -88,41 +86,76 @@ class TwpRgeUnitTest(unittest.TestCase):
                 else:
                     self.assertEqual(expected['ew'], groups['ew'][0].lower())
 
+    def _test_range2_edgecase(self, rgx, txts: tuple, expected: dict):
+        """
+        'Range 2' is an edge case, where the twprge_regex pattern does
+        NOT match 'T2S-2E' unless 'R' (or 'Range') is included in the
+        string, thus: 'T2S-R2E'. This was done to prevent over-matching
+        "Lot 2, N2 W2" as <'T2N-R2W'> (for example).
+        """
+        for txt in txts:
+            self.assertRegex(txt, rgx)
+            mo = rgx.search(txt)
+            if mo:
+                groups = mo.groupdict()
+                # We can compare lowercase values, since case won't matter.
+                self.assertEqual(expected['twpnum'], groups['twpnum'].lower())
+                # rgenum should be None.
+                self.assertEqual(expected['rgenum'], groups['rgenum'])
+                # rgenum_edgecase_rge2 will be '2'.
+                self.assertEqual(
+                    expected['rgenum_edgecase_rge2'],
+                    groups['rgenum_edgecase_rge2'])
+
+                # Only first letter of N/S and E/W will matter, but check
+                # if None is expected (e.g., in preprocessing regexes).
+                if expected['ns'] is None:
+                    self.assertEqual(None, groups['ns'])
+                else:
+                    self.assertEqual(expected['ns'], groups['ns'][0].lower())
+
+                if expected['ew'] is None:
+                    self.assertEqual(None, groups['ew'])
+                else:
+                    self.assertEqual(expected['ew'], groups['ew'][0].lower())
+
     def test_twprge_regex_nw(self):
         self._test_twprge(twprge_regex, self.BASIC_NW, self.BASIC_NW_EXPECTED)
 
     def test_twprge_regex_se(self):
         self._test_twprge(twprge_regex, self.BASIC_SE, self.BASIC_SE_EXPECTED)
 
-    def test_twprge_regex_rge2_nw(self):
+    def test_range2_edgecase_nw(self):
         """
-        Test the edge-case Twp/Rge regex for Range 2 West (testing N/W).
+        Test the edge case Twp/Rge regex for Range 2 West (testing N/W).
         """
         no_good = '2N-2W'
         ok = '2N-R2W'
         expected = {
             'twpnum': '2',
             'ns': 'n',
-            'rgenum': '2',
+            'rgenum': None,
+            'rgenum_edgecase_rge2': '2',
             'ew': 'w'
         }
-        self.assertNotRegex(no_good, twprge_regex_rge2)
-        self._test_twprge(twprge_regex_rge2, (ok,), expected)
+        self.assertNotRegex(no_good, twprge_regex)
+        self._test_range2_edgecase(twprge_regex, (ok,), expected)
 
-    def test_twprge_regex_rge2_se(self):
+    def test_range2_edgecase_se(self):
         """
-        Test the edge-case Twp/Rge regex for Range 2 East (testing S/E).
+        Test the edge case Twp/Rge regex for Range 2 East (testing S/E).
         """
         no_good = '2S-2E'
         ok = '2S-R2E'
         expected = {
             'twpnum': '2',
             'ns': 's',
-            'rgenum': '2',
+            'rgenum': None,
+            'rgenum_edgecase_rge2': '2',
             'ew': 'e'
         }
-        self.assertNotRegex(no_good, twprge_regex_rge2)
-        self._test_twprge(twprge_regex_rge2, (ok,), expected)
+        self.assertNotRegex(no_good, twprge_regex)
+        self._test_range2_edgecase(twprge_regex, (ok,), expected)
 
     def test_pp_twprge_no_nswe(self):
         txts = (
