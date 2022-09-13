@@ -156,7 +156,7 @@ pp_twprge_no_ewt = re.compile(
 
 # With enough context, will capture T&R's with OCR artifacts (e.g.
 # "TIS4N-R97W" instead of intended "T154N-R97W").
-twprge_ocr_scrub_regex = re.compile(
+pp_twprge_ocr_scrub = re.compile(
     r"""
     # The word or symbol for "Township". (At least "T" is required.)
     T(
