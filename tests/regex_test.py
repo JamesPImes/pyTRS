@@ -13,6 +13,7 @@ try:
         pp_twprge_no_nsr,
         pp_twprge_no_ewt,
         pp_twprge_ocr_scrub,
+        pp_twprge_pm,
     )
 except ImportError:
     import sys
@@ -28,6 +29,7 @@ except ImportError:
         pp_twprge_no_nsr,
         pp_twprge_no_ewt,
         pp_twprge_ocr_scrub,
+        pp_twprge_pm,
     )
 
 
@@ -250,6 +252,23 @@ class TwpRgeUnitTest(unittest.TestCase):
             'ew': 'w'
         }
         self._test_twprge(pp_twprge_ocr_scrub, txts, expected)
+
+    def test_pp_twprge_pm(self):
+        txts = (
+            'T154N-R97W, 5th P.M.',
+            'Township 154 North, Range 97 West, Fifth Principal Meridian',
+            'Twp. 154 N., Rge. 97 W., 5th P. M.',
+            'T-154-N-R-97-W-5-PM',
+            't154nr97w,5PM',
+            '154N-97W-5 P.M.'
+        )
+        expected = {
+            'twpnum': '154',
+            'ns': 'n',
+            'rgenum': '97',
+            'ew': 'w'
+        }
+        self._test_twprge(pp_twprge_pm, txts, expected)
 
 
 if __name__ == '__main__':

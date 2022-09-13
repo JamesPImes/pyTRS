@@ -39,12 +39,8 @@ twprge_regex = re.compile(
     """, re.IGNORECASE | re.VERBOSE)
 
 
-# TODO: I don't think this one is needed. Use twprge_regex instead.
-# twprge_broad_regex
-
-
 ########################################################################
-# prepro regexes...
+# preprocessor regexes...
 #
 # Broader Twp/Rge captures for the description preprocessing algorithm.
 # They're mostly the same as the normal twprge_regex, but with some
@@ -189,3 +185,46 @@ pp_twprge_ocr_scrub = re.compile(
     re.IGNORECASE | re.VERBOSE)
 
 # TODO: ocr_scrub regex that captures edge case "Range 2".
+
+
+# Looking for the phrase (or abbreviation for) 'Principal Meridian' and
+# following symbols and whitespace. Captures some misspellings. (These
+# are not tightly defined, so this pattern should not be used in wide
+# contexts. It is used in `pp_twprge_pm` to scrub Principal Meridian out
+# of Twp/Rge's in the preprocessor.)
+pm_regex = re.compile(
+    r"""
+    # Abbreviated 'P.M.'
+    ((P\.?\s{0,10}M\.?)
+    
+    # Or ...
+    |
+    
+    # Spelled out (allowing for some misspelling).
+    (P{1,2}r{1,2}i{0,2}n{0,2}c{0,2}i{0,2}p{0,2}a{0,2}l{0,2}\s
+    {0,10}M{1,2}e{0,2}r{0,2}i{0,2}d{0,2}i{0,2}a{0,2}n{0,2}))
+    """, re.IGNORECASE | re.VERBOSE)
+
+
+# Compile a twprge regex that should also capture P.M.
+pp_twprge_pm = re.compile(
+    fr"""
+    # Twp/Rge pattern.
+    {twprge_regex.pattern}
+    
+    # Deadspace ...
+    (\s*[:,;\.\-–—]*\s*)
+    
+    # of the ...
+    (o*f*)?\s*(t*h*e*|t*e*h*|h*t*e|h*e*t*)?\s*
+    
+    # Anything, arbitrarily capped at 25 characters.
+    # (Double-curly brackets to escape the f-string syntax.)
+    (.{{0,25}})
+    
+    # Deadspace ...
+    (\s*[:,;\.\-–—]*)
+    
+    # Principal Meridian pattern.
+    {pm_regex.pattern}
+    """, re.IGNORECASE | re.VERBOSE)
