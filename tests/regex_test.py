@@ -10,6 +10,7 @@ try:
     from pytrs.parser.regexlib2 import (
         twprge_regex,
         twprge_regex_rge2,
+        pp_twprge_no_nswe,
     )
 except ImportError:
     import sys
@@ -22,6 +23,7 @@ except ImportError:
     from pytrs.parser.regexlib2 import (
         twprge_regex,
         twprge_regex_rge2,
+        pp_twprge_no_nswe,
     )
 
 
@@ -116,6 +118,20 @@ class TwpRgeUnitTest(unittest.TestCase):
         self.assertNotRegex(no_good, twprge_regex_rge2)
         self._test_twprge(twprge_regex_rge2, (ok,), expected)
 
+    def test_pp_twprge_no_nswe(self):
+        txts = (
+            'T154-R97',
+            'Township 154, Range 97',
+            'Twp. 154, Rge. 97',
+            'T-154-R-97',
+        )
+        expected = {
+            'twpnum': '154',
+            'ns': None,
+            'rgenum': '97',
+            'ew': None
+        }
+        self._test_twprge(pp_twprge_no_nswe, txts, expected)
 
 if __name__ == '__main__':
     unittest.main()
