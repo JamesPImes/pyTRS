@@ -56,6 +56,10 @@ class TwpRgeUnitTest(unittest.TestCase):
     }
 
     def _test_basic(self, rgx, txts: tuple, expected: dict):
+        """
+        Test a Twp/Rge regex that matches all 4 components:
+        twpnum, ns, rgenum, ew
+        """
         for txt in txts:
             self.assertRegex(txt, rgx)
             mo = rgx.search(txt)
@@ -73,6 +77,36 @@ class TwpRgeUnitTest(unittest.TestCase):
 
     def test_twprge_regex_se(self):
         self._test_basic(twprge_regex, self.BASIC_SE, self.BASIC_SE_EXPECTED)
+
+    def test_twprge_regex_rge2_nw(self):
+        """
+        Test the edge-case Twp/Rge regex for Range 2 West (testing N/W).
+        """
+        no_good = '2N-2W'
+        ok = '2N-R2W'
+        expected = {
+            'twpnum': '2',
+            'ns': 'n',
+            'rgenum': '2',
+            'ew': 'w'
+        }
+        self.assertNotRegex(no_good, twprge_regex_rge2)
+        self._test_basic(twprge_regex_rge2, (ok,), expected)
+
+    def test_twprge_regex_rge2_se(self):
+        """
+        Test the edge-case Twp/Rge regex for Range 2 East (testing S/E).
+        """
+        no_good = '2S-2E'
+        ok = '2S-R2E'
+        expected = {
+            'twpnum': '2',
+            'ns': 's',
+            'rgenum': '2',
+            'ew': 'e'
+        }
+        self.assertNotRegex(no_good, twprge_regex_rge2)
+        self._test_basic(twprge_regex_rge2, (ok,), expected)
 
 
 if __name__ == '__main__':
