@@ -78,10 +78,11 @@ pp_twprge_no_nswe = re.compile(
     o{1,2}w{1,2}n{1,2}h{1,2}s{1,2}i{0,2}p{0,2}|
     o{1,2}w{1,2}n{1,2}s{1,2}i{0,2}h{1,2}p{0,2}
     )?
+    
     [\.\-–—,\s]*            # Deadspace between "Township" and twpnum.
     (?P<twpnum>\d{1,3})     # twpnum
     [\.\-–—,\s]*            # Deadspace between twpnum and n/s.
-    (?P<ns>N[orth]{0,5}|S[outh]{0,5})?     # n/s (optional)
+    (?P<ns>N[orth]{0,5}|S[outh]{0,5})?      # n/s (optional)
     
     [\.\-–—,;\|_~\s]+       # Deadspace between Twp and Rge.
     
@@ -90,4 +91,34 @@ pp_twprge_no_nswe = re.compile(
     (?P<rgenum>\d{1,3})     # rgenum
     [\.\-–—,\s]*            # Deadspace between rgenum and e/w.
     (?P<ew>W[est]{0,3}|E[ast]{0,3})?        # e/w (optional)
+    """, re.IGNORECASE | re.VERBOSE)
+
+
+# Require 'T' (Twp) and e/w, but not 'R' (Rge) or n/s.
+pp_twprge_no_nsr = re.compile(
+    r"""
+    # The word or symbol for "Township". (At least "T" is required.)
+    T(
+    w\.?|
+    wp\.?|
+    o{0,2}w{0,2}n{0,2}s{1,2}h{1,2}i{0,2}p{0,2}|
+    w{1,2}o{1,2}n{1,2}s{1,2}h{1,2}i{0,2}p{0,2}|
+    o{1,2}w{1,2}n{1,2}s{1,2}h{1,2}i{0,2}p{0,2}|
+    o{1,2}w{1,2}s{1,2}n{1,2}h{1,2}i{0,2}p{0,2}|
+    o{1,2}w{1,2}n{1,2}h{1,2}s{1,2}i{0,2}p{0,2}|
+    o{1,2}w{1,2}n{1,2}s{1,2}i{0,2}h{1,2}p{0,2}
+    )?
+    
+    [\.\-–—,\s]*            # Deadspace between "Township" and twpnum.
+    (?P<twpnum>\d{1,3})     # twpnum
+    [\.\-–—,\s]*            # Deadspace between twpnum and n/s.
+    (?P<ns>N[orth]{0,5}|S[outh]{0,5})?      # n/s (optional)
+    
+    [\.\-–—,;\|_~\s]+       # Deadspace between Twp and Rge.
+    
+    (R[ange]{0,6})?         # The word or symbol for "Range" (optional).
+    [\.\-–—,\s]*            # Deadspace between "Range" and rgenum.
+    (?P<rgenum>\d{1,3})     # rgenum
+    [\.\-–—,\s]*            # Deadspace between rgenum and e/w
+    (?P<ew>W[est]{0,3}|E[ast]{0,3})         # e/w (required)
     """, re.IGNORECASE | re.VERBOSE)

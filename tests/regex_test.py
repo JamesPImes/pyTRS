@@ -11,6 +11,7 @@ try:
         twprge_regex,
         twprge_regex_rge2,
         pp_twprge_no_nswe,
+        pp_twprge_no_nsr,
     )
 except ImportError:
     import sys
@@ -24,6 +25,7 @@ except ImportError:
         twprge_regex,
         twprge_regex_rge2,
         pp_twprge_no_nswe,
+        pp_twprge_no_nsr,
     )
 
 
@@ -132,6 +134,22 @@ class TwpRgeUnitTest(unittest.TestCase):
             'ew': None
         }
         self._test_twprge(pp_twprge_no_nswe, txts, expected)
+
+    def test_pp_twprge_no_nsr(self):
+        txts = (
+            'T154-97W',
+            'Township 154, 97 West',
+            'Twp. 154, 97 W.',
+            'T-154-97-W',
+        )
+        expected = {
+            'twpnum': '154',
+            'ns': None,
+            'rgenum': '97',
+            'ew': 'w'
+        }
+        self._test_twprge(pp_twprge_no_nsr, txts, expected)
+
 
 if __name__ == '__main__':
     unittest.main()
