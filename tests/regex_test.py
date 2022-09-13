@@ -137,7 +137,7 @@ class TwpRgeUnitTest(unittest.TestCase):
         }
         self._test_twprge(pp_twprge_no_nswe, txts, expected)
 
-    def test_pp_twprge_no_nsr(self):
+    def test_pp_twprge_no_nsr_west(self):
         txts = (
             'T154-97W',
             'Township 154, 97 West',
@@ -151,6 +151,22 @@ class TwpRgeUnitTest(unittest.TestCase):
             'ew': 'w'
         }
         self._test_twprge(pp_twprge_no_nsr, txts, expected)
+
+    def test_pp_twprge_no_nsr_east(self):
+        txts = (
+            'T154-97E',
+            'Township 154, 97 East',
+            'Twp. 154, 97 E.',
+            'T-154-97-E',
+        )
+        expected = {
+            'twpnum': '154',
+            'ns': None,
+            'rgenum': '97',
+            'ew': 'e'
+        }
+        self._test_twprge(pp_twprge_no_nsr, txts, expected)
+
 
     def test_pp_twprge_no_ewt(self):
         txts = (
@@ -166,6 +182,7 @@ class TwpRgeUnitTest(unittest.TestCase):
             'ew': None
         }
         self._test_twprge(pp_twprge_no_ewt, txts, expected)
+
 
 if __name__ == '__main__':
     unittest.main()
