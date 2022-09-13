@@ -169,7 +169,7 @@ class TwpRgeUnitTest(unittest.TestCase):
         }
         self._test_twprge(pp_twprge_no_nsr, txts, expected)
 
-    def test_pp_twprge_no_ewt(self):
+    def test_pp_twprge_no_ewt_north(self):
         txts = (
             '154N-R97',
             '154 North, Range 97',
@@ -179,6 +179,21 @@ class TwpRgeUnitTest(unittest.TestCase):
         expected = {
             'twpnum': '154',
             'ns': 'n',
+            'rgenum': '97',
+            'ew': None
+        }
+        self._test_twprge(pp_twprge_no_ewt, txts, expected)
+
+    def test_pp_twprge_no_ewt_south(self):
+        txts = (
+            '154S-R97',
+            '154 South, Range 97',
+            '154 S., Rge. 97',
+            '154-S-R-97'
+        )
+        expected = {
+            'twpnum': '154',
+            'ns': 's',
             'rgenum': '97',
             'ew': None
         }
