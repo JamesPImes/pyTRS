@@ -70,6 +70,7 @@ from .rgxlib import (
     pp_twprge_pm,
     pp_twprge_comma_remove,
     pp_twprge_ocr_scrub,
+    no_num_sec_regex
 )
 
 # All current layouts
@@ -5319,8 +5320,9 @@ class PLSSParser:
         # S_DESC_TR).
         text = text.strip()
 
-        # we use the `noNum` version of the sec_regex here
-        sec_mo = noNum_sec_regex.search(text)
+        # No need to capture section number. Just want to check relation
+        # to Twp/Rge.
+        sec_mo = no_num_sec_regex.search(text)
         tr_mo = twprge_broad_regex.search(text)
 
         if not sec_mo or not tr_mo:
