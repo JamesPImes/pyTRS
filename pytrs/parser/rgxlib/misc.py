@@ -26,3 +26,9 @@ intervener_regex = re.compile(
     \s*
     )
     """, re.IGNORECASE | re.VERBOSE)
+
+# A pattern ot be embedded within other patterns to check if "of the"
+# appears between target groups.
+of_the_regex = re.compile(
+    r"(\s+|of|o|f|o+f+)\s*(t+h+e+|t+e+h+|t+h+|t+)?", re.IGNORECASE
+)
