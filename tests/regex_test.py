@@ -8,6 +8,7 @@ try:
         PLSSPreprocessor,
     )
     from pytrs.parser.rgxlib import (
+        # twprge regexes
         twprge_regex,
         pp_twprge_no_nswe,
         pp_twprge_no_nsr,
@@ -15,6 +16,8 @@ try:
         pp_twprge_ocr_scrub,
         pp_twprge_pm,
         pp_twprge_comma_remove,
+        # section regexes
+        sec_regex,
     )
 except ImportError:
     import sys
@@ -25,6 +28,7 @@ except ImportError:
         PLSSPreprocessor,
     )
     from pytrs.parser.rgxlib import (
+        # twprge regexes
         twprge_regex,
         pp_twprge_no_nswe,
         pp_twprge_no_nsr,
@@ -32,6 +36,8 @@ except ImportError:
         pp_twprge_ocr_scrub,
         pp_twprge_pm,
         pp_twprge_comma_remove,
+        # section regexes
+        sec_regex,
     )
 
 
@@ -297,6 +303,57 @@ class TwpRgeUnitTest(unittest.TestCase):
         for txt in txts:
             mo = pp_twprge_comma_remove.search(txt)
             self.assertEqual(txt, mo.group(0))
+
+
+class SecUnitTest(unittest.TestCase):
+
+    def _test_sec(self, rgx, txts, expected):
+        """
+                Test a Twp/Rge regex that matches all 4 components:
+                twpnum, ns, rgenum, ew
+                """
+        for txt in txts:
+            self.assertRegex(txt, rgx)
+            mo = rgx.search(txt)
+            if mo:
+                groups = mo.groupdict()
+                for group, value in expected.items():
+                    self.assertEqual(value, groups[group])
+
+    def test_sec_regex_singular(self):
+        """
+        Test sec_regex with singular 'section' and equivalent
+        abbreviations.
+        """
+        txts = (
+            'Section 14',
+            'Seciton 14',
+            'Sec 14',
+            'Sec. 14',
+            'Sect. 14',
+            '§14'
+        )
+        expected = {
+            'secnum': '14',
+            'plural': None
+        }
+        self._test_sec(sec_regex, txts, expected)
+
+    def test_sec_regex_plural(self):
+        """
+        Test sec_regex with plural 'sections' and equivalent
+        abbreviations.
+        """
+        txts = (
+            'Sections 14',
+            'Secitons 14',
+            'Secs 14',
+        )
+        expected = {
+            'secnum': '14',
+            'plural': 's'
+        }
+        self._test_sec(sec_regex, txts, expected)
 
 
 if __name__ == '__main__':
