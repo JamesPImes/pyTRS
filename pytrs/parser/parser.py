@@ -68,6 +68,7 @@ from .regexlib2 import (
     pp_twprge_no_nsr,
     pp_twprge_no_ewt,
     pp_twprge_pm,
+    pp_twprge_comma_remove,
     pp_twprge_ocr_scrub,
 )
 
@@ -6782,6 +6783,7 @@ class PLSSPreprocessor:
         pp_twprge_no_nsr,
         pp_twprge_no_ewt,
         pp_twprge_pm,
+        pp_twprge_comma_remove,
     )
 
     # Turn this one on with `ocr_scrub=True`

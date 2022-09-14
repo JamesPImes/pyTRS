@@ -24,7 +24,6 @@ class PreprocessTest(unittest.TestCase):
             '154N-97W Sec 14: NE/4',
             'T154-R97 Sec 14: NE/4',
             '154N-R97 Sec 14: NE/4',
-            #
         )
         # Note: Following is only the expected result for some of the
         # test cases because default n/s and e/w are 'n' and 'w'.
@@ -34,7 +33,7 @@ class PreprocessTest(unittest.TestCase):
 
     def test_principal_meridian_preprocess(self):
         txt = 'T154N-R97W, 5th P.M., Sec 14: NE/4'
-        expected = 'T154N-R97W , Sec 14: NE/4'
+        expected = 'T154N-R97W Sec 14: NE/4'
         self.assertEqual(expected, PLSSPreprocessor(txt).text)
 
     # TODO: test_ocr_scrub
