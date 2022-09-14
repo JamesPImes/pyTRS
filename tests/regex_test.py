@@ -18,6 +18,10 @@ try:
         # section regexes
         sec_regex,
         multisec_regex,
+        # lot regexes
+        acreage_subpattern,
+        lot_regex,
+        multilot_regex,
         # misc regexes
         through_regex,
         intervener_regex,
@@ -37,6 +41,10 @@ except ImportError:
         # section regexes
         sec_regex,
         multisec_regex,
+        # lot regexes
+        acreage_subpattern,
+        lot_regex,
+        multilot_regex,
         # misc regexes
         through_regex,
         intervener_regex,
@@ -490,6 +498,67 @@ class MiscUnitTest(unittest.TestCase):
             groups = mo.groupdict()
             self.assertIsNone(groups.get('and'))
             self.assertIsNone(groups.get('through'))
+
+
+class LotUnitTest(unittest.TestCase):
+
+    def test_acreage_subpattern(self):
+        txts = (
+            '(12.34)',
+            '[12.34]',
+            '(1.0)',
+            '[1.0]',
+            '(123.456789)',
+            '[123.456789]',
+        )
+        for txt in txts:
+            self.assertRegex(txt, acreage_subpattern)
+
+    def test_lot_regex(self):
+        txts = (
+            'Lot 1',
+            'Lots 1',
+            'L. 1',
+            'L1',
+        )
+        for txt in txts:
+            self.assertRegex(txt, lot_regex)
+            mo = lot_regex.search(txt)
+            self.assertEqual('1', mo['lotnum'])
+
+    def test_multilot_regex_through(self):
+        txts = (
+            'Lot 1 - 8',
+            'Lot 1 - Lot 8',
+            'Lots 1 - 8',
+            'L. 1 - L. 8',
+            'L1 thru L8',
+            'L1 through L8'
+        )
+        for txt in txts:
+            self.assertRegex(txt, multilot_regex)
+            mo = multilot_regex.search(txt)
+            groups = mo.groupdict()
+            self.assertEqual('1', groups['lotnum'])
+            self.assertEqual('8', groups['lotnum_rightmost'])
+            self.assertIsNotNone(groups['thru'])
+
+    def test_multilot_regex_and(self):
+        txts = (
+            'Lot 1 and 8',
+            'Lot 1 and Lot 8',
+            'Lots 1 - 3, and 8',
+            'L. 1 - 3, and L. 8',
+            'L1 thru L3, and L8',
+            'L1 through L3, and L8'
+        )
+        for txt in txts:
+            self.assertRegex(txt, multilot_regex)
+            mo = multilot_regex.search(txt)
+            groups = mo.groupdict()
+            self.assertEqual('1', groups['lotnum'])
+            self.assertEqual('8', groups['lotnum_rightmost'])
+            self.assertIsNotNone(groups['and'])
 
 
 if __name__ == '__main__':
