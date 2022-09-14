@@ -6,7 +6,7 @@ import re
 fwb_lkbehind = r"((?<=¼|4|½|2)|(?<=\b))"
 
 # A subpattern to match 'One Quarter', 'Quarter', or equivalent symbol.
-quarter_subpattern = r"(One)?\s*Q[uarter]{3,7}|1\/?4|\/?4|¼"
+quarter_subpattern = r"((One)?\s*Q[uarter]{3,7}|1\/?4|\/?4|¼)"
 
 # A subpattern to match 'One Half', 'Half', or equivalent symbol.
 half_subpattern = r"((One)?\s*Half|1\/?2|\/?2|½)"
