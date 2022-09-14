@@ -18,6 +18,10 @@ try:
         pp_twprge_comma_remove,
         # section regexes
         sec_regex,
+        multisec_regex,
+        # misc regexes
+        through_regex,
+        intervener_regex,
     )
 except ImportError:
     import sys
@@ -38,6 +42,10 @@ except ImportError:
         pp_twprge_comma_remove,
         # section regexes
         sec_regex,
+        multisec_regex,
+        # misc regexes
+        through_regex,
+        intervener_regex,
     )
 
 
@@ -354,6 +362,78 @@ class SecUnitTest(unittest.TestCase):
             'plural': 's'
         }
         self._test_sec(sec_regex, txts, expected)
+
+
+class MiscUnitTest(unittest.TestCase):
+    """
+    Test .misc regexes in the .rgxlib.
+    """
+
+    def test_through_regex(self):
+        txts = (
+            'a - b',
+            'a – b',
+            'a — b',
+            'a through b',
+            'a thru b',
+            'a thru. b',
+        )
+        for txt in txts:
+            self.assertRegex(txt, through_regex)
+
+    def test_intervener_regex_through(self):
+        """
+        Test the intervener_regex (which goes in elided lists of
+        multi-sections and multi-lots). Look for 'through' specifically.
+        """
+        txts = (
+            'a - b',
+            'a – b',
+            'a — b',
+            'a through b',
+            'a thru b',
+            'a thru. b',
+        )
+        for txt in txts:
+            self.assertRegex(txt, intervener_regex)
+            mo = intervener_regex.search(txt)
+            groups = mo.groupdict()
+            self.assertIsNotNone(groups.get('thru'))
+            self.assertIsNone(groups.get('and'))
+
+    def test_intervener_regex_and(self):
+        """
+        Test the intervener_regex (which goes in elided lists of
+        multi-sections and multi-lots). Look for 'and' specifically.
+        """
+        txts = (
+            'a and b',
+            'a & b',
+        )
+        for txt in txts:
+            self.assertRegex(txt, intervener_regex)
+            mo = intervener_regex.search(txt)
+            groups = mo.groupdict()
+            self.assertIsNotNone(groups.get('and'))
+            self.assertIsNone(groups.get('thru'))
+
+    def test_intervener_regex_neither(self):
+        """
+        Test the intervener_regex (which goes in elided lists of
+        multi-sections and multi-lots). Look for neither 'through' nor
+        'and'.
+        """
+        txts = (
+            'a; b',
+            'a, b, c',
+            'a: d'
+        )
+        for txt in txts:
+            self.assertRegex(txt, intervener_regex)
+            mo = intervener_regex.search(txt)
+            groups = mo.groupdict()
+            self.assertIsNone(groups.get('and'))
+            self.assertIsNone(groups.get('through'))
 
 
 if __name__ == '__main__':
