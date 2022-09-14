@@ -131,8 +131,16 @@ half_plus_q_regex = re.compile(
         (?P<of_the>of(\s*the)?)?    # 'of' or 'of the'
         \s*
         
-        (?P<quarter_aliquot_rightmost>      # Which aliquot quarter appears
-            (?P<ne_found>{ne_clean.pattern})        # at the rightmost.
+        (?P<quarter_aliquot_rightmost>
+            
+            # Determine whichever aliquot quarter appears at the rightmost.
+            
+            # IMPORTANT: The following named groups ('ne_found' etc.) do
+            #   NOT match ONLY on the rightmost. Figure out which group
+            #   ('ne_found', etc.) matches the 'quarter_aliquot_rightmost'
+            #   group, and that will be the ACTUAL rightmost named group.
+            
+            (?P<ne_found>{ne_clean.pattern})        
             |
             (?P<nw_found>{nw_clean.pattern})
             |
