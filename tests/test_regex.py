@@ -838,6 +838,14 @@ class AliquotUnitTest(unittest.TestCase):
             mo = half_plus_q_regex.search(txt)
             self.assertIsNotNone(mo[quarters[rightmost]])
 
+            # Confirm that the named group 'quarter_aliquot_rightmost'
+            # is identical to the named group corresponding to the
+            # target quarter (i.e. the named group specified in
+            # `quarters`).
+            rightmost_span = mo.span('quarter_aliquot_rightmost')
+            quarter_span = mo.span(quarters[rightmost])
+            self.assertEqual(rightmost_span, quarter_span)
+
     def test_half_plus_q_regex_ne(self):
         """
         Test half_plus_q_regex with rightmost: NE/4.
