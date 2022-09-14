@@ -605,6 +605,10 @@ class AliquotUnitTest(unittest.TestCase):
         for txt in txts:
             self.assertRegex(txt, rgx)
 
+    def _test_aliquot_none(self, txts, rgx):
+        for txt in txts:
+            self.assertNotRegex(txt, rgx)
+
     def test_n2_regex(self):
         txts = (
             'North Half',
@@ -653,12 +657,92 @@ class AliquotUnitTest(unittest.TestCase):
         )
         self._test_aliquot_basic(txts, w2_regex)
 
-    # TODO: Test the following regex patterns:
-    # ne_regex
-    # nw_regex
-    # se_regex
-    # sw_regex
+    def test_ne_regex(self):
+        txts = (
+            'Northeast Quarter',
+            'Northeast One Quarter',
+            'North East Quarter',
+            'North East One Quarter',
+            'NE Quarter',
+            'NE/4',
+            'NE4',
+            'NE1/4',
+            'NE 1/4',
+        )
+        self._test_aliquot_basic(txts, ne_regex)
 
+        # Avoid clean_qq matches.
+        no_good = (
+            'NE',
+            'One Quarter',
+            'asdfNE/4',
+        )
+        self._test_aliquot_none(no_good, ne_regex)
+
+    def test_nw_regex(self):
+        txts = (
+            'Northwest Quarter',
+            'Northwest One Quarter',
+            'North West Quarter',
+            'North West One Quarter',
+            'NW Quarter',
+            'NW/4',
+            'NW4',
+            'NW1/4',
+            'NW 1/4',
+        )
+        self._test_aliquot_basic(txts, nw_regex)
+
+        # Avoid clean_qq matches.
+        no_good = (
+            'NW',
+            'asdfNW/4',
+        )
+        self._test_aliquot_none(no_good, nw_regex)
+
+    def test_se_regex(self):
+        txts = (
+            'Southeast Quarter',
+            'Southeast One Quarter',
+            'South East Quarter',
+            'South East One Quarter',
+            'SE Quarter',
+            'SE/4',
+            'SE4',
+            'SE1/4',
+            'SE 1/4',
+        )
+        self._test_aliquot_basic(txts, se_regex)
+
+        # Avoid clean_qq matches.
+        no_good = (
+            'SE',
+            'asdfSE/4',
+        )
+        self._test_aliquot_none(no_good, se_regex)
+
+    def test_sw_regex(self):
+        txts = (
+            'Southwest Quarter',
+            'Southwest One Quarter',
+            'South West Quarter',
+            'South West One Quarter',
+            'SW Quarter',
+            'SW/4',
+            'SW4',
+            'SW1/4',
+            'SW 1/4',
+        )
+        self._test_aliquot_basic(txts, sw_regex)
+
+        # Avoid clean_qq matches.
+        no_good = (
+            'SW',
+            'asdfSW/4'
+        )
+        self._test_aliquot_none(no_good, sw_regex)
+
+    # TODO: Test the following regex patterns:
     # ne_clean
     # nw_clean
     # se_clean
