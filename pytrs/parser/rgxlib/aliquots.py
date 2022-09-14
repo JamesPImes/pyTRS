@@ -8,26 +8,19 @@ fwb_lkbehind = r"((?<=¼|4|½|2)|(?<=\b))"
 # A subpattern to match 'One Quarter', 'Quarter', or equivalent symbol.
 quarter_subpattern = r"(One)?\s*Q[uarter]{3,7}|1\/?4|\/?4|¼"
 
+# A subpattern to match 'One Half', 'Half', or equivalent symbol.
+half_subpattern = r"((One)?\s*Half|1\/?2|\/?2|½)"
 
-# clean_qq regexes, for parsing aliquots under clean_qq=True conditions.
-# Will match much more broadly than the other aliquot regexes. (These
-# will get incorporated into the non-clean regexes too.)
+# Subpatterns for each quarter or abbreviation (with no fraction).
+ne_simple = r"(NE|North?\s*East)"
+se_simple = r"(SE|South?\s*East)"
+nw_simple = r"(NW|North?\s*West)"
+sw_simple = r"(SW|South?\s*West)"
 
-# N2, S2, E2, and W2 are the same under clean_qq conditions, since there
-# still must be SOME designator that it's a 'half'.
-
-ne_clean = re.compile(
-    fr"(NE|Nort[h]?\s*East)\s*({quarter_subpattern})?", re.IGNORECASE)
-
-se_clean = re.compile(
-    fr"(SE|Sout[h]?\s*East)\s*({quarter_subpattern})?", re.IGNORECASE)
-
-nw_clean = re.compile(
-    fr"(NW|Nort[h]?\s*West)\s*({quarter_subpattern})?", re.IGNORECASE)
-
-sw_clean = re.compile(
-    fr"(SW|Sout[h]?\s*West)\s*({quarter_subpattern})?", re.IGNORECASE)
-
+n_simple = r"(N\.? | No\.? | North?)"
+s_simple = r"(S\.?|So\.?|South?)"
+e_simple = r"(E\.?|East)"
+w_simple = r"(W\.?|West)"
 
 # Basic aliquot regexes.
 
@@ -36,25 +29,33 @@ sw_clean = re.compile(
 ne_regex = re.compile(
     fr"""
     {fwb_lkbehind}
-    {ne_clean}
+    {ne_simple}
+    \s*
+    {quarter_subpattern}
     """, re.IGNORECASE | re.VERBOSE)
 
 se_regex = re.compile(
     fr"""
     {fwb_lkbehind}
-    {se_clean}
+    {se_simple}
+    \s*
+    {quarter_subpattern}
     """, re.IGNORECASE | re.VERBOSE)
 
 nw_regex = re.compile(
     fr"""
     {fwb_lkbehind}
-    {nw_clean}
+    {nw_simple}
+    \s*
+    {quarter_subpattern}
     """, re.IGNORECASE | re.VERBOSE)
 
 sw_regex = re.compile(
     fr"""
     {fwb_lkbehind}
-    {sw_clean}
+    {sw_simple}
+    \s*
+    {quarter_subpattern}
     """, re.IGNORECASE | re.VERBOSE)
 
 # Halves.
@@ -62,25 +63,54 @@ sw_regex = re.compile(
 n2_regex = re.compile(
     fr"""
     {fwb_lkbehind}
-    (N\.?|No\.?|Nort[h]?)\s*((One)?\s*Half|1\/?2|\/?2|½)
+    {n_simple}
+    \s*
+    {half_subpattern}
     """, re.IGNORECASE | re.VERBOSE)
 
 s2_regex = re.compile(
     fr"""
     {fwb_lkbehind}
-    (S\.?|So\.?|Sout[h]?)\s*((One)?\s*Half|1\/?2|\/?2|½)
+    {s_simple}
+    \s*
+    {half_subpattern}
     """, re.IGNORECASE | re.VERBOSE)
 
 e2_regex = re.compile(
     fr"""
     {fwb_lkbehind}
-    (E\.?|East)\s*((One)?\s*Half|1\/?2|\/?2|½)
+    {e_simple}
+    \s*
+    {half_subpattern}
     """, re.IGNORECASE | re.VERBOSE)
 
 w2_regex = re.compile(
     fr"""
-    (\b|¼|4|½|2)(W\.?|West)\s*((One)?\s*Half|1\/?2|\/?2|½)
+    {fwb_lkbehind}
+    {w_simple}
+    \s*
+    {half_subpattern}
     """, re.IGNORECASE | re.VERBOSE)
+
+
+# clean_qq regexes, for parsing aliquots under clean_qq=True conditions.
+# Will match much more broadly than the other aliquot regexes.
+
+ne_clean = re.compile(
+    fr"{ne_simple}\s*({quarter_subpattern})?", re.IGNORECASE)
+
+se_clean = re.compile(
+    fr"{se_simple}\s*({quarter_subpattern})?", re.IGNORECASE)
+
+nw_clean = re.compile(
+    fr"{nw_simple}\s*({quarter_subpattern})?", re.IGNORECASE)
+
+sw_clean = re.compile(
+    fr"{sw_simple}\s*({quarter_subpattern})?", re.IGNORECASE)
+
+
+# N2, S2, E2, and W2 are the same under clean_qq conditions, since there
+# still must be SOME designator that it's a 'half'.
 
 
 # Find 'ALL', with options for context. Will only match 'ALL' at the
@@ -102,13 +132,13 @@ half_plus_q_regex = re.compile(
         \s*
         
         (?P<quarter_aliquot_rightmost>      # Which aliquot quarter appears
-            (?P<ne_found>{ne_clean})        # at the rightmost.
+            (?P<ne_found>{ne_clean.pattern})        # at the rightmost.
             |
-            (?P<nw_found>{nw_clean})
+            (?P<nw_found>{nw_clean.pattern})
             |
-            (?P<se_found>{se_clean})
+            (?P<se_found>{se_clean.pattern})
             |
-            (?P<sw_found>{sw_clean})
+            (?P<sw_found>{sw_clean.pattern})
         )
     )+      # IMPORTANT: One or more to match all.
     \b
