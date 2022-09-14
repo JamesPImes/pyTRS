@@ -93,28 +93,27 @@ class TwpRgeUnitTest(unittest.TestCase):
 
     def _test_twprge(self, rgx, txts: tuple, expected: dict):
         """
-        Test a Twp/Rge regex that matches all 4 components:
-        twpnum, ns, rgenum, ew
+        Test the specified Twp/Rge regex pattern against the sample
+        `txts`.
         """
         for txt in txts:
             self.assertRegex(txt, rgx)
             mo = rgx.search(txt)
-            if mo:
-                groups = mo.groupdict()
-                # We can compare lowercase values, since case won't matter.
-                self.assertEqual(expected['twpnum'], groups['twpnum'].lower())
-                self.assertEqual(expected['rgenum'], groups['rgenum'].lower())
-                # Only first letter of N/S and E/W will matter, but check
-                # if None is expected (e.g., in preprocessing regexes).
-                if expected['ns'] is None:
-                    self.assertEqual(None, groups['ns'])
-                else:
-                    self.assertEqual(expected['ns'], groups['ns'][0].lower())
+            groups = mo.groupdict()
+            # We can compare lowercase values, since case won't matter.
+            self.assertEqual(expected['twpnum'], groups['twpnum'].lower())
+            self.assertEqual(expected['rgenum'], groups['rgenum'].lower())
+            # Only first letter of N/S and E/W will matter, but check
+            # if None is expected (e.g., in preprocessing regexes).
+            if expected['ns'] is None:
+                self.assertEqual(None, groups['ns'])
+            else:
+                self.assertEqual(expected['ns'], groups['ns'][0].lower())
 
-                if expected['ew'] is None:
-                    self.assertEqual(None, groups['ew'])
-                else:
-                    self.assertEqual(expected['ew'], groups['ew'][0].lower())
+            if expected['ew'] is None:
+                self.assertEqual(None, groups['ew'])
+            else:
+                self.assertEqual(expected['ew'], groups['ew'][0].lower())
 
     def _test_range2_edgecase(self, rgx, txts: tuple, expected: dict):
         """
@@ -126,28 +125,27 @@ class TwpRgeUnitTest(unittest.TestCase):
         for txt in txts:
             self.assertRegex(txt, rgx)
             mo = rgx.search(txt)
-            if mo:
-                groups = mo.groupdict()
-                # We can compare lowercase values, since case won't matter.
-                self.assertEqual(expected['twpnum'], groups['twpnum'].lower())
-                # rgenum should be None.
-                self.assertEqual(expected['rgenum'], groups['rgenum'])
-                # rgenum_edgecase_rge2 will be '2'.
-                self.assertEqual(
-                    expected['rgenum_edgecase_rge2'],
-                    groups['rgenum_edgecase_rge2'])
+            groups = mo.groupdict()
+            # We can compare lowercase values, since case won't matter.
+            self.assertEqual(expected['twpnum'], groups['twpnum'].lower())
+            # rgenum should be None.
+            self.assertEqual(expected['rgenum'], groups['rgenum'])
+            # rgenum_edgecase_rge2 will be '2'.
+            self.assertEqual(
+                expected['rgenum_edgecase_rge2'],
+                groups['rgenum_edgecase_rge2'])
 
-                # Only first letter of N/S and E/W will matter, but check
-                # if None is expected (e.g., in preprocessing regexes).
-                if expected['ns'] is None:
-                    self.assertEqual(None, groups['ns'])
-                else:
-                    self.assertEqual(expected['ns'], groups['ns'][0].lower())
+            # Only first letter of N/S and E/W will matter, but check
+            # if None is expected (e.g., in preprocessing regexes).
+            if expected['ns'] is None:
+                self.assertEqual(None, groups['ns'])
+            else:
+                self.assertEqual(expected['ns'], groups['ns'][0].lower())
 
-                if expected['ew'] is None:
-                    self.assertEqual(None, groups['ew'])
-                else:
-                    self.assertEqual(expected['ew'], groups['ew'][0].lower())
+            if expected['ew'] is None:
+                self.assertEqual(None, groups['ew'])
+            else:
+                self.assertEqual(expected['ew'], groups['ew'][0].lower())
 
     def test_twprge_regex_nw(self):
         txts = (
@@ -357,16 +355,14 @@ class SecUnitTest(unittest.TestCase):
 
     def _test_sec(self, rgx, txts, expected):
         """
-                Test a Twp/Rge regex that matches all 4 components:
-                twpnum, ns, rgenum, ew
-                """
+        Test sec and multisec regexes against the sample `txts`.
+        """
         for txt in txts:
             self.assertRegex(txt, rgx)
             mo = rgx.search(txt)
-            if mo:
-                groups = mo.groupdict()
-                for group, value in expected.items():
-                    self.assertEqual(value, groups[group])
+            groups = mo.groupdict()
+            for group, value in expected.items():
+                self.assertEqual(value, groups[group])
 
     def test_sec_regex_singular(self):
         """
@@ -418,10 +414,9 @@ class SecUnitTest(unittest.TestCase):
         for txt in txts:
             self.assertRegex(txt, multisec_regex)
             mo = multisec_regex.search(txt)
-            if mo:
-                self.assertEqual('14', mo['secnum'])
-                self.assertEqual('20', mo['secnum_rightmost'])
-                self.assertIsNotNone(mo['thru'])
+            self.assertEqual('14', mo['secnum'])
+            self.assertEqual('20', mo['secnum_rightmost'])
+            self.assertIsNotNone(mo['thru'])
 
     def test_multisec_and(self):
         """
@@ -438,10 +433,9 @@ class SecUnitTest(unittest.TestCase):
         for txt in txts:
             self.assertRegex(txt, multisec_regex)
             mo = multisec_regex.search(txt)
-            if mo:
-                self.assertEqual('14', mo['secnum'])
-                self.assertEqual('20', mo['secnum_rightmost'])
-                self.assertIsNotNone(mo['and'])
+            self.assertEqual('14', mo['secnum'])
+            self.assertEqual('20', mo['secnum_rightmost'])
+            self.assertIsNotNone(mo['and'])
 
     def test_multisec_single(self):
         """
@@ -460,10 +454,9 @@ class SecUnitTest(unittest.TestCase):
         for txt in txts:
             self.assertRegex(txt, multisec_regex)
             mo = multisec_regex.search(txt)
-            if mo:
-                self.assertEqual('14', mo['secnum'])
-                self.assertIsNone(mo['secnum_rightmost'])
-                self.assertIsNone(mo['plural_rightmost'])
+            self.assertEqual('14', mo['secnum'])
+            self.assertIsNone(mo['secnum_rightmost'])
+            self.assertIsNone(mo['plural_rightmost'])
 
 
 class MiscUnitTest(unittest.TestCase):
