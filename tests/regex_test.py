@@ -14,6 +14,7 @@ try:
         pp_twprge_no_ewt,
         pp_twprge_ocr_scrub,
         pp_twprge_pm,
+        pp_twprge_comma_remove,
     )
 except ImportError:
     import sys
@@ -30,6 +31,7 @@ except ImportError:
         pp_twprge_no_ewt,
         pp_twprge_ocr_scrub,
         pp_twprge_pm,
+        pp_twprge_comma_remove,
     )
 
 
@@ -269,6 +271,32 @@ class TwpRgeUnitTest(unittest.TestCase):
             'ew': 'w'
         }
         self._test_twprge(pp_twprge_pm, txts, expected)
+
+    def test_pp_twprge_comma_remove(self):
+        """
+        Preprocessing twprge regex pattern for identifying and removing
+        trailing commas and similar characters.
+        :return:
+        """
+        txts = (
+            'T154N-R97W,',
+            'Township 154 North, Range 97 West ---- ,',
+            'Twp. 154 N., Rge. 97 W. ;',
+            'T-154-N-R-97-W  -',
+            't154nr97w  :, ',
+            '154N-97W,'
+        )
+        expected = {
+            'twpnum': '154',
+            'ns': 'n',
+            'rgenum': '97',
+            'ew': 'w'
+        }
+        self._test_twprge(pp_twprge_comma_remove, txts, expected)
+        # Confirm entire string is matched in each case.
+        for txt in txts:
+            mo = pp_twprge_comma_remove.search(txt)
+            self.assertEqual(txt, mo.group(0))
 
 
 if __name__ == '__main__':

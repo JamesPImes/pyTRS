@@ -228,3 +228,15 @@ pp_twprge_pm = re.compile(
     # Principal Meridian pattern.
     {pm_regex.pattern}
     """, re.IGNORECASE | re.VERBOSE)
+
+
+# Preprocessing twprge regex pattern for identifying and removing
+# trailing commas and similar characters.
+pp_twprge_comma_remove = re.compile(
+    fr"""
+    # Twp/Rge pattern.
+    {twprge_regex.pattern}
+
+    # Deadspace ...
+    ([\s:,;\.\-–—]*)
+    """, re.IGNORECASE | re.VERBOSE)
