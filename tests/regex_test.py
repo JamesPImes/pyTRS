@@ -827,8 +827,155 @@ class AliquotUnitTest(unittest.TestCase):
             self.assertEqual('all', mo['all'].lower())
             self.assertIsNotNone(mo['context'])
 
-    # TODO: Test the following regex patterns:
-    # half_plus_q_regex
+    def _test_half_plus_q(self, txts, rightmost):
+        """
+        Test half_plus_q_regex with specified rightmost quarter.
+        (Note that this regex is only intended for partially
+        preprocessed text, with halves already turned to '½' symbols.)
+        """
+        quarters = {
+            'ne': 'ne_found',
+            'nw': 'nw_found',
+            'se': 'se_found',
+            'sw': 'sw_found',
+        }
+        for txt in txts:
+            self.assertRegex(txt, half_plus_q_regex)
+            # Ensure the target quarter was found at rightmost position.
+            mo = half_plus_q_regex.search(txt)
+            self.assertIsNotNone(mo[quarters[rightmost]])
+
+    def test_half_plus_q_regex_ne(self):
+        """
+        Test half_plus_q_regex with rightmost: NE/4.
+        """
+        txts = (
+            'N½NE/4',
+            'N½NE4',
+            'N½NE',
+            'N½ NE',
+            'N½ of NE',
+            'N½ of the NE',
+            'S½N½ NE',
+            'S½N½ of NE',
+            'S½N½ of the NE',
+            'N½ NE4',
+            'N½ of NE4',
+            'N½ of the NE4',
+            'N½ NE/4',
+            'N½ of NE/4',
+            'N½ of the NE/4',
+            'N½ NE 1/4',
+            'N½ of NE 1/4',
+            'N½ of the NE 1/4',
+            'N½ Northeast',
+            'N½ of Northeast',
+            'N½ of the Northeast',
+            # Allow intervening aliquot, but check rightmost.
+            'N½ Southwest Northeast',
+            'N½ of Southwest of Northeast',
+            'N½ of the Southwest of the Northeast',
+        )
+        self._test_half_plus_q(txts, 'ne')
+
+    def test_half_plus_q_regex_nw(self):
+        """
+        Test half_plus_q_regex with rightmost: NW/4.
+        """
+        txts = (
+            'N½NW/4',
+            'N½NW4',
+            'N½NW',
+            'N½ NW',
+            'N½ of NW',
+            'N½ of the NW',
+            'S½N½ NW',
+            'S½N½ of NW',
+            'S½N½ of the NW',
+            'N½ NW4',
+            'N½ of NW4',
+            'N½ of the NW4',
+            'N½ NW/4',
+            'N½ of NW/4',
+            'N½ of the NW/4',
+            'N½ NW 1/4',
+            'N½ of NW 1/4',
+            'N½ of the NW 1/4',
+            'N½ Northwest',
+            'N½ of Northwest',
+            'N½ of the Northwest',
+            # Allow intervening aliquot, but check rightmost.
+            'N½ Southwest Northwest',
+            'N½ of Southwest of Northwest',
+            'N½ of the Southwest of the Northwest',
+        )
+        self._test_half_plus_q(txts, 'nw')
+
+    def test_half_plus_q_regex_se(self):
+        """
+        Test half_plus_q_regex with rightmost: SE/4.
+        """
+        txts = (
+            'N½SE/4',
+            'N½SE4',
+            'N½SE',
+            'N½ SE',
+            'N½ of SE',
+            'N½ of the SE',
+            'S½N½ SE',
+            'S½N½ of SE',
+            'S½N½ of the SE',
+            'N½ SE4',
+            'N½ of SE4',
+            'N½ of the SE4',
+            'N½ SE/4',
+            'N½ of SE/4',
+            'N½ of the SE/4',
+            'N½ SE 1/4',
+            'N½ of SE 1/4',
+            'N½ of the SE 1/4',
+            'N½ Southeast',
+            'N½ of Southeast',
+            'N½ of the Southeast',
+            # Allow intervening aliquot, but check rightmost.
+            'N½ Southwest Southeast',
+            'N½ of Southwest of Southeast',
+            'N½ of the Southwest of the Southeast',
+        )
+        self._test_half_plus_q(txts, 'se')
+
+    def test_half_plus_q_regex_sw(self):
+        """
+        Test half_plus_q_regex with rightmost: SW/4.
+        """
+        txts = (
+            'N½SW/4',
+            'N½SW4',
+            'N½SW',
+            'N½ SW',
+            'N½ of SW',
+            'N½ of the SW',
+            'S½N½ SW',
+            'S½N½ of SW',
+            'S½N½ of the SW',
+            'N½ SW4',
+            'N½ of SW4',
+            'N½ of the SW4',
+            'N½ SW/4',
+            'N½ of SW/4',
+            'N½ of the SW/4',
+            'N½ SW 1/4',
+            'N½ of SW 1/4',
+            'N½ of the SW 1/4',
+            'N½ Southwest',
+            'N½ of Southwest',
+            'N½ of the Southwest',
+            # Allow intervening aliquot, but check rightmost.
+            'N½ Northeast Southwest',
+            'N½ of Northeast of Southwest',
+            'N½ of the Northeast of the Southwest',
+        )
+        self._test_half_plus_q(txts, 'sw')
 
 
 if __name__ == '__main__':
