@@ -806,8 +806,28 @@ class AliquotUnitTest(unittest.TestCase):
         )
         self._test_aliquot_basic(txts, sw_clean)
 
+    def test_all_regex(self):
+        txts_no_context = (
+            'all',
+            'ALL',
+        )
+        for txt in txts_no_context:
+            self.assertRegex(txt, all_regex)
+            mo = all_regex.search(txt)
+            self.assertEqual('all', mo['all'].lower())
+            self.assertIsNone(mo['context'])
+
+        txts_with_context = (
+            'All of',
+            'All of the '
+        )
+        for txt in txts_with_context:
+            self.assertRegex(txt, all_regex)
+            mo = all_regex.search(txt)
+            self.assertEqual('all', mo['all'].lower())
+            self.assertIsNotNone(mo['context'])
+
     # TODO: Test the following regex patterns:
-    # all_regex
     # half_plus_q_regex
 
 
