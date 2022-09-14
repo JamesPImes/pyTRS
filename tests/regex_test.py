@@ -674,8 +674,8 @@ class AliquotUnitTest(unittest.TestCase):
         # Avoid clean_qq matches.
         no_good = (
             'NE',
-            'One Quarter',
             'asdfNE/4',
+            'One Quarter',  # Dangerous edge case.
         )
         self._test_aliquot_none(no_good, ne_regex)
 
@@ -738,16 +738,75 @@ class AliquotUnitTest(unittest.TestCase):
         # Avoid clean_qq matches.
         no_good = (
             'SW',
-            'asdfSW/4'
+            'asdfSW/4',
         )
         self._test_aliquot_none(no_good, sw_regex)
 
-    # TODO: Test the following regex patterns:
-    # ne_clean
-    # nw_clean
-    # se_clean
-    # sw_clean
+    def test_ne_clean(self):
+        txts = (
+            'Northeast Quarter',
+            'Northeast One Quarter',
+            'North East Quarter',
+            'North East One Quarter',
+            'NE Quarter',
+            'NE/4',
+            'NE4',
+            'NE1/4',
+            'NE 1/4',
+            'NE',
+            'asdfNE/4',
+        )
+        self._test_aliquot_basic(txts, ne_clean)
 
+    def test_nw_clean(self):
+        txts = (
+            'Northwest Quarter',
+            'Northwest One Quarter',
+            'North West Quarter',
+            'North West One Quarter',
+            'NW Quarter',
+            'NW/4',
+            'NW4',
+            'NW1/4',
+            'NW 1/4',
+            'NW',
+            'asdfNW/4',
+        )
+        self._test_aliquot_basic(txts, nw_clean)
+
+    def test_se_clean(self):
+        txts = (
+            'Southwest Quarter',
+            'Southwest One Quarter',
+            'South West Quarter',
+            'South West One Quarter',
+            'SW Quarter',
+            'SW/4',
+            'SW4',
+            'SW1/4',
+            'SW 1/4',
+            'SW',
+            'asdfSW/4',
+        )
+        self._test_aliquot_basic(txts, sw_clean)
+
+    def test_sw_clean(self):
+        txts = (
+            'Southwest Quarter',
+            'Southwest One Quarter',
+            'South West Quarter',
+            'South West One Quarter',
+            'SW Quarter',
+            'SW/4',
+            'SW4',
+            'SW1/4',
+            'SW 1/4',
+            'SW',
+            'asdfSW/4'
+        )
+        self._test_aliquot_basic(txts, sw_clean)
+
+    # TODO: Test the following regex patterns:
     # all_regex
     # half_plus_q_regex
 
