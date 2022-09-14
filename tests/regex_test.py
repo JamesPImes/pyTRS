@@ -15,13 +15,32 @@ try:
         pp_twprge_ocr_scrub,
         pp_twprge_pm,
         pp_twprge_comma_remove,
+
         # section regexes
         sec_regex,
         multisec_regex,
+
         # lot regexes
         acreage_subpattern,
         lot_regex,
         multilot_regex,
+
+        # aliquot regexes
+        ne_clean,
+        nw_clean,
+        se_clean,
+        sw_clean,
+        ne_regex,
+        nw_regex,
+        se_regex,
+        sw_regex,
+        n2_regex,
+        s2_regex,
+        e2_regex,
+        w2_regex,
+        all_regex,
+        half_plus_q_regex,
+
         # misc regexes
         through_regex,
         intervener_regex,
@@ -38,13 +57,32 @@ except ImportError:
         pp_twprge_ocr_scrub,
         pp_twprge_pm,
         pp_twprge_comma_remove,
+
         # section regexes
         sec_regex,
         multisec_regex,
+
         # lot regexes
         acreage_subpattern,
         lot_regex,
         multilot_regex,
+
+        # aliquot regexes
+        ne_clean,
+        nw_clean,
+        se_clean,
+        sw_clean,
+        ne_regex,
+        nw_regex,
+        se_regex,
+        sw_regex,
+        n2_regex,
+        s2_regex,
+        e2_regex,
+        w2_regex,
+        all_regex,
+        half_plus_q_regex,
+
         # misc regexes
         through_regex,
         intervener_regex,
@@ -559,6 +597,75 @@ class LotUnitTest(unittest.TestCase):
             self.assertEqual('1', groups['lotnum'])
             self.assertEqual('8', groups['lotnum_rightmost'])
             self.assertIsNotNone(groups['and'])
+
+
+class AliquotUnitTest(unittest.TestCase):
+
+    def _test_aliquot_basic(self, txts, rgx):
+        for txt in txts:
+            self.assertRegex(txt, rgx)
+
+    def test_n2_regex(self):
+        txts = (
+            'North Half',
+            'N2',
+            'N/2',
+            'N1/2',
+            'North 1/2',
+            'N 1/2',
+            'N½',
+        )
+        self._test_aliquot_basic(txts, n2_regex)
+
+    def test_s2_regex(self):
+        txts = (
+            'South Half',
+            'S2',
+            'S/2',
+            'S1/2',
+            'South 1/2',
+            'S 1/2',
+            'S½',
+        )
+        self._test_aliquot_basic(txts, s2_regex)
+
+    def test_e2_regex(self):
+        txts = (
+            'East Half',
+            'E2',
+            'E/2',
+            'E1/2',
+            'East 1/2',
+            'E 1/2',
+            'E½',
+        )
+        self._test_aliquot_basic(txts, e2_regex)
+
+    def test_w2_regex(self):
+        txts = (
+            'West Half',
+            'W2',
+            'W/2',
+            'W1/2',
+            'West 1/2',
+            'W 1/2',
+            'W½',
+        )
+        self._test_aliquot_basic(txts, w2_regex)
+
+    # TODO: Test the following regex patterns:
+    # ne_regex
+    # nw_regex
+    # se_regex
+    # sw_regex
+
+    # ne_clean
+    # nw_clean
+    # se_clean
+    # sw_clean
+
+    # all_regex
+    # half_plus_q_regex
 
 
 if __name__ == '__main__':
