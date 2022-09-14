@@ -1,12 +1,11 @@
 
+"""
+Tests for the regex patterns in pytrs.parser.parser.rgxlib
+"""
+
 import unittest
 
 try:
-    import pytrs
-    from pytrs.parser.parser import (
-        PLSSParser,
-        PLSSPreprocessor,
-    )
     from pytrs.parser.rgxlib import (
         # twprge regexes
         twprge_regex,
@@ -26,11 +25,6 @@ try:
 except ImportError:
     import sys
     sys.path.append('../')
-    import pytrs
-    from pytrs.parser.parser import (
-        PLSSParser,
-        PLSSPreprocessor,
-    )
     from pytrs.parser.rgxlib import (
         # twprge regexes
         twprge_regex,
