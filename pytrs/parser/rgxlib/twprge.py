@@ -1,4 +1,8 @@
 
+"""
+Regex patterns for Twp/Rge and related preprocessing.
+"""
+
 import re
 
 twprge_regex = re.compile(
@@ -183,8 +187,6 @@ pp_twprge_ocr_scrub = re.compile(
     (?P<ew>W[est]{0,3}|E[ast]{0,3})     # e/w (required).
     """,
     re.IGNORECASE | re.VERBOSE)
-
-# TODO: ocr_scrub regex that captures edge case "Range 2".
 
 
 # Looking for the phrase (or abbreviation for) 'Principal Meridian' and

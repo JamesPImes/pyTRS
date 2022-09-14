@@ -7,7 +7,7 @@ try:
         PLSSParser,
         PLSSPreprocessor,
     )
-    from pytrs.parser.regexlib2 import (
+    from pytrs.parser.rgxlib import (
         twprge_regex,
         pp_twprge_no_nswe,
         pp_twprge_no_nsr,
@@ -24,7 +24,7 @@ except ImportError:
         PLSSParser,
         PLSSPreprocessor,
     )
-    from pytrs.parser.regexlib2 import (
+    from pytrs.parser.rgxlib import (
         twprge_regex,
         pp_twprge_no_nswe,
         pp_twprge_no_nsr,

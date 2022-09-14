@@ -62,7 +62,7 @@ from .regexlib import (
     twprge_pm_regex,
     sec_within_desc_regex
 )
-from .regexlib2 import (
+from .rgxlib import (
     twprge_regex,
     pp_twprge_no_nswe,
     pp_twprge_no_nsr,
