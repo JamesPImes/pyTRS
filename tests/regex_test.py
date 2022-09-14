@@ -36,34 +36,6 @@ except ImportError:
 
 
 class TwpRgeUnitTest(unittest.TestCase):
-    BASIC_NW = (
-        'T154N-R97W',
-        'Township 154 North, Range 97 West',
-        'Twp. 154 N., Rge. 97 W.',
-        'T-154-N-R-97-W',
-        't154nr97w',
-        '154N-97W'
-    )
-    BASIC_NW_EXPECTED = {
-        'twpnum': '154',
-        'ns': 'n',
-        'rgenum': '97',
-        'ew': 'w'
-    }
-    BASIC_SE = (
-        'T154S-R97E',
-        'Township 154 South, Range 97 East',
-        'Twp. 154 S., Rge. 97 E.',
-        'T-154-S-R-97-E',
-        't154sr97e',
-        '154S-97E'
-    )
-    BASIC_SE_EXPECTED = {
-        'twpnum': '154',
-        'ns': 's',
-        'rgenum': '97',
-        'ew': 'e'
-    }
 
     def _test_twprge(self, rgx, txts: tuple, expected: dict):
         """
@@ -124,10 +96,38 @@ class TwpRgeUnitTest(unittest.TestCase):
                     self.assertEqual(expected['ew'], groups['ew'][0].lower())
 
     def test_twprge_regex_nw(self):
-        self._test_twprge(twprge_regex, self.BASIC_NW, self.BASIC_NW_EXPECTED)
+        txts = (
+            'T154N-R97W',
+            'Township 154 North, Range 97 West',
+            'Twp. 154 N., Rge. 97 W.',
+            'T-154-N-R-97-W',
+            't154nr97w',
+            '154N-97W'
+        )
+        expected = {
+            'twpnum': '154',
+            'ns': 'n',
+            'rgenum': '97',
+            'ew': 'w'
+        }
+        self._test_twprge(twprge_regex, txts, expected)
 
     def test_twprge_regex_se(self):
-        self._test_twprge(twprge_regex, self.BASIC_SE, self.BASIC_SE_EXPECTED)
+        txts = (
+            'T154S-R97E',
+            'Township 154 South, Range 97 East',
+            'Twp. 154 S., Rge. 97 E.',
+            'T-154-S-R-97-E',
+            't154sr97e',
+            '154S-97E'
+        )
+        expected = {
+            'twpnum': '154',
+            'ns': 's',
+            'rgenum': '97',
+            'ew': 'e'
+        }
+        self._test_twprge(twprge_regex, txts, expected)
 
     def test_range2_edgecase_nw(self):
         """
