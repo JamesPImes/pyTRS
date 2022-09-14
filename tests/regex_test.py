@@ -363,6 +363,68 @@ class SecUnitTest(unittest.TestCase):
         }
         self._test_sec(sec_regex, txts, expected)
 
+    def test_multisec_through(self):
+        """
+        Test multisec_regex with rightmost section set off by 'through'.
+        """
+        txts = (
+            'Section 14 - 20',
+            'Seciton 14 through 20',
+            'Sections 14 and 16 to 20',
+            'Sec. 14, 15, and 16 - 20',
+            'Sect. 14 and Section 16 to 20',
+            '§14-§20'
+        )
+        for txt in txts:
+            self.assertRegex(txt, multisec_regex)
+            mo = multisec_regex.search(txt)
+            if mo:
+                self.assertEqual('14', mo['secnum'])
+                self.assertEqual('20', mo['secnum_rightmost'])
+                self.assertIsNotNone(mo['thru'])
+
+    def test_multisec_and(self):
+        """
+        Test multisec_regex with rightmost section set off by 'and'.
+        """
+        txts = (
+            'Section 14 and 20',
+            'Seciton 14 through 16 and 20',
+            'Sections 14 to 16 and 20',
+            'Sec. 14, 15 - 16, and 20',
+            'Sect. 14 and Sections 16 and 20',
+            '§14 & §20'
+        )
+        for txt in txts:
+            self.assertRegex(txt, multisec_regex)
+            mo = multisec_regex.search(txt)
+            if mo:
+                self.assertEqual('14', mo['secnum'])
+                self.assertEqual('20', mo['secnum_rightmost'])
+                self.assertIsNotNone(mo['and'])
+
+    def test_multisec_single(self):
+        """
+        Test multisec_regex but with only a single section.
+        (multisec_regex should also match single sections, but with
+        secnum_rightmost and plural_rightmost as None.)
+        """
+        txts = (
+            'Section 14',
+            'Seciton 14',
+            'Sections 14',
+            'Sec. 14,',
+            'Sect. 14 and ',
+            '§14 &'
+        )
+        for txt in txts:
+            self.assertRegex(txt, multisec_regex)
+            mo = multisec_regex.search(txt)
+            if mo:
+                self.assertEqual('14', mo['secnum'])
+                self.assertIsNone(mo['secnum_rightmost'])
+                self.assertIsNone(mo['plural_rightmost'])
+
 
 class MiscUnitTest(unittest.TestCase):
     """
