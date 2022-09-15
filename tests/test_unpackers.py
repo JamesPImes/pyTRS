@@ -276,7 +276,7 @@ class TwpRgeUnpackersTests(unittest.TestCase):
             't154nr97w',
             '154N-97W',
         )
-        expected_nw = '154n97w'
+        expected_nw = 'T154N-R97W'
         # Test s/e.
         se = (
             'T154S-R97E',
@@ -286,7 +286,7 @@ class TwpRgeUnpackersTests(unittest.TestCase):
             't154sr97e',
             '154S-97E'
         )
-        expected_se = '154s97e'
+        expected_se = 'T154S-R97E'
 
         for txt in nw:
             self.assertRegex(txt, twprge_regex)
@@ -304,16 +304,16 @@ class TwpRgeUnpackersTests(unittest.TestCase):
         mo = pp_twprge_no_nswe.search(txt)
 
         # Test master default_ns and default_ew
-        self.assertEqual('154n97w', unpack_twprge(mo))
+        self.assertEqual('T154N-R97W', unpack_twprge(mo))
         # Test explicit.
         self.assertEqual(
-            '154n97w', unpack_twprge(mo, default_ns='n', default_ew='w'))
+            'T154N-R97W', unpack_twprge(mo, default_ns='n', default_ew='w'))
         self.assertEqual(
-            '154n97e', unpack_twprge(mo, default_ns='n', default_ew='e'))
+            'T154N-R97E', unpack_twprge(mo, default_ns='n', default_ew='e'))
         self.assertEqual(
-            '154s97w', unpack_twprge(mo, default_ns='s', default_ew='w'))
+            'T154S-R97W', unpack_twprge(mo, default_ns='s', default_ew='w'))
         self.assertEqual(
-            '154s97e', unpack_twprge(mo, default_ns='s', default_ew='e'))
+            'T154S-R97E', unpack_twprge(mo, default_ns='s', default_ew='e'))
 
         # Check proper error when passing illegal default_ns or default_ew.
         with self.assertRaises(DefaultNSError):
@@ -331,7 +331,7 @@ class TwpRgeUnpackersTests(unittest.TestCase):
             'Twp. ISl N., Rge. IL0 W.',
             'T-ISl-N-R-IL0-W'
         )
-        expected = '151n110w'
+        expected = 'T151N-R110W'
         for txt in txts:
             self.assertRegex(txt, pp_twprge_ocr_scrub)
             mo = pp_twprge_ocr_scrub.search(txt)

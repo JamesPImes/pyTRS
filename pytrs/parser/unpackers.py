@@ -232,7 +232,7 @@ def unpack_twprge(
     INTERNAL USE:
 
     Take a match object of a twprge_regex pattern, and return a
-    string in the format of '000n000w'.
+    string in the format of 'T000N-R000W' (or fewer 0's, as applicable).
     """
 
     if default_ns is None:
@@ -258,9 +258,10 @@ def unpack_twprge(
     except ValueError:
         pass
 
-    ns = default_ns.lower()
+    ns = default_ns
     if groups['ns'] is not None:
-        ns = groups['ns'][0].lower()
+        ns = groups['ns'][0]
+    ns = ns.upper()
 
     rge_num = groups['rgenum']
     if rge_num is None:
@@ -279,11 +280,12 @@ def unpack_twprge(
     except ValueError:
         pass
 
-    ew = default_ew.lower()
+    ew = default_ew
     if groups['ew'] is not None:
-        ew = groups['ew'][0].lower()
+        ew = groups['ew'][0]
+    ew = ew.upper()
 
-    return f"{twp_num}{ns}{rge_num}{ew}"
+    return f"T{twp_num}{ns}-R{rge_num}{ew}"
 
 
 def ocr_scrub_alpha_to_num(txt):
