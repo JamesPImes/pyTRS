@@ -6,7 +6,7 @@ Functions to unpack regex matches into their intended components.
 import re
 
 from .rgxlib import *
-from .config import (
+from .master_config import (
     DefaultEWError,
     DefaultNSError,
     MasterConfig,

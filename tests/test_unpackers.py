@@ -29,7 +29,7 @@ try:
         start_of_rightmost,
         get_leading_aliquot,
     )
-    from pytrs.parser.config import (
+    from pytrs.parser.master_config import (
         DefaultNSError,
         DefaultEWError,
     )
@@ -59,7 +59,7 @@ except ImportError:
         start_of_rightmost,
         get_leading_aliquot,
     )
-from pytrs.parser.config import (
+    from pytrs.parser.master_config import (
         DefaultNSError,
         DefaultEWError,
     )
