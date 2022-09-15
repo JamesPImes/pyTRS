@@ -303,4 +303,5 @@ def ocr_scrub_alpha_to_num(txt):
     txt = txt.replace('O', '0')
     txt = txt.replace('I', '1')
     txt = txt.replace('l', '1')
+    txt = txt.replace('L', '1')
     return txt

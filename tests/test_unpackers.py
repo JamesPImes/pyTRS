@@ -321,6 +321,22 @@ class TwpRgeUnpackersTests(unittest.TestCase):
         with self.assertRaises(DefaultEWError):
             unpack_twprge(mo, default_ew='asdf')
 
+    def test_unpack_twprge_ocr_scrub(self):
+        txts = (
+            'TISlN-RIL0W',
+            'Township ISl North, Range IL0 West',
+            'T0wnship ISl North, Range IL0 West',
+            'T0wnshlp ISl North, Range IL0 West',
+            'T0wn5h1p ISl North, Range IL0 West',
+            'Twp. ISl N., Rge. IL0 W.',
+            'T-ISl-N-R-IL0-W'
+        )
+        expected = '151n110w'
+        for txt in txts:
+            self.assertRegex(txt, pp_twprge_ocr_scrub)
+            mo = pp_twprge_ocr_scrub.search(txt)
+            self.assertEqual(expected, unpack_twprge(mo, ocr_scrub=True))
+
 
 class GeneralUnpackersTests(unittest.TestCase):
 
