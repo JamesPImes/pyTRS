@@ -1,5 +1,4 @@
 
-from .rgxlib import *
 from .unpackers import *
 
 # Clean aliquot abbreviations with fraction.
@@ -160,3 +159,7 @@ def remove_aliquot_interveners(txt):
 
     return txt
 
+
+__all__ = [
+    'TractPreprocessor'
+]
