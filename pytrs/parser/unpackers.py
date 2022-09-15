@@ -41,3 +41,26 @@ def is_multi_sec(multisec_mo) -> bool:
     elif multisec_mo['secnum'] is not None:
         return False
     raise ValueError
+
+
+# General functions.
+
+def thru_rightmost(mo) -> bool:
+    """
+    INTERNAL USE:
+    Whether the word 'through' (or an abbreviation) appears before the
+    rightmost sec/lot in a match object for multisec_regex,
+    multilot_regex, or multilot_with_aliquots_regex.
+
+    WARNING: Do not pass a match object for any other regex pattern.
+    """
+    # Do NOT check 'through' named group directly, because it will match
+    # if it exists, even if it is not the rightmost. But 'intervener'
+    # should always be the rightmost 'through' or 'and'.
+
+    # Assume that a regex pattern with named group 'intervener' was used.
+    txt = mo['intervener']
+    if txt is None:
+        return False
+    txt = txt.strip()
+    return through_regex.search(txt) is not None
