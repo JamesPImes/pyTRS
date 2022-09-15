@@ -315,7 +315,21 @@ def twprge_natural_to_short(twprge: str) -> str:
     abbreviation used in this library (e.g., '154n97w').
     :param twprge: A natural Twp/Rge (e.g. 'T154N-R97W')
     :return: The equivalent Twp/Rge in the standard abbreviation (e.g.,
-    '154n97w'
+    '154n97w').
     """
     twprge = twprge.lower()
     return re.sub(r'[rt-]', '', twprge)
+
+
+def twprge_short_to_natural(twprge: str) -> str:
+    """
+    Convert a Twp/Rge in the standard abbreviation used in this library
+    (e.g., '154n97w') into the equivalent natural Twp/Rge (e.g.
+    'T154N-R97W')
+    :param twprge: A Twp/Rge in the standard abbreviation (e.g.,
+    '154n97w').
+    :return: The equivalent natural Twp/Rge (e.g. 'T154N-R97W')
+    """
+    twprge = twprge.upper()
+    twprge = f"T{twprge}"
+    return re.sub(r'(N|S)', r'\1-R', twprge)

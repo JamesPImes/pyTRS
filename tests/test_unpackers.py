@@ -21,6 +21,7 @@ try:
         # twprge functions
         unpack_twprge,
         twprge_natural_to_short,
+        twprge_short_to_natural,
 
         # general functions
         thru_rightmost,
@@ -50,6 +51,7 @@ except ImportError:
         # twprge functions
         unpack_twprge,
         twprge_natural_to_short,
+        twprge_short_to_natural,
 
         # general functions
         thru_rightmost,
@@ -340,14 +342,24 @@ class TwpRgeUnpackersTests(unittest.TestCase):
             self.assertEqual(expected, unpack_twprge(mo, ocr_scrub=True))
 
     def test_twprge_natural_to_short(self):
-        txts_expected = {
+        natural_short = {
             'T154N-R97W': '154n97w',
             'T1N-R7E': '1n7e',
             'T154S-R97W': '154s97w',
             'T1S-R7W': '1s7w',
         }
-        for txt, expected in txts_expected.items():
-            self.assertEqual(expected, twprge_natural_to_short(txt))
+        for natural, short in natural_short.items():
+            self.assertEqual(short, twprge_natural_to_short(natural))
+
+    def test_twprge_short_to_natural(self):
+        natural_short = {
+            'T154N-R97W': '154n97w',
+            'T1N-R7E': '1n7e',
+            'T154S-R97W': '154s97w',
+            'T1S-R7W': '1s7w',
+        }
+        for natural, short in natural_short.items():
+            self.assertEqual(natural, twprge_short_to_natural(short))
 
 
 class GeneralUnpackersTests(unittest.TestCase):
