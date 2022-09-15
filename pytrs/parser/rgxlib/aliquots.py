@@ -133,7 +133,7 @@ half_plus_q_regex = re.compile(
     
     (
         \s*
-        (?P<of_the>of(\s*the)?)?    # 'of' or 'of the'
+        (?P<of_the>\s*of(\s*the)?)?    # 'of' or 'of the'
         \s*
         
         (?P<quarter_aliquot_rightmost>
@@ -164,7 +164,7 @@ half_plus_q_regex = re.compile(
         |
         (?=[NESW]½)           # End on clean half.
         |
-        (?P<clean_quarter>(?=NE¼|NW¼|SE¼|SW¼))   # End on clean quarter.
+        (?=NE¼|NW¼|SE¼|SW¼)   # End on clean quarter.
     )
     """, re.IGNORECASE | re.VERBOSE)
 
