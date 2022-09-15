@@ -19,11 +19,7 @@ def is_multi_lot(multilots_mo) -> bool:
 
     WARNING: Do not pass a match object for any other regex pattern.
     """
-    if multilots_mo['lotnum_rightmost'] is not None:
-        return True
-    elif multilots_mo['lotnum'] is not None:
-        return False
-    raise ValueError
+    return is_multi('lot', multilots_mo)
 
 
 # Unpacking multisec_regex.
@@ -36,14 +32,37 @@ def is_multi_sec(multisec_mo) -> bool:
 
     WARNING: Do not pass a match object for any other regex pattern.
     """
-    if multisec_mo['secnum_rightmost'] is not None:
-        return True
-    elif multisec_mo['secnum'] is not None:
-        return False
-    raise ValueError
+    return is_multi('sec', multisec_mo)
 
 
 # General functions.
+
+
+def is_multi(kind, mo) -> bool:
+    """
+    INTERNAL USE:
+    Whether a multisec_regex, multilot_regex, or
+    multilot_with_aliquots_regex match object found more than one sec /
+    lot (True) or if it is only one sec / lot (False).
+
+    WARNING: Do not pass a match object for any other regex pattern.
+
+    :param kind: Either 'lot' or 'sec', depending on whether we're
+    figuring out whether this is a multi-lot or a multi-sec.
+    :param mo: a match object for multisec_regex, multilot_regex, or
+    multilot_with_aliquots_regex.
+    """
+    # 'lot' will match named groups 'lotnum_rightmost' and 'lotnum' in
+    # the lot-type regexes; and 'sec' will match 'secnum_rightmost' and
+    # 'secnum' in sec-type regex.
+    if kind not in ('lot', 'sec'):
+        raise ValueError
+    if mo[f'{kind}num_rightmost'] is not None:
+        return True
+    elif mo[f'{kind}num'] is not None:
+        return False
+    raise ValueError
+
 
 def thru_rightmost(mo) -> bool:
     """
