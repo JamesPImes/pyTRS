@@ -70,10 +70,14 @@ multilot_regex = re.compile(
 multilot_with_aliquot_regex = re.compile(
     fr"""
     {cwb_lkbehind}
-    (?P<aliquot>(([NESW]½)|((NE|NW|SE|SW)¼))+)  # leading aliquot division (optional)
-    \s*
-    (of)?                           # "of" (optional)
-    \s*
+    (
+        # leading aliquot division (optional)
+        (?P<aliquot>(([NESW]½)|((NE|NW|SE|SW)¼))+)
+        
+        \s*
+        (of)?                           # "of" (optional)
+        \s*
+    )?
     
     # The usual multi-lot pattern with the same named groups.
     {multilot_regex.pattern}
