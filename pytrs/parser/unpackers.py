@@ -26,7 +26,8 @@ def get_rightmost_lot(multilot_mo) -> str:
     """
     Get the rightmost lot from a lot_regex, multilot_regex, or
     multilot_with_aliquot_regex match object.
-    :param multilot_mo:
+    :param multilot_mo: a match object for lot_regex, multilot_regex,
+    or multilot_with_aliquot_regex.
     :return:
     """
     return get_rightmost('lot', multilot_mo)
@@ -35,9 +36,10 @@ def get_rightmost_lot(multilot_mo) -> str:
 def get_rightmost_acreage(multilot_mo):
     """
     Extract the stated acreage (if any) next to the rightmost lot, and
-    return it as a string.
-    :param multilot_mo:
-    :return:
+    return it as a string.  If no acreage is found, will return None.
+    :param multilot_mo: a match object for lot_regex, multilot_regex,
+    or multilot_with_aliquot_regex.
+    :return: The acreage as a string, or None if not found.
     """
     # Search for an acreage match from the start of the rightmost through
     # the end of the match.
@@ -67,6 +69,7 @@ def is_multi_sec(multisec_mo) -> bool:
     or if it is only one sec (False).
 
     WARNING: Do not pass a match object for any other regex pattern.
+    :param multisec_mo: a match object for sec_regex or multisec_regex.
     """
     return is_multi('sec', multisec_mo)
 
@@ -75,7 +78,7 @@ def get_rightmost_sec(multisec_mo) -> str:
     """
     Get the rightmost lot from a lot_regex, multilot_regex, or
     multilot_with_aliquot_regex match object.
-    :param multilot_mo:
+    :param multisec_mo: a match object for sec_regex or multisec_regex.
     :return:
     """
     return get_rightmost('sec', multisec_mo)
@@ -103,6 +106,9 @@ def is_multi(kind, mo) -> bool:
     # 'secnum' in sec-type regex.
     if kind not in ('lot', 'sec'):
         raise ValueError
+    if 'intervener' not in mo.groupdict():
+        # Not a multi-<whatever> regex pattern
+        return False
     if mo[f'{kind}num_rightmost'] is not None:
         return True
     elif mo[f'{kind}num'] is not None:
