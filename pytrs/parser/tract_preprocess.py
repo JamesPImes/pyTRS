@@ -114,13 +114,16 @@ def half_plus_q_scrubber(txt):
         elif mo['sw_found'] == rightmost_comparer:
             rightmost_quarter = SW_FRAC
 
-        # Replace this entire regex match with itself, but only up
-        # through the point where we reached the rightmost group. At
-        # that point, we substitute the replacement substring (being the
-        # quarter abbreviation with fraction symbol). That newly
-        # cleaned-up quarter + fraction will not match in the next loop.
-        i = mo.start('quarter_aliquot_rightmost')
-        replace_with = f"{mo.group(0)[:i]}{rightmost_quarter}"
+        # Replace this entire regex match with itself, but sub in the
+        # newly cleaned-up quarter + fraction, which will not match in
+        # the next loop.
+
+        # Start with full match.
+        replace_with = mo.group(0)
+        # Cut out the rightmost quarter we just found.
+        replace_with = replace_with[:-len(rightmost_comparer)]
+        # Tack on the cleaned up rightmost quarter.
+        replace_with = f"{replace_with}{rightmost_quarter}"
         txt = re.sub(half_plus_q_regex, replace_with, txt)
     return txt
 

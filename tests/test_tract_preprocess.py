@@ -59,6 +59,7 @@ class PreprocessFuncTestCase(unittest.TestCase):
             'S2NE': 'S½NE¼',
             'S2NENW': 'S½NE¼NW¼',
             'N2 of NE of NW, NW': 'N½NE¼NW¼, NW¼',
+            'S½N½ SW': 'S½N½SW¼'
         }
         for txt, expected in txts_expected.items():
             self.assertEqual(expected, scrub_aliquots(txt, clean_qq=True))
@@ -81,6 +82,7 @@ class TractPreprocessorTests(unittest.TestCase):
             'S2NE': 'S½NE¼',
             'S2NENW': 'S½NE¼NW¼',
             'N2 of NE of NW, NW': 'N½NE¼NW¼, NW',
+            'S½N½ SW': 'S½N½SW¼',
         }
         for txt, expected in txts_expected.items():
             preprocessor = TractPreprocessor(txt)
@@ -98,6 +100,7 @@ class TractPreprocessorTests(unittest.TestCase):
             'S2NE': 'S½NE¼',
             'S2NENW': 'S½NE¼NW¼',
             'N2 of NE of NW, NW': 'N½NE¼NW¼, NW¼',
+            'S½N½ SW': 'S½N½SW¼',
         }
         for txt, expected in txts_expected.items():
             preprocessor = TractPreprocessor(txt, clean_qq=True)
