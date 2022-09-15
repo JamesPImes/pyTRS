@@ -9,6 +9,9 @@ from .misc import (
 # (need to rule out "Lots" at the start of such a match):
 lots_context_regex = re.compile(r"Lo?ts?|Lo?s?t", re.IGNORECASE)
 
+# Lookbehind subpattern for comma (or similar) or word boundary.
+cwb_lkbehind = r"((?<=,|;|:)|(?<=\b))"
+
 # Capture acreage in the format (12.345678) or [12.345678].
 acreage_subpattern = re.compile(
     r"""
@@ -21,8 +24,9 @@ acreage_subpattern = re.compile(
 
 lot_regex = re.compile(
     fr"""
+    {cwb_lkbehind}
     (
-        (L\.?o?t?)                  # The word or abbreviation "Lot"
+        (L\.?|Lo?t)                 # The word or abbreviation "Lot"
         (?P<plural>s)?              # Plural 's' (optional).
         \s*
         (?P<lotnum>\d{{1,3}})       # lotnum
@@ -47,12 +51,15 @@ multilot_regex = re.compile(
         ({intervener_regex.pattern})+   # IMPORTANT: Allow more than one intervener
                                         # to keep matching multilots to the right!
 
-        ((L\.?o?t?)                  # The word or abbreviation "Lot" (optional on the right).
+        ((L\.?|Lo?t)                 # The word or abbreviation "Lot" (optional on the right).
         (?P<plural_rightmost>s)?)?   # Plural 's' (optional).
         \s*
         (?P<lotnum_rightmost>\d{{1,3}})     # lotnum (rightmost)
         \s*
-        (?P<acreage_rightmost>{acreage_subpattern.pattern})?  # Acreage (optional).
+        
+        # Note: This is named 'acreage_notfirst' because it is optional
+        # and may not exist on the actually rightmost lot.
+        (?P<acreage_notfirst>{acreage_subpattern.pattern})?  # Acreage (optional).
     )*
     """, re.IGNORECASE | re.VERBOSE)
 
@@ -62,6 +69,7 @@ multilot_regex = re.compile(
 # abbreviations with fractions.
 multilot_with_aliquot_regex = re.compile(
     fr"""
+    {cwb_lkbehind}
     (?P<aliquot>(([NESW]½)|((NE|NW|SE|SW)¼))+)  # leading aliquot division (optional)
     \s*
     (of)?                           # "of" (optional)
