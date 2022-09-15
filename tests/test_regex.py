@@ -1,6 +1,6 @@
 
 """
-Tests for the regex patterns in pytrs.parser.parser.rgxlib
+Tests for the regex patterns in pytrs.parser.rgxlib
 """
 
 import unittest
