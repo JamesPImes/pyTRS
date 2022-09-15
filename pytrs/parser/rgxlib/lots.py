@@ -78,3 +78,8 @@ multilot_with_aliquot_regex = re.compile(
     # The usual multi-lot pattern with the same named groups.
     {multilot_regex.pattern}
     """, re.IGNORECASE | re.VERBOSE)
+
+# A pattern for extracting just the acreage component.
+lot_acres_unpacker_regex = re.compile(
+    fr"\d{{1,3}}\s*(?P<acreage>{acreage_subpattern.pattern})",
+    re.VERBOSE | re.IGNORECASE)

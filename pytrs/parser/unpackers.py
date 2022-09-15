@@ -32,6 +32,32 @@ def get_rightmost_lot(multilot_mo) -> str:
     return get_rightmost('lot', multilot_mo)
 
 
+def get_rightmost_acreage(multilot_mo):
+    """
+    Extract the stated acreage (if any) next to the rightmost lot, and
+    return it as a string.
+    :param multilot_mo:
+    :return:
+    """
+    # Search for an acreage match from the start of the rightmost through
+    # the end of the match.
+    i = start_of_rightmost(multilot_mo)
+    j = multilot_mo.end(0)
+    acreage_mo = lot_acres_unpacker_regex.search(
+        multilot_mo.string,
+        pos=i,
+        endpos=j)
+
+    if acreage_mo is None:
+        return None
+    acreage_string = acreage_mo['acreage']
+    acreage_string = acreage_string.replace('[', '')
+    acreage_string = acreage_string.replace(']', '')
+    acreage_string = acreage_string.replace('(', '')
+    acreage_string = acreage_string.replace(')', '')
+    return acreage_string
+
+
 # Unpacking multisec_regex.
 
 def is_multi_sec(multisec_mo) -> bool:
@@ -91,6 +117,9 @@ def thru_rightmost(mo) -> bool:
     rightmost sec/lot in a match object for multisec_regex,
     multilot_regex, or multilot_with_aliquots_regex.
 
+    Also returns False for 'single' matches (or where 'intervener'
+    named group does not exist in the regex pattern that was used).
+
     WARNING: Do not pass a match object for any other regex pattern.
     """
     # Do NOT check 'through' named group directly, because it will match
@@ -98,6 +127,9 @@ def thru_rightmost(mo) -> bool:
     # should always be the rightmost 'through' or 'and'.
 
     # Assume that a regex pattern with named group 'intervener' was used.
+    if 'intervener' not in mo.groupdict():
+        # Not a multi-<whatever> regex pattern
+        return False
     txt = mo['intervener']
     if txt is None:
         return False
@@ -137,14 +169,15 @@ def start_of_rightmost(mo):
     """
     INTERNAL USE:
     Get the start position of the rightmost 'intervener' named group
-    within the match object, if found. If not found, will return the
-    start position of the match itself.
-
-    WARNING: Do not pass a match object for any other regex pattern.
+    within the match object, if found. If not found or group does not
+    exist, will return the start position of the match itself.
 
     :param mo: a match object for multisec_regex, multilot_regex, or
     multilot_with_aliquots_regex.
     """
+    if 'intervener' not in mo.groupdict():
+        # Not a multi-<whatever> regex pattern
+        return mo.start()
     # Assume that a regex pattern with named group 'intervener' was used.
     if mo['intervener'] is not None:
         return mo.start('intervener')

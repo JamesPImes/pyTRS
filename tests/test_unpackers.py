@@ -11,6 +11,7 @@ try:
         # lot/multilot functions
         is_multi_lot,
         get_rightmost_lot,
+        get_rightmost_acreage,
 
         # sec/multisec functions
         is_multi_sec,
@@ -29,6 +30,7 @@ except ImportError:
         # lot/multilot functions
         is_multi_lot,
         get_rightmost_lot,
+        get_rightmost_acreage,
 
         # sec/multisec functions
         is_multi_sec,
@@ -98,6 +100,41 @@ class LotUnpackersTests(unittest.TestCase):
             test = f"NE¼ of {test}"
             mo = multilot_with_aliquot_regex.search(test)
             self.assertEqual('5', get_rightmost_lot(mo))
+
+    def test_get_rightmost_acreage(self):
+
+        multis_yes = (
+            'Lot 1(31.09), 2(31.13), 3(34.13), and 5(35.99)',
+            'Lot 1(35.99)',
+            'Lot 1 - 3, and 5(35.99)'
+        )
+        multis_no = (
+            'Lot 1(31.09), 2(31.13), 3(34.13), and 5',
+            'Lot 1',
+            'Lot 1 - 3, and 5',
+        )
+        singles_yes = (
+            'Lot 1(35.99)',
+        )
+        singles_no = (
+            'Lot 1',
+        )
+
+        for txt in multis_yes:
+            mo = multilot_regex.search(txt)
+            self.assertEqual('35.99', get_rightmost_acreage(mo))
+
+        for txt in multis_no:
+            mo = multilot_regex.search(txt)
+            self.assertIsNone(get_rightmost_acreage(mo))
+
+        for txt in singles_yes:
+            mo = lot_regex.search(txt)
+            self.assertEqual('35.99', get_rightmost_acreage(mo))
+
+        for txt in singles_no:
+            mo = lot_regex.search(txt)
+            self.assertIsNone(get_rightmost_acreage(mo))
 
 
 class SecUnpackersTests(unittest.TestCase):
