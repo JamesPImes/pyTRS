@@ -129,7 +129,8 @@ all_regex = re.compile(r"\b(?P<all>ALL)(?P<context>.{1,6})?", re.IGNORECASE)
 half_plus_q_regex = re.compile(
     fr"""
     ((?<=½)|(?<=\b))                # Lookbehind of word boundary or '½' 
-    (?P<half_aliquot>[NESW])½       # Which aliquot half.
+    (?P<half_aliquot>[NESW]½)       # Which aliquot half.
+    
     (
         \s*
         (?P<of_the>of(\s*the)?)?    # 'of' or 'of the'
@@ -144,16 +145,27 @@ half_plus_q_regex = re.compile(
             #   ('ne_found', etc.) matches the 'quarter_aliquot_rightmost'
             #   group, and that will be the ACTUAL rightmost named group.
             
-            (?P<ne_found>{ne_clean.pattern})        
+            (?P<ne_found>{ne_simple})        
             |
-            (?P<nw_found>{nw_clean.pattern})
+            (?P<nw_found>{nw_simple})
             |
-            (?P<se_found>{se_clean.pattern})
+            (?P<se_found>{se_simple})
             |
-            (?P<sw_found>{sw_clean.pattern})
+            (?P<sw_found>{sw_simple})
         )
     )+      # IMPORTANT: One or more to match all.
-    \b
+    
+    # Lookahead for apparent marker of end of the aliquot, and exclude
+    # any already-cleaned halves or quarters.
+    (
+        $                     # End of string.
+        |
+        (?=[\s\.\,\;])        # End on white space, comma, etc.
+        |
+        (?=[NESW]½)           # End on clean half.
+        |
+        (?P<clean_quarter>(?=NE¼|NW¼|SE¼|SW¼))   # End on clean quarter.
+    )
     """, re.IGNORECASE | re.VERBOSE)
 
 # For cutting out whitespace and 'of the' or 'of' between identified
