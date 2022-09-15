@@ -969,8 +969,7 @@ class AliquotUnitTest(unittest.TestCase):
         Test half_plus_q_regex with rightmost: NE/4.
         """
         txts = (
-            'N½NE/4',
-            'N½NE4',
+            'N½NE',
             'N½NE',
             'N½ NE',
             'N½ of NE',
@@ -978,15 +977,6 @@ class AliquotUnitTest(unittest.TestCase):
             'S½N½ NE',
             'S½N½ of NE',
             'S½N½ of the NE',
-            'N½ NE4',
-            'N½ of NE4',
-            'N½ of the NE4',
-            'N½ NE/4',
-            'N½ of NE/4',
-            'N½ of the NE/4',
-            'N½ NE 1/4',
-            'N½ of NE 1/4',
-            'N½ of the NE 1/4',
             'N½ Northeast',
             'N½ of Northeast',
             'N½ of the Northeast',
@@ -1002,8 +992,6 @@ class AliquotUnitTest(unittest.TestCase):
         Test half_plus_q_regex with rightmost: NW/4.
         """
         txts = (
-            'N½NW/4',
-            'N½NW4',
             'N½NW',
             'N½ NW',
             'N½ of NW',
@@ -1011,15 +999,6 @@ class AliquotUnitTest(unittest.TestCase):
             'S½N½ NW',
             'S½N½ of NW',
             'S½N½ of the NW',
-            'N½ NW4',
-            'N½ of NW4',
-            'N½ of the NW4',
-            'N½ NW/4',
-            'N½ of NW/4',
-            'N½ of the NW/4',
-            'N½ NW 1/4',
-            'N½ of NW 1/4',
-            'N½ of the NW 1/4',
             'N½ Northwest',
             'N½ of Northwest',
             'N½ of the Northwest',
@@ -1035,8 +1014,6 @@ class AliquotUnitTest(unittest.TestCase):
         Test half_plus_q_regex with rightmost: SE/4.
         """
         txts = (
-            'N½SE/4',
-            'N½SE4',
             'N½SE',
             'N½ SE',
             'N½ of SE',
@@ -1044,15 +1021,6 @@ class AliquotUnitTest(unittest.TestCase):
             'S½N½ SE',
             'S½N½ of SE',
             'S½N½ of the SE',
-            'N½ SE4',
-            'N½ of SE4',
-            'N½ of the SE4',
-            'N½ SE/4',
-            'N½ of SE/4',
-            'N½ of the SE/4',
-            'N½ SE 1/4',
-            'N½ of SE 1/4',
-            'N½ of the SE 1/4',
             'N½ Southeast',
             'N½ of Southeast',
             'N½ of the Southeast',
@@ -1068,8 +1036,6 @@ class AliquotUnitTest(unittest.TestCase):
         Test half_plus_q_regex with rightmost: SW/4.
         """
         txts = (
-            'N½SW/4',
-            'N½SW4',
             'N½SW',
             'N½ SW',
             'N½ of SW',
@@ -1077,15 +1043,6 @@ class AliquotUnitTest(unittest.TestCase):
             'S½N½ SW',
             'S½N½ of SW',
             'S½N½ of the SW',
-            'N½ SW4',
-            'N½ of SW4',
-            'N½ of the SW4',
-            'N½ SW/4',
-            'N½ of SW/4',
-            'N½ of the SW/4',
-            'N½ SW 1/4',
-            'N½ of SW 1/4',
-            'N½ of the SW 1/4',
             'N½ Southwest',
             'N½ of Southwest',
             'N½ of the Southwest',
