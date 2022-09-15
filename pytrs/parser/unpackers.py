@@ -6,6 +6,11 @@ Functions to unpack regex matches into their intended components.
 import re
 
 from .rgxlib import *
+from .config import (
+    DefaultEWError,
+    DefaultNSError,
+    MasterConfig,
+)
 
 
 # Unpacking lot_regex, multilot_regex, and lot_with_aliquot_regex matches.
@@ -214,3 +219,88 @@ def start_of_rightmost(mo):
     if mo['intervener'] is not None:
         return mo.start('intervener')
     return mo.start()
+
+
+# For unpacking Twp/Rge regex matches.
+
+def unpack_twprge(
+        twprge_mo,
+        default_ns=None,
+        default_ew=None,
+        ocr_scrub=False) -> str:
+    """
+    INTERNAL USE:
+
+    Take a match object of a twprge_regex pattern, and return a
+    string in the format of '000n000w'.
+    """
+
+    if default_ns is None:
+        default_ns = MasterConfig.default_ns
+    if default_ns not in MasterConfig._LEGAL_NS:
+        raise DefaultNSError
+
+    if default_ew is None:
+        default_ew = MasterConfig.default_ew
+    if default_ew not in MasterConfig._LEGAL_EW:
+        raise DefaultEWError
+
+    groups = twprge_mo.groupdict()
+
+    twp_num = groups['twpnum']
+    if ocr_scrub:
+        twp_num = ocr_scrub_alpha_to_num(twp_num)
+    # Clean up any leading '0's in twp_num.
+    # (Try/except is used to handle twprge_ocr_scrub_regex mo's,
+    # which can contain alpha characters in `twp_num`.)
+    try:
+        twp_num = str(int(twp_num))
+    except ValueError:
+        pass
+
+    ns = default_ns.lower()
+    if groups['ns'] is not None:
+        ns = groups['ns'][0].lower()
+
+    rge_num = groups['rgenum']
+    if rge_num is None:
+        # Weird edge case for "Range 2 [East/West]", because it
+        # alone requires "Range" be specified before the number, to
+        # avoid over-matching "Lot 2, N2 W2" as <'T2N-R2W'> (for
+        # example).
+        rge_num = groups['rgenum_edgecase_rge2']
+    # Clean up any leading '0's in rge_num.
+    # (Try/except is used to handle twprge_ocr_scrub_regex mo's,
+    # which can contain alpha characters in `rge_num`.)
+    if ocr_scrub:
+        rge_num = ocr_scrub_alpha_to_num(rge_num)
+    try:
+        rge_num = str(int(rge_num))
+    except ValueError:
+        pass
+
+    ew = default_ew.lower()
+    if groups['ew'] is not None:
+        ew = groups['ew'][0].lower()
+
+    return f"{twp_num}{ns}{rge_num}{ew}"
+
+
+def ocr_scrub_alpha_to_num(txt):
+    """
+    INTERNAL USE:
+    Convert non-numeric characters that are commonly mis-recognized
+    by OCR to their apparently intended numeric counterpart.
+    USE JUDICIOUSLY!
+    """
+
+    # This should only be used on strings whose characters MUST be
+    # numeric values (e.g., the '#' here: "T###N-R###W" -- i.e. only on
+    # a couple .group() components of the match object).
+    # Must use a ton of context not to over-compensate!
+    txt = txt.replace('S', '5')
+    txt = txt.replace('s', '5')
+    txt = txt.replace('O', '0')
+    txt = txt.replace('I', '1')
+    txt = txt.replace('l', '1')
+    return txt

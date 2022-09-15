@@ -18,11 +18,18 @@ try:
         is_multi_sec,
         get_rightmost_sec,
 
+        # twprge functions
+        unpack_twprge,
+
         # general functions
         thru_rightmost,
         get_rightmost,
         start_of_rightmost,
         get_leading_aliquot,
+    )
+    from pytrs.parser.config import (
+        DefaultNSError,
+        DefaultEWError,
     )
 except ImportError:
     import sys
@@ -39,11 +46,18 @@ except ImportError:
         is_multi_sec,
         get_rightmost_sec,
 
+        # twprge functions
+        unpack_twprge,
+
         # general functions
         thru_rightmost,
         get_rightmost,
         start_of_rightmost,
         get_leading_aliquot,
+    )
+from pytrs.parser.config import (
+        DefaultNSError,
+        DefaultEWError,
     )
 
 
@@ -248,6 +262,64 @@ class SecUnpackersTests(unittest.TestCase):
             test = txt.format('Sec')
             mo = sec_regex.search(test)
             self.assertEqual('5', get_rightmost_sec(mo))
+
+
+class TwpRgeUnpackersTests(unittest.TestCase):
+
+    def test_unpack_twprge(self):
+        # Test n/w.
+        nw = (
+            'T154N-R97W',
+            'Township 154 North, Range 97 West',
+            'Twp. 154 N., Rge. 97 W.',
+            'T-154-N-R-97-W',
+            't154nr97w',
+            '154N-97W',
+        )
+        expected_nw = '154n97w'
+        # Test s/e.
+        se = (
+            'T154S-R97E',
+            'Township 154 South, Range 97 East',
+            'Twp. 154 S., Rge. 97 E.',
+            'T-154-S-R-97-E',
+            't154sr97e',
+            '154S-97E'
+        )
+        expected_se = '154s97e'
+
+        for txt in nw:
+            self.assertRegex(txt, twprge_regex)
+            mo = twprge_regex.search(txt)
+            self.assertEqual(expected_nw, unpack_twprge(mo))
+
+        for txt in se:
+            self.assertRegex(txt, twprge_regex)
+            mo = twprge_regex.search(txt)
+            self.assertEqual(expected_se, unpack_twprge(mo))
+
+    def test_unpack_twprge_defaults(self):
+        txt = 'T154-R97'
+        self.assertRegex(txt, pp_twprge_no_nswe)
+        mo = pp_twprge_no_nswe.search(txt)
+
+        # Test master default_ns and default_ew
+        self.assertEqual('154n97w', unpack_twprge(mo))
+        # Test explicit.
+        self.assertEqual(
+            '154n97w', unpack_twprge(mo, default_ns='n', default_ew='w'))
+        self.assertEqual(
+            '154n97e', unpack_twprge(mo, default_ns='n', default_ew='e'))
+        self.assertEqual(
+            '154s97w', unpack_twprge(mo, default_ns='s', default_ew='w'))
+        self.assertEqual(
+            '154s97e', unpack_twprge(mo, default_ns='s', default_ew='e'))
+
+        # Check proper error when passing illegal default_ns or default_ew.
+        with self.assertRaises(DefaultNSError):
+            unpack_twprge(mo, default_ns='asdf')
+        with self.assertRaises(DefaultEWError):
+            unpack_twprge(mo, default_ew='asdf')
 
 
 class GeneralUnpackersTests(unittest.TestCase):
