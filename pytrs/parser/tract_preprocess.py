@@ -50,6 +50,28 @@ CLEAN_QQ_REGEXES = (
 )
 
 
+class TractPreprocessor:
+    """
+    INTERNAL USE:
+
+    A class for preprocessing text for the ``TractParser``. Get the
+    preprocessed text from the ``.text`` attribute, or the original text
+    from the ``.orig_text`` attribute.
+    """
+
+    def __init__(self, orig_text, clean_qq=False):
+        self.orig_text = orig_text
+        self.clean_qq = clean_qq
+        self.text = self.preprocess(orig_text)
+
+    def preprocess(self, text, clean_qq=None, commit=True) -> str:
+        if clean_qq is None:
+            clean_qq = self.clean_qq
+        if commit:
+            self.text = scrub_aliquots(text, clean_qq)
+        return scrub_aliquots(text, clean_qq)
+
+
 def sub_scrubber(txt, scrubber_rgx):
     """
     Convert the raw aliquots to cleaner components, using the
