@@ -41,15 +41,12 @@ multilot_regex = re.compile(
         # and 'acreage' -- for the leftmost lot.
         {lot_regex.pattern}
     )
-    
-    \s*
-    
     (
         # What comes between lots ('through', 'and', etc.). Captures named
         # groups 'through' and 'and' for those words or equivalent symbols.
         ({intervener_regex.pattern})+   # IMPORTANT: Allow more than one intervener
                                         # to keep matching multilots to the right!
-        \s*
+
         ((L\.?o?t?)                  # The word or abbreviation "Lot" (optional on the right).
         (?P<plural_rightmost>s)?)?   # Plural 's' (optional).
         \s*

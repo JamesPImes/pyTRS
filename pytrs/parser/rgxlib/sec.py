@@ -40,13 +40,12 @@ multisec_regex = re.compile(
         # This group captures "Section" and named groups 'plural' and 'secnum'.
         {sec_regex.pattern}
     )
-    \s*
     (
         # What comes between sections ('through', 'and', etc.). Captures named
         # groups 'through' and 'and' for those words or equivalent symbols.
         ({intervener_regex.pattern})+   # IMPORTANT: Allow more than one intervener
                                         # to keep matching multisec to the right!
-        \s*
+
         ({no_num_sec_regex.pattern}     # The word or abbreviation "Section" (optional)
         (?P<plural_rightmost>s)?)?
         \s*
