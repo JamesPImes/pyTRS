@@ -131,3 +131,21 @@ def get_rightmost(kind, mo) -> str:
         return mo[f'{kind}num_rightmost']
     else:
         return mo[f'{kind}num']
+
+
+def start_of_rightmost(mo):
+    """
+    INTERNAL USE:
+    Get the start position of the rightmost 'intervener' named group
+    within the match object, if found. If not found, will return the
+    start position of the match itself.
+
+    WARNING: Do not pass a match object for any other regex pattern.
+
+    :param mo: a match object for multisec_regex, multilot_regex, or
+    multilot_with_aliquots_regex.
+    """
+    # Assume that a regex pattern with named group 'intervener' was used.
+    if mo['intervener'] is not None:
+        return mo.start('intervener')
+    return mo.start()
