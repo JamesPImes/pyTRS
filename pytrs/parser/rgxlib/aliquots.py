@@ -17,10 +17,14 @@ se_simple = r"(SE|South?\s*East)"
 nw_simple = r"(NW|North?\s*West)"
 sw_simple = r"(SW|South?\s*West)"
 
-n_simple = r"(N\.? | No\.? | North?)"
+# Subpatterns for each direction or abbreviation (with no fraction).
+n_simple = r"(N\.?|No\.?|North?)"
 s_simple = r"(S\.?|So\.?|South?)"
 e_simple = r"(E\.?|East)"
 w_simple = r"(W\.?|West)"
+
+# Subpattern for cleaned up aliquot.
+aliquot_simple = r"(([NESW]½)|((NE|NW|SE|SW)¼))"
 
 # Basic aliquot regexes.
 
@@ -150,4 +154,20 @@ half_plus_q_regex = re.compile(
         )
     )+      # IMPORTANT: One or more to match all.
     \b
+    """, re.IGNORECASE | re.VERBOSE)
+
+# For cutting out whitespace and 'of the' or 'of' between identified
+# aliquot components:
+aliquot_intervener_remover_regex = re.compile(
+    fr"""
+    (?P<aliquot1>({aliquot_simple})+)  # first aliquot component
+    (
+        \s*     # any amount of whitespace (to be removed)
+        
+        # 'of the' or 'of' (to be removed)
+        (\s+|of|o|f|o+f+)\s*(t+h+e+|t+e+h+|t+h+|t+)?
+        
+        \s*     # any amount of whitespace (to be removed)
+    )
+    (?P<aliquot2>{aliquot_simple})  # second aliquot component
     """, re.IGNORECASE | re.VERBOSE)

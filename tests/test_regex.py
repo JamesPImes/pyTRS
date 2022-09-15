@@ -41,6 +41,7 @@ try:
         w2_regex,
         all_regex,
         half_plus_q_regex,
+        aliquot_intervener_remover_regex,
 
         # misc regexes
         through_regex,
@@ -83,6 +84,7 @@ except ImportError:
         w2_regex,
         all_regex,
         half_plus_q_regex,
+        aliquot_intervener_remover_regex,
 
         # misc regexes
         through_regex,
@@ -1093,6 +1095,23 @@ class AliquotUnitTest(unittest.TestCase):
             'N½ of the Northeast of the Southwest',
         )
         self._test_half_plus_q(txts, 'sw')
+
+    def test_aliquot_intervener_remover_regex(self):
+        txts_expected = {
+            'N½ of the S½': ('N½', 'S½'),
+            'NE¼ of the SW¼': ('NE¼', 'SW¼'),
+            'NE¼ of SW¼': ('NE¼', 'SW¼'),
+            'NE¼ SW¼': ('NE¼', 'SW¼'),
+            'N½NE¼ of the SW¼': ('N½NE¼', 'SW¼'),
+            'N½NE¼ of SW¼': ('N½NE¼', 'SW¼'),
+            'N½NE¼ SW¼': ('N½NE¼', 'SW¼'),
+        }
+        for txt, expected in txts_expected.items():
+            aq1, aq2 = expected
+            self.assertRegex(txt, aliquot_intervener_remover_regex)
+            mo = aliquot_intervener_remover_regex.search(txt)
+            self.assertEqual(aq1, mo['aliquot1'])
+            self.assertEqual(aq2, mo['aliquot2'])
 
 
 if __name__ == '__main__':
