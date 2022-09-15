@@ -47,7 +47,7 @@ multisec_regex = re.compile(
         ({intervener_regex.pattern})+   # IMPORTANT: Allow more than one intervener
                                         # to keep matching multisec to the right!
         \s*
-        ({no_num_sec_regex.pattern}
+        ({no_num_sec_regex.pattern}     # The word or abbreviation "Section" (optional)
         (?P<plural_rightmost>s)?)?
         \s*
         (?P<secnum_rightmost>\d{{1,3}})  # Rightmost section number (1 to 3 digits)
