@@ -24,7 +24,7 @@ try:
         acreage_subpattern,
         lot_regex,
         multilot_regex,
-        lot_with_aliquot_regex,
+        multilot_with_aliquot_regex,
 
         # aliquot regexes
         ne_clean,
@@ -618,8 +618,8 @@ class LotUnitTest(unittest.TestCase):
                 txts.append(f"{aq} {lot}")
                 txts.append(f"{aq} of {lot}")
         for txt in txts:
-            self.assertRegex(txt, lot_with_aliquot_regex)
-            mo = lot_with_aliquot_regex.search(txt)
+            self.assertRegex(txt, multilot_with_aliquot_regex)
+            mo = multilot_with_aliquot_regex.search(txt)
             groups = mo.groupdict()
             self.assertEqual('1', groups['lotnum'])
             self.assertIsNone(groups['lotnum_rightmost'])
@@ -656,8 +656,8 @@ class LotUnitTest(unittest.TestCase):
                 txts.append(f"{aq} {lot}")
                 txts.append(f"{aq} of {lot}")
         for txt in txts:
-            self.assertRegex(txt, lot_with_aliquot_regex)
-            mo = lot_with_aliquot_regex.search(txt)
+            self.assertRegex(txt, multilot_with_aliquot_regex)
+            mo = multilot_with_aliquot_regex.search(txt)
             groups = mo.groupdict()
             self.assertEqual('1', groups['lotnum'])
             self.assertEqual('8', groups['lotnum_rightmost'])
@@ -695,8 +695,8 @@ class LotUnitTest(unittest.TestCase):
                 txts.append(f"{aq} {lot}")
                 txts.append(f"{aq} of {lot}")
         for txt in txts:
-            self.assertRegex(txt, lot_with_aliquot_regex)
-            mo = lot_with_aliquot_regex.search(txt)
+            self.assertRegex(txt, multilot_with_aliquot_regex)
+            mo = multilot_with_aliquot_regex.search(txt)
             groups = mo.groupdict()
             self.assertEqual('1', groups['lotnum'])
             self.assertEqual('8', groups['lotnum_rightmost'])

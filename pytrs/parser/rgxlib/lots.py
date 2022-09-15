@@ -63,7 +63,7 @@ multilot_regex = re.compile(
 # A pattern to match divided lots (e.g., 'N½N½ of Lots 1 - 3'). To be
 # used only AFTER aliquots have been preprocessed into standard
 # abbreviations with fractions.
-lot_with_aliquot_regex = re.compile(
+multilot_with_aliquot_regex = re.compile(
     fr"""
     (?P<aliquot>(([NESW]½)|((NE|NW|SE|SW)¼))+)  # leading aliquot division (optional)
     \s*
