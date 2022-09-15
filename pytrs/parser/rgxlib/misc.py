@@ -32,3 +32,6 @@ intervener_regex = re.compile(
 of_the_regex = re.compile(
     r"(\s+|of|o|f|o+f+)\s*(t+h+e+|t+e+h+|t+h+|t+)?", re.IGNORECASE
 )
+
+# Lookbehind subpattern for comma (or similar) or word boundary.
+comma_wb_lookbehind = r"((?<=[,;:])|(?<=\b))"

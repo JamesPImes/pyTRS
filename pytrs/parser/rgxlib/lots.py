@@ -3,14 +3,12 @@ import re
 
 from .misc import (
     intervener_regex,
+    comma_wb_lookbehind
 )
 
 # A regex for extra context around pp_twprge_no_nsr preprocessing
 # (need to rule out "Lots" at the start of such a match):
 lots_context_regex = re.compile(r"Lo?ts?|Lo?s?t", re.IGNORECASE)
-
-# Lookbehind subpattern for comma (or similar) or word boundary.
-cwb_lkbehind = r"((?<=,|;|:)|(?<=\b))"
 
 # Capture acreage in the format (12.345678) or [12.345678].
 acreage_subpattern = re.compile(
@@ -24,7 +22,7 @@ acreage_subpattern = re.compile(
 
 lot_regex = re.compile(
     fr"""
-    {cwb_lkbehind}
+    {comma_wb_lookbehind}
     (
         (L\.?|Lt\.?|Lot)            # The word or abbreviation "Lot"
         (?P<plural>s)?              # Plural 's' (optional).
@@ -69,7 +67,7 @@ multilot_regex = re.compile(
 # abbreviations with fractions.
 multilot_with_aliquot_regex = re.compile(
     fr"""
-    {cwb_lkbehind}
+    {comma_wb_lookbehind}
     (
         # leading aliquot division (optional)
         (?P<aliquot>(([NESW]½)|((NE|NW|SE|SW)¼))+)
