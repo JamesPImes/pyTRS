@@ -307,3 +307,15 @@ def ocr_scrub_alpha_to_num(txt):
     txt = txt.replace('l', '1')
     txt = txt.replace('L', '1')
     return txt
+
+
+def twprge_natural_to_short(twprge: str) -> str:
+    """
+    Convert a natural Twp/Rge (e.g. 'T154N-R97W') into the standard
+    abbreviation used in this library (e.g., '154n97w').
+    :param twprge: A natural Twp/Rge (e.g. 'T154N-R97W')
+    :return: The equivalent Twp/Rge in the standard abbreviation (e.g.,
+    '154n97w'
+    """
+    twprge = twprge.lower()
+    return re.sub(r'[rt-]', '', twprge)

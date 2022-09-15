@@ -20,6 +20,7 @@ try:
 
         # twprge functions
         unpack_twprge,
+        twprge_natural_to_short,
 
         # general functions
         thru_rightmost,
@@ -48,6 +49,7 @@ except ImportError:
 
         # twprge functions
         unpack_twprge,
+        twprge_natural_to_short,
 
         # general functions
         thru_rightmost,
@@ -336,6 +338,16 @@ class TwpRgeUnpackersTests(unittest.TestCase):
             self.assertRegex(txt, pp_twprge_ocr_scrub)
             mo = pp_twprge_ocr_scrub.search(txt)
             self.assertEqual(expected, unpack_twprge(mo, ocr_scrub=True))
+
+    def test_twprge_natural_to_short(self):
+        txts_expected = {
+            'T154N-R97W': '154n97w',
+            'T1N-R7E': '1n7e',
+            'T154S-R97W': '154s97w',
+            'T1S-R7W': '1s7w',
+        }
+        for txt, expected in txts_expected.items():
+            self.assertEqual(expected, twprge_natural_to_short(txt))
 
 
 class GeneralUnpackersTests(unittest.TestCase):
