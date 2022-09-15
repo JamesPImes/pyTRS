@@ -31,8 +31,8 @@ def is_multi_lot(multilots_mo) -> bool:
 def is_multi_sec(multisec_mo) -> bool:
     """
     INTERNAL USE:
-    Whether a multisec_regex match object found more than one lot (True)
-    or if it is only one lot (False).
+    Whether a multisec_regex match object found more than one sec (True)
+    or if it is only one sec (False).
 
     WARNING: Do not pass a match object for any other regex pattern.
     """
