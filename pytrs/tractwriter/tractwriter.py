@@ -170,5 +170,5 @@ class TractWriter:
 
 
 __all__ = [
-    TractWriter
+    'TractWriter'
 ]
