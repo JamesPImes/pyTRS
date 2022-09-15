@@ -22,6 +22,16 @@ def is_multi_lot(multilots_mo) -> bool:
     return is_multi('lot', multilots_mo)
 
 
+def get_rightmost_lot(multilot_mo) -> str:
+    """
+    Get the rightmost lot from a lot_regex, multilot_regex, or
+    multilot_with_aliquot_regex match object.
+    :param multilot_mo:
+    :return:
+    """
+    return get_rightmost('lot', multilot_mo)
+
+
 # Unpacking multisec_regex.
 
 def is_multi_sec(multisec_mo) -> bool:
@@ -33,6 +43,16 @@ def is_multi_sec(multisec_mo) -> bool:
     WARNING: Do not pass a match object for any other regex pattern.
     """
     return is_multi('sec', multisec_mo)
+
+
+def get_rightmost_sec(multisec_mo) -> str:
+    """
+    Get the rightmost lot from a lot_regex, multilot_regex, or
+    multilot_with_aliquot_regex match object.
+    :param multilot_mo:
+    :return:
+    """
+    return get_rightmost('sec', multisec_mo)
 
 
 # General functions.
@@ -83,3 +103,31 @@ def thru_rightmost(mo) -> bool:
         return False
     txt = txt.strip()
     return through_regex.search(txt) is not None
+
+
+def get_rightmost(kind, mo) -> str:
+    """
+    INTERNAL USE:
+    Whether a multisec_regex, multilot_regex, or
+    multilot_with_aliquots_regex match object found more than one sec /
+    lot (True) or if it is only one sec / lot (False).
+
+    WARNING: Do not pass a match object for any other regex pattern.
+
+    :param kind: Either 'lot' or 'sec', depending on whether we're
+    figuring out whether this is a multi-lot or a multi-sec.
+    :param mo: a match object for multisec_regex, multilot_regex, or
+    multilot_with_aliquots_regex.
+    """
+    # 'lot' will match named groups 'lotnum_rightmost' and 'lotnum' in
+    # the lot-type regexes; and 'sec' will match 'secnum_rightmost' and
+    # 'secnum' in sec-type regex.
+    if kind not in ('lot', 'sec'):
+        raise ValueError
+    groups = mo.groupdict()
+    if f'{kind}num_rightmost' not in groups.keys():
+        return mo[f'{kind}num']
+    elif is_multi(kind, mo):
+        return mo[f'{kind}num_rightmost']
+    else:
+        return mo[f'{kind}num']

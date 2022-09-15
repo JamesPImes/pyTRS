@@ -10,12 +10,15 @@ try:
     from pytrs.parser.unpackers import (
         # lot/multilot functions
         is_multi_lot,
+        get_rightmost_lot,
 
         # sec/multisec functions
         is_multi_sec,
+        get_rightmost_sec,
 
         # general functions
         thru_rightmost,
+        get_rightmost,
     )
 except ImportError:
     import sys
@@ -51,6 +54,46 @@ class LotUnpackersTests(unittest.TestCase):
         no_aq_mo = multilot_with_aliquot_regex.search(no_with_aliquot)
         self.assertFalse(is_multi_lot(no_aq_mo))
 
+    def test_get_rightmost(self):
+        multis = (
+            '{} 1 and 3 - 5',
+            '{} 1 - 5',
+            '{} 1 - 3 and 5',
+            '{} 1 - 3, 5',
+            '{} 5',
+            '{} 1 and 5',
+            '{} 1 - 3 and 5',
+            '{} 1 - 3, 5',
+        )
+
+        singles = (
+            '{} 5',
+        )
+
+        for txt in multis:
+            # Test lots
+            test = txt.format('Lot')
+            mo = multilot_regex.search(test)
+            self.assertTrue(get_rightmost_lot(mo))
+
+            # Test lots with aliquots
+            test = txt.format('Lot')
+            test = f"NE¼ of {test}"
+            mo = multilot_with_aliquot_regex.search(test)
+            self.assertEqual('5', get_rightmost_lot(mo))
+
+        for txt in singles:
+            # Test lots
+            test = txt.format('Lot')
+            yes_mo_lot = multilot_regex.search(test)
+            self.assertEqual('5', get_rightmost_lot(yes_mo_lot))
+
+            # Test lots with aliquots
+            test = txt.format('Lot')
+            test = f"NE¼ of {test}"
+            mo = multilot_with_aliquot_regex.search(test)
+            self.assertEqual('5', get_rightmost_lot(mo))
+
 
 class SecUnpackersTests(unittest.TestCase):
 
@@ -63,6 +106,34 @@ class SecUnpackersTests(unittest.TestCase):
 
         no_mo = multisec_regex.search(no)
         self.assertFalse(is_multi_sec(no_mo))
+
+    def test_get_rightmost(self):
+        multis = (
+            '{} 1 and 3 - 5',
+            '{} 1 - 5',
+            '{} 1 - 3 and 5',
+            '{} 1 - 3, 5',
+            '{} 1',
+            '{} 1 and 3',
+            '{} 1 - 3 and 5',
+            '{} 1 - 3, 5',
+        )
+
+        singles = (
+            '{} 5',
+        )
+
+        for txt in multis:
+            # Test sections
+            test = txt.format('Sec')
+            mo = multisec_regex.search(test)
+            self.assertTrue(get_rightmost_sec(mo))
+
+        for txt in singles:
+            # Test sections
+            test = txt.format('Sec')
+            mo = sec_regex.search(test)
+            self.assertEqual('5', get_rightmost_sec(mo))
 
 
 class GeneralUnpackersTests(unittest.TestCase):
