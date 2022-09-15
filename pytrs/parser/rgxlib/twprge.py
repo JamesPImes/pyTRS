@@ -5,8 +5,14 @@ Regex patterns for Twp/Rge and related preprocessing.
 
 import re
 
+from .misc import (
+    comma_wb_lookbehind,
+)
+
 twprge_regex = re.compile(
     r"""
+    ((?<=[,;:])|(?<=\b))    # Word boundary or comma (or similar) lookbehind.
+     
     (T[ownship]{0,9})?      # The word or symbol for "Township" (optional).
     [\.\-–—,\s]*            # Deadspace between "Township" and twpnum.
     (?P<twpnum>\d{1,3})     # twpnum
@@ -61,6 +67,8 @@ twprge_regex = re.compile(
 # Require 'T' (Twp) and 'R' (Rge), but not n/s or e/w.
 pp_twprge_no_nswe = re.compile(
     r"""
+    ((?<=[,;:])|(?<=\b))    # Word boundary or comma (or similar) lookbehind.
+    
     # The word or symbol for "Township". (At least "T" is required.)
     T(
     w\.?|
@@ -91,6 +99,8 @@ pp_twprge_no_nswe = re.compile(
 # Require 'T' (Twp) and e/w, but not 'R' (Rge) or n/s.
 pp_twprge_no_nsr = re.compile(
     r"""
+    ((?<=[,;:])|(?<=\b))    # Word boundary or comma (or similar) lookbehind.
+    
     # The word or symbol for "Township". (At least "T" is required.)
     T(
     w\.?|
@@ -121,6 +131,8 @@ pp_twprge_no_nsr = re.compile(
 # Require 'R' (Rge) and n/s, but not 'T' (Twp) or e/w.
 pp_twprge_no_ewt = re.compile(
     r"""
+    ((?<=[,;:])|(?<=\b))    # Word boundary or comma (or similar) lookbehind.
+    
     # The word or symbol for "Township" (optional).
     (
     T|
@@ -152,6 +164,8 @@ pp_twprge_no_ewt = re.compile(
 # "TIS4N-R97W" instead of intended "T154N-R97W").
 pp_twprge_ocr_scrub = re.compile(
     r"""
+    ((?<=[,;:])|(?<=\b))    # Word boundary or comma (or similar) lookbehind.
+    
     # The word or symbol for "Township". (At least "T" is required.)
     T(
     w\.?|
