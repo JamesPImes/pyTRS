@@ -63,7 +63,7 @@ class TractPreprocessor:
         self.clean_qq = clean_qq
         self.text = self.preprocess(orig_text)
 
-    def preprocess(self, text, clean_qq=None, commit=True) -> str:
+    def preprocess(self, text, clean_qq=None, commit=False) -> str:
         if clean_qq is None:
             clean_qq = self.clean_qq
         if commit:
@@ -73,8 +73,8 @@ class TractPreprocessor:
 
 def sub_scrubber(txt, scrubber_rgx):
     """
-    Convert the raw aliquots to cleaner components, using the
-    specified scrubber_rgx.
+    Convert the raw aliquots to cleaner components, using the specified
+    scrubber_rgx.
     """
     replace_with = QQ_SCRUBBER_DEFINITIONS[scrubber_rgx]
     # Make substitutions until there are no changes.
@@ -96,16 +96,29 @@ def half_plus_q_scrubber(txt):
         mo = half_plus_q_regex.search(txt)
         if mo is None:
             continue
+
+        # The 'quarter_aliquot_rightmost' named group always matches the
+        # rightmost quarter. It is agnostic as to whether that matches
+        # specifically the NE/4, NW/4, SE/4, or SW/4. To determine which
+        # was matched, compare the contents in each of the four named
+        # groups against 'quarter_aliquot_rightmost'. Whichever of those
+        # matches is the actual rightmost quarter.
         rightmost_comparer = mo['quarter_aliquot_rightmost']
         rightmost_quarter = ''
         if mo['ne_found'] == rightmost_comparer:
-            rightmost_quarter = 'NE¼'
+            rightmost_quarter = NE_FRAC
         elif mo['nw_found'] == rightmost_comparer:
-            rightmost_quarter = 'NW¼'
+            rightmost_quarter = NW_FRAC
         elif mo['se_found'] == rightmost_comparer:
-            rightmost_quarter = 'SE¼'
+            rightmost_quarter = SE_FRAC
         elif mo['sw_found'] == rightmost_comparer:
-            rightmost_quarter = 'SW¼'
+            rightmost_quarter = SW_FRAC
+
+        # Replace this entire regex match with itself, but only up
+        # through the point where we reached the rightmost group. At
+        # that point, we substitute the replacement substring (being the
+        # quarter abbreviation with fraction symbol). That newly
+        # cleaned-up quarter + fraction will not match in the next loop.
         i = mo.start('quarter_aliquot_rightmost')
         replace_with = f"{mo.group(0)[:i]}{rightmost_quarter}"
         txt = re.sub(half_plus_q_regex, replace_with, txt)
