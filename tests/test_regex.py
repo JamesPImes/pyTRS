@@ -612,13 +612,13 @@ class LotUnitTest(unittest.TestCase):
             'L. 1',
             'L1',
         )
-        txts = []
+        txts_expected = {}
         # Construct pairs of '<aliquot> <lots>' (and '<aliquot> of <lots>').
         for aq in aliquots:
             for lot in lots:
-                txts.append(f"{aq} {lot}")
-                txts.append(f"{aq} of {lot}")
-        for txt in txts:
+                txts_expected[f"{aq} {lot}"] = aq
+                txts_expected[f"{aq} of {lot}"] = aq
+        for txt, expected in txts_expected.items():
             self.assertRegex(txt, multilot_with_aliquot_regex)
             mo = multilot_with_aliquot_regex.search(txt)
             groups = mo.groupdict()
@@ -627,7 +627,7 @@ class LotUnitTest(unittest.TestCase):
             # Ensure the entire string was matched.
             self.assertEqual(txt, mo.group(0))
             # Ensure the entire aliquot portion was matched.
-            self.assertTrue(mo['aliquot'] in aliquots)
+            self.assertEqual(expected, mo['aliquot'])
 
     def test_lot_with_aliquot_regex_multilot_through(self):
         """
