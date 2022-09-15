@@ -60,6 +60,15 @@ def get_rightmost_acreage(multilot_mo):
     return acreage_string
 
 
+def first_lot_is_plural(multilot_mo) -> bool:
+    """
+    Check if the leftmost word 'Lot' is plural.
+    :param multilot_mo:
+    :return:
+    """
+    return multilot_mo['plural'] is not None
+
+
 # Unpacking multisec_regex.
 
 def is_multi_sec(multisec_mo) -> bool:

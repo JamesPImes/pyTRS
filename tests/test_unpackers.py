@@ -12,6 +12,7 @@ try:
         is_multi_lot,
         get_rightmost_lot,
         get_rightmost_acreage,
+        first_lot_is_plural,
 
         # sec/multisec functions
         is_multi_sec,
@@ -31,6 +32,7 @@ except ImportError:
         is_multi_lot,
         get_rightmost_lot,
         get_rightmost_acreage,
+        first_lot_is_plural,
 
         # sec/multisec functions
         is_multi_sec,
@@ -135,6 +137,47 @@ class LotUnpackersTests(unittest.TestCase):
         for txt in singles_no:
             mo = lot_regex.search(txt)
             self.assertIsNone(get_rightmost_acreage(mo))
+
+    def test_first_lot_is_plural(self):
+        """
+        Check first_lot_is_plural()
+        """
+        multis_yes = (
+            'Lots 1 - 3',
+            'Lots 1 - 3 and Lot 5',
+            'Lots 1',
+        )
+        multis_no = (
+            'Lot 1 - 3',
+            'Lot 1 - 3 and Lots 5 - 7',
+            'L1',
+            'L1 - L3',
+            'L1, L2'
+        )
+        singles_yes = (
+            'Lots 1',
+            # These are weird, but would match:
+            'Lt.s 1',
+            'L.s 1',
+        )
+        singles_no = (
+            'Lot 1',
+            'L1',
+            'Lt. 1',
+            'Lt.1',
+        )
+        for txt in multis_yes:
+            mo = multilot_regex.search(txt)
+            self.assertTrue(first_lot_is_plural(mo))
+        for txt in multis_no:
+            mo = multilot_regex.search(txt)
+            self.assertFalse(first_lot_is_plural(mo))
+        for txt in singles_yes:
+            mo = lot_regex.search(txt)
+            self.assertTrue(first_lot_is_plural(mo))
+        for txt in singles_no:
+            mo = lot_regex.search(txt)
+            self.assertFalse(first_lot_is_plural(mo))
 
 
 class SecUnpackersTests(unittest.TestCase):

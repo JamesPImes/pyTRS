@@ -26,7 +26,7 @@ lot_regex = re.compile(
     fr"""
     {cwb_lkbehind}
     (
-        (L\.?|Lo?t)                 # The word or abbreviation "Lot"
+        (L\.?|Lt\.?|Lot)            # The word or abbreviation "Lot"
         (?P<plural>s)?              # Plural 's' (optional).
         \s*
         (?P<lotnum>\d{{1,3}})       # lotnum
@@ -51,7 +51,7 @@ multilot_regex = re.compile(
         ({intervener_regex.pattern})+   # IMPORTANT: Allow more than one intervener
                                         # to keep matching multilots to the right!
 
-        ((L\.?|Lo?t)                 # The word or abbreviation "Lot" (optional on the right).
+        ((L\.?|Lt\.?|Lot)               # The word or abbreviation "Lot" (optional on the right).
         (?P<plural_rightmost>s)?)?   # Plural 's' (optional).
         \s*
         (?P<lotnum_rightmost>\d{{1,3}})     # lotnum (rightmost)
