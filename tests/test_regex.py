@@ -563,6 +563,7 @@ class LotUnitTest(unittest.TestCase):
             'Lot 1 - 8',
             'Lot 1 - Lot 8',
             'Lots 1 - 8',
+            'Lots 1 and 3 - 8',
             'L. 1 - L. 8',
             'L1 thru L8',
             'L1 through L8'
