@@ -22,6 +22,7 @@ try:
         thru_rightmost,
         get_rightmost,
         start_of_rightmost,
+        get_leading_aliquot,
     )
 except ImportError:
     import sys
@@ -42,6 +43,7 @@ except ImportError:
         thru_rightmost,
         get_rightmost,
         start_of_rightmost,
+        get_leading_aliquot,
     )
 
 
@@ -178,6 +180,36 @@ class LotUnpackersTests(unittest.TestCase):
         for txt in singles_no:
             mo = lot_regex.search(txt)
             self.assertFalse(first_lot_is_plural(mo))
+
+    def test_get_leading_aliquot(self):
+        aliquots = (
+            'W½',
+            'N½NE¼',
+            'E½E½SE¼',
+            'S½NE¼NW¼',
+            'S½N½SW¼SW¼',
+        )
+        lots = (
+            'Lot 1',
+            'Lots 1',
+            'L. 1',
+            'L1',
+        )
+        # Test where leading aliquot exists.
+        txts_expected = {}
+        # Construct pairs of '<aliquot> <lots>' (and '<aliquot> of <lots>').
+        for aq in aliquots:
+            for lot in lots:
+                txts_expected[f"{aq} {lot}"] = aq
+                txts_expected[f"{aq} of {lot}"] = aq
+        for txt, expected in txts_expected.items():
+            mo = multilot_with_aliquot_regex.search(txt)
+            self.assertEqual(expected, get_leading_aliquot(mo))
+
+        # Test where no leading aliquot exists.
+        for txt in lots:
+            mo = multilot_with_aliquot_regex.search(txt)
+            self.assertEqual('', get_leading_aliquot(mo))
 
 
 class SecUnpackersTests(unittest.TestCase):

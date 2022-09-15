@@ -69,6 +69,23 @@ def first_lot_is_plural(multilot_mo) -> bool:
     return multilot_mo['plural'] is not None
 
 
+# Tools for interpreting lot_with_aliquot_regex match objects:
+
+def get_leading_aliquot(mo):
+    """
+    INTERNAL USE:
+
+    :return: The string of the leading aliquot component from a
+    multilot_with_aliquot_regex match object. Returns empty string if
+    that group was not found in the match.
+    """
+    groups = mo.groupdict()
+    aliquot = groups.get('aliquot', '')
+    if aliquot is None:
+        return ''
+    return aliquot
+
+
 # Unpacking multisec_regex.
 
 def is_multi_sec(multisec_mo) -> bool:
