@@ -24,6 +24,7 @@ try:
         acreage_subpattern,
         lot_regex,
         multilot_regex,
+        lot_with_aliquot_regex,
 
         # aliquot regexes
         ne_clean,
@@ -590,6 +591,120 @@ class LotUnitTest(unittest.TestCase):
             self.assertEqual('1', groups['lotnum'])
             self.assertEqual('8', groups['lotnum_rightmost'])
             self.assertIsNotNone(groups['and'])
+
+    def test_lot_with_aliquot_regex_single(self):
+        """
+        Test the pattern of aliquots before multi-lot (e.g.,
+        "N½ of Lots 1 and 3"). To be used only after aliquots are
+        preprocessed.
+        """
+        aliquots = (
+            'W½',
+            'N½NE¼',
+            'E½E½SE¼',
+            'S½NE¼NW¼',
+            'S½N½SW¼SW¼',
+        )
+        lots = (
+            'Lot 1',
+            'Lots 1',
+            'L. 1',
+            'L1',
+        )
+        txts = []
+        # Construct pairs of '<aliquot> <lots>' (and '<aliquot> of <lots>').
+        for aq in aliquots:
+            for lot in lots:
+                txts.append(f"{aq} {lot}")
+                txts.append(f"{aq} of {lot}")
+        for txt in txts:
+            self.assertRegex(txt, lot_with_aliquot_regex)
+            mo = lot_with_aliquot_regex.search(txt)
+            groups = mo.groupdict()
+            self.assertEqual('1', groups['lotnum'])
+            self.assertIsNone(groups['lotnum_rightmost'])
+            # Ensure the entire string was matched.
+            self.assertEqual(txt, mo.group(0))
+            # Ensure the entire aliquot portion was matched.
+            self.assertTrue(mo['aliquot'] in aliquots)
+
+    def test_lot_with_aliquot_regex_multilot_through(self):
+        """
+        Test the pattern of aliquots before multi-lot (e.g.,
+        "N½ of Lots 1 - 3"). To be used only after aliquots are
+        preprocessed.
+        """
+        aliquots = (
+            'W½',
+            'N½NE¼',
+            'E½E½SE¼',
+            'S½NE¼NW¼',
+            'S½N½SW¼SW¼',
+        )
+        lots = (
+            'Lot 1 - 8',
+            'Lot 1 - Lot 8',
+            'Lots 1 - 8',
+            'L. 1 - L. 8',
+            'L1 thru L8',
+            'L1 through L8'
+        )
+        txts = []
+        # Construct pairs of '<aliquot> <lots>' (and '<aliquot> of <lots>').
+        for aq in aliquots:
+            for lot in lots:
+                txts.append(f"{aq} {lot}")
+                txts.append(f"{aq} of {lot}")
+        for txt in txts:
+            self.assertRegex(txt, lot_with_aliquot_regex)
+            mo = lot_with_aliquot_regex.search(txt)
+            groups = mo.groupdict()
+            self.assertEqual('1', groups['lotnum'])
+            self.assertEqual('8', groups['lotnum_rightmost'])
+            self.assertIsNotNone(groups['thru'])
+            # Ensure the entire string was matched.
+            self.assertEqual(txt, mo.group(0))
+            # Ensure the entire aliquot portion was matched.
+            self.assertTrue(mo['aliquot'] in aliquots)
+
+    def test_lot_with_aliquot_regex_multilot_and(self):
+        """
+        Test the pattern of aliquots before multi-lot (e.g.,
+        "N½ of Lots 1 and 3"). To be used only after aliquots are
+        preprocessed.
+        """
+        aliquots = (
+            'W½',
+            'N½NE¼',
+            'E½E½SE¼',
+            'S½NE¼NW¼',
+            'S½N½SW¼SW¼',
+        )
+        lots = (
+            'Lot 1 and 8',
+            'Lot 1 and Lot 8',
+            'Lots 1 - 3, and 8',
+            'L. 1 - 3, and L. 8',
+            'L1 thru L3, and L8',
+            'L1 through L3, and L8'
+        )
+        txts = []
+        # Construct pairs of '<aliquot> <lots>' (and '<aliquot> of <lots>').
+        for aq in aliquots:
+            for lot in lots:
+                txts.append(f"{aq} {lot}")
+                txts.append(f"{aq} of {lot}")
+        for txt in txts:
+            self.assertRegex(txt, lot_with_aliquot_regex)
+            mo = lot_with_aliquot_regex.search(txt)
+            groups = mo.groupdict()
+            self.assertEqual('1', groups['lotnum'])
+            self.assertEqual('8', groups['lotnum_rightmost'])
+            self.assertIsNotNone(groups['and'])
+            # Ensure the entire string was matched.
+            self.assertEqual(txt, mo.group(0))
+            # Ensure the entire aliquot portion was matched.
+            self.assertTrue(mo['aliquot'] in aliquots)
 
 
 class AliquotUnitTest(unittest.TestCase):

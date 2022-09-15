@@ -58,3 +58,18 @@ multilot_regex = re.compile(
         (?P<acreage_rightmost>{acreage_subpattern.pattern})?  # Acreage (optional).
     )*
     """, re.IGNORECASE | re.VERBOSE)
+
+
+# A pattern to match divided lots (e.g., 'N½N½ of Lots 1 - 3'). To be
+# used only AFTER aliquots have been preprocessed into standard
+# abbreviations with fractions.
+lot_with_aliquot_regex = re.compile(
+    fr"""
+    (?P<aliquot>(([NESW]½)|((NE|NW|SE|SW)¼))+)  # leading aliquot division (optional)
+    \s*
+    (of)?                           # "of" (optional)
+    \s*
+    
+    # The usual multi-lot pattern with the same named groups.
+    {multilot_regex.pattern}
+    """, re.IGNORECASE | re.VERBOSE)
