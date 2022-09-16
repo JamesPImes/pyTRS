@@ -91,7 +91,82 @@ def get_leading_aliquot(mo):
     return aliquot
 
 
-# Unpacking multisec_regex.
+# Unpacking Sections / Multi-Sections textblocks and multisec_regex patterns.
+
+class SecUnpacker:
+    """A class to unpack Section and Multi-Section text blocks."""
+
+    def __init__(self, txt):
+        self.sec_list = []
+        self.flags = []
+        self.flag_lines = []
+        self.unpack_sections(txt)
+
+    def unpack_sections(self, txt):
+
+        # A working list of the sections. Note that this gets filled
+        # from last-to-first on this working text block, but gets
+        # reversed at the end.
+        working_sec_list = []
+
+        found_through = False
+        endpos = len(txt)
+        while True:
+            sec_mo = multisec_regex.search(txt, endpos=endpos)
+
+            if sec_mo is None:
+                # We're out of section numbers.
+                break
+
+            # Pull the right-most section number (still as a string):
+            sec_num = get_rightmost_sec(sec_mo)
+
+            # Assume we've found the last section and can therefore skip
+            # the next loop after we've found the last section.
+            endpos = 0
+            if is_multi_sec(sec_mo):
+                # If multiple sections remain, we will continue our
+                # search next loop.
+                endpos = start_of_rightmost(sec_mo)
+
+            # Clean up any leading '0's in sec_num.
+            sec_num = str(int(sec_num))
+
+            # Format section number as 2 digits.
+            new_sec = sec_num.rjust(2, '0')
+
+            if found_through:  # during the last loop.
+                # We've identified a elided list (e.g., 'Sections 3 - 9').
+                previous_sec = working_sec_list[-1]
+                start_of_list = int(sec_num)
+                end_of_list = int(previous_sec)
+
+                # Whether this elided list is in the expected order (i.e.
+                # 'Sections 3 - 9' -> True; 'Sections 9 - 3' -> False).
+                correct_order = start_of_list < end_of_list
+                end, start, step = end_of_list - 1, start_of_list - 1, -1
+                if not correct_order:
+                    end, start, step = end_of_list + 1, start_of_list + 1, 1
+                    flag = 'nonsequential_sections'
+                    flag_line = f"{flag}<{start_of_list} - {end_of_list}>"
+                    self.flags.append(flag)
+                    self.flag_lines.append((flag, flag_line))
+
+                for i in range(end, start, step):
+                    add_sec = str(i).rjust(2, '0')
+                    working_sec_list.append(add_sec)
+            else:
+                # A standalone section.
+                working_sec_list.append(new_sec)
+
+            # Check for the next loop.
+            found_through = thru_rightmost(sec_mo)
+
+        working_sec_list.reverse()
+        self.sec_list.extend(working_sec_list)
+
+        return working_sec_list
+
 
 def is_multi_sec(multisec_mo) -> bool:
     """
