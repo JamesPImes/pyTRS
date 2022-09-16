@@ -45,6 +45,38 @@ class MasterConfig:
     _LEGAL_NS = ('n', 's', 'N', 'S')
     _LEGAL_EW = ('e', 'w', 'E', 'W')
 
+    # Str representations of error Twp/Rge/Sec
+    _ERR_SEC = 'XX'
+    _ERR_TWP = 'XXXz'
+    _ERR_RGE = _ERR_TWP
+    _ERR_TWPRGE = f"{_ERR_TWP}{_ERR_RGE}"
+    _ERR_TRS = f"{_ERR_TWPRGE}{_ERR_SEC}"
+
+    # Str representations of undefined Twp/Rge/Sec
+    _UNDEF_SEC = '__'
+    _UNDEF_TWP = '___z'
+    _UNDEF_RGE = _UNDEF_TWP
+    _UNDEF_TWPRGE = f"{_UNDEF_TWP}{_UNDEF_RGE}"
+    _UNDEF_TRS = f"{_UNDEF_TWPRGE}{_UNDEF_SEC}"
+
+    _ALL_ERR = (
+        _ERR_SEC,
+        _ERR_TWP,
+        _ERR_RGE,
+        _ERR_TWPRGE,
+        _ERR_TRS
+    )
+
+    _ALL_UNDEF = (
+        _UNDEF_SEC,
+        _UNDEF_TWP,
+        _UNDEF_RGE,
+        _UNDEF_TWPRGE,
+        _UNDEF_TRS
+    )
+
+    _ALL_ERR_UNDEF = tuple(list(_ALL_ERR) + list(_ALL_UNDEF))
+
 
 __all__ = [
     'DefaultEWError',
