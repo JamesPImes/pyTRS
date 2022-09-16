@@ -9,3 +9,5 @@ from .lots import *
 from .aliquots import *
 from .warnings import *
 from .misc import *
+from .context_checkers import *
+
