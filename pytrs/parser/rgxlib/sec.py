@@ -29,7 +29,6 @@ sec_regex = re.compile(
     
     # Note the double curly brackets to escape f-string syntax.
     (?P<secnum>\d{{1,3}})       # Section number, between 1 and 3 digits.
-    \s*                         # Trailing whitespace.
     )
     """, re.IGNORECASE | re.VERBOSE)
 
@@ -51,5 +50,5 @@ multisec_regex = re.compile(
         \s*
         (?P<secnum_rightmost>\d{{1,3}})  # Rightmost section number (1 to 3 digits)
     )*   # Will go to here for multi-sections
-    \s*(?P<colon>:)?    # Capture an optional colon at end.
+    (?P<colon>\s*:)?    # Capture an optional colon at end.
     """, re.IGNORECASE | re.VERBOSE)
