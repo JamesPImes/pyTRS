@@ -1,8 +1,10 @@
 
 from .rgxlib import *
 from .unpackers import (
+    SecUnpacker,
     unpack_twprge,
     twprge_natural_to_short,
+    is_multi_sec,
 )
 from .master_config import (
     DefaultEWError,
@@ -83,11 +85,12 @@ class TwpRgeFinder:
         def new_match(mo):
             """
             Extract the abbreviated Twp/Rge, and the start/end positions
-            of the match. Append to the list of matches as a 3-tuple.
+            of the match. Append to the list of matches as a 4-tuple,
+            whose first element is 'TWPRGE'.
             """
             twprge = unpack_twprge(mo)
             twprge = twprge_natural_to_short(twprge)
-            new = (twprge, mo.start(0), mo.end(0))
+            new = ('TWPRGE', twprge, mo.start(0), mo.end(0))
             self.matches.append(new)
             return new
 
@@ -128,6 +131,136 @@ class TwpRgeFinder:
                 self.flags.append(flag)
                 self.flag_lines.append(line)
 
+        return None
+
+
+class SecFinder:
+    """
+    INTERNAL USE:
+
+    A class to find Sections that appropriately match the specified
+    layout.
+    """
+
+    DEFAULT_COLON = 'default_colon'
+    SECOND_PASS = 'second_pass'
+
+    def __init__(
+            self,
+            txt: str,
+            layout: str = None,
+            require_colon = DEFAULT_COLON):
+        self.txt = txt
+        self.matches = []
+        self.layout = layout
+        self.flags = []
+        self.flag_lines = []
+        self.findall_matching_sec(txt, layout, require_colon)
+
+    def findall_matching_sec(
+            self,
+            text: str,
+            layout: str = None,
+            require_colon=DEFAULT_COLON):
+        """
+        INTERNAL USE:
+
+        Pull from the text all sections and 'multi-sections' that are
+        appropriate to the description layout.
+        :param text: The text to search for sections.
+        :param layout: The layout of the description. (Will be deduced
+        if not specified.)
+        :param require_colon: Same effect as in ``PLSSParser.parse()``
+        """
+
+        def new_match(mo):
+            """
+            Extract the list of section numbers, and the start/end
+            positions of the match. Append to the list of matches as a
+            4-tuple, whose first element is 'SEC'.
+            :param mo:
+            :return:
+            """
+            unpacker = SecUnpacker(mo.group(0))
+            self.flags.extend(unpacker.flags)
+            self.flag_lines.extend(unpacker.flag_lines)
+            new = ('SEC', unpacker.sec_list, mo.start(0), mo.end(0))
+            self.matches.append(new)
+
+        if layout is None:
+            layout = deduce_layout(text=text)
+
+        # require_colon=True will pass over sections that are NOT
+        # followed by colons in the TRS_DESC and S_DESC_TR layouts only.
+        # It is defaulted to (sort-of) True for those layouts, but if no
+        # satisfactory section or multi-section is found during the
+        # first pass, it will rerun with `require_colon=SECOND_PASS`.
+        # Feeding `require_colon=True` as a kwarg will override allowing
+        # the second pass.
+
+        if isinstance(require_colon, bool):
+            need_colon = require_colon
+        elif require_colon == self.SECOND_PASS:
+            need_colon = False
+            # Clear any staged flags from the first pass.
+            self.flags = []
+            self.flag_lines = []
+        else:
+            need_colon = True
+        if layout not in [TRS_DESC, S_DESC_TR]:
+            # need_colon has no effect on other description layouts.
+            need_colon = False
+
+        for sec_mo in multisec_regex.finditer(text):
+            # Sections and multi-sections can get ruled out for a few reasons.
+            legit_match = True
+            sec_txt = sec_mo.group(0)
+            sec_nums = SecUnpacker(sec_txt).sec_list
+
+            # For TRS_DESC and S_DESC_TR layouts specifically, we do NOT
+            # want to match sections following "of", "said", or "in"
+            # (e.g. 'the NE/4 of Section 4'), because it very likely
+            # means it's a continuation of the same description.
+            illegal = (' of', ' said', ' in', ' within')
+            illegal_word_prior = text[:sec_mo.start()].rstrip().endswith(illegal)
+            if layout in [TRS_DESC, S_DESC_TR] and illegal_word_prior:
+                legit_match = False
+
+            # Also for TRS_DESC and S_DESC_TR layouts, we ONLY want to
+            # match sections and multi-Sections that are followed by a
+            # colon (if need_colon is True).
+            if need_colon and sec_mo['colon'] is None:
+                legit_match = False
+
+            if not legit_match:
+                # Create a warning flag that we did not pull this
+                # (multi)section and move on to the next loop.
+                if len(sec_nums) > 1:
+                    flag = f"multisec_ignored<{', '.join(sec_nums)}>"
+                else:
+                    flag = f"sec_ignored<{sec_nums[0]}>"
+                self.flags.append(flag)
+                self.flag_lines.append((flag, sec_txt))
+                continue
+
+            if is_multi_sec(sec_mo):
+                # Generate the appropriate flag.
+                flag = f"multisec_found<{', '.join(sec_nums)}"
+                self.flags.extend(flag)
+                self.flags.extend((flag, sec_txt))
+
+            new_match(sec_mo)
+
+        if self.matches and require_colon != self.SECOND_PASS:
+            return None
+        elif self.matches:
+            flag = f"pulled_sec_without_colon<{','.join(sec_nums)}>"
+            self.flags.append((flag, flag))
+            return None
+        if require_colon == self.DEFAULT_COLON and layout in [TRS_DESC, S_DESC_TR]:
+            # Do a second pass.
+            self.findall_matching_sec(
+                text, layout=layout, require_colon=self.SECOND_PASS)
         return None
 
 
