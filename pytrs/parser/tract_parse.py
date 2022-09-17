@@ -4,6 +4,8 @@ Class and functions for parsing tract descriptions that have already
 been preprocessed.
 """
 
+import re
+
 from .rgxlib import *
 from .unpackers import (
     LotUnpacker,
