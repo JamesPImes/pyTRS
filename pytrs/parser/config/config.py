@@ -6,7 +6,7 @@ A class to configure parsing of individual PLSSDesc and Tract objects.
 import re
 
 from .master_config import *
-from ..plss_parse import _IMPLEMENTED_LAYOUTS
+from .layouts import _IMPLEMENTED_LAYOUTS
 
 class ConfigError(TypeError):
     """

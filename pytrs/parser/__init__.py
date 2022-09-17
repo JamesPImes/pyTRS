@@ -38,7 +38,8 @@ from .config import (
 from .plss_parse import (
     deduce_layout,
     find_twprge,
-
+)
+from .config import (
     # Public-facing info / examples.
     IMPLEMENTED_LAYOUTS,
     IMPLEMENTED_LAYOUT_EXAMPLES,
