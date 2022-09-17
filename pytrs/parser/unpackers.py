@@ -27,6 +27,15 @@ class LotUnpacker:
         self.unpack_lots(txt)
 
     def unpack_lots(self, txt):
+        """
+        Unpack the text into a list of lots (``.lot_list``) and dict of
+        acreages (``.lot_acres``, if any are specified in text),
+        formatted as 'L#'. And populate ``.flags``, and ``.flag_lines``
+        with warning data, if appropriate.
+        :param txt: A chunk of text that matched a lot_regex or
+        multilot_regex pattern (or similar).
+        :return: None (populates the object's attributes).
+        """
         # A working list of the lots. Note that this gets filled from
         # last-to-first on this working text block, but gets reversed at
         # the end.
@@ -184,7 +193,15 @@ class SecUnpacker:
         self.unpack_sections(txt)
 
     def unpack_sections(self, txt):
-
+        """
+        Unpack the text into a list of sections (``.sec_list``),
+        formatted as 2-digit strings (with leading 0 if needed). And
+        populate ``.flags``, and ``.flag_lines`` with warning data, if
+        appropriate.
+        :param txt: A chunk of text that matched a sec_regex or
+        multisec_regex pattern.
+        :return: None (populates the object's attributes).
+        """
         # A working list of the sections. Note that this gets filled
         # from last-to-first on this working text block, but gets
         # reversed at the end.
