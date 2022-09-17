@@ -4,7 +4,7 @@ Functions to unpack regex matches into their intended components.
 """
 
 from .rgxlib import *
-from .master_config import (
+from .config import (
     DefaultEWError,
     DefaultNSError,
     MasterConfig,
