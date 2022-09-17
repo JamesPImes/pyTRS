@@ -8,7 +8,7 @@ import re
 
 from .rgxlib import *
 from .unpackers import ocr_scrub_alpha_to_num
-from .master_config import (
+from .config import (
     MasterConfig,
     DefaultNSError,
     DefaultEWError,
