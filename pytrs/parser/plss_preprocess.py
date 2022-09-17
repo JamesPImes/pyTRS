@@ -7,7 +7,7 @@ from .rgxlib import *
 from .unpackers import (
     unpack_twprge,
 )
-from .master_config import (
+from .config import (
     MasterConfig,
 )
 
