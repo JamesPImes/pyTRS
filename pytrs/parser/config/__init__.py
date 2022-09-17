@@ -5,3 +5,4 @@ parsing behavior.
 """
 
 from .master_config import *
+from .config import *
