@@ -20,39 +20,12 @@ from .plss_preprocess import (
 )
 from .tract import Tract
 from .containers import TractList
-
-
-# All current layouts
-TRS_DESC = "TRS_desc"
-DESC_STR = "desc_STR"
-S_DESC_TR = "S_desc_TR"
-TR_DESC_S = "TR_desc_S"
-COPY_ALL = "copy_all"
-
-# A tuple of all currently implemented layouts:
-_IMPLEMENTED_LAYOUTS = (
+from .config import (
     TRS_DESC,
     DESC_STR,
     S_DESC_TR,
     TR_DESC_S,
     COPY_ALL,
-)
-
-# The same tuple as a public-facing var
-IMPLEMENTED_LAYOUTS = _IMPLEMENTED_LAYOUTS
-
-IMPLEMENTED_LAYOUT_EXAMPLES = (
-    "'TRS_desc'\n"
-    "T154N-R97W\nSection 14: NE/4\n\n"
-    "'desc_STR'\n"
-    "NE/4 of Section 14, T154N-R97W\n\n"
-    "'S_desc_TR'\n"
-    "Section 14: NE/4, T154N-R97W\n\n"
-    "'TR_desc_S'\n"
-    "T154N-R97W\nNE/4 of Section 14\n\n"
-    "'copy_all'\n"
-    "Note: <copy_all> means that the entire text will be copied as the "
-    "description, regardless of what the actual layout is."
 )
 
 _E_FLAG_SECERR = 'SecERROR'
@@ -853,8 +826,8 @@ def deduce_layout(text: str, candidates: list = None):
     'S_desc_TR', and 'TR_desc_S'), but will also consider 'copy_all' if
     an apparently flawed description is found. If specifying fewer than
     all candidates, ensure that at least one layout from
-    ``IMPLEMENTED_LAYOUTS`` is in the list. (Strings not in
-    ``IMPLEMENTED_LAYOUTS`` will have no effect.)
+    ``pytrs.IMPLEMENTED_LAYOUTS`` is in the list. (Strings not in
+    ``pytrs.IMPLEMENTED_LAYOUTS`` will have no effect.)
 
     :return: Returns the algorithm's best guess at the layout (i.e.
     a string).
@@ -936,13 +909,4 @@ __all__ = [
     'SecFinder',
     'deduce_layout',
     'find_twprge',
-
-    # Public-facing info / examples.
-    'TRS_DESC',
-    'DESC_STR',
-    'S_DESC_TR',
-    'TR_DESC_S',
-    'COPY_ALL',
-    'IMPLEMENTED_LAYOUTS',
-    'IMPLEMENTED_LAYOUT_EXAMPLES',
 ]
