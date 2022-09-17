@@ -57,21 +57,12 @@ class _TRSTractList:
             raise TypeError("type 'str' is not an acceptable iterable.")
         if into is None:
             into = []
+        if isinstance(iterable, cls):
+            into.extend(iterable)
+            return into
         for elem in iterable:
             if isinstance(elem, cls._ok_individuals):
                 into.append(cls._verify_individual(elem))
-            elif isinstance(elem, cls):
-                # Other instances of this class have already been
-                # appropriately type-checked.
-                into.extend(elem)
-            else:
-                # Check if it has a `.tracts` attribute (like a PLSSDesc
-                # object), and if so, that it is a TractList object.
-                tl = getattr(elem, 'tracts', None)
-                if not isinstance(tl, cls):
-                    raise TypeError(
-                        f"{cls._typeerror_msg} Iterable contained {type(elem)!r}.")
-                into.extend(tl)
         return into
 
     @classmethod
@@ -1008,43 +999,6 @@ class _TRSTractList:
                     cls._from_multiple(obj_deeper, into=into)
         return into
 
-    @classmethod
-    def _iter_from_multiple(cls, *objects):
-        """
-        INTERNAL USE:
-
-        Create from multiple elements a generator of `Tract` objects or
-        `TRS` objects.
-
-        (Identical to `.from_multiple()`, but returns a generator of
-        `Tract` objects or `TRS` objects, rather than a `TractList` or
-        `TRSList`.)
-
-        :param objects: For `TractList` objects, may pass any number or
-        combination of Tract, PLSSDesc, and/or TractList objects (or
-        other list-like element holding any of those object types).
-        For `TRSList` objects, may pass any number of `TRS` objects or
-        strings in the pyTRS standardized Twp/Rge/Sec format, or
-        `TRSList` objects.
-
-        :return: A generator of `Tract` objects (or `TRS` objects, as
-        applicable).
-        """
-        for obj in objects:
-            if isinstance(obj, cls._ok_individuals):
-                yield cls._verify_individual(obj)
-            elif isinstance(obj, cls):
-                # Other instances of this class have already been
-                # appropriately type-checked.
-                yield from obj
-            elif isinstance(obj, cls._ok_iterables):
-                for obj_deeper in obj:
-                    yield cls._verify_individual(obj_deeper)
-            else:
-                # Assume it's another list-like object.
-                for obj_deeper in obj:
-                    yield from cls._iter_from_multiple(obj_deeper)
-
 
 class TractList(_TRSTractList):
     """
@@ -1595,24 +1549,6 @@ class TractList(_TRSTractList):
         # an accurate docstring (and to simplify the signature).
         return cls._from_multiple(objects)
 
-    @classmethod
-    def iter_from_multiple(cls, *objects):
-        """
-        Create from multiple sources a generator of `Tract` objects.
-
-        (Identical to `.from_multiple()`, but returns a generator of
-        `Tract` objects, rather than a `TractList`.)
-
-        :param objects: Any number or combination of `Tract`,
-        `PLSSDesc`, and/or `TractList` objects (or other iterable
-        holding any of those object types).
-
-        :return: A generator of Tract objects.
-        """
-        # This is (re-)defined from the superclass only in order to have
-        # an accurate docstring.
-        yield from cls._iter_from_multiple(objects)
-
 
 class TRSList(_TRSTractList):
     """
@@ -1685,7 +1621,7 @@ class TRSList(_TRSTractList):
     # A TRSList holds only TRS objects. But these types can be processed
     # into individual TRS objects, which are then added.
     _ok_individuals = (str, TRS, Tract)
-    _ok_iterables = (TractList)
+    _ok_iterables = (TractList,)
     _typeerror_msg = (
         "TRSList will accept only types (`str`, `pytrs.TRS`, `pytrs.Tract`)."
     )
@@ -1788,25 +1724,6 @@ class TRSList(_TRSTractList):
         # This is (re-)defined from the superclass only in order to have
         # an accurate docstring (and to simplify the signature).
         return cls._from_multiple(objects)
-
-    @classmethod
-    def iter_from_multiple(cls, *objects):
-        """
-        Create from multiple sources a generator of `TRS` objects.
-
-        (Identical to `.from_multiple()`, but returns a generator of
-        `TRS` objects, rather than a `TRSList`.)
-
-        :param objects: May pass any number or combination of `TRS`
-        objects or strings in the pyTRS standardized Twp/Rge/Sec format,
-        or `TRSList` objects, or other list-like objects containing
-        those object types.
-
-        :return: A generator of `TRS` objects.
-        """
-        # This is (re-)defined from the superclass only in order to have
-        # an accurate docstring.
-        yield from cls._iter_from_multiple(objects)
 
 
 def group_tracts(
