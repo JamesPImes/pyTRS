@@ -78,7 +78,7 @@ multilot_with_aliquot_regex = re.compile(
     )?
     
     # The usual multi-lot pattern with the same named groups.
-    {multilot_regex.pattern}
+    (?P<lots>{multilot_regex.pattern})
     """, re.IGNORECASE | re.VERBOSE)
 
 # A pattern for extracting just the acreage component.
