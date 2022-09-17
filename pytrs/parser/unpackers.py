@@ -3,8 +3,6 @@
 Functions to unpack regex matches into their intended components.
 """
 
-import re
-
 from .rgxlib import *
 from .master_config import (
     DefaultEWError,
@@ -13,7 +11,88 @@ from .master_config import (
 )
 
 
-# Unpacking lot_regex, multilot_regex, and lot_with_aliquot_regex matches.
+# Unpacking lot_regex, multilot_regex, and lot_with_aliquot_regex matches,
+# and lot text blocks.
+
+class LotUnpacker:
+    """A class to unpack lot text blocks."""
+
+    def __init__(self, txt):
+        self.lot_list = []
+        self.lot_acres = {}
+        self.flags = []
+        self.flag_lines = []
+        self.unpack_lots(txt)
+
+    def unpack_lots(self, txt):
+        # A working list of the lots. Note that this gets filled from
+        # last-to-first on this working text block, but gets reversed at
+        # the end.
+        working_lot_list = []
+        working_acreages = {}
+
+        found_through = False
+        endpos = len(txt)
+        while True:
+            lot_mo = multilot_regex.search(txt, endpos=endpos)
+
+            if lot_mo is None:
+                # We're out of lot numbers.
+                break
+
+            # Pull the right-most lot number (still as a string):
+            lot_num = get_rightmost_lot(lot_mo)
+            lot_acreage = get_rightmost_acreage(lot_mo)
+
+            # Assume we've found the last section and can therefore skip
+            # the next loop after we've found the last section.
+            endpos = 0
+            if is_multi_lot(lot_mo):
+                # If multiple sections remain, we will continue our
+                # search next loop.
+                endpos = start_of_rightmost(lot_mo)
+
+            lot_num = int(lot_num)
+
+            if found_through:  # during the last loop.
+                # We've identified a elided list (e.g., 'Sections 3 - 9').
+                previous_lot = working_lot_list[-1]
+                start_of_list = lot_num
+                end_of_list = previous_lot
+
+                # Whether this elided list is in the expected order (i.e.
+                # 'Sections 3 - 9' -> True; 'Sections 9 - 3' -> False).
+                correct_order = start_of_list < end_of_list
+                end, start, step = end_of_list - 1, start_of_list - 1, -1
+                if not correct_order:
+                    end, start, step = end_of_list + 1, start_of_list + 1, 1
+                    flag = 'nonsequential_lots'
+                    flag_line = f"{flag}<{start_of_list} - {end_of_list}>"
+                    self.flags.append(flag)
+                    self.flag_lines.append((flag, flag_line))
+
+                for new_lot in range(end, start, step):
+                    working_lot_list.append(new_lot)
+            else:
+                # A standalone section.
+                working_lot_list.append(lot_num)
+
+            if lot_acreage is not None:
+                working_acreages[f'L{lot_num}'] = lot_acreage
+
+            # Check for the next loop.
+            found_through = thru_rightmost(lot_mo)
+
+        working_lot_list.reverse()
+        # Put into preferred format 'L#'.
+        working_lot_list = [f'L{lot_num}' for lot_num in working_lot_list]
+        self.lot_list.extend(working_lot_list)
+
+        for lot, acreage in working_acreages.items():
+            self.lot_acres[lot] = acreage
+
+        return working_lot_list
+
 
 def is_multi_lot(multilots_mo) -> bool:
     """
