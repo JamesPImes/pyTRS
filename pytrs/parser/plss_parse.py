@@ -339,7 +339,10 @@ class PLSSParser:
         :param parse_qq: Whether to instruct subordinate Tract objects
         to parse their lots/qqs.
         :param clean_qq:
-        :param require_colon: See comments regarding
+        :param require_colon: Whether to require colon after section in
+        TRS_desc and S_desc_TR layouts. (Defaults to sort-of required,
+        but will do a second pass if no match is found during the first
+        pass.)
         :param segment:
         :param qq_depth_min:
         :param qq_depth_max:
