@@ -106,7 +106,7 @@ class TwpRgeFinder:
                 continue
 
             # For TRS_DESC and S_DESC_TR, we have to rule out false matches.
-            is_match = True
+            legit_match = True
 
             # Get the rightmost sec_mo to the left of this twprge.
             i = twprge_mo.start(0)
@@ -120,9 +120,9 @@ class TwpRgeFinder:
                 # a match.
                 # (E.g., "...that part of Section 4 of T154N-R97W...")
                 if sec_twprge_in_between.search(substring) is not None:
-                    is_match = False
+                    legit_match = False
 
-            if is_match:
+            if legit_match:
                 new_match(twprge_mo)
             else:
                 ignored_twprge = unpack_twprge(twprge_mo)
@@ -251,7 +251,7 @@ class SecFinder:
                 # Generate the appropriate flag.
                 flag = f"multisec_found<{', '.join(sec_nums)}>"
                 self.flags.append(flag)
-                self.flags.extend((flag, sec_txt))
+                self.flag_lines.append((flag, sec_txt))
 
             new_match(sec_mo)
 
@@ -286,8 +286,9 @@ class PLSSParser:
             text,
             layout=None,
             config=None,
-            parse_qq=None,
+            segment=False,
             clean_up=None,
+            parse_qq=None,
             source=None):
         """
         INTERNAL USE:
@@ -298,6 +299,8 @@ class PLSSParser:
         :param config: Config data to hand down to subordinate Tract
         objects. (Will be at least partially overridden by
         ``parse_qq=True``, if that is passed.)
+        :param segment:
+        :param clean_up:
         :param parse_qq: Whether to instruct subordinate Tract objects
         to parse their lots/qqs.
         :param source: Source of the PLSS description. (Optional)
@@ -311,6 +314,7 @@ class PLSSParser:
         self.config = config
 
         # These impact the parse of this PLSS description.
+        self.mandate_layout = not segment and layout is not None
         preprocessor = PLSSPreprocessor(text)
         self.text = preprocessor.text
         if layout is None:
@@ -331,6 +335,8 @@ class PLSSParser:
         self.markers_dict = {}
         self.tract_components = []
         self.unused_components = []
+        self.blocks = [self.text]
+        self.next_tract_uid = 0
 
         # These get populated and handed off.
         self.tracts = []
@@ -346,24 +352,41 @@ class PLSSParser:
             self.w_flags.append(flag)
             self.w_flag_lines.append((flag, flag))
 
-        self.parse()
+        self.parse(segment=segment)
 
-    def find_matches(self):
-        twprge_finder = TwpRgeFinder(self.text, layout=self.layout)
-        sec_finder = SecFinder(self.text, layout=self.layout)
-
+    def find_matches(self, text, layout):
+        """
+        Find matching Twp/Rge and Sec according to the specified layout.
+        :param text: The text (full description or chunk) in which to
+        find matches.
+        :param layout: The layout to use for finding matches.
+        """
+        # Populate Twp/Rge matches/flags.
+        twprge_finder = TwpRgeFinder(text, layout)
         self.twprge_matches = twprge_finder.matches
         self.w_flags.extend(twprge_finder.flags)
         self.w_flag_lines.extend(twprge_finder.flag_lines)
-
+        # Populate section matches/flags.
+        sec_finder = SecFinder(text, layout)
         self.sec_matches = sec_finder.matches
         self.w_flags.extend(sec_finder.flags)
         self.w_flag_lines.extend(sec_finder.flag_lines)
+        return None
 
-    def populate_markers(self):
-        # TEXT_START and TEXT_END get overwritten.
+    def populate_markers(self, text):
+        """
+        Convert the Twp/Rge and Sec matches into the markers_list and
+        markers_dict, which are examined by the parser to determine
+        which section(s) goes with which Twp/Rge, and which block of
+        description goes with that.
+
+        :param text: The text (full description or chunk) in which to
+        find matches.
+        """
+        # TEXT_START and TEXT_END may get overwritten, if the start or end
+        # of a Twp/Rge or Sec was matched there.
         self.markers_dict[0] = self.TEXT_START
-        self.markers_dict[len(self.text)] = self.TEXT_END
+        self.markers_dict[len(text)] = self.TEXT_END
         for kind, val, start, end in self.sec_matches:
             self.markers_dict[start] = self.SEC_START
             self.markers_dict[end] = self.SEC_END
@@ -373,39 +396,85 @@ class PLSSParser:
             self.markers_dict[end] = self.TWPRGE_END
             self.working_twprge_list.append(val)
         self.markers_list = sorted(self.markers_dict.keys())
+        return None
 
-    def parse(self):
+    def reset(self):
+        """
+        Reset the cached matches, markers, etc.
+        """
+        self.twprge_matches = []
+        self.working_twprge_list = []
+        self.sec_matches = []
+        self.working_sec_list = []
+        self.markers_list = []
+        self.markers_dict = {}
+        self.tract_components = []
+        self.unused_components = []
+        return None
+
+    def parse(self, segment=False):
         """
         Parse the text and create Tract objects. Populates the relevant
         attributes.
+        :param segment: Whether to do a segmented parse (defaults to
+        ``False``).
         """
         def flag_unused(unused_text):
             """
             Create a warning flag and flag line for unused text.
             """
-            flag = f"unused_desc_<{unused_text}>"
+            flag = f"unused_desc<{unused_text}>"
             self.w_flags.append(flag)
             self.w_flag_lines.append((flag, unused_text))
 
-        self.find_matches()
-        self.populate_markers()
+        def examine_unused():
+            """
+            Generate a warning flag for each block of unused text longer
+            than a few characters, then reset the unused components.
+            """
+            for unused_chunk in self.unused_components:
+                if len(unused_chunk) > 3:
+                    flag_unused(unused_chunk)
 
-        # Populate the tract data (self.tract_components).
-        if self.layout in [DESC_STR, TR_DESC_S]:
-            self._descstr_trdescs()
-        elif self.layout in [TRS_DESC, S_DESC_TR]:
-            self._trsdesc_sdesctr()
-        else:
-            self._copyall()
+        if segment:
+            chunker = PLSSChunker(self.text, layout=self.layout)
+            self.blocks = chunker.blocks
+            self.unused_components.extend(chunker.unused_blocks)
+            examine_unused()
 
-        # Convert the tract data into actual Tract objects.
-        self.construct_tracts()
+        for chunk in self.blocks:
+            self.reset()
+            chunk_layout = self.layout
+            if not self.mandate_layout:
+                chunk_layout = deduce_layout(chunk)
+            self.find_matches(chunk, chunk_layout)
+            self.populate_markers(chunk)
 
-        # Generate a warning flag for each block of unused text longer
-        # than a few characters.
-        for chunk in self.unused_components:
-            if len(chunk) > 3:
-                flag_unused(chunk)
+            # Populate the tract data (self.tract_components).
+            if chunk_layout in [DESC_STR, TR_DESC_S]:
+                self._descstr_trdescs(chunk, chunk_layout)
+            elif chunk_layout in [TRS_DESC, S_DESC_TR]:
+                self._trsdesc_sdesctr(chunk, chunk_layout)
+            else:
+                self._copyall(chunk)
+
+            # Convert the tract data into actual Tract objects.
+            self.construct_tracts()
+            examine_unused()
+
+        self.hand_down_flags()
+
+    def hand_down_flags(self):
+        """
+        Give each subordinate Tract object the warning and error flags
+        of this PLSSParser.
+        """
+        for tract in self.tracts:
+            tract.w_flags.extend(self.w_flags)
+            tract.w_flag_lines.extend(self.w_flag_lines)
+            tract.e_flags.extend(self.e_flags)
+            tract.e_flag_lines.extend(self.e_flag_lines)
+        return None
 
     def construct_tracts(self):
         """
@@ -414,7 +483,6 @@ class PLSSParser:
         list.
         """
         for tract_data in self.tract_components:
-            tract_num = 0
             desc = tract_data['desc']
             if self.clean_up:
                 desc = cleanup_desc(desc)
@@ -427,13 +495,13 @@ class PLSSParser:
                     parse_qq=self.parse_qq,
                     source=self.source,
                     orig_desc=self.orig_text,
-                    orig_index=tract_num
+                    orig_index=self.next_tract_uid
                 )
                 self.tracts.append(new_tract)
-                tract_num += 1
+                self.next_tract_uid += 1
         return None
 
-    def _descstr_trdescs(self):
+    def _descstr_trdescs(self, txt, layout=None):
         """
         Use the already-gathered matched Twp/Rge and Sec data to break
         the text down into tract components for the desc_STR and
@@ -441,7 +509,6 @@ class PLSSParser:
         """
         markers_list = self.markers_list
         markers = self.markers_dict
-        txt = self.text
 
         # Note that these layouts are 'forward looking' (e.g., we don't
         # know what section a description block will belong to until
@@ -453,7 +520,10 @@ class PLSSParser:
         # Default to errors for Twp/Rge.
         working_twprge = MasterConfig._ERR_TWPRGE
 
-        if self.layout == DESC_STR:
+        if layout is None:
+            layout = self.layout
+
+        if layout == DESC_STR:
             working_twprge = self.get_next_twprge()
 
         final = len(markers_list) - 1
@@ -504,21 +574,21 @@ class PLSSParser:
                 break
 
             # Capture unused text at the end of the string.
-            if self.layout == TR_DESC_S:
+            if layout == TR_DESC_S:
                 start_kinds = [self.SEC_START, self.TWPRGE_START]
                 if marker_type == self.SEC_END and next_marker_type not in start_kinds:
                     new_unused = txt[marker_pos:next_marker_pos].strip()
                     self.unused_components.append(new_unused)
 
             # Capture unused text at the end of a section (if appropriate).
-            elif self.layout == DESC_STR:
+            elif layout == DESC_STR and count != final:
                 enders = [self.SEC_END, self.TWPRGE_END]
                 if marker_type in enders and next_marker_type != self.SEC_START:
                     new_unused = txt[marker_pos:next_marker_pos].strip()
                     self.unused_components.append(new_unused)
         return None
 
-    def _trsdesc_sdesctr(self):
+    def _trsdesc_sdesctr(self, txt, layout=None):
         """
         Use the already-gathered matched Twp/Rge and Sec data to break
         the text down into tract components for the TRS_desc and
@@ -526,12 +596,14 @@ class PLSSParser:
         """
         markers_list = self.markers_list
         markers = self.markers_dict
-        txt = self.text
         # Default to errors for Twp/Rge and Sec.
         working_twprge = MasterConfig._ERR_TWPRGE
         working_sec = [MasterConfig._ERR_SEC]
 
-        if self.layout == S_DESC_TR:
+        if layout is None:
+            layout = self.layout
+
+        if layout == S_DESC_TR:
             working_twprge = self.get_next_twprge()
 
         final = len(markers_list) - 1
@@ -561,7 +633,7 @@ class PLSSParser:
                 self.unused_components.append(new_unused)
         return None
 
-    def _copyall(self):
+    def _copyall(self, txt):
         """
         Use the already-gathered matched Twp/Rge and Sec data, but parse
         as copy_all layout.
@@ -571,7 +643,7 @@ class PLSSParser:
         sec = [sec[0]]
         twprge = self.get_next_twprge()
         copyall_tract = {
-            'desc': self.text,
+            'desc': txt,
             'sec': sec,
             'twprge': twprge
         }
@@ -598,6 +670,107 @@ class PLSSParser:
             return [MasterConfig._ERR_SEC]
 
 
+class PLSSChunker:
+    """
+    INTERNAL USE:
+    A class for breaking PLSS descriptions into chunks by Twp/Rge,
+    according to the specified or deduced layout of the overall
+    description.
+
+    The PLSSParser will extract the ``.blocks`` and parse each of them
+    separately, and ``.unused_blocks`` will be converted by the
+    PLSSParser into warning flags that such chunks were not included in
+    the resulting tracts.
+    """
+
+    def __init__(self, text, layout=None):
+        """
+        INTERNAL USE:
+        :param text: The text to be broken into chunks.
+        :param layout: The layout to use. If not specified, will be
+        deduced.
+        """
+        self.text = text
+        self.layout = layout
+        self.blocks = []
+        self.unused_blocks = []
+        self.segment(layout=layout)
+
+    def segment(self, layout=None):
+        """
+        Break the text up according to the layout (one matching Twp/Rge
+        per chunk). Populates ``.blocks`` and ``.unused_block`` and
+        returns None.
+        :param layout:  The layout to use. If not specified, will be
+        deduced.
+        """
+        text = self.text
+        if layout is None:
+            layout = deduce_layout(text)
+        # Don't collect TwpRgeFinder-generated flags at this point.
+        # They'll be collected during the actual parse.
+        matches = TwpRgeFinder(text, layout).matches
+        if not matches or layout == COPY_ALL:
+            self.blocks.append(text)
+            return None
+        if layout in [TRS_DESC, TR_DESC_S]:
+            self._segment_twprge_first(text, matches)
+        else:
+            self._segment_twprge_last(text, matches)
+        return None
+
+    def _segment_twprge_first(self, text, matches):
+        """
+        Populate ``.blocks`` and ``.unused_blocks`` according to layouts
+        in which Twp/Rge occurs first (i.e. TRS_desc and TR_desc_S).
+        :param text: The text that is being chunked.
+        :param matches: The Twp/Rge matches generated by a TwpRgeFinder
+        that was run on the text.
+        :return: None
+        """
+        str_end = len(text)
+        for i, (kind, twprge, start, end) in enumerate(matches):
+            next_start = str_end
+            try:
+                _, _, next_start, _ = matches[i + 1]
+            except IndexError:
+                pass
+            if i == 0 and start != 0:
+                # String starts with something other than a Twp/Rge, in
+                # a layout that requires Twp/Rge to occur first.
+                self.unused_blocks.append(text[:start])
+
+            new_block = text[start:next_start]
+            new_block = cleanup_desc(new_block)
+            self.blocks.append(new_block)
+        return None
+
+    def _segment_twprge_last(self, text, matches):
+        """
+        Populate ``.blocks`` and ``.unused_blocks`` according to layouts
+        in which Twp/Rge occurs last (i.e. S_desc_TR and desc_STR).
+        :param text: The text that is being chunked.
+        :param matches: The Twp/Rge matches generated by a TwpRgeFinder
+        that was run on the text.
+        :return: None
+        """
+        str_len = len(text)
+        for i, (kind, twprge, start, end) in enumerate(matches):
+            previous_end = 0
+            if i != 0:
+                _, _, _, previous_end = matches[i - 1]
+            if i == len(matches) - 1 and end != str_len:
+                # The last element is not the final character in the string.
+                # In other words, text ends with something other than a Twp/Rge,
+                # in a layout that requires Twp/Rge to occur last.
+                self.unused_blocks.append(text[end:])
+
+            new_block = text[previous_end:end]
+            new_block = cleanup_desc(new_block)
+            self.blocks.append(new_block)
+        return None
+
+
 def deduce_layout(text: str, candidates: list = None):
     """
     Deduce the layout of the description.
@@ -611,8 +784,8 @@ def deduce_layout(text: str, candidates: list = None):
     'S_desc_TR', and 'TR_desc_S'), but will also consider 'copy_all' if
     an apparently flawed description is found. If specifying fewer than
     all candidates, ensure that at least one layout from
-    IMPLEMENTED_LAYOUTS is in the list. (Strings not in
-    IMPLEMENTED_LAYOUTS will have no effect.)
+    ``IMPLEMENTED_LAYOUTS`` is in the list. (Strings not in
+    ``IMPLEMENTED_LAYOUTS`` will have no effect.)
 
     :return: Returns the algorithm's best guess at the layout (i.e.
     a string).
@@ -692,6 +865,9 @@ def cleanup_desc(text):
 __all__ = [
     'PLSSParser',
     'deduce_layout',
+    'find_twprge',
+
+    # Public-facing info / examples.
     'TRS_DESC',
     'DESC_STR',
     'S_DESC_TR',
@@ -699,5 +875,4 @@ __all__ = [
     'COPY_ALL',
     'IMPLEMENTED_LAYOUTS',
     'IMPLEMENTED_LAYOUT_EXAMPLES',
-    'find_twprge'
 ]
