@@ -240,7 +240,7 @@ class SecFinder:
                 # Create a warning flag that we did not pull this
                 # (multi)section and move on to the next loop.
                 if len(sec_nums) > 1:
-                    flag = f"multisec_ignored<{', '.join(sec_nums)}>"
+                    flag = f"multisec_ignored<{','.join(sec_nums)}>"
                 else:
                     flag = f"sec_ignored<{sec_nums[0]}>"
                 self.flags.append(flag)
@@ -249,7 +249,7 @@ class SecFinder:
 
             if is_multi_sec(sec_mo):
                 # Generate the appropriate flag.
-                flag = f"multisec_found<{', '.join(sec_nums)}>"
+                flag = f"multisec_found<{','.join(sec_nums)}>"
                 self.flags.append(flag)
                 self.flag_lines.append((flag, sec_txt))
 
