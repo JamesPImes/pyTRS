@@ -11,3 +11,6 @@ from .warnings import *
 from .misc import *
 from .context_checkers import *
 
+# Remove 're' module from __all__, to avoid cluttering namespace.
+__all__ = [k for k in locals().keys() if not k.startswith('__')]
+__all__.remove('re')
