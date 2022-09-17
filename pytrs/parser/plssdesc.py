@@ -5,9 +5,6 @@ Tract objects.
 """
 
 from .config import (
-    MasterConfig,
-    DefaultNSError,
-    DefaultEWError,
     Config,
     ConfigError,
 )
@@ -18,25 +15,9 @@ from .plss_parse import (
     PLSSParser,
     SecFinder,
     deduce_layout,
-    find_twprge,
-
-    # Public-facing info / examples.
-    TRS_DESC,
-    DESC_STR,
-    S_DESC_TR,
-    TR_DESC_S,
     COPY_ALL,
-    IMPLEMENTED_LAYOUTS,
-    IMPLEMENTED_LAYOUT_EXAMPLES,
 )
-from .tract import Tract
-from .trs import TRS
-from .tract_parse import TractParser
 from .containers import TractList
-from ..utils import (
-    flatten,
-    _confirm_list_of_strings as clean_attributes,
-)
 
 
 class PLSSDesc:
@@ -58,19 +39,19 @@ class PLSSDesc:
     and ``default_ew`` for each ``PLSSDesc`` object to control how these
     should be assumed (as a ``config=`` parameter at init, or as an
     argument in the appropriate method). Alternatively, we can change
-    ``PLSSDesc.MASTER_DEFAULT_NS`` and ``PLSSDesc.MASTER_DEFAULT_EW``
-    (class variables) to control all unspecified ``default_ns`` and
+    ``MasterConfig.default_ns`` and ``MasterConfig.default_ew`` (class
+    variables) to control ALL unspecified ``default_ns`` and
     ``default_ew`` for (these class variables will control for both
     PLSSDesc and Tract objects). However, specifying ``default_ns`` and
     ``default_ew`` for a given object will override the master defaults
     for that particular object.
-    The default settings are for North (`'n'`) and West (`'w'`).
+    The default settings are for North (``'n'``) and West (``'w'``).
     IMPORTANT: When specifying ``default_ns``, ``default_ew``,
-    ``PLSSDesc.MASTER_DEFAULT_NS`` or ``PLSSDesc.MASTER_DEFAULT_EW``, be
+    ``MasterConfig.default_ns`` or ``MasterConfig.default_ew``, be
     sure to use ONLY single, lower-case letters (``'n'``, ``'s'``,
     ``'e'``, and ``'w'``). Or don't worry about it, and just use
-    ``PLSSDesc.NORTH``, ``PLSSDesc.SOUTH``, ``PLSSDesc.EAST``, and
-    ``PLSSDesc.WEST``.
+    ``MasterConfig.NORTH``, ``MasterConfig.SOUTH``, ``MasterConfig.EAST``,
+    and ``MasterConfig.WEST``.
 
     ____ PARSING ____
     Parse the PLSSDesc object into pytrs.Tract objects with the
@@ -94,16 +75,15 @@ class PLSSDesc:
 
     .orig_desc -- The original text. (Gets set from the first positional
         argument at init.)
-    .tracts -- A pytrs.TractList object (i.e. a list) containing
-        all of the pytrs.Tract objects that were generated from parsing
-        this object.
+    .tracts -- A pytrs.TractList object (i.e. a list) containing the
+        ``Tract`` objects that were generated from parsing this object.
     .pp_desc -- The preprocessed description. (If the object has not yet
-        been preprocessed, it will be equivalent to .orig_desc)
+        been preprocessed, it will be equivalent to ``.orig_desc``)
     .source -- (Optional) Any value of any type (probably a str or int)
         specifying where the description came from. Useful if parsing
         multiple descriptions and need to internally keep track where
         they came from. (Optionally specify at init with parameter
-        `source=<str, int, etc.>`.)
+        ``source=<str, int, etc.>``.)
     .w_flags -- a list of warning flags (strings) generated during
         preprocessing and/or parsing.
     .w_flag_lines -- a list of 2-tuples, each being a warning flag and the
@@ -115,7 +95,7 @@ class PLSSDesc:
     .flags -- a combined list of Warning & Error flags.
     .flag_lines -- a combined lines of 2-tuples, for Warning & Error
         flags.
-    .desc_is_flawed -- a bool, whether or not an apparently fatal flaw was
+    .desc_is_flawed -- a bool, whether an apparently fatal flaw was
         discovered during parsing.
     .layout -- The user-dictated or algorithm-deduced layout of the
         description (controls how the parsing algorithm interprets the
@@ -179,19 +159,6 @@ class PLSSDesc:
     remove them from the original ``.tracts``.
     """
 
-    NORTH = 'n'
-    SOUTH = 's'
-    EAST = 'e'
-    WEST = 'w'
-
-    # Control all unspecified default_ns and default_ew
-    MASTER_DEFAULT_NS = NORTH
-    MASTER_DEFAULT_EW = WEST
-
-    # Legal settings for N/S/E/W
-    _LEGAL_NS = ('n', 's', 'N', 'S')
-    _LEGAL_EW = ('e', 'w', 'E', 'W')
-
     def __init__(
             self,
             raw_plss: str,
@@ -240,9 +207,10 @@ class PLSSDesc:
         self.source = source
 
         # The layout of this PLSS description -- Initially None, but may
-        # be set to one of the values in the _IMPLEMENTED_LAYOUTS tuple
+        # be set to one of the values in the IMPLEMENTED_LAYOUTS tuple
         # before __init__() returns, if specified in `config`.
         self.layout = None
+        self.current_layout = None
 
         # If a T&R is identified without 'North/South' specified, or without
         # 'East/West' specified, fall back on default_ns and default_ew,
@@ -387,12 +355,10 @@ class PLSSDesc:
             new_config = Config(new_config)
         if not isinstance(new_config, Config):
             raise ConfigError(new_config)
-
         for attrib in Config._PLSSDESC_ATTRIBUTES:
             value = getattr(new_config, attrib)
             if value is not None:
                 setattr(self, attrib, value)
-
         self.__config = new_config
 
     @property
@@ -436,17 +402,17 @@ class PLSSDesc:
         to ``.config``.
 
         :param layout: The layout to be assumed. If not specified,
-        defaults to whatever is in `self.layout`; and if not specified
+        defaults to whatever is in ``self.layout``; and if not specified
         there, will be automatically deduced.
         :param default_ns: How to interpret townships for which
         direction was not specified -- i.e. either 'n' or 's'. (Defaults
         to `self.default_ns` (if configured) or to
-        ``PLSSDesc.MASTER_DEFAULT_NS`` which is 'n' unless otherwise
+        ``MasterConfig.default_ns`` which is 'n' unless otherwise
         configured.)
         :param default_ew: How to interpret ranges for which direction
         was not specified -- i.e. either 'e' or 'w'. (Defaults to
         `self.default_ew` (if configured) or to
-        ``PLSSDesc.MASTER_DEFAULT_EW`` which is 'w' unless otherwise
+        ``MasterConfig.default_ew`` which is 'w' unless otherwise
         configured.)
         :param clean_up: Whether to clean up common 'artefacts' from
         parsing. If not specified, defaults to False for parsing the
@@ -503,8 +469,8 @@ class PLSSDesc:
         of the parse. If set as 2, any subdivision smaller than
         quarter-quarter (e.g., 'NENE') would be discarded -- so, for
         example, the 'N/2NE/4NE/4' would simply become the 'NENE'. Must
-        be greater than or equal to `qq_depth_min`. (Defaults to None --
-        i.e. no maximum. Can also be configured at init.)
+        be greater than or equal to ``qq_depth_min``. (Defaults to None
+        -- i.e. no maximum. Can also be configured at init.)
         :param qq_depth: (Optional, and only relevant if parsing Tracts
         into lots and QQs.) An int, specifying both the minimum and
         maximum depth of the parse. If specified, will override both
@@ -515,9 +481,8 @@ class PLSSDesc:
         Tracts into lots and QQs.) Whether to break halves into
         quarters, even if we're beyond the qq_depth_min. (False by
         default, but can be configured at init.)
-        :return: Returns a ``pytrs.TractList`` object (a subclass of
-        built-in ``list``) of all of the resulting ``pytrs.Tract``
-        objects.
+        :return: Returns a ``pytrs.TractList`` object containing the
+        resulting ``pytrs.Tract`` objects.
         """
 
         # --------------------------------------------------------------
@@ -544,8 +509,8 @@ class PLSSDesc:
 
         # NOTE: If layout was specified at init or when calling
         # `.parse(layout=<string>)`, PLSSParser._parse_segment() will be
-        # prevented from from deducing it.  Leave as None to allow the
-        # parser to deduce.
+        # prevented from deducing it.  Leave as None to allow the parser
+        # to deduce.
 
         if parse_qq is None:
             parse_qq = self.parse_qq
@@ -560,11 +525,8 @@ class PLSSDesc:
             segment = self.segment
 
         if layout == COPY_ALL:
-            # If a *segment* (which will be divided up shortly) finds
-            # itself in the COPY_ALL layout, that should still parse
-            # fine. But segmenting the whole description would defy the
-            # point of COPY_ALL layout. So prevent `segment` when the
-            # OVERALL layout is COPY_ALL.
+            # Segmenting the whole description would defy the point of
+            # the COPY_ALL layout, so prevent it.
             segment = False
 
         # For QQ parsing (if applicable)
@@ -594,19 +556,15 @@ class PLSSDesc:
             "handed_down_config": handed_down_config,
         }
 
-        # ----------------------------------------
-        # Parse it.
-
         parser = PLSSParser(
             text=self.orig_desc,
             layout=layout,
             source=self.source,
             **config_params
         )
-
+        tracts = parser.tracts  # a TractList object
         if commit:
             # Wipe the existing tracts, etc., if any.
-            self.tracts = TractList()
             self.w_flags = []
             self.e_flags = []
             self.w_flag_lines = []
@@ -615,12 +573,12 @@ class PLSSDesc:
             # Unpack each of the 'unpackable' attributes.
             for attribute in parser.UNPACKABLES:
                 setattr(self, attribute, getattr(parser, attribute))
-
+            self.tracts = tracts
             # The resulting `.text` in the parser is the preprocessed
             # description.
             self.pp_desc = parser.text
 
-        return parser.tracts
+        return tracts
 
     def config_tracts(self, config):
         """
@@ -692,8 +650,8 @@ class PLSSDesc:
         :return: Returns the algorithm's best guess at the layout (i.e.
         a string).
         """
-        text = PLSSPreprocessor(self.orig_desc, ocr_scrub=self.ocr_scrub)
-        return PLSSParser.deduce_layout(text, candidates=candidates)
+        preprocessor = PLSSPreprocessor(self.orig_desc, ocr_scrub=self.ocr_scrub)
+        return deduce_layout(preprocessor.text, candidates=candidates)
 
     def preprocess(
             self, default_ns=None, default_ew=None, commit=False,
