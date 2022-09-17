@@ -3,6 +3,8 @@
 Functions to unpack regex matches into their intended components.
 """
 
+import re
+
 from .rgxlib import *
 from .config import (
     DefaultEWError,
