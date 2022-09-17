@@ -165,16 +165,11 @@ def reduce_whitespace(txt):
     new_txt = ''
     while txt != new_txt:
         new_txt = txt
-        # Reduce consecutive spaces.
-        txt = re.sub(r" +", " ", txt)
-        # Reduce consecutive tabs.
-        txt = re.sub(r"\t+", " ", txt)
-        # Convert carriage returns to linebreaks
-        txt = re.sub(r"\r", "\n", txt)
-        # Maximum of two linebreaks in a row
-        txt = re.sub(r"\n{2,}", "\n\n", txt)
-        # Remove tabs and spaces at the start of a new line.
-        txt = re.sub(r"\n[ \t]", "\n", txt)
+        txt = re.sub(r' +', ' ', txt)
+        txt = re.sub(r'\t+', ' ', txt)
+        txt = re.sub(r'\r', '\n', txt)
+        txt = re.sub(r'\n{2,}', '\n\n', txt)
+        txt = re.sub(r'^[ \t]', '', txt)
     return txt
 
 
