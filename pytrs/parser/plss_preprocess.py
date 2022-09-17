@@ -3,6 +3,8 @@
 Tools for preprocessing text before parsing as PLSSDesc.
 """
 
+import re
+
 from .rgxlib import *
 from .unpackers import (
     unpack_twprge,
