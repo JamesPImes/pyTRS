@@ -18,7 +18,8 @@ from .plss_preprocess import (
     PLSSPreprocessor,
     find_twprge,
 )
-from .parser import Tract
+from .tract import Tract
+from .containers import TractList
 
 
 # All current layouts
@@ -271,7 +272,18 @@ class SecFinder:
 class PLSSParser:
     """
     INTERNAL USE:
-    A class to parse already-preprocessed text into Tract objects.
+
+    A class to handle the heavy lifting of parsing ``PLSSDesc`` objects
+    into ``Tract`` objects. Not intended for use by the end-user. (All
+    functionality can be triggered by appropriate ``PLSSDesc`` methods.)
+
+    NOTE: All parsing parameters must be locked in before initializing
+    the ``PLSSParser``. Upon initializing, the parse will be
+    automatically triggered and cannot be modified.
+
+    The ``PLSSDesc.parse()`` method is actually a wrapper for
+    initializing a ``PLSSParser`` object, and for extracting the
+    relevant attributes from it.
     """
 
     TWPRGE_START = 'TWPRGE_START'
@@ -295,35 +307,58 @@ class PLSSParser:
             self,
             text,
             layout=None,
-            config=None,
-            segment=False,
+            default_ns: str = MasterConfig.default_ns,
+            default_ew: str = MasterConfig.default_ew,
+            ocr_scrub=False,
             clean_up=None,
-            parse_qq=None,
+            parse_qq=False,
+            clean_qq=False,
+            require_colon=SecFinder.DEFAULT_COLON,
+            segment=False,
+            qq_depth_min=2,
+            qq_depth_max=None,
+            qq_depth=None,
+            break_halves=False,
+            handed_down_config=None,
             source=None,
-            parent=None,
     ):
         """
         INTERNAL USE:
         A class to parse already-preprocessed text into Tract objects.
 
+        NOTE: Documentation for this class is not maintained here. See
+        instead ``PLSSDesc.parse()``, which essentially serves as a
+        wrapper for this class.
+
         :param text: Preprocessed text to be parsed.
         :param layout:
-        :param config: Config data to hand down to subordinate Tract
-        objects. (Will be at least partially overridden by
-        ``parse_qq=True``, if that is passed.)
-        :param segment:
+        :param default_ns:
+        :param default_ew:
+        :param ocr_scrub:
         :param clean_up:
         :param parse_qq: Whether to instruct subordinate Tract objects
         to parse their lots/qqs.
-        :param source: Source of the PLSS description. (Optional)
+        :param clean_qq:
+        :param require_colon: See comments regarding
+        :param segment:
+        :param qq_depth_min:
+        :param qq_depth_max:
+        :param qq_depth:
+        :param break_halves:
+        :param handed_down_config: Config data to hand down to
+        subordinate Tract objects. (Will be at least partially
+        overridden by ``parse_qq=True``, if that is passed.)
+        :param source:
         """
         # These inform subordinate Tract objects.
         self.parse_qq = parse_qq
         self.source = None
         self.orig_text = text
+        if handed_down_config is None:
+            handed_down_config = ''
         if parse_qq:
-            config = f"{config},parse_qq"
-        self.config = config
+            handed_down_config = f"{handed_down_config},parse_qq"
+        self.handed_down_config = handed_down_config
 
         # These impact the parse of this PLSS description.
         self.mandate_layout = not segment and layout is not None
@@ -337,6 +372,17 @@ class PLSSParser:
             if layout == COPY_ALL:
                 clean_up = False
         self.clean_up = clean_up
+        self.default_ns = default_ns
+        self.default_ew = default_ew
+        self.ocr_scrub = ocr_scrub
+        self.require_colon = require_colon
+
+        # These exclusively affect the parsing of subordinate Tracts.
+        self.clean_qq = clean_qq
+        self.qq_depth_min = qq_depth_min
+        self.qq_depth_max = qq_depth_max
+        self.qq_depth = qq_depth
+        self.break_halves = break_halves
 
         # These are temporary data.
         self.twprge_matches = []
@@ -351,7 +397,7 @@ class PLSSParser:
         self.next_tract_uid = 0
 
         # These get populated and handed off.
-        self.tracts = []
+        self.tracts = TractList()
         self.w_flags = []
         self.w_flag_lines = []
         self.e_flags = []
@@ -369,6 +415,10 @@ class PLSSParser:
             self.source = source
 
         self.parse(segment=segment)
+
+    @property
+    def current_layout(self):
+        return self.layout
 
     def find_matches(self, text, layout):
         """
@@ -507,7 +557,7 @@ class PLSSParser:
                 new_tract = Tract(
                     desc,
                     trs,
-                    config=self.config,
+                    config=self.handed_down_config,
                     parse_qq=self.parse_qq,
                     source=self.source,
                     orig_desc=self.orig_text,
