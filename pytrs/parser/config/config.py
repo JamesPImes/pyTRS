@@ -6,7 +6,7 @@ A class to configure parsing of individual PLSSDesc and Tract objects.
 import re
 
 from .master_config import *
-
+from ..plss_parse import _IMPLEMENTED_LAYOUTS
 
 class ConfigError(TypeError):
     """
@@ -205,7 +205,7 @@ class Config:
                 # Specifying E/W can be done with just a string (there's
                 # nothing else it can mean in config context.)
                 self.default_ew = line
-            elif line in MasterConfig._IMPLEMENTED_LAYOUTS:
+            elif line in _IMPLEMENTED_LAYOUTS:
                 # Specifying layout can be done with just a string
                 # (there's nothing else it can mean in config context.)
                 self.layout = line
