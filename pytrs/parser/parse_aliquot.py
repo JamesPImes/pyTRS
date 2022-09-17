@@ -285,7 +285,6 @@ def rebuild_aliquots(nested_aliquot_list: list):
     qq_list = []
     while nested_aliquot_list:
         deepest = nested_aliquot_list.pop(-1)
-        print(nested_aliquot_list)
         if not nested_aliquot_list:
             # No more elements.
             qq_list = deepest
