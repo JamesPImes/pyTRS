@@ -11,7 +11,7 @@ from .unpackers import (
     twprge_natural_to_short,
     is_multi_sec,
 )
-from .master_config import (
+from .config import (
     MasterConfig,
 )
 from .plss_preprocess import (
@@ -281,6 +281,16 @@ class PLSSParser:
     TEXT_START = 'TEXT_START'
     TEXT_END = 'TEXT_END'
 
+    # These attributes have corresponding attributes in PLSSDesc objects.
+    UNPACKABLES = (
+        "tracts",
+        "w_flags",
+        "e_flags",
+        "w_flag_lines",
+        "e_flag_lines",
+        "current_layout",
+    )
+
     def __init__(
             self,
             text,
@@ -289,7 +299,9 @@ class PLSSParser:
             segment=False,
             clean_up=None,
             parse_qq=None,
-            source=None):
+            source=None,
+            parent=None,
+    ):
         """
         INTERNAL USE:
         A class to parse already-preprocessed text into Tract objects.
@@ -307,7 +319,7 @@ class PLSSParser:
         """
         # These inform subordinate Tract objects.
         self.parse_qq = parse_qq
-        self.source = source
+        self.source = None
         self.orig_text = text
         if parse_qq:
             config = f"{config},parse_qq"
@@ -347,10 +359,14 @@ class PLSSParser:
 
         # Append a warning flag for any Twp/Rges that were fixed during
         # preprocessing.
-        for fixed in preprocessor.fixed_twprges:
-            flag = f"fixed_twprge<{fixed}>"
+        if preprocessor.fixed_twprges:
+            flag = f"fixed_twprge<{'//'.join(preprocessor.fixed_twprges)}>"
             self.w_flags.append(flag)
             self.w_flag_lines.append((flag, flag))
+
+        # Override source in parent, if specified as init parameter.
+        if source is None:
+            self.source = source
 
         self.parse(segment=segment)
 
@@ -864,6 +880,7 @@ def cleanup_desc(text):
 
 __all__ = [
     'PLSSParser',
+    'SecFinder',
     'deduce_layout',
     'find_twprge',
 
