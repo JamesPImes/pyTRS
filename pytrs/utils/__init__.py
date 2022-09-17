@@ -248,3 +248,27 @@ def gen_uid(num, sub, total_sub, just=4):
         f".{num_to_alpha(sub).lower()}"
         f"-{num_to_alpha(total_sub).lower()}"
     )
+
+
+def _confirm_list_of_strings(*attributes) -> list:
+    """
+    INTERNAL USE:
+    Ensure that each element has been entered as a string.
+    Returns a flattened list of strings.
+    """
+    attributes = flatten(attributes)
+    if len(attributes) == 0:
+        return []
+    if not all((isinstance(att, str) for att in attributes)):
+        raise TypeError('Must pass list of strings.')
+    return attributes
+
+
+__all__ = [
+    'num_to_alpha',
+    'alpha_to_num',
+    'flatten',
+    'config_help',
+    'config_parameters',
+    'gen_uid',
+]
