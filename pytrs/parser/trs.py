@@ -630,3 +630,36 @@ class TRS:
         cls._clear_cache()
 
         return new_rgx
+
+
+def trs_to_dict(trs) -> dict:
+    """
+    Take a compiled Twp/Rge/Sec (in the standard pyTRS format) and break
+    it into a dict, keyed as follows:
+        "twp"       -> Twp number + direction (a str or None)
+        "twp_num"   -> Twp number (an int or None);
+        "twp_ns"    -> Twp direction ('n', 's', or None);
+        "twp_undef" -> whether the Twp was undefined. **
+        "rge"       -> Rge number + direction (a str or None)
+        "rge_num"   -> Rge num (an int or None);
+        "rge_ew"    -> Rge direction ('e', 'w', or None)
+        "rge_undef" -> whether the Rge was undefined. **
+        "sec_num"   -> Sec number (an int or None)
+        "sec_undef" -> whether the Sec was undefined. **
+
+    ** Note that error parses do NOT qualify as 'undefined'. Undefined
+    and error values are both stored as None. 'twp_undef', 'rge_undef',
+    and 'sec_undef' are included to differentiate between error vs.
+    undefined, in case that distinction is needed.
+
+    :param trs: The Twp/Rge/Sec (in the pyTRS format) to be broken
+    apart.
+    :return: A dict with the various elements.
+    """
+    return TRS.trs_to_dict(trs)
+
+
+__all__ = [
+    'TRS',
+    'trs_to_dict',
+]
