@@ -12,7 +12,7 @@ from ..utils import _confirm_list_of_strings as clean_attributes
 from ..utils import flatten
 
 
-class _TRSTractList(list):
+class _TRSTractList:
     """
     INTERNAL USE:
 
@@ -40,7 +40,7 @@ class _TRSTractList(list):
 
         :param iterable: Same as in `list()`
         """
-        list.__init__(self, self._verify_iterable(iterable))
+        self._elements = self._verify_iterable(iterable)
 
     @classmethod
     def _verify_iterable(cls, iterable, into=None):
@@ -88,31 +88,73 @@ class _TRSTractList(list):
         return obj
 
     def __setitem__(self, index, value):
-        list.__setitem__(self, index, self._verify_individual(value))
+        self._verify_individual(value)
+        self._elements[index] = value
 
     def __getitem__(self, item):
-        if isinstance(item, slice):
-            return self.__class__(list.__getitem__(self, item))
-        return list.__getitem__(self, item)
+        return self._elements[item]
+
+    def __contains__(self, o):
+        return self._elements.__contains__(o)
+
+    def __len__(self):
+        return self._elements.__len__()
+
+    def __iter__(self):
+        return iter(self._elements)
+
+    def __reversed__(self):
+        return self._elements.__reversed__()
 
     def __repr__(self):
         return str(self)
 
     def extend(self, iterable):
-        list.extend(self, self._verify_iterable(iterable))
+        self._elements.extend(self._verify_iterable(iterable))
 
     def append(self, obj):
-        list.append(self, self._verify_individual(obj))
+        self._elements.append(self._verify_individual(obj))
 
     def __iadd__(self, other):
-        self.extend(other)
+        self._elements = self._elements + self._verify_iterable(other)
         return self
 
     def __add__(self, value):
-        return self.__class__(list.__add__(self, value))
+        return self.__class__(self._elements + self._verify_iterable(value))
+
+    def __imul__(self, n):
+        self._elements = self._elements * n
+        return self
+
+    def __mul__(self, n):
+        return self.__class__(self._elements * n)
+
+    def __eq__(self, other):
+        """
+        Will only compare equality between objects of the same type,
+        even if the other object is a list of the same Tract / TRS objs.
+        """
+        if not isinstance(other, self.__class__):
+            return False
+        return self._elements == other._elements
+
+    def pop(self, n=-1):
+        return self._elements.pop(n)
 
     def copy(self):
-        return self.__class__(list.copy(self))
+        return self.__class__(self._elements.copy())
+
+    def sort(self, key=None, reverse=False):
+        if key is None:
+            return self.custom_sort(reverse=reverse)
+        return self._elements.sort(key=key, reverse=reverse)
+
+    def to_standard_list(self):
+        """
+        Get the elements of this container in a standard built-in list.
+        :return: A standard list containing the same elements.
+        """
+        return self._elements.copy()
 
     def filter(self, key, drop=False):
         """
