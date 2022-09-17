@@ -183,3 +183,13 @@ aliquot_intervener_remover_regex = re.compile(
     )
     (?P<aliquot2>{aliquot_simple})  # second aliquot component
     """, re.IGNORECASE | re.VERBOSE)
+
+
+# Will capture the aliquot component (without fraction) in 'aliquot_no_frac'
+# named group. Should only be used on preprocessed aliquot blocks (e.g.,
+# "E½NW¼NE¼" or "ALL"):
+single_aliquot_unpacker_regex = re.compile(r"((?P<aliquot_no_frac>[NESW]{1,2}|ALL)[½¼]?)")
+
+
+aliquot_unpacker_regex = re.compile(
+    r'\b(([NESW]½)|((NE|NW|SE|SW)¼))+\b')
