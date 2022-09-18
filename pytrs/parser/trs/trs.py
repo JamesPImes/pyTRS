@@ -6,9 +6,9 @@ TRS class to represent a unique Twp/Rge/Sec combination.
 
 import re
 
-from .rgxlib import *
-from .unpackers import ocr_scrub_alpha_to_num
-from .config import (
+from ..rgxlib import *
+from ..unpack import ocr_scrub_alpha_to_num
+from ..config import (
     MasterConfig,
     DefaultNSError,
     DefaultEWError,
