@@ -20,6 +20,10 @@ The main parsing package. Primary classes:
 """
 
 from .plssdesc import PLSSDesc
+from .plssdesc.plss_parse import (
+    deduce_layout,
+    find_twprge,
+)
 from .tract import Tract
 from .trs import (
     TRS,
@@ -34,10 +38,6 @@ from .containers import (
 from .config import (
     Config,
     MasterConfig,
-)
-from .plss_parse import (
-    deduce_layout,
-    find_twprge,
 )
 from .config import (
     # Public-facing info / examples.
