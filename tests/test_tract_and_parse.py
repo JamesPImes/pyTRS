@@ -358,6 +358,46 @@ class TractTests(unittest.TestCase):
         self.assertEqual('154n97w01: Lot 1, S/2NE/4, ...', tract.quick_desc_short())
         self.assertEqual('154n97w01: Lot 1,...', tract.quick_desc_short(max_len=20))
 
+    def test_get_headers(self):
+        """
+        Test the .get_headers() method, for converting attribute names
+        into headers for tabular data.
+        :return:
+        """
+        attributes = ['trs', 'desc', 'lots', 'ilots', 'qqs']
+        plus_cols = ['Test1', 'Test2']
+        expected_default = [
+            'Twp/Rge/Sec',
+            'Description',
+            'Lots',
+            'Lot Numbers',
+            'Aliquots',
+            'Test1',
+            'Test2']
+        # nice_headers = True pulls default nice headers.
+        headers = Tract.get_headers(attributes, nice_headers=True, plus_cols=plus_cols)
+        self.assertEqual(expected_default, headers)
+
+        custom_headers = {
+            'trs': 'test_trs',
+            'desc': 'test_desc',
+            'lots': 'test_lots',
+            'ilots': 'test_ilots',
+            'qqs': 'test_qqs',
+        }
+        expected_custom = [
+            'test_trs',
+            'test_desc',
+            'test_lots',
+            'test_ilots',
+            'test_qqs',
+            'Test1',
+            'Test2',
+        ]
+        headers = Tract.get_headers(
+            attributes, nice_headers=custom_headers, plus_cols=plus_cols)
+        self.assertEqual(expected_custom, headers)
+
 
 if __name__ == '__main__':
     unittest.main()
