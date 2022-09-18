@@ -1,10 +1,10 @@
-# Copyright (c) 2020, James P. Imes, all rights reserved.
+# Copyright (c) 2020-2022, James P. Imes, all rights reserved.
 
 """
-Tkinter-based interface tools for the pyTRS library.
+Tkinter-based GUI tools for getting user input.
 """
 
-from pytrs.interface_tools.config_popup import PromptConfig
-from pytrs.interface_tools.attrib_popup import PromptAttrib
-from pytrs.interface_tools.config_popup import prompt_config
-from pytrs.interface_tools.attrib_popup import prompt_attrib
+from .config_popup import PromptConfig
+from .attrib_popup import PromptAttrib
+from .config_popup import prompt_config
+from .attrib_popup import prompt_attrib

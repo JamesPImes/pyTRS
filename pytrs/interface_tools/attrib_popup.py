@@ -1,16 +1,16 @@
-# Copyright (c) 2020-2021, James P. Imes, all rights reserved
+# Copyright (c) 2020-2022, James P. Imes, all rights reserved
 
 """
-A GUI app for choosing pytrs.Tract attributes.
-A PromptAttrib object can be used directly in a tkinter application; or
-the prompt_attrib() function can be used to hold up the program while
-the user makes their choices, and then continue when it returns.
+A GUI app for choosing ``Tract`` attributes.
+A ``PromptAttrib`` object can be used directly in a tkinter application;
+or the ``prompt_attrib()`` function can be used to hold up the program
+while the user makes their choices, and then continue when it returns.
 """
 
 import tkinter as tk
 from tkinter import messagebox
 from tkinter.ttk import Checkbutton
-from pytrs import Tract
+from ..parser import Tract
 
 
 def prompt_attrib(
@@ -78,7 +78,7 @@ def prompt_attrib(
 class PromptAttrib(tk.Frame):
     """
     A tkinter frame for configuring which attributes should be
-    returned from parsed PLSSDesc and/or Tract objects.
+    returned from parsed ``PLSSDesc`` and/or ``Tract`` objects.
     """
 
     # These will be options in the prompt.
@@ -279,10 +279,3 @@ class PromptAttrib(tk.Frame):
             self.target_var.set('CANCEL')
             self.external_var_dict['attrib_list'] = ['CANCEL']
             self.master.destroy()
-
-
-if __name__ == '__main__':
-    # If run on its own, won't really serve much purpose, but it will
-    # pop up and show the default attributes.
-    pa = PromptAttrib()
-    pa.master.mainloop()

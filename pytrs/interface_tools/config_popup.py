@@ -1,12 +1,11 @@
-# Copyright (c) 2020-2021, James P. Imes, all rights reserved
+# Copyright (c) 2020-2022, James P. Imes, all rights reserved
 
 """
-A GUI app for choosing Config parameters for pyTRS parsing;
-results can be returned as text parameters (a string) or as a compiled
-pytrs.Config object.
-A PromptConfig object can be used directly in a tkinter application; or
-the prompt_config() function can be used to hold up the program while
-the user makes their choices, and then continue when it returns.
+A GUI app for choosing config parameters for parsing.
+
+A ``PromptConfig`` object can be used directly in a tkinter application;
+or the ``prompt_config()`` function can be used to hold up the program
+while the user makes their choices, and then continue when it returns.
 """
 
 # Note: Pass `show_ok=True` and `exit_after_ok=True` to use
@@ -20,7 +19,12 @@ the user makes their choices, and then continue when it returns.
 import tkinter as tk
 from tkinter import messagebox
 from tkinter.ttk import Combobox
-import pytrs
+from ..parser import (
+    Config,
+    MasterConfig,
+    IMPLEMENTED_LAYOUTS,
+    IMPLEMENTED_LAYOUT_EXAMPLES,
+)
 
 
 def prompt_config(
@@ -79,8 +83,8 @@ def prompt_config(
 
 class PromptConfig(tk.Frame):
     """
-    A tkinter frame for configuring pyTRS parsing parameters (i.e.
-    pytrs.Config objects).
+    A tkinter frame for configuring parsing parameters (i.e. ``Config``
+    objects).
 
     NOTE: You can customize the behavior of this class by modifying the
     class attributes before creating one:
@@ -104,7 +108,7 @@ class PromptConfig(tk.Frame):
     # __init__().
 
     # The options that will be populated if `attributes='all'` at init.
-    ALL_PARAMETERS = list(pytrs.Config._CONFIG_ATTRIBUTES)
+    ALL_PARAMETERS = list(Config._CONFIG_ATTRIBUTES)
 
     # Parameters that are set via radiobuttons:
     RB_PARAMS = [
@@ -150,7 +154,7 @@ class PromptConfig(tk.Frame):
             'West',
             'East'),
         'layout': tuple(
-            ['Deduce (RECOMMENDED)'] + list(pytrs.IMPLEMENTED_LAYOUTS)),
+            ['Deduce (RECOMMENDED)'] + list(IMPLEMENTED_LAYOUTS)),
         'qq_depth_min': (
             "[Default: 2 -> QQ's]",
             '1 (quarter sections)',
@@ -208,7 +212,7 @@ class PromptConfig(tk.Frame):
             "layouts, it is probably wise to let the program "
             "deduce the layout for each.\n\n"
             "Below are examples of the possible layouts:\n\n"
-            f"{pytrs.IMPLEMENTED_LAYOUT_EXAMPLES}"
+            f"{IMPLEMENTED_LAYOUT_EXAMPLES}"
         ),
 
         'clean_qq': (
@@ -676,17 +680,17 @@ class PromptConfig(tk.Frame):
 
         if 'default_ns' in self.parameters:
             ns = self.combos['default_ns'].get().lower()
-            if ns.startswith(pytrs.PLSSDesc._LEGAL_NS):
+            if ns.startswith(MasterConfig._LEGAL_NS):
                 param_vals.append(ns[0])
 
         if 'default_ew' in self.parameters:
             ew = self.combos['default_ew'].get().lower()
-            if ew.startswith(pytrs.PLSSDesc._LEGAL_EW):
+            if ew.startswith(MasterConfig._LEGAL_EW):
                 param_vals.append(ew[0])
 
         if 'layout' in self.parameters:
             layout = self.combos['layout'].get()
-            if layout in pytrs.IMPLEMENTED_LAYOUTS:
+            if layout in IMPLEMENTED_LAYOUTS:
                 param_vals.append(layout)
 
         # Check each of the requested variables. If not default (i.e. -1),
@@ -799,9 +803,3 @@ class PromptConfig(tk.Frame):
             help_button.grid(column=2, row=row)
             self.combo.grid(column=3, row=row, sticky='w')
             top_owner.combos[attribute] = self.combo
-
-
-if __name__ == '__main__':
-    # If run on its own, won't serve much purpose, but...
-    pc = PromptConfig(show_ok=True, show_cancel=True)
-    pc.master.mainloop()
