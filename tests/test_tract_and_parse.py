@@ -256,8 +256,13 @@ class TractTests(unittest.TestCase):
         self.assertTrue(qq_flag in tract.w_flags)
         self.assertTrue((qq_flag, qq_flag) in tract.w_flag_lines)
 
+    def test_lots_qqs(self):
+        txt = 'Lots 1 - 3, S/2NE/4, Lot 5, Lot 1'
+        tract = Tract(txt, parse_qq=True)
+        self.assertEqual(['L1', 'L2', 'L3', 'L5', 'L1', 'SENE', 'SWNE'], tract.lots_qqs)
+
     def test_ilots(self):
-        txt = 'Lots 1 - 3, Lot 5, Lot 1'
+        txt = 'Lots 1 - 3, S/2NE/4, Lot 5, Lot 1'
         tract = Tract(txt, parse_qq=True)
         self.assertEqual([1, 2, 3, 5, 1], tract.ilots)
 
