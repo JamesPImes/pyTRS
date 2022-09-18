@@ -8,7 +8,8 @@ import unittest
 try:
     from pytrs.parser.rgxlib import *
     from pytrs.parser.unpack.unpackers import (
-        # lot/multilot functions
+        # lot/multilot functions and classes
+        LotUnpacker,
         is_multi_lot,
         get_rightmost_lot,
         get_rightmost_acreage,
@@ -38,7 +39,8 @@ except ImportError:
     sys.path.append('../')
     from pytrs.parser.rgxlib import *
     from pytrs.parser.unpack.unpackers import (
-        # lot/multilot functions
+        # lot/multilot functions and classes
+        LotUnpacker,
         is_multi_lot,
         get_rightmost_lot,
         get_rightmost_acreage,
@@ -228,6 +230,16 @@ class LotUnpackersTests(unittest.TestCase):
         for txt in lots:
             mo = multilot_with_aliquot_regex.search(txt)
             self.assertEqual('', get_leading_aliquot(mo))
+
+    def test_lot_unpacker_class(self):
+        txt = 'Lots 1 - 3, 5(38.91)'
+        expected_lots = ['L1', 'L2', 'L3', 'L5']
+        expected_acres = {
+            'L5': '38.91',
+        }
+        unpacker = LotUnpacker(txt)
+        self.assertEqual(expected_lots, unpacker.lot_list)
+        self.assertEqual(expected_acres, unpacker.lot_acres)
 
 
 class SecUnpackersTests(unittest.TestCase):

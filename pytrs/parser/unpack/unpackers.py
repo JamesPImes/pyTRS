@@ -92,7 +92,12 @@ class LotUnpacker:
                 working_lot_list.append(lot_num)
 
             if lot_acreage is not None:
-                working_acreages[f'L{lot_num}'] = lot_acreage
+                lot_name = f'L{lot_num}'
+                if lot_name in self.lot_acres:
+                    flag = f"dup_lot_acreage<{lot_name}({self.lot_acres[lot_name]})>"
+                    self.flags.append(flag)
+                    self.flag_lines.append((flag, flag))
+                self.lot_acres[lot_name] = lot_acreage
 
             # Check for the next loop.
             found_through = thru_rightmost(lot_mo)
