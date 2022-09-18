@@ -48,14 +48,22 @@ class TractParseTests(unittest.TestCase):
             self.assertEqual(expected, parser.lots + parser.qqs)
 
     def test_lot_divs(self):
-        txts_expected = {
+        txts_expected_with = {
             'N/2 of Lot 1, Lot 3, E/2SW/4 of Lot 7': ['N2 of L1', 'L3', 'E2SW of L7'],
             'Lot 5, N/2 of Lots 1 - 3': ['L5', 'N2 of L1', 'N2 of L2', 'N2 of L3'],
         }
-        for txt, expected in txts_expected.items():
+        for txt, expected in txts_expected_with.items():
             # Default include lot divisions.
             parser = TractParser(txt)
             self.assertEqual(expected, parser.lots)
+        txts_expected_without = {
+            'N/2 of Lot 1, Lot 3, E/2SW/4 of Lot 7': ['L1', 'L3', 'L7'],
+            'Lot 5, N/2 of Lots 1 - 3': ['L5', 'L1', 'L2', 'L3'],
+        }
+        for txt, expected in txts_expected_without.items():
+            parser = TractParser(txt, include_lot_divs=False)
+            self.assertEqual(expected, parser.lots)
+
 
 
 class AliquotParseTests(unittest.TestCase):
