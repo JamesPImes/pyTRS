@@ -319,6 +319,40 @@ class TractTests(unittest.TestCase):
         self.assertFalse(tract.trs_is_undef())
         self.assertFalse(tract.trs_is_error())
 
+    def test_pretty_twprge(self):
+        custom_pretty_settings = {
+            't': 'Twp ',
+            'r': 'Rge ',
+            'delim': ', ',
+            'n': ' North',
+            's': ' South',
+            'e': ' East',
+            'w': ' West',
+            'undef': '___X'
+        }
+
+        tract = Tract('NE/4', '154n97w14')
+        # Default.
+        self.assertEqual('T154N-R97W', tract.pretty_twprge())
+        # Custom.
+        prettified = tract.pretty_twprge(**custom_pretty_settings)
+        self.assertEqual('Twp 154 North, Rge 97 West', prettified)
+
+        tract = Tract('NE/4', '154s97e14')
+        # Default.
+        self.assertEqual('T154S-R97E', tract.pretty_twprge())
+        # Custom.
+        prettified = tract.pretty_twprge(**custom_pretty_settings)
+        self.assertEqual('Twp 154 South, Rge 97 East', prettified)
+
+        # Undefined
+        tract = Tract('NE/4')
+        # Default.
+        self.assertEqual('T---X-R---X', tract.pretty_twprge())
+        # Custom.
+        prettified = tract.pretty_twprge(**custom_pretty_settings)
+        self.assertEqual('Twp ___X, Rge ___X', prettified)
+
     # Test data extraction methods.
 
     def test_to_dict(self):
