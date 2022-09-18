@@ -277,6 +277,8 @@ class TractTests(unittest.TestCase):
         self.assertIsNone(tract.twp_num)
         self.assertIsNone(tract.rge_num)
         self.assertIsNone(tract.sec_num)
+        self.assertTrue(tract.trs_is_undef())
+        self.assertFalse(tract.trs_is_error())
 
         # Assign a Twp/Rge/Sec that cannot be understood by the parser.
         tract.trs = 'asdf'
@@ -290,6 +292,8 @@ class TractTests(unittest.TestCase):
         self.assertIsNone(tract.twp_num)
         self.assertIsNone(tract.rge_num)
         self.assertIsNone(tract.sec_num)
+        self.assertFalse(tract.trs_is_undef())
+        self.assertTrue(tract.trs_is_error())
 
         # Assign a valid Twp/Rge/Sec.
         tract.trs = '154n97w01'
@@ -307,6 +311,8 @@ class TractTests(unittest.TestCase):
         self.assertFalse(tract.twp_undef)
         self.assertFalse(tract.rge_undef)
         self.assertFalse(tract.sec_undef)
+        self.assertFalse(tract.trs_is_undef())
+        self.assertFalse(tract.trs_is_error())
 
 
 if __name__ == '__main__':
