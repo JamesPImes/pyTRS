@@ -111,6 +111,18 @@ class TractParseTests(unittest.TestCase):
         to_3 = TractParser(txt, qq_depth=3)
         self.assertEqual(expected_3, to_3.qqs)
 
+    def test_break_halves(self):
+        txt = 'N/2NW/4SW/4, SE/4SE/4'
+        expected_without_break = ['N2NWSW', 'SESE']
+        expected_with_break = ['NENWSW', 'NWNWSW', 'SESE']
+
+        # Default qq_depth_min=2; qq_depth_max=None; break_halves=False.
+        without = TractParser(txt)
+        self.assertEqual(expected_without_break, without.qqs)
+
+        with_break_halves = TractParser(txt, break_halves=True)
+        self.assertEqual(expected_with_break, with_break_halves.qqs)
+
 
 class AliquotParseTests(unittest.TestCase):
 
