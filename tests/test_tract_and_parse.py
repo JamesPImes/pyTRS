@@ -335,6 +335,14 @@ class TractTests(unittest.TestCase):
         tract = Tract(desc, trs, parse_qq=True)
         self.assertEqual(expected, tract.to_dict(attributes_to_pull))
 
+    def test_to_list(self):
+        desc = 'Lot 1, S/2NE/4'
+        trs = '154n97w01'
+        attributes_to_pull = ['trs', 'desc', 'lots', 'qqs', 'flags']
+        expected = [trs, desc, ['L1'], ['SENE', 'SWNE'], []]
+        tract = Tract(desc, trs, parse_qq=True)
+        self.assertEqual(expected, tract.to_list(attributes_to_pull))
+
 
 if __name__ == '__main__':
     unittest.main()
