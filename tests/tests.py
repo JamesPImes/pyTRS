@@ -3,7 +3,7 @@ import unittest
 
 try:
     import pytrs
-    from pytrs.parser.parser import (
+    from pytrs.parser.plssdesc import (
         PLSSParser,
         PLSSPreprocessor,
     )
@@ -11,7 +11,7 @@ except ImportError:
     import sys
     sys.path.append('../')
     import pytrs
-    from pytrs.parser.parser import (
+    from pytrs.parser.plssdesc import (
         PLSSParser,
         PLSSPreprocessor,
     )

@@ -6,14 +6,14 @@ Tests for the pytrs.parser.plss_preprocess submodule.
 import unittest
 
 try:
-    from pytrs.parser.plss_preprocess import (
+    from pytrs.parser.plssdesc.plss_preprocess import (
         PLSSPreprocessor,
         find_twprge,
     )
 except ImportError:
     import sys
     sys.path.append('../')
-    from pytrs.parser.plss_preprocess import (
+    from pytrs.parser.plssdesc.plss_preprocess import (
         PLSSPreprocessor,
         find_twprge,
     )

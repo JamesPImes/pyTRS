@@ -7,7 +7,7 @@ import unittest
 
 try:
     from pytrs.parser.rgxlib import *
-    from pytrs.parser.unpackers import (
+    from pytrs.parser.unpack.unpackers import (
         # lot/multilot functions
         is_multi_lot,
         get_rightmost_lot,
@@ -37,7 +37,7 @@ except ImportError:
     import sys
     sys.path.append('../')
     from pytrs.parser.rgxlib import *
-    from pytrs.parser.unpackers import (
+    from pytrs.parser.unpack.unpackers import (
         # lot/multilot functions
         is_multi_lot,
         get_rightmost_lot,

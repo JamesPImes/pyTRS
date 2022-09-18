@@ -8,7 +8,7 @@ import unittest
 
 
 try:
-    from pytrs.parser.tract_preprocess import (
+    from pytrs.parser.tract.tract_preprocess import (
         remove_aliquot_interveners,
         scrub_aliquots,
         TractPreprocessor,
@@ -16,7 +16,7 @@ try:
 except ImportError:
     import sys
     sys.path.append('../')
-    from pytrs.parser.tract_preprocess import (
+    from pytrs.parser.tract.tract_preprocess import (
         remove_aliquot_interveners,
         scrub_aliquots,
         TractPreprocessor,
