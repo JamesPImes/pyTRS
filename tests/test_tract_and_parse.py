@@ -401,8 +401,8 @@ class TractTests(unittest.TestCase):
 
     def test_get_headers(self):
         """
-        Test the .get_headers() method, for converting attribute names
-        into headers for tabular data.
+        Test the .get_headers() static method, for converting attribute
+        names into headers for tabular data.
         :return:
         """
         attributes = ['trs', 'desc', 'lots', 'ilots', 'qqs']
