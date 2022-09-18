@@ -111,7 +111,7 @@ class TractParser:
 
         NOTE: Documentation for this method is mostly maintained under
         ``Tract.parse()``, which essentially serves as a wrapper for the
-        TractParser class and this method.
+        ``TractParser`` class and this method.
         """
         text = self.text
         include_lot_divs = self.include_lot_divs
@@ -175,6 +175,12 @@ class TractParser:
                 # For example: 'N/2 of Lot 1 and 2'  (meaning ['N2 of L1',
                 # 'N2 of L2']) is possible. See also, "N/2 of Lot 1 - 3".
             self.lots.extend(new_lots)
+            for lot_, acres_ in unpacker.lot_acres.items():
+                if lot_ in self.lot_acres:
+                    flag = f"dup_lot_acreage<{lot_}({self.lot_acres[lot_]})>"
+                    self.w_flags.append(flag)
+                    self.w_flag_lines.append((flag, flag))
+                self.lot_acres[lot_] = acres_
 
         # Get a list of all of the aliquots strings, so we can parse them
         # individually.
