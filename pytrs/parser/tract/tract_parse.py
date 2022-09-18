@@ -233,16 +233,14 @@ class TractParser:
         dup_qqs = find_duplicates(self.qqs)
 
         if dup_lots:
-            flag = "dup_lot"
-            context = f"{flag}<{','.join(dup_lots)}>"
+            flag = f"dup_lot<{','.join(dup_lots)}>"
             self.w_flags.append(flag)
-            self.w_flag_lines.append((flag, context))
+            self.w_flag_lines.append((flag, flag))
 
         if dup_qqs:
-            flag = "dup_qq"
-            context = f"{flag}<{','.join(dup_qqs)}>"
+            flag = f"dup_qq<{','.join(dup_qqs)}>"
             self.w_flags.append(flag)
-            self.w_flag_lines.append((flag, context))
+            self.w_flag_lines.append((flag, flag))
 
 
 __all__ = [
