@@ -64,6 +64,52 @@ class TractParseTests(unittest.TestCase):
             parser = TractParser(txt, include_lot_divs=False)
             self.assertEqual(expected, parser.lots)
 
+    def test_qq_depth_min(self):
+        txt = 'N2'
+        expected_1 = ['NE', 'NW']
+        expected_2 = ['NENE', 'NWNE', 'SENE', 'SWNE', 'NENW', 'NWNW', 'SENW', 'SWNW']
+        expected_3 = [
+            'NENENE', 'NWNENE', 'SENENE', 'SWNENE',
+            'NENWNE', 'NWNWNE', 'SENWNE', 'SWNWNE',
+            'NESENE', 'NWSENE', 'SESENE', 'SWSENE',
+            'NESWNE', 'NWSWNE', 'SESWNE', 'SWSWNE',
+            'NENENW', 'NWNENW', 'SENENW', 'SWNENW',
+            'NENWNW', 'NWNWNW', 'SENWNW', 'SWNWNW',
+            'NESENW', 'NWSENW', 'SESENW', 'SWSENW',
+            'NESWNW', 'NWSWNW', 'SESWNW', 'SWSWNW',
+        ]
+        to_1 = TractParser(txt, qq_depth_min=1)
+        self.assertEqual(expected_1, to_1.qqs)
+        to_2 = TractParser(txt, qq_depth_min=2)
+        self.assertEqual(expected_2, to_2.qqs)
+        to_3 = TractParser(txt, qq_depth_min=3)
+        self.assertEqual(expected_3, to_3.qqs)
+
+    def test_qq_depth_max(self):
+        txt = 'S/2N/2NW/4SW/4, SE/4SE/4'
+        # Do not do a qq_depth_max of 1.
+        expected_2 = ['NWSW', 'SESE']
+        expected_3 = ['N2NWSW', 'SESE']
+        expected_4 = ['S2N2NWSW', 'SESE']
+        to_2 = TractParser(txt, qq_depth_max=2)
+        self.assertEqual(expected_2, to_2.qqs)
+        to_3 = TractParser(txt, qq_depth_max=3)
+        self.assertEqual(expected_3, to_3.qqs)
+        to_4 = TractParser(txt, qq_depth_max=4)
+        self.assertEqual(expected_4, to_4.qqs)
+
+    def test_qq_depth_exact(self):
+        txt = 'S/2N/2NW/4SW/4, SE/4SE/4'
+        # Do not do a qq_depth_max of 1.
+        expected_1 = ['SW', 'SE']
+        expected_2 = ['NWSW', 'SESE']
+        expected_3 = ['NENWSW', 'NWNWSW', 'NESESE', 'NWSESE', 'SESESE', 'SWSESE']
+        to_1 = TractParser(txt, qq_depth=1)
+        self.assertEqual(expected_1, to_1.qqs)
+        to_2 = TractParser(txt, qq_depth=2)
+        self.assertEqual(expected_2, to_2.qqs)
+        to_3 = TractParser(txt, qq_depth=3)
+        self.assertEqual(expected_3, to_3.qqs)
 
 
 class AliquotParseTests(unittest.TestCase):
