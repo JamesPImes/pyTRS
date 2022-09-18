@@ -5,11 +5,11 @@ Tools for preprocessing text before parsing as PLSSDesc.
 
 import re
 
-from .rgxlib import *
-from .unpackers import (
+from ..rgxlib import *
+from ..unpack import (
     unpack_twprge,
 )
-from .config import (
+from ..config import (
     MasterConfig,
 )
 

@@ -4,10 +4,12 @@ A class to represent a full PLSS land description and parse it into
 Tract objects.
 """
 
-from .config import (
+from ..config import (
     Config,
     ConfigError,
+    COPY_ALL,
 )
+from ..containers import TractList
 from .plss_preprocess import (
     PLSSPreprocessor,
 )
@@ -15,9 +17,7 @@ from .plss_parse import (
     PLSSParser,
     SecFinder,
     deduce_layout,
-    COPY_ALL,
 )
-from .containers import TractList
 
 
 class PLSSDesc:

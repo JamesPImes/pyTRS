@@ -4,28 +4,28 @@ Class and functions for parsing PLSS descriptions that have already been
 preprocessed.
 """
 
-from .rgxlib import *
-from .unpackers import (
+from ..rgxlib import *
+from ..unpack import (
     SecUnpacker,
     unpack_twprge,
     twprge_natural_to_short,
     is_multi_sec,
 )
-from .config import (
+from ..config import (
     MasterConfig,
 )
-from .plss_preprocess import (
-    PLSSPreprocessor,
-    find_twprge,
-)
-from .tract import Tract
-from .containers import TractList
-from .config import (
+from ..tract import Tract
+from ..containers import TractList
+from ..config import (
     TRS_DESC,
     DESC_STR,
     S_DESC_TR,
     TR_DESC_S,
     COPY_ALL,
+)
+from .plss_preprocess import (
+    PLSSPreprocessor,
+    find_twprge,
 )
 
 _E_FLAG_SECERR = 'SecERROR'
