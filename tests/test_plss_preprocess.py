@@ -1,6 +1,6 @@
 
 """
-Tests for the pytrs.parser.plss_preprocess submodule.
+Tests for the pytrs.parser.plssdesc.plss_preprocess submodule.
 """
 
 import unittest

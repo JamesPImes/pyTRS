@@ -1,6 +1,6 @@
 
 """
-Tests for pytrs.parser.unpackers submodule.
+Tests for pytrs.parser.unpack.unpackers submodule.
 """
 
 import unittest
