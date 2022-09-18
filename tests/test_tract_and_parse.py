@@ -246,6 +246,14 @@ class TractTests(unittest.TestCase):
             self.assertEqual('NE/4', tract.desc)
             self.assertEqual('154s97e01', tract.trs)
 
+    def test_duplot_dupqq_flags(self):
+        txt = 'Lots 1 - 3, NW/4, Lot 2, Lot 1, NE/4NW/4, SW/4NW/4'
+        tract = Tract(txt, parse_qq=True)
+        self.assertTrue('dup_lot<L1,L2>' in tract.w_flags)
+        self.assertTrue(('dup_lot<L1,L2>', 'dup_lot<L1,L2>') in tract.w_flag_lines)
+        self.assertTrue('dup_qq<NENW,SWNW>' in tract.w_flags)
+        self.assertTrue(('dup_qq<NENW,SWNW>', 'dup_qq<NENW,SWNW>') in tract.w_flag_lines)
+
 
 if __name__ == '__main__':
     unittest.main()
