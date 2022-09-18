@@ -5,3 +5,4 @@ build/
 dist/
 dev/
 /pyTRS.egg-info/
+*scratch*
