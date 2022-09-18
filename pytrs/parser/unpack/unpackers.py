@@ -27,6 +27,12 @@ class LotUnpacker:
         self.lot_acres = {}
         self.flags = []
         self.flag_lines = []
+        # aliquots_through is the number of lots (counting from the left)
+        # to which to apply an aliquot subdivision to (i.e.include_lot_divs)
+        # if such a subdivision is found before this lot text.
+        # Specifically, we will add aliquots until we encounter the second
+        # occurrence of the word 'Lot(s)'.
+        self.aliquots_through = 1
         self.unpack_lots(txt)
 
     def unpack_lots(self, txt):
@@ -44,6 +50,14 @@ class LotUnpacker:
         # the end.
         working_lot_list = []
         working_acreages = {}
+
+        # Keep track of the last time we encountered the word 'Lot(s)',
+        # in order to determine which lot(s) we might apply an aliquot
+        # division to (if one is found). The application of aliquots
+        # occurs in the TractParse class (not here), but this method
+        # deduces how many lots (counting from the left) will receive
+        # the aliquot.
+        word_lot_encountered = 0
 
         found_through = False
         endpos = len(txt)
@@ -91,6 +105,9 @@ class LotUnpacker:
                 # A standalone section.
                 working_lot_list.append(lot_num)
 
+            if lot_mo['word_lot_rightmost'] is not None:
+                word_lot_encountered = len(working_lot_list)
+
             if lot_acreage is not None:
                 lot_name = f'L{lot_num}'
                 if lot_name in self.lot_acres:
@@ -109,6 +126,10 @@ class LotUnpacker:
 
         for lot, acreage in working_acreages.items():
             self.lot_acres[lot] = acreage
+
+        # Determine how many lots (counting from the left) we can add
+        # aliquot subdivision to (if any is found in the TractParser).
+        self.aliquots_through = len(working_lot_list) - word_lot_encountered
 
         return working_lot_list
 
