@@ -377,6 +377,13 @@ class TractTests(unittest.TestCase):
         tract = Tract(desc, trs, parse_qq=True)
         self.assertEqual(expected, tract.to_list(attributes_to_pull))
 
+    def test_dunder_str(self):
+        """Test the str() representation of a Tract object."""
+        desc = 'Lot 1, S/2NE/4'
+        trs = '154n97w01'
+        tract = Tract(desc, trs)
+        self.assertEqual('154n97w01: Lot 1, S/2NE/4', str(tract))
+
     def test_quick_desc(self):
         desc = 'Lot 1, S/2NE/4'
         trs = '154n97w01'
