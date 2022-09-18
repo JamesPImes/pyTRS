@@ -1,15 +1,15 @@
 
 """
 Customized containers for Tract and TRS objects, along with helper
-functions for grouping (or ungrouping), sorting, and filtering.
+functions for grouping (or ungrouping) and sorting.
 """
 
 import re
 
-from .tract import Tract
-from .trs import TRS
-from ..utils import _confirm_list_of_strings as clean_attributes
-from ..utils import flatten
+from ...utils import flatten
+from ...utils import _confirm_list_of_strings as clean_attributes
+from ..tract import Tract
+from ..trs import TRS
 
 
 class _TRSTractList:
