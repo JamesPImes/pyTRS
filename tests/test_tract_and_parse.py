@@ -343,6 +343,21 @@ class TractTests(unittest.TestCase):
         tract = Tract(desc, trs, parse_qq=True)
         self.assertEqual(expected, tract.to_list(attributes_to_pull))
 
+    def test_quick_desc(self):
+        desc = 'Lot 1, S/2NE/4'
+        trs = '154n97w01'
+        tract = Tract(desc, trs)
+        self.assertEqual('154n97w01: Lot 1, S/2NE/4', tract.quick_desc())
+        self.assertEqual(
+            '154n97w01 -- Lot 1, S/2NE/4', tract.quick_desc(delim=' -- '))
+
+    def test_quick_desc_short(self):
+        desc = 'Lot 1, S/2NE/4, and it goes on and on and on and on'
+        trs = '154n97w01'
+        tract = Tract(desc, trs)
+        self.assertEqual('154n97w01: Lot 1, S/2NE/4, ...', tract.quick_desc_short())
+        self.assertEqual('154n97w01: Lot 1,...', tract.quick_desc_short(max_len=20))
+
 
 if __name__ == '__main__':
     unittest.main()
