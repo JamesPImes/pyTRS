@@ -261,6 +261,53 @@ class TractTests(unittest.TestCase):
         tract = Tract(txt, parse_qq=True)
         self.assertEqual([1, 2, 3, 5, 1], tract.ilots)
 
+    def test_trs_components(self):
+        """
+        Check that the Twp/Rge/Sec attributes/properties are correct.
+        :return:
+        """
+        # Do not specify Twp/Rge/Sec initially.
+        tract = Tract('NE/4')
+
+        # '___z___z__' is the undefined Twp/Rge/Sec.
+        self.assertEqual('___z___z__', tract.trs)
+        self.assertTrue(tract.twp_undef)
+        self.assertTrue(tract.rge_undef)
+        self.assertTrue(tract.sec_undef)
+        self.assertIsNone(tract.twp_num)
+        self.assertIsNone(tract.rge_num)
+        self.assertIsNone(tract.sec_num)
+
+        # Assign a Twp/Rge/Sec that cannot be understood by the parser.
+        tract.trs = 'asdf'
+        # 'XXXzXXXzXX' is the error Twp/Rge/Sec.
+        self.assertEqual('XXXzXXXzXX', tract.trs)
+        # These are no longer undefined, even though they are nonsense.
+        self.assertFalse(tract.twp_undef)
+        self.assertFalse(tract.rge_undef)
+        self.assertFalse(tract.sec_undef)
+        # But these are still None.
+        self.assertIsNone(tract.twp_num)
+        self.assertIsNone(tract.rge_num)
+        self.assertIsNone(tract.sec_num)
+
+        # Assign a valid Twp/Rge/Sec.
+        tract.trs = '154n97w01'
+        self.assertEqual('154n97w01', tract.trs)
+        self.assertEqual('154n', tract.twp)
+        self.assertEqual(154, tract.twp_num)
+        self.assertEqual('n', tract.twp_ns)
+        self.assertEqual('n', tract.ns)
+        self.assertEqual('97w', tract.rge)
+        self.assertEqual(97, tract.rge_num)
+        self.assertEqual('w', tract.rge_ew)
+        self.assertEqual('w', tract.ew)
+        self.assertEqual('01', tract.sec)
+        self.assertEqual(1, tract.sec_num)
+        self.assertFalse(tract.twp_undef)
+        self.assertFalse(tract.rge_undef)
+        self.assertFalse(tract.sec_undef)
+
 
 if __name__ == '__main__':
     unittest.main()
