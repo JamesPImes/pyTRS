@@ -89,21 +89,8 @@ class TractParser:
             self.e_flags = parent.e_flags.copy()
             self.w_flag_lines = parent.w_flag_lines.copy()
             self.e_flag_lines = parent.e_flag_lines.copy()
-            self.source = parent.source
-
-        self.parse_cache = {}
-        self.reset_cache()
 
         self.parse()
-
-    def reset_cache(self):
-        self.parse_cache = {
-            "text_block": "",
-            "unused_text": [],
-            "unused_with_context": [],
-            "w_flags_staging": [],
-            "w_flag_lines_staging": []
-        }
 
     def parse(self):
         """
