@@ -1,9 +1,10 @@
-# Copyright (c) 2021, James P. Imes. All rights reserved.
+# Copyright (c) 2021-2022, James P. Imes. All rights reserved.
 
 import csv
 from pathlib import Path
-from pytrs import Tract, TractList
-from pytrs.utils import gen_uid
+
+from ..parser import Tract, TractList
+from ..utils import gen_uid
 
 
 class TractWriter:
