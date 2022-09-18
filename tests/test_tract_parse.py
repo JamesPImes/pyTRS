@@ -1,25 +1,23 @@
 
 """
-Tests for the pytrs.parser.tract.tract_parse submodule.
+Tests for the pytrs.parser.tract module and submodules.
 """
 
 import unittest
 
 try:
-    from pytrs.parser.tract.tract_parse import (
-        TractParser,
-
-    )
+    from pytrs.parser.tract import Tract
+    from pytrs.parser.tract.tract_parse import TractParser
     from pytrs.parser.tract.aliquot_parse import parse_aliquot
 except ImportError:
     import sys
     sys.path.append('../')
-    from pytrs.parser.tract.tract_parse import (
-        TractParser,
-
-    )
+    from pytrs.parser.tract import Tract
+    from pytrs.parser.tract.tract_parse import TractParser
     from pytrs.parser.tract.aliquot_parse import parse_aliquot
 
+
+# This data will be used for testing both TractParser and Tract classes.
 
 BASIC = {
     'desc': 'Lots 1 - 3, S/2N/2, Lot 8(39.21), SE/4SE/4',
@@ -89,7 +87,9 @@ BREAK_HALVES = {
 
 
 class TractParseTests(unittest.TestCase):
-
+    """
+    Tests for the ``TractParse`` class.
+    """
     def test_basic(self):
         parser = TractParser(text=BASIC['desc'])
         self.assertEqual(BASIC['expected_lots'], parser.lots)
@@ -158,6 +158,68 @@ class AliquotParseTests(unittest.TestCase):
 
         qqs2 = parse_aliquot('SE/4SE/4')
         self.assertEqual(['SESE'], qqs2)
+
+
+class TractTests(unittest.TestCase):
+    """
+    Tests for ``Tract`` class, including parsing.
+    """
+    def test_basic(self):
+        tract = Tract(desc=BASIC['desc'], parse_qq=True)
+        self.assertEqual(BASIC['expected_lots'], tract.lots)
+        self.assertEqual(BASIC['expected_acres'], tract.lot_acres)
+        self.assertEqual(BASIC['expected_qqs'], tract.qqs)
+
+    def test_clean_qq(self):
+        for txt, expected in CLEAN_QQ.items():
+            tract = Tract(txt, parse_qq=True, config='clean_qq')
+            self.assertEqual(expected, tract.lots_qqs)
+
+    def test_lot_divs(self):
+        for txt, expected in WITH_LOT_DIVS.items():
+            # Default include lot divisions.
+            tract = Tract(txt, parse_qq=True)
+            self.assertEqual(expected, tract.lots)
+        for txt, expected in WITHOUT_LOT_DIV.items():
+            tract = Tract(txt, parse_qq=True, config='include_lot_divs.False')
+            self.assertEqual(expected, tract.lots)
+
+    def test_qq_depth_min(self):
+        txt = QQ_DEPTH_MIN['txt']
+        to_1 = Tract(txt, parse_qq=True, config='qq_depth_min.1')
+        self.assertEqual(QQ_DEPTH_MIN['expected_1'], to_1.qqs)
+        to_2 = Tract(txt, parse_qq=True, config='qq_depth_min.2')
+        self.assertEqual(QQ_DEPTH_MIN['expected_2'], to_2.qqs)
+        to_3 = Tract(txt, parse_qq=True, config='qq_depth_min.3')
+        self.assertEqual(QQ_DEPTH_MIN['expected_3'], to_3.qqs)
+
+    def test_qq_depth_max(self):
+        txt = QQ_DEPTH_MAX['txt']
+        to_2 = Tract(txt, parse_qq=True, config='qq_depth_max.2')
+        self.assertEqual(QQ_DEPTH_MAX['expected_2'], to_2.qqs)
+        to_3 = Tract(txt, parse_qq=True, config='qq_depth_max.3')
+        self.assertEqual(QQ_DEPTH_MAX['expected_3'], to_3.qqs)
+        to_4 = Tract(txt, parse_qq=True, config='qq_depth_max.4')
+        self.assertEqual(QQ_DEPTH_MAX['expected_4'], to_4.qqs)
+
+    def test_qq_depth_exact(self):
+        txt = QQ_DEPTH_EXACT['txt']
+        to_1 = Tract(txt, parse_qq=True, config='qq_depth.1')
+        self.assertEqual(QQ_DEPTH_EXACT['expected_1'], to_1.qqs)
+        to_2 = Tract(txt, parse_qq=True, config='qq_depth.2')
+        self.assertEqual(QQ_DEPTH_EXACT['expected_2'], to_2.qqs)
+        to_3 = Tract(txt, parse_qq=True, config='qq_depth.3')
+        self.assertEqual(QQ_DEPTH_EXACT['expected_3'], to_3.qqs)
+
+    def test_break_halves(self):
+        txt = BREAK_HALVES['txt']
+
+        # Default qq_depth_min=2; qq_depth_max=None; break_halves=False.
+        without = Tract(txt, parse_qq=True)
+        self.assertEqual(BREAK_HALVES['expected_without_break'], without.qqs)
+
+        with_break_halves = Tract(txt, parse_qq=True, config='break_halves')
+        self.assertEqual(BREAK_HALVES['expected_with_break'], with_break_halves.qqs)
 
 
 if __name__ == '__main__':
