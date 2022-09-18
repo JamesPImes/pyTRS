@@ -1,6 +1,7 @@
 
 """
-Tests for the pytrs.parser.tract module and submodules.
+Tests for the pytrs.parser.tract module and submodules (except the
+.tract_preprocess submodule, which has its own tests).
 """
 
 import unittest
