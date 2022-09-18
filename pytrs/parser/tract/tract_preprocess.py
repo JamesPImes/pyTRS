@@ -1,5 +1,7 @@
 
-from .unpackers import *
+import re
+
+from ..rgxlib import *
 
 # Clean aliquot abbreviations with fraction.
 NE_FRAC = 'NE¼'

@@ -6,16 +6,16 @@ been preprocessed.
 
 import re
 
-from .rgxlib import *
-from .unpackers import (
+from ..rgxlib import *
+from ..unpack import (
     LotUnpacker,
+)
+from .aliquot_parse import (
+    parse_aliquot,
+    _ALL
 )
 from .tract_preprocess import (
     TractPreprocessor,
-)
-from .parse_aliquot import (
-    parse_aliquot,
-    _ALL
 )
 
 

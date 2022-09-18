@@ -4,7 +4,7 @@ Functions to parse an aliquot text block into a list of quarter-quarter
 (or smaller or larger, as configured by the requested depth).
 """
 
-from .rgxlib import *
+from ..rgxlib import *
 
 # Cardinal directions / aliquot names (without fractions).
 _N = 'N'

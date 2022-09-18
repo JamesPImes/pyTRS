@@ -5,16 +5,16 @@ description block, and to parse that description block into lots and
 aliquot Quarter-Quarters ("QQs").
 """
 
-from .config import (
+from ...utils import (
+    _confirm_list_of_strings as clean_attributes,
+)
+from ..config import (
     Config,
     ConfigError,
 )
-from .trs import TRS
+from ..trs import TRS
 from .tract_preprocess import TractPreprocessor
 from .tract_parse import TractParser
-from ..utils import (
-    _confirm_list_of_strings as clean_attributes,
-)
 
 
 class Tract:
@@ -871,3 +871,8 @@ class Tract:
         if plus_cols:
             header_row.extend(plus_cols)
         return header_row
+
+
+__all__ = [
+    'Tract'
+]
