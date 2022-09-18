@@ -34,5 +34,17 @@ class TractParseTests(unittest.TestCase):
         self.assertEqual(expected_qqs, parser.qqs)
 
 
+class AliquotParseTests(unittest.TestCase):
+
+    def test_aliquot_parse(self):
+        desc = 'S/2N/2'
+        expected_qqs = ['SENE', 'SWNE', 'SENW', 'SWNW']
+        qqs = parse_aliquot(desc)
+        self.assertEqual(expected_qqs, qqs)
+
+        qqs2 = parse_aliquot('SE/4SE/4')
+        self.assertEqual(['SESE'], qqs2)
+
+
 if __name__ == '__main__':
     unittest.main()
