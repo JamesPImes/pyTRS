@@ -33,6 +33,20 @@ class TractParseTests(unittest.TestCase):
         self.assertEqual(expected_acres, parser.lot_acres)
         self.assertEqual(expected_qqs, parser.qqs)
 
+    def test_clean_qq(self):
+        txts_expected = {
+            'Lot 1 of SE/4 of the NW/4': ['L1', 'SENW'],
+            'Southeast Quarter of the Northeast Quarter': ['SENE'],
+            'Lots 1 - 3, NENE': ['L1', 'L2', 'L3', 'NENE'],
+            'S2NE': ['SENE', 'SWNE'],
+            'S2NENW, Lot 7': ['L7', 'S2NENW'],
+            'N2 of NE of NW, NW': ['N2NENW', 'NENW', 'NWNW', 'SENW', 'SWNW'],
+            'S½N½ SW': ['S2NESW', 'S2NWSW']
+        }
+        for txt, expected in txts_expected.items():
+            parser = TractParser(txt, clean_qq=True)
+            self.assertEqual(expected, parser.lots + parser.qqs)
+
 
 class AliquotParseTests(unittest.TestCase):
 
