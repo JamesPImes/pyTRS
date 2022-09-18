@@ -222,6 +222,30 @@ class TractTests(unittest.TestCase):
         with_break_halves = Tract(txt, parse_qq=True, config='break_halves')
         self.assertEqual(BREAK_HALVES['expected_with_break'], with_break_halves.qqs)
 
+    def test_from_twprgesec(self):
+        # Test n/w (default).
+        components_nw = [
+            ('NE/4', '154n', '97w', '1'),
+            ('NE/4', '154', '97', '1'),
+            ('NE/4', 154, 97, 1),
+        ]
+        for desc, twp, rge, sec in components_nw:
+            tract = Tract.from_twprgesec(desc, twp, rge, sec)
+            self.assertEqual('NE/4', tract.desc)
+            # Relies on standard default_ns='w' and default_ew='w' values.
+            self.assertEqual('154n97w01', tract.trs)
+
+        # Test s/e.
+        components_se = [
+            ('NE/4', '154s', '97e', '1'),
+            ('NE/4', '154', '97', '1'),
+            ('NE/4', 154, 97, 1),
+        ]
+        for desc, twp, rge, sec in components_se:
+            tract = Tract.from_twprgesec(desc, twp, rge, sec, default_ns='s', default_ew='e')
+            self.assertEqual('NE/4', tract.desc)
+            self.assertEqual('154s97e01', tract.trs)
+
 
 if __name__ == '__main__':
     unittest.main()
