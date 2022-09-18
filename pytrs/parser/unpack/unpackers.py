@@ -1,12 +1,15 @@
 
 """
-Functions to unpack regex matches into their intended components.
+INTERNAL USE:
+
+Functions and classes to unpack regex matches and corresponding text
+blocks into their intended components.
 """
 
 import re
 
-from .rgxlib import *
-from .config import (
+from ..rgxlib import *
+from ..config import (
     DefaultEWError,
     DefaultNSError,
     MasterConfig,
@@ -506,3 +509,24 @@ def twprge_short_to_natural(twprge: str) -> str:
     twprge = twprge.upper()
     twprge = f"T{twprge}"
     return re.sub(r'(N|S)', r'\1-R', twprge)
+
+
+__all__ = [
+    'LotUnpacker',
+    'is_multi_lot',
+    'get_rightmost_lot',
+    'get_rightmost_acreage',
+    'first_lot_is_plural',
+    'get_leading_aliquot',
+    'SecUnpacker',
+    'is_multi_sec',
+    'get_rightmost_sec',
+    'is_multi',
+    'thru_rightmost',
+    'get_rightmost',
+    'start_of_rightmost',
+    'unpack_twprge',
+    'ocr_scrub_alpha_to_num',
+    'twprge_natural_to_short',
+    'twprge_short_to_natural',
+]
