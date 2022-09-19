@@ -734,11 +734,14 @@ class PromptConfig(tk.Frame):
                 # _min and _max, so break out of the loop
                 break
 
-        # Join the list of param/vals into a string, and return it
-        config_text = ','.join(param_vals)
         if not proceed:
             return None
-        return config_text
+
+        # Join the list of param/vals into a string.
+        config_text = ','.join(param_vals)
+        # Convert that string to a Config object, which will cleanly
+        # decompile it into a simplified string.
+        return Config(config_text).decompile_to_text()
 
     def ok_clicked(self):
         """
