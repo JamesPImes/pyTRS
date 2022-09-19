@@ -489,26 +489,42 @@ class PLSSParser:
             examine_unused()
 
         for chunk in self.blocks:
-            self.reset()
-            chunk_layout = self.layout
-            if not self.mandate_layout:
-                chunk_layout = deduce_layout(chunk)
-            self.find_matches(chunk, chunk_layout)
-            self.populate_markers(chunk)
-
-            # Populate the tract data (self.tract_components).
-            if chunk_layout in [DESC_STR, TR_DESC_S]:
-                self._descstr_trdescs(chunk, chunk_layout)
-            elif chunk_layout in [TRS_DESC, S_DESC_TR]:
-                self._trsdesc_sdesctr(chunk, chunk_layout)
-            else:
-                self._copyall(chunk)
-
-            # Convert the tract data into actual Tract objects.
-            self.construct_tracts()
+            self.parse_chunk(chunk)
             examine_unused()
 
         self.hand_down_flags()
+
+    def parse_chunk(self, chunk, copy_all=False):
+        """
+        Parse a chunk of text into Tracts.
+        :param chunk: The chunk of text to parse.
+        :param copy_all: Used for a second pass if no Tracts were
+        identified during the first.
+        :return: The list of new Tract objects that were generated.
+        """
+        self.reset()
+        chunk_layout = self.layout
+        if not self.mandate_layout:
+            chunk_layout = deduce_layout(chunk)
+        if copy_all:
+            chunk_layout = COPY_ALL
+        self.find_matches(chunk, chunk_layout)
+        self.populate_markers(chunk)
+
+        # Populate the tract data (self.tract_components).
+        if chunk_layout in [DESC_STR, TR_DESC_S]:
+            self._descstr_trdescs(chunk, chunk_layout)
+        elif chunk_layout in [TRS_DESC, S_DESC_TR]:
+            self._trsdesc_sdesctr(chunk, chunk_layout)
+        else:
+            self._copyall(chunk)
+
+        # Convert the tract data into actual Tract objects.
+        new_tracts = self.construct_tracts()
+        if not new_tracts:
+            # If no tracts identified, rerun this chunk as copy_all layout.
+            new_tracts = self.parse_chunk(chunk, copy_all=True)
+        return new_tracts
 
     def hand_down_flags(self):
         """
@@ -528,6 +544,7 @@ class PLSSParser:
         into ``Tract`` objects, and append them to the ``self.tracts``
         list.
         """
+        new_tracts = []
         for tract_data in self.tract_components:
             desc = tract_data['desc']
             if self.clean_up:
@@ -544,8 +561,9 @@ class PLSSParser:
                     orig_index=self.next_tract_uid
                 )
                 self.tracts.append(new_tract)
+                new_tracts.append(new_tract)
                 self.next_tract_uid += 1
-        return None
+        return new_tracts
 
     def _descstr_trdescs(self, txt, layout=None):
         """
