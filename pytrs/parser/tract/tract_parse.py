@@ -51,7 +51,7 @@ class TractParser:
             self,
             text,
             clean_qq=False,
-            include_lot_divs=True,
+            suppress_lot_divs=False,
             qq_depth_min=2,
             qq_depth_max=None,
             qq_depth=None,
@@ -67,7 +67,7 @@ class TractParser:
         self.preprocessor = TractPreprocessor(text, clean_qq)
         self.text = self.preprocessor.text
         self.clean_qq = clean_qq
-        self.include_lot_divs = include_lot_divs
+        self.suppress_lot_divs = suppress_lot_divs
         self.qq_depth_min = qq_depth_min
         self.qq_depth_max = qq_depth_max
         self.qq_depth = qq_depth
@@ -101,7 +101,7 @@ class TractParser:
         ``TractParser`` class and this method.
         """
         text = self.text
-        include_lot_divs = self.include_lot_divs
+        suppress_lot_divs = self.suppress_lot_divs
         qq_depth_min = self.qq_depth_min
         qq_depth_max = self.qq_depth_max
         qq_depth = self.qq_depth
@@ -151,7 +151,7 @@ class TractParser:
             self.w_flags.extend(unpacker.flags)
             self.w_flag_lines.extend(unpacker.flag_lines)
             new_lots = unpacker.lot_list
-            if include_lot_divs and leading_aliquot is not None:
+            if not suppress_lot_divs and leading_aliquot is not None:
                 # Combine the aliquot(s) with the lot(s).
                 leading_aliquot = leading_aliquot.replace('¼', '')
                 leading_aliquot = leading_aliquot.replace('½', '2')

@@ -113,7 +113,7 @@ class PromptConfig(tk.Frame):
     # Parameters that are set via radiobuttons:
     RB_PARAMS = [
         'clean_qq',
-        'include_lot_divs',
+        'supress_lot_divs',
         'require_colon',
         'ocr_scrub',
         'segment',
@@ -229,12 +229,12 @@ class PromptConfig(tk.Frame):
             "Default: off (`False`)"
         ),
 
-        'include_lot_divs': (
-            "If parsing lots, report any divisions of lots. For "
-            "example, if True, 'N/2 of Lot 1' would be reported "
-            "as 'N2 of L1'. If this is turned off, it would be "
+        'suppress_lot_divs': (
+            "If parsing lots, suppress report any divisions of lots. "
+            "For example, if False, 'N/2 of Lot 1' would be reported "
+            "as 'N2 of L1'. If this is turned on, it would be "
             "reported as 'L1'.\n\n"
-            "Default: on (`True`)"
+            "Default: off (`False`)"
         ),
 
         'require_colon': (

@@ -1097,7 +1097,7 @@ class TractList(_TRSTractList):
             self,
             config=None,
             clean_qq=None,
-            include_lot_divs=None,
+            suppress_lot_divs=None,
             qq_depth_min=None,
             qq_depth_max=None,
             qq_depth=None,
@@ -1117,7 +1117,7 @@ class TractList(_TRSTractList):
         :param config: (Optional) New Config parameters to apply to each
         Tract before parsing.
         :param clean_qq: Same as in ``Tract.parse()`` method.
-        :param include_lot_divs: Same as in ``Tract.parse()`` method.
+        :param suppress_lot_divs: Same as in ``Tract.parse()`` method.
         :param qq_depth_min: Same as in ``Tract.parse()`` method.
         :param qq_depth_max: Same as in ``Tract.parse()`` method.
         :param qq_depth: Same as in ``Tract.parse()`` method.
@@ -1129,7 +1129,7 @@ class TractList(_TRSTractList):
         for t in self:
             t.parse(
                 clean_qq=clean_qq,
-                include_lot_divs=include_lot_divs,
+                suppress_lot_divs=suppress_lot_divs,
                 qq_depth_min=qq_depth_min,
                 qq_depth_max=qq_depth_max,
                 qq_depth=qq_depth,

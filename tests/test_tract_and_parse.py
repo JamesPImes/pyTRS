@@ -38,7 +38,7 @@ CLEAN_QQ  = {
             'S½N½ SW': ['S2NESW', 'S2NWSW']
         }
 
-# Testing include_lot_divs (True vs. False)
+# Testing suppress_lot_divs (True vs. False)
 WITH_LOT_DIVS = {
     'N/2 of Lot 1, Lot 3, E/2SW/4 of Lot 7': ['N2 of L1', 'L3', 'E2SW of L7'],
     'Lot 5, N/2 of Lots 1 - 3': ['L5', 'N2 of L1', 'N2 of L2', 'N2 of L3'],
@@ -108,7 +108,7 @@ class TractParseTests(unittest.TestCase):
             parser = TractParser(txt)
             self.assertEqual(expected, parser.lots)
         for txt, expected in WITHOUT_LOT_DIV.items():
-            parser = TractParser(txt, include_lot_divs=False)
+            parser = TractParser(txt, suppress_lot_divs=True)
             self.assertEqual(expected, parser.lots)
 
     def test_qq_depth_min(self):
@@ -182,7 +182,7 @@ class TractTests(unittest.TestCase):
             tract = Tract(txt, parse_qq=True)
             self.assertEqual(expected, tract.lots)
         for txt, expected in WITHOUT_LOT_DIV.items():
-            tract = Tract(txt, parse_qq=True, config='include_lot_divs.False')
+            tract = Tract(txt, parse_qq=True, config='suppress_lot_divs')
             self.assertEqual(expected, tract.lots)
 
     def test_qq_depth_min(self):

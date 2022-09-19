@@ -47,7 +47,7 @@ class Config:
         -- 'parse_qq'  vs.  'parse_qq.False'
         -- 'clean_qq'  vs.  'clean_qq.False'
         -- 'require_colon'  vs.  'require_colon.False'
-        -- 'include_lot_divs'  vs.  'include_lot_divs.False'
+        -- 'suppress_lot_divs'  vs.  'suppress_lot_divs.False'
         -- 'ocr_scrub'  vs.  'ocr_scrub.False'
         -- 'segment'  vs.  'segment.False'
         -- 'qq_depth_min.<int>'  (defaults to 'qq_depth_min.2')
@@ -72,7 +72,7 @@ class Config:
         'parse_qq',
         'clean_qq',
         'require_colon',
-        'include_lot_divs',
+        'suppress_lot_divs',
         'ocr_scrub',
         'segment',
         'qq_depth',
@@ -86,7 +86,7 @@ class Config:
         'wait_to_parse',
         'parse_qq',
         'clean_qq',
-        'include_lot_divs',
+        'suppress_lot_divs',
         'require_colon',
         'ocr_scrub',
         'segment',
@@ -108,7 +108,7 @@ class Config:
         'default_ew',
         'parse_qq',
         'clean_qq',
-        'include_lot_divs',
+        'suppress_lot_divs',
         'ocr_scrub',
         'qq_depth',
         'qq_depth_min',
@@ -123,7 +123,7 @@ class Config:
 
         Pass config parameters as a single string, with each parameter
         separated by comma. Spaces are optional and have no effect.
-            ex: 'n,s,clean_qq,include_lot_divs.False'
+            ex: 'n,s,clean_qq,suppress_lot_divs.False'
 
         All possible parameters (call ``pytrs.utils.config_parameters()``
         for definitions) -- any unspecified parameters will fall back to
@@ -134,7 +134,7 @@ class Config:
         -- 'parse_qq'  vs.  'parse_qq.False'
         -- 'clean_qq'  vs.  'clean_qq.False'
         -- 'require_colon'  vs.  'require_colon.False'
-        -- 'include_lot_divs'  vs.  'include_lot_divs.False'
+        -- 'suppress_lot_divs'  vs.  'suppress_lot_divs.False'
         -- 'ocr_scrub'  vs.  'ocr_scrub.False'
         -- 'segment'  vs.  'segment.False'
         -- 'qq_depth_min.<int>'  (defaults to 'qq_depth_min.2')
@@ -173,7 +173,7 @@ class Config:
         self.parse_qq = None
         self.clean_qq = None
         self.require_colon = None
-        self.include_lot_divs = None
+        self.suppress_lot_divs = None
         self.ocr_scrub = None
         self.segment = None
         self.qq_depth = None
@@ -246,7 +246,7 @@ class Config:
         config.clean_qq = parent.clean_qq
         config.default_ns = parent.default_ns
         config.default_ew = parent.default_ew
-        config.include_lot_divs = parent.include_lot_divs
+        config.suppress_lot_divs = parent.suppress_lot_divs
         return config
 
     @classmethod

@@ -240,9 +240,9 @@ class PLSSDesc:
         # description (for TRS_DESC and S_DESC_TR layouts):
         self.require_colon = SecFinder.DEFAULT_COLON
 
-        # Whether to include any divisions of lots
+        # Whether to suppress any divisions of lots
         # (i.e. 'N/2 of Lot 1' -> 'N2 of L1')
-        self.include_lot_divs = True
+        self.suppress_lot_divs = False
 
         # Whether to iron out common OCR artifacts.
         # NOTE: Currently only has effect of cleaning up T&R's during
@@ -597,7 +597,7 @@ class PLSSDesc:
             self,
             config=None,
             clean_qq=None,
-            include_lot_divs=None,
+            suppress_lot_divs=None,
             qq_depth_min=None,
             qq_depth_max=None,
             qq_depth=None,
@@ -619,7 +619,7 @@ class PLSSDesc:
         :param config: (Optional) New Config parameters to apply to each
         Tract before parsing. (If there is a conflict
         :param clean_qq: Same as in ``Tract.parse()`` method.
-        :param include_lot_divs: Same as in ``Tract.parse()`` method.
+        :param suppress_lot_divs: Same as in ``Tract.parse()`` method.
         :param qq_depth_min: Same as in ``Tract.parse()`` method.
         :param qq_depth_max: Same as in ``Tract.parse()`` method.
         :param qq_depth: Same as in ``Tract.parse()`` method.
@@ -629,7 +629,7 @@ class PLSSDesc:
         return self.tracts.parse_tracts(
                 config=config,
                 clean_qq=clean_qq,
-                include_lot_divs=include_lot_divs,
+                suppress_lot_divs=suppress_lot_divs,
                 qq_depth_min=qq_depth_min,
                 qq_depth_max=qq_depth_max,
                 qq_depth=qq_depth,
