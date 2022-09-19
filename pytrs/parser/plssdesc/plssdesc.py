@@ -237,8 +237,9 @@ class PLSSDesc:
         self.clean_qq = False
 
         # Whether we should require a colon between Section ## and tract
-        # description (for TRS_DESC and S_DESC_TR layouts):
-        self.require_colon = SecFinder.DEFAULT_COLON
+        # description (for TRS_DESC and S_DESC_TR layouts).
+        self.sec_colon_cautious = False
+        self.sec_colon_required = False
 
         # Whether to suppress any divisions of lots
         # (i.e. 'N/2 of Lot 1' -> 'N2 of L1')
@@ -301,6 +302,19 @@ class PLSSDesc:
             self.parse(commit=True)
         else:
             self.preprocess(commit=True)
+
+    @property
+    def require_colon(self):
+        """
+        Check ``sec_colon_required`` and ``sec_colon_cautious`` to
+        determine whether to require colon after section number.
+        :return: True, False, or SecFinder.SEC_COLON_CAUTIOUS. (The
+        PLSSParser will know what to do with these values.)
+        """
+        required = self.sec_colon_required
+        if self.sec_colon_cautious:
+            required = SecFinder.SEC_COLON_CAUTIOUS
+        return required
 
     def __str__(self):
         return self.orig_desc
@@ -381,7 +395,8 @@ class PLSSDesc:
             clean_up=None,
             parse_qq=None,
             clean_qq=None,
-            require_colon=None,
+            sec_colon_cautious=None,
+            sec_colon_required=None,
             segment=None,
             ocr_scrub=None,
             commit=True,
@@ -425,22 +440,28 @@ class PLSSDesc:
         no metes-and-bounds, exceptions, complicated descriptions,
         etc.). Defaults to whatever is specified in `self.clean_qq`
         (which is False, unless configured otherwise).
-        :param require_colon: Whether to require a colon between the
-        section number and the following description (only has an effect
-        on 'TRS_desc' or 'S_desc_TR' layouts).
-        If not specified, it will default to whatever was set at init;
-        and unless otherwise specified there, will default to a 'two-
-        pass' method, where first it will require the colon; and if no
-        matching sections are found, it will do a second pass where
-        colons are not required. Setting as `True` or `False` here
-        prevent the two-pass method.
+        :param sec_colon_cautious: See ``see_colon_required`` parameter.
+        :param sec_colon_required: Use ``sec_colon_cautious`` and
+        ``sec_colon_required`` to determine whether to require a colon
+        between the section number and the following description (only
+        has an effect on 'TRS_desc' or 'S_desc_TR' layouts). If
+        ``sec_colon_required`` is True, then ``sec_colon_cautious`` will
+        have no effect.
+        If neither is specified, it will default to whatever was set at
+        init; and unless otherwise specified there, will default to
+        False (i.e. require no colon).
+        If ``sec_colon_cautious=True`` (and ``sec_colon_required`` is
+        False or None), it will use a 'two-pass' method, where first it
+        will require the colon; and if no matching sections are found,
+        it will do a second pass where colons are not required.
             ex: 'Section 14 NE/4'
-                `require_colon=True` --> no match
-                `require_colon=False` --> match (but beware false
-                    positives)
-                <not specified> --> no match on first pass; if no other
-                            sections are identified, will be matched on
-                            second pass.
+                [default, neither specified] --> match (but beware false
+                            positives)
+                ``sec_colon_required=True`` --> no match
+                ``sec_colon_cautious=True`` (and ``sec_colon_required``
+                    not specified) --> no match on first pass; if no
+                            other sections are identified, will be
+                            matched on second pass.
         :param segment: Whether to break the text down into segments,
         with one MATCHING township/range per segment (i.e. only T&R's
         that are appropriate to the specified layout will count for the
@@ -495,8 +516,11 @@ class PLSSDesc:
         # ----------------------------------------
         # Lock down parameters for this parse.
 
-        if require_colon is None:
-            require_colon = self.require_colon
+        require_colon = self.require_colon
+        if sec_colon_required is not None:
+            require_colon = self.sec_colon_required
+        elif sec_colon_cautious:
+            require_colon = SecFinder.SEC_COLON_CAUTIOUS
 
         if not default_ns:
             default_ns = self.default_ns
@@ -547,7 +571,9 @@ class PLSSDesc:
             "clean_up": clean_up,
             "parse_qq": parse_qq,
             "clean_qq": clean_qq,
+            # Culmination of sec_colon_required and sec_colon_cautious.
             "require_colon": require_colon,
+
             "segment": segment,
             "qq_depth_min": qq_depth_min,
             "qq_depth_max": qq_depth_max,

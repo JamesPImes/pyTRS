@@ -114,7 +114,8 @@ class PromptConfig(tk.Frame):
     RB_PARAMS = [
         'clean_qq',
         'supress_lot_divs',
-        'require_colon',
+        'sec_colon_required',
+        'sec_colon_cautious',
         'ocr_scrub',
         'segment',
         'init_preprocess',
@@ -237,7 +238,8 @@ class PromptConfig(tk.Frame):
             "Default: off (`False`)"
         ),
 
-        'require_colon': (
+        'sec_colon_required': (
+            # TODO: Rewrite for current behavior.
             "Instruct a PLSSDesc object (whose layout is "
             "`TRS_desc` or `S_desc_TR`) to require a colon "
             "between the section number and the following "
@@ -257,6 +259,10 @@ class PromptConfig(tk.Frame):
             "will broadly capture all such instances, and the "
             "second-pass method will not be needed. (Again, "
             "beware false matches.)"
+        ),
+
+        'sec_colon_cautious': (
+            # TODO: Write up.
         ),
 
         'ocr_scrub': (

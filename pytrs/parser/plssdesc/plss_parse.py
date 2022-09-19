@@ -120,14 +120,14 @@ class SecFinder:
     layout.
     """
 
-    DEFAULT_COLON = 'default_colon'
+    SEC_COLON_CAUTIOUS = 'sec_colon_cautious'
     SECOND_PASS = 'second_pass'
 
     def __init__(
             self,
             txt: str,
             layout: str = None,
-            require_colon = DEFAULT_COLON):
+            require_colon=False):
         self.txt = txt
         self.matches = []
         self.layout = layout
@@ -139,7 +139,7 @@ class SecFinder:
             self,
             text: str,
             layout: str = None,
-            require_colon=DEFAULT_COLON):
+            require_colon=False):
         """
         INTERNAL USE:
 
@@ -148,7 +148,11 @@ class SecFinder:
         :param text: The text to search for sections.
         :param layout: The layout of the description. (Will be deduced
         if not specified.)
-        :param require_colon: Same effect as in ``PLSSParser.parse()``
+        :param require_colon: Whether to require a colon after section
+        number in ``TRS_desc`` and ``S_desc_TR`` layouts. Defaults to
+        ``False``. Alternatively, pass ``True`` to require colons, or
+        ``SecFinder.SEC_COLON_CAUTIOUS`` to do a two-pass method
+        (as turned on with config parameter ``'sec_colon_cautious'``).
         """
 
         def new_match(mo):
@@ -235,7 +239,7 @@ class SecFinder:
             flag = f"pulled_sec_without_colon<{','.join(sec_nums)}>"
             self.flags.append((flag, flag))
             return None
-        if require_colon == self.DEFAULT_COLON and layout in [TRS_DESC, S_DESC_TR]:
+        if require_colon == self.SEC_COLON_CAUTIOUS and layout in [TRS_DESC, S_DESC_TR]:
             # Do a second pass.
             self.findall_matching_sec(
                 text, layout=layout, require_colon=self.SECOND_PASS)
@@ -279,20 +283,20 @@ class PLSSParser:
     def __init__(
             self,
             text,
-            layout=None,
+            layout: str = None,
             default_ns: str = MasterConfig.default_ns,
             default_ew: str = MasterConfig.default_ew,
             ocr_scrub=False,
-            clean_up=None,
+            clean_up: bool = None,
             parse_qq=False,
             clean_qq=False,
-            require_colon=SecFinder.DEFAULT_COLON,
+            require_colon=False,
             segment=False,
-            qq_depth_min=2,
-            qq_depth_max=None,
-            qq_depth=None,
+            qq_depth_min: int = 2,
+            qq_depth_max: int = None,
+            qq_depth: int = None,
             break_halves=False,
-            handed_down_config=None,
+            handed_down_config: str = None,
             source=None,
     ):
         """
@@ -312,10 +316,12 @@ class PLSSParser:
         :param parse_qq: Whether to instruct subordinate Tract objects
         to parse their lots/qqs.
         :param clean_qq:
-        :param require_colon: Whether to require colon after section in
-        TRS_desc and S_desc_TR layouts. (Defaults to sort-of required,
-        but will do a second pass if no match is found during the first
-        pass.)
+        :param require_colon: See ``sec_colon_required`` and
+        ``sec_colon_required`` parameters in ``PLSSDesc.parse()``
+        method.  This ``require_colon`` is the culmination of those
+        two parameters -- can be ``False`` (default behavior), ``True``,
+        or ``SecFinder.SEC_COLON_CAUTIOUS`` (which will do a second pass
+        if no section is found with a colon during the first pass).
         :param segment:
         :param qq_depth_min:
         :param qq_depth_max:
@@ -413,7 +419,7 @@ class PLSSParser:
         self.w_flags.extend(twprge_finder.flags)
         self.w_flag_lines.extend(twprge_finder.flag_lines)
         # Populate section matches/flags.
-        sec_finder = SecFinder(text, layout)
+        sec_finder = SecFinder(text, layout, self.require_colon)
         self.sec_matches = sec_finder.matches
         self.w_flags.extend(sec_finder.flags)
         self.w_flag_lines.extend(sec_finder.flag_lines)

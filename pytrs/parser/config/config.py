@@ -46,7 +46,8 @@ class Config:
         -- 'e'  <or>  'default_ew.e'  vs.  'w'  <or>  'default_ew.w'
         -- 'parse_qq'  vs.  'parse_qq.False'
         -- 'clean_qq'  vs.  'clean_qq.False'
-        -- 'require_colon'  vs.  'require_colon.False'
+        -- 'sec_colon_required'     # TODO: clarify docstring
+        -- 'sec_colon_cautious'     # TODO: clarify docstring
         -- 'suppress_lot_divs'  vs.  'suppress_lot_divs.False'
         -- 'ocr_scrub'  vs.  'ocr_scrub.False'
         -- 'segment'  vs.  'segment.False'
@@ -71,7 +72,8 @@ class Config:
         'wait_to_parse',
         'parse_qq',
         'clean_qq',
-        'require_colon',
+        'sec_colon_required',
+        'sec_colon_cautious',
         'suppress_lot_divs',
         'ocr_scrub',
         'segment',
@@ -87,7 +89,8 @@ class Config:
         'parse_qq',
         'clean_qq',
         'suppress_lot_divs',
-        'require_colon',
+        'sec_colon_required',
+        'sec_colon_cautious',
         'ocr_scrub',
         'segment',
         'break_halves',
@@ -133,7 +136,8 @@ class Config:
         -- 'wait_to_parse'  vs.  'wait_to_parse.False'
         -- 'parse_qq'  vs.  'parse_qq.False'
         -- 'clean_qq'  vs.  'clean_qq.False'
-        -- 'require_colon'  vs.  'require_colon.False'
+        -- 'sec_colon_required'     # TODO: clarify docstring
+        -- 'sec_colon_cautious'     # TODO: clarify docstring
         -- 'suppress_lot_divs'  vs.  'suppress_lot_divs.False'
         -- 'ocr_scrub'  vs.  'ocr_scrub.False'
         -- 'segment'  vs.  'segment.False'
@@ -172,7 +176,8 @@ class Config:
         self.wait_to_parse = None
         self.parse_qq = None
         self.clean_qq = None
-        self.require_colon = None
+        self.sec_colon_required = None
+        self.sec_colon_cautious = None
         self.suppress_lot_divs = None
         self.ocr_scrub = None
         self.segment = None
