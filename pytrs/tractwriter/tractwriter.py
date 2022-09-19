@@ -120,9 +120,10 @@ class TractWriter:
 
     def write(self, to_write, plus_cols=None):
         """
-        Write the data from the ``to_write``.
-        :param to_write: a Tract, a PLSSDesc object, a TractList, or an
-        iterable of any combination of those object types.
+        Write the data from ``to_write`` to the csv.
+        :param to_write: a ``Tract``, a ``PLSSDesc`` object, a
+        ``TractList``, or an iterable of any combination of those object
+        types.
         :param plus_cols: (Optional) a list of additional data to write
         for each of the written rows. (Will write the same data for
         every row written.)
@@ -133,15 +134,10 @@ class TractWriter:
         if to_write is None:
             self.uid += 1
             return 0
-        total_to_write = None
-        if self.gen_uids:
-            # If we're generating UID's, we need to know how many we'll
-            # write in total, so get a TractList.
-            tl = TractList.from_multiple(to_write)
-            total_to_write = len(tl)
-        else:
-            # Otherwise, save the memory, and use a generator.
-            tl = TractList.iter_from_multiple(to_write)
+        # If we're generating UID's, we need to know how many we'll
+        # write in total, so get a TractList.
+        tl = TractList.from_multiple(to_write)
+        total_to_write = len(tl)
         written = 0
         for tract in tl:
             row = tract.to_list(self.attributes)
