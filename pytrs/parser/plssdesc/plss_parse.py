@@ -338,7 +338,7 @@ class PLSSParser:
 
         # These impact the parse of this PLSS description.
         self.mandate_layout = not segment and layout is not None
-        preprocessor = PLSSPreprocessor(text)
+        preprocessor = PLSSPreprocessor(text, default_ns, default_ew, ocr_scrub)
         self.text = preprocessor.text
         if layout is None:
             layout = deduce_layout(text)
