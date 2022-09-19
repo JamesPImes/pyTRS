@@ -12,6 +12,7 @@ from test_tract_and_parse import *
 from test_plss_preprocess import *
 from test_plssdesc_and_parse import *
 from test_trs import *
+from test_containers import *
 
 if __name__ == '__main__':
     unittest.main()
