@@ -49,7 +49,7 @@ multilot_regex = re.compile(
         ({intervener_regex.pattern})+   # IMPORTANT: Allow more than one intervener
                                         # to keep matching multilots to the right!
 
-        ((L\.?|Lt\.?|Lot)               # The word or abbreviation "Lot" (optional on the right).
+        (?P<word_lot_rightmost>(L\.?|Lt\.?|Lot)    # The word or abbreviation "Lot" (optional on the right).
         (?P<plural_rightmost>s)?)?   # Plural 's' (optional).
         \s*
         (?P<lotnum_rightmost>\d{{1,3}})     # lotnum (rightmost)

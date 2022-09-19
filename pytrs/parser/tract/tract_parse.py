@@ -89,21 +89,8 @@ class TractParser:
             self.e_flags = parent.e_flags.copy()
             self.w_flag_lines = parent.w_flag_lines.copy()
             self.e_flag_lines = parent.e_flag_lines.copy()
-            self.source = parent.source
-
-        self.parse_cache = {}
-        self.reset_cache()
 
         self.parse()
-
-    def reset_cache(self):
-        self.parse_cache = {
-            "text_block": "",
-            "unused_text": [],
-            "unused_with_context": [],
-            "w_flags_staging": [],
-            "w_flag_lines_staging": []
-        }
 
     def parse(self):
         """
@@ -111,7 +98,7 @@ class TractParser:
 
         NOTE: Documentation for this method is mostly maintained under
         ``Tract.parse()``, which essentially serves as a wrapper for the
-        TractParser class and this method.
+        ``TractParser`` class and this method.
         """
         text = self.text
         include_lot_divs = self.include_lot_divs
@@ -168,13 +155,16 @@ class TractParser:
                 # Combine the aliquot(s) with the lot(s).
                 leading_aliquot = leading_aliquot.replace('¼', '')
                 leading_aliquot = leading_aliquot.replace('½', '2')
-                new_lots = [f"{leading_aliquot} of {new_lot}" for new_lot in new_lots]
+                for idx in range(unpacker.aliquots_through):
+                    new_lots[idx] = f"{leading_aliquot} of {new_lots[idx]}"
 
-                # NOTE: The above could be a bit more robust to handle all
-                # real-world permutations.
-                # For example: 'N/2 of Lot 1 and 2'  (meaning ['N2 of L1',
-                # 'N2 of L2']) is possible. See also, "N/2 of Lot 1 - 3".
             self.lots.extend(new_lots)
+            for lot_, acres_ in unpacker.lot_acres.items():
+                if lot_ in self.lot_acres:
+                    flag = f"dup_lot_acreage<{lot_}({self.lot_acres[lot_]})>"
+                    self.w_flags.append(flag)
+                    self.w_flag_lines.append((flag, flag))
+                self.lot_acres[lot_] = acres_
 
         # Get a list of all of the aliquots strings, so we can parse them
         # individually.
@@ -243,16 +233,14 @@ class TractParser:
         dup_qqs = find_duplicates(self.qqs)
 
         if dup_lots:
-            flag = "dup_lot"
-            context = f"{flag}<{','.join(dup_lots)}>"
+            flag = f"dup_lot<{','.join(dup_lots)}>"
             self.w_flags.append(flag)
-            self.w_flag_lines.append((flag, context))
+            self.w_flag_lines.append((flag, flag))
 
         if dup_qqs:
-            flag = "dup_qq"
-            context = f"{flag}<{','.join(dup_qqs)}>"
+            flag = f"dup_qq<{','.join(dup_qqs)}>"
             self.w_flags.append(flag)
-            self.w_flag_lines.append((flag, context))
+            self.w_flag_lines.append((flag, flag))
 
 
 __all__ = [

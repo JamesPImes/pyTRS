@@ -338,7 +338,7 @@ class PLSSParser:
 
         # These impact the parse of this PLSS description.
         self.mandate_layout = not segment and layout is not None
-        preprocessor = PLSSPreprocessor(text)
+        preprocessor = PLSSPreprocessor(text, default_ns, default_ew, ocr_scrub)
         self.text = preprocessor.text
         if layout is None:
             layout = deduce_layout(text)
@@ -382,7 +382,11 @@ class PLSSParser:
         # Append a warning flag for any Twp/Rges that were fixed during
         # preprocessing.
         if preprocessor.fixed_twprges:
-            flag = f"fixed_twprge<{'//'.join(preprocessor.fixed_twprges)}>"
+            short_versions = [
+                twprge_natural_to_short(tr)
+                for tr in preprocessor.fixed_twprges
+            ]
+            flag = f"fixed_twprge<{'//'.join(short_versions)}>"
             self.w_flags.append(flag)
             self.w_flag_lines.append((flag, flag))
 

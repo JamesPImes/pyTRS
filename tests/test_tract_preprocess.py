@@ -1,6 +1,6 @@
 
 """
-Tests for the pytrs.parser.tract_preprocess submodule (for tract
+Tests for the pytrs.parser.tract.tract_preprocess submodule (for tract
 preprocessing).
 """
 

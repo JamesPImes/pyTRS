@@ -68,6 +68,7 @@ except ImportError:
         acreage_subpattern,
         lot_regex,
         multilot_regex,
+        multilot_with_aliquot_regex,
 
         # aliquot regexes
         ne_clean,

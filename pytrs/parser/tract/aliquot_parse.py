@@ -230,7 +230,7 @@ def combine_consecutive_halves(aliquot_components):
         match_conditions = (
             aq1 in QQ_HALVES,
             aq2 in QQ_HALVES,
-            aq2 not in QQ_SAME_AXIS[aq1],
+            aq2 not in QQ_SAME_AXIS.get(aq1, ()),
         )
         if all(match_conditions):
             # For example, the current component is 'N' and the next
