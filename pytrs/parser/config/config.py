@@ -249,6 +249,58 @@ class Config:
         config.include_lot_divs = parent.include_lot_divs
         return config
 
+    @classmethod
+    def from_dict(cls, parameters: dict, config_name=''):
+        """
+        Get a new ``Config`` from a dict, keyed by parameter name. Uses
+        only the keys found in the dict, and ignores any keys that do
+        not correspond to ``Config`` attribute names.
+        :param parameters: A dict of parameter names and corresponding
+        values for the ``Config``.
+        :param config_name: An optional string, being the name of this
+        ``Config`` object. (If specified, will override a 'config_name'
+        key in the ``parameters`` dict, if any.)
+        :return: A new ``Config``.
+        """
+        if config_name:
+            name = config_name
+        else:
+            name = parameters.get('config_name', '')
+        cf = Config(config_name=name)
+        for att in cls._CONFIG_ATTRIBUTES:
+            val = parameters.get(att, None)
+            if val is None:
+                continue
+            elif att in cls._BOOL_TYPE_ATTRIBUTES and not isinstance(val, bool):
+                raise ValueError(
+                    f"Illegal value type {type(val)!r} "
+                    f"passed for attribute {att!r}. Expected bool."
+                )
+            elif att in cls._INT_TYPE_ATTRIBUTES and not isinstance(val, int):
+                raise ValueError(
+                    f"Illegal value type {type(val)!r} "
+                    f"passed for attribute {att!r}. Expected int."
+                )
+            elif att == 'default_ns':
+                val = verify_default_ns(val)
+            elif att == 'default_ew':
+                val = verify_default_ew(val)
+            setattr(cf, att, val)
+        return cf
+
+    @classmethod
+    def from_kwargs(cls, config_name='', **kwargs):
+        """
+        Get a new ``Config`` from kwargs, keyed by parameter name. Uses
+        only the args provided, and ignores any parameters keys that do
+        not correspond to ``Config`` attribute names.
+        :param kwargs:
+        :param config_name: An optional string, being the name of this
+        ``Config`` object.
+        :return: A new ``Config``.
+        """
+        return cls.from_dict(kwargs, config_name)
+
     def decompile_to_text(self) -> str:
         """
         Decompile a Config object into its equivalent string.
