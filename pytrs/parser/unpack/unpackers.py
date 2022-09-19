@@ -57,6 +57,9 @@ class LotUnpacker:
         # occurs in the TractParse class (not here), but this method
         # deduces how many lots (counting from the left) will receive
         # the aliquot.
+        # NOTE: We ignore the word 'Lot(s)' when it occurs after
+        # 'through', so that we capture 'N/2 of Lot 1 - Lot 3' as
+        # the N/2 of each Lot 1, 2, and 3.
         word_lot_encountered = 0
 
         found_through = False
@@ -105,9 +108,6 @@ class LotUnpacker:
                 # A standalone section.
                 working_lot_list.append(lot_num)
 
-            if lot_mo['word_lot_rightmost'] is not None:
-                word_lot_encountered = len(working_lot_list)
-
             if lot_acreage is not None:
                 lot_name = f'L{lot_num}'
                 if lot_name in self.lot_acres:
@@ -118,6 +118,9 @@ class LotUnpacker:
 
             # Check for the next loop.
             found_through = thru_rightmost(lot_mo)
+
+            if lot_mo['word_lot_rightmost'] is not None and not found_through:
+                word_lot_encountered = len(working_lot_list)
 
         working_lot_list.reverse()
         # Put into preferred format 'L#'.
