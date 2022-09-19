@@ -1,12 +1,14 @@
 
 """
-A class to configure parsing of individual PLSSDesc and Tract objects.
+A class to configure parsing of individual ``PLSSDesc`` and ``Tract``
+objects.
 """
 
 import re
 
 from .master_config import *
 from .layouts import _IMPLEMENTED_LAYOUTS
+
 
 class ConfigError(TypeError):
     """
@@ -37,12 +39,11 @@ class Config:
     (must first import ``pytrs.utils``):
         ``pytrs.utils.config_help()``
 
-    All possible parameters (call ``pytrs.utils.config_parameters()`` for
-    definitions) -- any unspecified parameters will fall back to
+    All possible parameters (call ``pytrs.utils.config_parameters()``
+    for definitions) -- any unspecified parameters will fall back to
     default parsing behavior:
         -- 'n'  <or>  'default_ns.n'  vs.  's'  <or>  'default_ns.s'
         -- 'e'  <or>  'default_ew.e'  vs.  'w'  <or>  'default_ew.w'
-        -- 'init_parse'  vs.  'init_parse.False'
         -- 'parse_qq'  vs.  'parse_qq.False'
         -- 'clean_qq'  vs.  'clean_qq.False'
         -- 'require_colon'  vs.  'require_colon.False'
@@ -180,18 +181,28 @@ class Config:
         self.qq_depth_max = None
         self.break_halves = None
 
-        # Remove all spaces from config_text:
-        config_text = config_text.replace(' ', '')
+        # Break up text.
+        self.text_to_attributes(config_text)
 
+    def __str__(self):
+        return self.decompile_to_text()
+
+    def __repr__(self):
+        return f"Config<{self.decompile_to_text()!r}>"
+
+    def text_to_attributes(self, config_text) -> None:
+        """
+        Convert the text into Config values and store them to the
+        appropriate Config attributes.
+
+        :param config_text: Standard Config text.
+        :return: None.
+        """
+        config_text = re.sub(r'\s*', '', config_text)
         # Separate config parameters with ','  or  ';'
-        config_lines = re.split(r'[;,]', config_text)
-
-        # Parse each 'attrib.val' pair and commit to this Config object.
-        for line in config_lines:
-
-            if line == '':
+        for line in re.split(r'[;,]', config_text):
+            if not line:
                 continue
-
             if re.split(r'[\.=]', line)[0] in Config._BOOL_TYPE_ATTRIBUTES:
                 # If string is the name of an attribute that will be stored
                 # as a bool, default to `True` (but will be overruled in
@@ -212,15 +223,10 @@ class Config:
             else:
                 # This method handles any other parameter.
                 self._set_str_to_values(line)
+        return None
 
-    def __str__(self):
-        return self.decompile_to_text()
-
-    def __repr__(self):
-        return f"Config<{self.decompile_to_text()!r}>"
-
-    @staticmethod
-    def from_parent(parent, config_name='', suppress_layout=False):
+    @classmethod
+    def from_parent(cls, parent, config_name='', suppress_layout=False):
         """
         Compile and return a ``Config`` object from the settings in a
         ``PLSSDesc`` object or ``Tract`` object.
@@ -232,128 +238,141 @@ class Config:
         :param suppress_layout: Whether to include the ``.layout``
         attribute from the parent object. (Defaults to ``False``)
         """
-
-        config = Config()
-
-        config.config_name = config_name
-        if not suppress_layout:
-            config.layout = getattr(parent, 'layout', None)
-        else:
+        config = cls(config_name=config_name)
+        config.layout = getattr(parent, 'layout', None)
+        if suppress_layout:
             config.layout = None
-        config.init_parse = parent.init_parse
         config.parse_qq = parent.parse_qq
         config.clean_qq = parent.clean_qq
         config.default_ns = parent.default_ns
         config.default_ew = parent.default_ew
         config.include_lot_divs = parent.include_lot_divs
-
         return config
 
     def decompile_to_text(self) -> str:
         """
         Decompile a Config object into its equivalent string.
         """
-
-        def write_val_as_text(att, val):
-            if att in Config._BOOL_TYPE_ATTRIBUTES:
-                if val is None:
-                    return ""
-                if val:
-                    # If true, Config needs to receive only the
-                    # attribute name (defaults to True if specified).
-                    return att
-                else:
-                    return f"{att}.{val}"
-
-            elif att in ['default_ns', 'default_ew']:
-                if val is not None:
-                    # Only need to specify 'n' or 's' to set default_ns; and
-                    # 'e' or 'w' for default_ew (i.e. not 'default_ns.n' or
-                    # 'default_ew.w'), so we return only `val`, and not `att`
-                    return val
-                else:
-                    return ''
-            elif val is None:
-                return ''
-            else:
-                return f"{att}.{val}"
-
         write_vals = []
         for att in Config._CONFIG_ATTRIBUTES:
-            w = write_val_as_text(att, getattr(self, att))
+            w = attribute_value_to_str(att, getattr(self, att))
             if w:
-                # Include only non-empty strings (i.e. config params
-                # that were actually set)
                 write_vals.append(w)
-
         return ','.join(write_vals)
 
     def _set_str_to_values(self, attrib_val, default_bool=None):
         """
+        INTERNAL USE:
+
         Take in a string of an attribute/value pair (in the format
         'attribute.value' or 'attribute=value') and set the appropriate
         value of the attribute.
         """
-
-        def str_to_value(text):
-            """
-            Convert string to None or bool or int, if appropriate.
-            """
-            if text == 'None':
-                return None
-            elif text == 'True':
-                return True
-            elif text == 'False':
-                return False
+        try:
+            # split attribute/value pair by : or . or =
+            attribute, value = re.split(r'[\.=:]', attrib_val)
+        except ValueError:
+            attribute = attrib_val
+            value = None
+        if attribute not in self._CONFIG_ATTRIBUTES:
+            raise ValueError(f"Illegal config attribute {attribute!r}")
+        # Convert the value based on the category of the attribute.
+        if attribute in Config._BOOL_TYPE_ATTRIBUTES:
+            if value is None:
+                value = default_bool
             else:
-                try:
-                    return int(text)
-                except ValueError:
-                    return text
-
-        # split attribute/value pair by '.' or '='
-        #   ex: 'default_ns.n' or 'default_ns=n' -> ['default_ns', 'n']
-        comps = re.split(r'[\.=]', attrib_val)
-
-        # Track whether only one component was found in the text with `only_one`:
-        #   i.e. "init_parse." --> `only_one=True`
-        #   but 'init_parse.True' --> `only_one=False`
-        # (Both will set `self.init_parse` to `True` in this example, since it's
-        # a bool-type config parameter)
-        only_one = False
-        if len(comps) != 2:
-            only_one = True
-
-        def decide_bool():
-            """
-            If only_one, return the default bool; otherwise, return
-            the user-specified value from attrib_val.
-            """
-            if only_one:
-                return default_bool
-            else:
-                return str_to_value(comps[1])
-
-        if only_one and not isinstance(default_bool, bool):
-            # If only one component, and default_bool was not entered as
-            # a bool, return a failure value:
-            return -1
-
-        # Write values to the respective attributes. boolTypeAttribs
-        # will specifically become bools:
-        if comps[0] in Config._BOOL_TYPE_ATTRIBUTES:
-            # If this is a bool-type attribute, set the value with decide_bool()
-            setattr(self, comps[0], decide_bool())
-            return 0
-        elif comps[0] in ['default_ns', 'default_ew']:
-            # Only writing the first letter of comps[1], in lowercase
-            #   (i.e. 'North' --> 'n' or 'West' --> 'w'):
-            setattr(self, comps[0], str_to_value(comps[1][0].lower()))
-            return 0
+                value = str_to_value(value)
+        elif attribute == 'default_ns':
+            if value is not None:
+                value = verify_default_ns(value)
+        elif attribute == 'default_ew':
+            if value is not None:
+                value = verify_default_ew(value)
         else:
-            # Otherwise, set it however it's specified.
-            setattr(self, comps[0], str_to_value(comps[1]))
-            return 0
+            value = str_to_value(value)
+        if value is not None:
+            setattr(self, attribute, value)
+        return None
+
+
+def attribute_value_to_str(attribute, value):
+    """
+    INTERNAL USE:
+
+    Encode an attribute/value pair into the equivalent string as
+    understood by ``Config`` objects.
+    :param attribute:
+    :param value:
+    :return: The attribute/value encoded as a string that is
+    understandable by ``Config`` objects.
+    """
+    if value is None:
+        return ''
+    if attribute in Config._BOOL_TYPE_ATTRIBUTES:
+        if value:
+            # If true, Config needs to receive only the
+            # attribute name (defaults to True if specified).
+            return attribute
+        else:
+            return f"{attribute}.{value}"
+    elif attribute in ['default_ns', 'default_ew']:
+        # Only need to specify 'n' or 's' to set default_ns; and 'e' or
+        # 'w' for default_ew (i.e. 'default_ns.n' or 'default_ew.w' would
+        # be redundant, as understood by Config objects.
+        return value[0]
+    else:
+        return f"{attribute}.{value}"
+
+
+def str_to_value(text):
+    """
+    INTERNAL USE:
+
+    Convert string to None or bool or int, if appropriate. Otherwise,
+    leave it as a string.
+    """
+    text = str(text)
+    if text == 'None':
+        return None
+    elif text == 'True':
+        return True
+    elif text == 'False':
+        return False
+    else:
+        try:
+            return int(text)
+        except ValueError:
+            return text
+
+
+def verify_default_ns(val):
+    """
+    INTERNAL USE:
+    Verify whether a value is appropriate for ``default_ns``.  If so,
+    return the first character, in lowercase; otherwise, raise a
+    DefaultNSError.
+    """
+    if not isinstance(val, str) or val is None or not val:
+        raise DefaultNSError
+    first_char = val.lower()[0]
+    if first_char not in MasterConfig._LEGAL_NS:
+        raise DefaultNSError
+    return first_char
+
+
+def verify_default_ew(val):
+    """
+    INTERNAL USE:
+    Verify whether a value is appropriate for ``default_ew``.  If so,
+    return the first character, in lowercase; otherwise, raise a
+    DefaultEWError.
+    """
+    if not isinstance(val, str) or val is None or not val:
+        raise DefaultEWError
+    first_char = val.lower()[0]
+    if first_char not in MasterConfig._LEGAL_EW:
+        raise DefaultEWError
+    return first_char
 
 
 __all__ = [
