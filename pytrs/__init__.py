@@ -27,7 +27,7 @@ __disclaimer__ = _constants.__disclaimer__
 __website__ = _constants.__website__
 
 
-# Import the main parsing functionality as top-level classes, vars, etc.
+# Import only the main parsing functionality as top-level classes, vars, etc.
 from pytrs.parser import (
     # Primary parsing classes and their helper classes
     PLSSDesc,   # parser.plssdesc submodule
@@ -47,10 +47,10 @@ from pytrs.parser import (
     sort_grouped_tracts,    # parser.containers submodule
 
     # A tuple of currently implemented layouts
-    IMPLEMENTED_LAYOUTS,    # parser.plss_parse submodule
+    IMPLEMENTED_LAYOUTS,    # parser.config.layouts submodule
 
     # Examples of the currently implemented layouts
-    IMPLEMENTED_LAYOUT_EXAMPLES     # parser.plss_parse submodule
+    IMPLEMENTED_LAYOUT_EXAMPLES     # parser.config.layouts submodule
 )
 
 
