@@ -113,7 +113,7 @@ class PromptConfig(tk.Frame):
     # Parameters that are set via radiobuttons:
     RB_PARAMS = [
         'clean_qq',
-        'supress_lot_divs',
+        'suppress_lot_divs',
         'sec_colon_required',
         'sec_colon_cautious',
         'ocr_scrub',
@@ -231,38 +231,40 @@ class PromptConfig(tk.Frame):
         ),
 
         'suppress_lot_divs': (
-            "If parsing lots, suppress report any divisions of lots. "
-            "For example, if False, 'N/2 of Lot 1' would be reported "
-            "as 'N2 of L1'. If this is turned on, it would be "
-            "reported as 'L1'.\n\n"
+            "If parsing lots, suppress reporting any divisions of lots. "
+            "For example, if this setting is not used, then 'N/2 of Lot 1' "
+            "would be reported as 'N2 of L1'. If this is turned on, it "
+            "would be reported as simply 'L1'.\n\n"
             "Default: off (`False`)"
         ),
 
         'sec_colon_required': (
-            # TODO: Rewrite for current behavior.
             "Instruct a PLSSDesc object (whose layout is "
             "`TRS_desc` or `S_desc_TR`) to require a colon "
             "between the section number and the following "
             "description -- i.e. 'Section 14 NE/4' would NOT be "
-            "picked up if 'require_colon' is on (`True`).  If "
-            "turned off (`False`), then 'Section 14 NE/4' would "
-            "be captured. However, this may result in false "
+            "picked up if 'sec_colon_required' is on (`True`).  If "
+            "turned off (`False`, the default), then 'Section 14 NE/4' "
+            "would be captured. However, this may result in false "
             "matches, depending on the dataset.\n\n"
-            "(Note that the default parsing method is to first "
-            "pass over instances that do not have a colon. If no "
-            "sections are matched, it will make a second pass, "
-            "this time allowing section numbers that are NOT "
-            "followed by colon. If not set here, the potentially "
-            "two-pass method will be used by default.)\n\n"
-            "If set to on (`True`) here, that second-pass method "
-            "will be prevented. If set to off (`False`) here, it "
-            "will broadly capture all such instances, and the "
-            "second-pass method will not be needed. (Again, "
-            "beware false matches.)"
+            "See also `sec_colon_cautious` setting, which will do a "
+            "second pass if no section is found during the first pass.\n\n"
+            "(Note: If both `sec_colon_required` AND `sec_colon_cautious` "
+            "are set, then `sec_colon_required` will control.)"
         ),
 
         'sec_colon_cautious': (
-            # TODO: Write up.
+            "Similar to `sec_colon_required`, except that this will do a "
+            "potential second pass. Specifically, during the first pass while "
+            "parsing a PLSSDesc (whose layout is `TRS_desc` or `S_desc_TR`), "
+            "it will require a colon to between the section number and the "
+            "following description -- i.e. 'Section 14 NE/4' would NOT be "
+            "picked up during the first pass.\n\n"
+            "However, if no section is identified during the first pass, "
+            "a second pass will be conducted during which colons are not "
+            "required.\n\n"
+            "(Note: If both `sec_colon_required` AND `sec_colon_cautious` "
+            "are set, then `sec_colon_required` will control.)"
         ),
 
         'ocr_scrub': (
