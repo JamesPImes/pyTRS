@@ -385,11 +385,11 @@ class Tract:
         :param sec: Section (a str or int)
         :param default_ns: (Optional) If `twp` wasn't specified as N or
         S, assume `default_ns` (pass as 'n' or 's'). If not specified,
-        will fall back to PLSSDesc.MASTER_DEFAULT_NS (which is 'n'
+        will fall back to ``MasterConfig.default_ns`` (which is 'n'
         unless configured otherwise).
         :param default_ew: (Optional) If `rge` wasn't specified as E or
         W, assume `default_ew` (pass as 'e' or 'w'). If not specified,
-        will fall back to PLSSDesc.MASTER_DEFAULT_EW (which is 'w'
+        will fall back to ``MasterConfig.default_ew`` (which is 'w'
         unless configured otherwise).
         :param ocr_scrub: A bool, whether to try to scrub common OCR
         artifacts from the Twp, Rge, and Sec -- if any of them are
@@ -550,8 +550,8 @@ class Tract:
         and `sec=`. (If N/S or E/W are not specified, will pull defaults
         from `default_ns` and `default_ew` -- or failing that, from
         `config` parameters. If not specified in any of those places,
-        will default to ``PLSSDesc.MASTER_DEFAULT_NS`` and
-        ``PLSSDesc.MASTER_DEFAULT_EW``, which are `'n'` and `'w'`,
+        will default to ``MasterConfig.default_ns`` and
+        ``MasterConfig.default_ns``, which are `'n'` and `'w'`,
         respectively, unless configured otherwise.)
 
         :param desc: Same as initializing a Tract object.
@@ -565,13 +565,13 @@ class Tract:
         :param default_ns: How to interpret townships for which direction
         was not specified -- i.e. either 'n' or 's'. (Defaults to what
         is specified in the ``config=`` parameters, if any; and if not
-        there, then to ``PLSSDesc.MASTER_DEFAULT_NS``, which is 'n'
-        unless otherwise specified.)
+        there, then to ``MasterConfig.default_ns``, which is 'n' unless
+        otherwise specified.)
         :param default_ew: How to interpret ranges for which direction
         was not specified -- i.e. either 'e' or 'w'. (Defaults to what
         is specified in the ``config=`` parameters, if any; and if not
-        there, then to ``PLSSDesc.MASTER_DEFAULT_EW``, which is 'w'
-        unless otherwise specified.)
+        there, then to ``MasterConfig.default_ew``, which is 'w' unless
+        otherwise specified.)
         :param source: Same as when initializing a Tract object.
         :param orig_desc: Same as when initializing a Tract object.
         :param orig_index: Same as when initializing a Tract object.
