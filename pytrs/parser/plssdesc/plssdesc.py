@@ -54,18 +54,9 @@ class PLSSDesc:
     and ``MasterConfig.WEST``.
 
     ____ PARSING ____
-    Parse the PLSSDesc object into pytrs.Tract objects with the
-    `.parse()` method at some point after init. Alternatively, trigger
-    the parse at init in one of several ways:
-    -- Use init parameter `init_parse=True` (parses the PLSSDesc object
-        into Tract objects, which are NOT yet parsed into lots and
-        QQ's).
-    -- Use init parameter `parse_qq=True` (parses the PLSSDesc object
-        into Tract objects, which ARE then immediately parsed into lots
-        and QQ's)
-    -- Include string 'init_parse' and/or 'parse_qq' among the config
-        parameters that are passed in `config=` at init.
-    (NOTE: parse_qq entails init_parse, but not vice-versa.)
+    ``PLSSDesc`` are automatically parsed into ``Tract`` objects upon
+    init. Alternatively / additionally, call the ``.parse()`` method at
+    some point after init.
 
     ____ IMPORTANT INSTANCE VARIABLES AFTER PARSING ____
     These are the notable attributes of a PLSSDesc object. For the tract
