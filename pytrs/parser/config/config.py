@@ -312,7 +312,7 @@ class Config:
         """
         write_vals = []
         for att in Config._CONFIG_ATTRIBUTES:
-            w = attribute_value_to_str(att, getattr(self, att))
+            w = attrib_and_val_to_str(att, getattr(self, att))
             if w:
                 write_vals.append(w)
         return ','.join(write_vals)
@@ -352,7 +352,7 @@ class Config:
         return None
 
 
-def attribute_value_to_str(attribute, value):
+def attrib_and_val_to_str(attribute, value):
     """
     INTERNAL USE:
 
