@@ -226,8 +226,9 @@ class _TRSTractList:
         contain only two of them, and the original will still have one,
         being the first one.
 
-        Control how to assess duplicates by passing one of the following
-        values to ``method=``:
+        Control how to assess whether elements in the list are
+        duplicates by passing one of the following values to
+        ``method=``:
 
         - ``method='instance'``
             - Whether two objects are actually the same instance -- i.e.
@@ -363,21 +364,17 @@ class _TRSTractList:
         """
         Sort the elements in this ``TractList`` (or ``TRSList``).
 
-        The standard ``list.sort(key=<lambda>, reverse=<bool>)``
-        parameters can be used here, but this method has additional
-        customized key options.
-
-        .. note::
-            The *parameter* ``reverse=<bool>`` applies only to lambda
-            sorts, and NOT to the custom keys detailed below.  To
-            reverse the custom sort keys, use the ``'.rev'`` encoding
-            discussed below.
+        The standard ``list.sort(key=<lambda>, reverse=<bool>)`` keyword
+        arguments can be used here, but this method has additional
+        customized key options.  (Note that the keyword argument
+        ``reverse=<bool>`` applies only to lambda sorts, and NOT to the
+        custom keys detailed below.)
 
         Customized key options:
 
         - ``'i'`` -- Sort tracts by the order in which they were
-          created. (*Note:* ``'i'`` sorting has no effect on a
-          ``TRSList``.)
+          created.
+            - *Note:* ``'i'`` sorting has no effect on a ``TRSList``.
 
         - ``'t'`` -- Sort by Township, such as:
             - ``'t.num'`` -- Sort by raw number, ignoring N/S. (†)
@@ -427,7 +424,7 @@ class _TRSTractList:
                 ->  then sort by Range (smallest-to-largest);
                 ->  then sort by Township (smallest-to-largest)
 
-        Example use of key::
+        Example::
 
             tractlist_or_trslist.custom_sort(key='s.reverse,r.ew,t.ns')
 
@@ -1229,7 +1226,7 @@ class TractList(_TRSTractList):
     # Aliases to mirror `sort_tracts`
     filter_tracts = _TRSTractList.filter
     filter_tracts_errors = _TRSTractList.filter_errors
-    group_tracts_by = _TRSTractList.group_by
+    group_tracts = _TRSTractList.group_by
 
     @staticmethod
     def sort_grouped_tracts(tracts_dict, sort_key, reverse=False) -> dict:
@@ -1704,7 +1701,7 @@ class TractList(_TRSTractList):
     @classmethod
     def from_multiple(cls, *objects):
         """
-        Create a ``TractList`` from multiple sources, which may be any
+        Create a `TractList` from multiple sources, which may be any
         number and combination of ``Tract``, ``PLSSDesc``, and
         ``TractList`` objects (or other iterable holding any of those
         object types).
@@ -1799,7 +1796,7 @@ class TRSList(_TRSTractList):
     - ``.filter_errors()``
         - Get a new ``TRSList`` of ``TRS`` objects whose Twp, Rge, and/or
           Section were an error or undefined, and optionally remove them
-          from the original ``TRSList``.
+         from the original ``TRSList``.
     """
 
     # A TRSList holds only TRS objects. But these types can be processed
@@ -1866,8 +1863,8 @@ class TRSList(_TRSTractList):
         :param trs: The Twp/Rge/Section(s) to look for in this TRSList.
          May pass as a ``TRS`` object, a string in the standard pyTRS
          format, or a ``TRSList``.  May also pass a ``Tract``, a parsed
-         ``PLSSDesc`` object, or a ``TractList`` -- or an iterable
-         container holding any combination of those types.
+         ``PLSSDesc`` object, or a ``TractList``.  May also or an
+         iterable container holding any combination of those types.
 
          *Note:* If a ``Tract``, ``PLSSDesc``, or ``TractList``
          is encountered, the ``.trs`` attribute in each ``Tract`` will

@@ -37,6 +37,7 @@ class PLSSDesc:
     containing equivalent config parameters -- see documentation on
     ``Config`` objects for possible parameters).
 
+    ------------
 
     **PARSING**
 
@@ -44,12 +45,13 @@ class PLSSDesc:
     init. Alternatively / additionally, call the ``.parse()`` method at
     some point after init.
 
+    ------------
 
     **IMPORTANT INSTANCE VARIABLES AFTER PARSING**
 
     These are the notable attributes of a ``PLSSDesc`` object. For the
     tract-level information (i.e. the data fields you might want to
-    write to a spreadsheet or table), look into the attributes of
+    write to a spreadsheet or table), look into the attributes o
     ``Tract`` objects. (Tract-level data can be extracted in bulk from
     ``PLSSDesc`` objects with methods discussed in the *next* section.)
 
@@ -105,6 +107,7 @@ class PLSSDesc:
           description (controls how the parsing algorithm interprets the
           text).
 
+    ------------
 
     **Assuming unspecified N/S and E/W for Township/Range**
 
@@ -131,6 +134,7 @@ class PLSSDesc:
         them as ``MasterConfig.NORTH``, ``MasterConfig.SOUTH``,
         ``MasterConfig.EAST``, or ``MasterConfig.WEST``.
 
+    ------------
 
     **STREAMLINED OUTPUT OF THE PARSED TRACT DATA**
 
@@ -181,6 +185,7 @@ class PLSSDesc:
           ``TractList`` stored in ``.tracts``, optionally removing
           duplicates.
 
+    ------------
 
     **SORTING / GROUPING / FILTERING TRACTS BY ATTRIBUTE VALUES**
 
@@ -1405,6 +1410,9 @@ class PLSSDesc:
         """
         return self.tracts.group_by(attribute, into, sort_key, sort_reverse)
 
+    # Alias to mirror `sort_tracts`.
+    group_tracts_by = group_by
+
     def filter(self, key, drop=False):
         """
         Extract from ``.tracts`` all ``Tract`` objects that match the
@@ -1426,6 +1434,9 @@ class PLSSDesc:
          objects, unless ``drop=True`` was passed.)
         """
         return self.tracts.filter(key, drop)
+
+    # Alias to mirror `sort_tracts`.
+    filter_tracts = filter
 
     def filter_errors(self, twp=True, rge=True, sec=True, undef=False, drop=False):
         """
@@ -1458,6 +1469,9 @@ class PLSSDesc:
          objects.
         """
         return self.tracts.filter_errors(twp, rge, sec, undef, drop)
+
+    # Alias to mirror `sort_tracts`
+    filter_error_tracts = filter_errors
 
     def filter_duplicates(self, method='instance', drop=False):
         """
@@ -1516,6 +1530,9 @@ class PLSSDesc:
         :return: A new ``TractList``.
         """
         return self.tracts.filter_duplicates(method, drop)
+
+    # Alias to mirror `sort_tracts`
+    filter_duplicate_tracts = filter_duplicates
 
 
 __all__ = [
