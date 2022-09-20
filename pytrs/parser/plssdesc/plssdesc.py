@@ -405,50 +405,52 @@ class PLSSDesc:
         attributes (``.tracts``, ``.w_flags``, ``.w_flag_lines``,
         ``.e_flags``, and ``.e_flag_lines``). Returns only the
         ``TractList`` object containing the parsed ``Tract`` objects
-        (i.e. what would be stored to ``.tracts``).
+        (i.e. what would be stored to ``.tracts`), regardless of
+        ``commit=``.
 
         NOTE: Any parameters passed here will override the corresponding
         ``.config`` settings, but any unspecified parameters will defer
         to ``.config``.
 
         :param layout: The layout to be assumed. If not specified,
-        defaults to whatever is in ``self.layout``; and if not specified
-        there, will be automatically deduced.
+        defaults to whatever is in ``.layout`` attribute; and if not
+        specified there, will be automatically deduced.
         :param default_ns: How to interpret townships for which
-        direction was not specified -- i.e. either 'n' or 's'. (Defaults
-        to `self.default_ns` (if configured) or to
-        ``MasterConfig.default_ns`` which is 'n' unless otherwise
+        direction was not specified -- i.e. either ``'n'`` or ``'s'``.
+        (Defaults to ``.default_ns`` attribute (if configured) or to
+        ``MasterConfig.default_ns`` which is ``'n'`` unless otherwise
         configured.)
         :param default_ew: How to interpret ranges for which direction
-        was not specified -- i.e. either 'e' or 'w'. (Defaults to
-        `self.default_ew` (if configured) or to
-        ``MasterConfig.default_ew`` which is 'w' unless otherwise
+        was not specified -- i.e. either ``'e'`` or ``'w'``. (Defaults
+        to ``.default_ew`` attribute (if configured) or to
+        ``MasterConfig.default_ew`` which is ``'w'`` unless otherwise
         configured.)
-        :param clean_up: Whether to clean up common 'artefacts' from
-        parsing. If not specified, defaults to False for parsing the
-        'copy_all' layout, and `True` for all others.
-        :param parse_qq: Whether to parse each resulting Tract object
+        :param clean_up: Whether to clean up common 'artifacts' from
+        parsing. If not specified, defaults to ``False`` for parsing the
+        ``'copy_all'`` layout, and ``True`` for all others.
+        :param parse_qq: Whether to parse each resulting ``Tract``
         into lots and QQs when initialized. If not specified, defaults
-        to whatever is specified in `self.parse_qq` (which is ``True``
+        to whatever is specified in ``.parse_qq`` attribute (``False``
         unless otherwise configured).
-        :param clean_qq: Whether to expect only clean lots and QQ's (i.e.
-        no metes-and-bounds, exceptions, complicated descriptions,
-        etc.). Defaults to whatever is specified in `self.clean_qq`
-        (which is False, unless configured otherwise).
+        :param clean_qq: Whether to expect only clean lots and QQ's
+        (i.e. no metes-and-bounds, exceptions, complicated descriptions,
+        etc.). Defaults to whatever is specified in ``.clean_qq``
+        attribute (``False``, unless configured otherwise).
         :param sec_colon_cautious: See ``see_colon_required`` parameter.
-        :param sec_colon_required: Use ``sec_colon_cautious`` and
+        :param sec_colon_required: Use ``sec_colon_cautious`` or
         ``sec_colon_required`` to determine whether to require a colon
         between the section number and the following description (only
-        has an effect on 'TRS_desc' or 'S_desc_TR' layouts). If
-        ``sec_colon_required`` is True, then ``sec_colon_cautious`` will
-        have no effect.
+        has an effect on ``'TRS_desc'`` or ``'S_desc_TR'`` layouts). If
+        ``sec_colon_required`` is ``True``, then ``sec_colon_cautious``
+        will have no effect.
         If neither is specified, it will default to whatever was set at
         init; and unless otherwise specified there, will default to
-        False (i.e. require no colon).
+        ``False`` (i.e. require no colon).
         If ``sec_colon_cautious=True`` (and ``sec_colon_required`` is
-        False or None), it will use a 'two-pass' method, where first it
-        will require the colon; and if no matching sections are found,
-        it will do a second pass where colons are not required.
+        ``False`` or ``None``), it will use a 'two-pass' method, where
+        first it will require the colon; and if no matching sections are
+        found, it will do a second pass where colons are not required.
+
             ex: 'Section 14 NE/4'
                 [default, neither specified] --> match (but beware false
                             positives)
@@ -457,48 +459,50 @@ class PLSSDesc:
                     not specified) --> no match on first pass; if no
                             other sections are identified, will be
                             matched on second pass.
+
         :param segment: Whether to break the text down into segments,
-        with one MATCHING township/range per segment (i.e. only T&R's
+        with one MATCHING township/range per segment (i.e. only Twp/Rges
         that are appropriate to the specified layout will count for the
         purposes of this parameter). This can potentially capture
         descriptions whose layout changes partway through, but can also
         cause appropriate warning/error flags to be missed. If not
-        specified here, defaults to whatever is set in `self.segment`.
+        specified here, defaults to whatever is set in ``.segment``
+        attribute.
         :param ocr_scrub: Whether to try to iron out common OCR
         'artifacts'. May cause unintended changes. (Defaults to
-        `.ocr_scrub` attribute, which is `False` unless otherwise
+        ``.ocr_scrub`` attribute, which is `False` unless otherwise
         configured.)
         :param commit: Whether to commit the results to the appropriate
-        instance attributes. Defaults to `True`.
+        instance attributes. Defaults to ``True``.
         :param qq_depth_min: (Optional, and only relevant if parsing
         Tracts into lots and QQs.) An int, specifying the minimum depth
         of the parse. If not set here, will default to settings from
         init (if any), which in turn default to 2, i.e. to
-        quarter-quarters (e.g., 'N/2NE/4' -> ['NENE', 'NENE']).
+        quarter-quarters (e.g., 'N/2NE/4' -> ``['NENE', 'NENE']``).
         Setting to 3 would return 10-acre subdivisions (i.e. dividing
-        the 'NENE' into ['NENENE', 'NWNENE', 'SENENE', 'SWNENE']), and
-        so forth.
+        the 'NENE' into ``['NENENE', 'NWNENE', 'SENENE', 'SWNENE']``),
+        and so forth.
         WARNING: Higher than a few levels of depth will result in very
         slow performance.
         :param qq_depth_max: (Optional, and only relevant if parsing
         Tracts into lots and QQs.) An int, specifying the maximum depth
         of the parse. If set as 2, any subdivision smaller than
         quarter-quarter (e.g., 'NENE') would be discarded -- so, for
-        example, the 'N/2NE/4NE/4' would simply become the 'NENE'. Must
-        be greater than or equal to ``qq_depth_min``. (Defaults to None
-        -- i.e. no maximum. Can also be configured at init.)
+        example, the 'N/2NE/4NE/4' would simply become the ``'NENE'``.
+        Must be greater than or equal to ``qq_depth_min``. (Defaults to
+        ``None`` -- i.e. no maximum.)
         :param qq_depth: (Optional, and only relevant if parsing Tracts
         into lots and QQs.) An int, specifying both the minimum and
         maximum depth of the parse. If specified, will override both
-        `qq_depth_min` and `qq_depth_max`. (Defaults to None -- i.e. use
-        qq_depth_min and optionally qq_depth_max; and can optionally be
-        configured at init.)
+        ``qq_depth_min`` and ``qq_depth_max``. (Defaults to `None` --
+        i.e. use ``qq_depth_min`` and optionally ``qq_depth_max``.)
         :param break_halves: (Optional, and only relevant if parsing
         Tracts into lots and QQs.) Whether to break halves into
-        quarters, even if we're beyond the qq_depth_min. (False by
-        default, but can be configured at init.)
-        :return: Returns a ``pytrs.TractList`` object containing the
-        resulting ``pytrs.Tract`` objects.
+        quarters, even if we're beyond the ``qq_depth_min``. (``False``
+        by default.)
+        :return: Returns a ``TractList`` object containing the
+        resulting ``Tract`` objects. (That same ``TractList`` will be
+        stored to ``.tracts`` if ``commit=True``.
         """
 
         # --------------------------------------------------------------
