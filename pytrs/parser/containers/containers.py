@@ -343,43 +343,47 @@ class _TRSTractList:
 
     def custom_sort(self, key='i,s,r,t', reverse=False):
         """
-        Sort the elements in this `TractList` (or `TRSList`), in place.
-        The standard ``list.sort(key=<lambda>, reverse=<bool>)``
-        parameters can be used here. But this method has additional
-        customized key options.  (Note that the parameter
+        Sort the elements in this ``TractList`` (or ``TRSList``).
+
+        The standard ``list.sort(key=<lambda>, reverse=<bool>)`` keyword
+        arguments can be used here, but this method has additional
+        customized key options.  (Note that the keyword argument
         ``reverse=<bool>`` applies only to lambda sorts, and NOT to the
         custom keys detailed below.)
 
-        Customized key options:
+        Customized key options::
 
-        'i' -> Sort by the original order the `Tract` objects were
-                created.  (NOTE: 'i' sorting has no effect in `TRSList`
-                objects.)
+            'i' -> Sort Tracts by the order in which they were created.
+                        (NOTE: 'i' sorting has no effect in TRSList
+                        objects.)
 
-        't' -> Sort by Township.
-               't.num'  --> Sort by raw number, ignoring N/S. (default)
-               't.ns'   --> Sort from north-to-south
-               't.sn'   --> Sort from south-to-north
+            't' -> Sort by Township.
+                    'num'    --> Sort by raw number, ignoring N/S. (*)
+                    'ns'     --> Sort from north-to-south
+                    'sn'     --> Sort from south-to-north
+                        (* Denotes default behavior.)
 
-        'r' -> Sort by Range.
-               'r.num'  --> Sort by raw number, ignoring E/W. (default)
-               'r.ew'   --> Sort from east-to-west **
-               'r.we'   --> Sort from west-to-east **
-        (** NOTE: These do not account for Principal Meridians.)
+            'r' -> Sort by Range.
+                    'num'    --> Sort by raw number, ignoring E/W. (*)
+                    'ew'     --> Sort from east-to-west (**)
+                    'we'     --> Sort from west-to-east (**)
+                        (* Denotes default behavior.)
+                        (** NOTE: These do not account for Principal
+                            Meridians.)
 
-        's' -> Sort by Section number.
+            's' -> Sort by Section number.
 
-        Reverse any or all of the keys by adding '.reverse' (or '.rev')
-        at the end of it.
+        Reverse any of the keys by adding ``'.reverse'`` (or ``'.rev'``)
+        at the end of each desired key(s) to be reversed.
 
         Use as many sort keys as you want. They will be applied in order
         from left-to-right, so place the highest 'priority' sort last.
 
-        Twp/Rge's that are errors (i.e. `'XXXzXXXz'`) will be sorted to
-        the end of the list when sorting on Twp and/or Rge (whether by
-        number, north-to-south, south-to-north, east-to-west, or west-
-        to-east).  Similarly, error Sections (i.e. `'XX'`) will be
-        sorted to the end of the list when sorting on section.  (The
+        Twp/Rge's that are errors (i.e. ``'XXXzXXXz'``) will be sorted
+        to the end of the list when sorting on Twp and/or Rge (whether
+        by number, north-to-south, south-to-north, east-to-west, or
+        west- to-east).  Similarly, error Sections (i.e. ``'XX'``) will
+        be sorted to the end of the list when sorting on section.  (The
         exception is if the sort is reversed, in which case, they come
         first.)
 
@@ -387,7 +391,7 @@ class _TRSTractList:
         (spaces are optional). The components of each key should be
         separated by a period.
 
-        Example keys:
+        Example keys::
 
             's.reverse,r.ew,t.ns'
                 ->  Sort by section number (reversed, so largest-to-
@@ -401,6 +405,10 @@ class _TRSTractList:
                     then sort by Range (smallest-to-largest);
                     then sort by Township (smallest-to-largest)
 
+        Example::
+
+            tractlist_or_trslist.custom_sort(key='s.reverse,r.ew,t.ns')
+
         Moreover, we can conduct multiple sorts by passing ``key`` as a
         list of sort keys. We can mix and match string keys above with
         lambdas, although the ``reverse=<bool>`` will apply only to the
@@ -409,13 +417,13 @@ class _TRSTractList:
         Optionally pass ``reverse=`` as a list of bools (i.e. a list
         equal in length to ``key=<list of sort keys>``) to use different
         ``reverse`` values for different lambdas. But then make sure
-        that the lengths are equal, or it will raise an IndexError.
+        that the lengths are equal, or it will raise an ``IndexError``.
 
         :param key: A str, specifying which sort(s) should be done, and
         in which order. Alternatively, a lambda function (same as for
         the builtin ``list.sort(key=<lambda>)`` method).
 
-        May optionally pass `sort_key` as a list of sort keys, to be
+        May optionally pass ``sort_key`` as a list of sort keys, to be
         applied left-to-right. In that case, lambdas and string keys may
         be mixed and matched.
 
@@ -426,12 +434,12 @@ class _TRSTractList:
         within the string key itself). Defaults to ``False``.
 
         NOTE: If ``key`` was passed as a list of keys, then ``reverse``
-        must be passed as EITHER a single bool that will apply to all of
-        the (non-string) sorts, OR as a list of bools that is equal in
+        must be passed as EITHER a single bool that will apply to all
+        (non-string) sorts, OR as a list of bools that is equal in
         length to ``key`` (i.e. the values in ``key`` and ``reverse``
         will be matched up one-to-one).
 
-        :return: None. (The original list is sorted in place.)
+        :return: None
         """
         if not key:
             return None
@@ -1177,11 +1185,7 @@ class TractList(_TRSTractList):
         those dicts (the returned list being equal in length to this
         ``TractList`` object).
 
-        :param attributes: The names (strings) of whichever attributes
-        should be included (see documentation on ``Tract`` objects
-        for the names of relevant attributes).
-
-        :Example:
+        Example:
 
         .. code-block:: python
 
@@ -1192,10 +1196,7 @@ class TractList(_TRSTractList):
             tl_obj = TractList(d_obj)
             tl_obj.tracts_to_dict('trs', 'desc', 'qqs')
 
-
-        Example returns a list of two dicts:
-
-        .. code-block:: python
+        Example returns a list of two dicts::
 
             [
             {'trs': '154n97w14',
@@ -1206,6 +1207,12 @@ class TractList(_TRSTractList):
             'desc': 'Northwest Quarter, North Half South West Quarter',
             'qqs': ['NENW', 'NWNW', 'SENW', 'SWNW', 'NESW', 'NWSW']}
             ]
+
+        :param attributes: The names (strings) of whichever attributes
+        should be included (see documentation on ``Tract`` objects
+        for the names of relevant attributes).
+        :return: List of dicts, containing the requested data for each
+        ``Tract``.
         """
         attributes = clean_attributes(attributes)
         return [t.to_dict(attributes) for t in self]
@@ -1217,24 +1224,18 @@ class TractList(_TRSTractList):
         list of those lists (the returned list being equal in length to
         this ``TractList`` object).
 
-        :param attributes: The names (strings) of whichever attributes
-        should be included (see documentation on ``Tract`` objects
-        for the names of relevant attributes).
-
-        :Example:
+        Example:
 
         .. code-block:: python
 
-        txt = '''154N-97W
-        Sec 14: NE/4
-        Sec 15: Northwest Quarter, North Half South West Quarter'''
-        d_obj = PLSSDesc(txt)
-        tl_obj = TractList(d_obj)
-        tl_obj.tracts_to_list('trs', 'desc', 'qqs')
+            txt = '''154N-97W
+            Sec 14: NE/4
+            Sec 15: Northwest Quarter, North Half South West Quarter'''
+            d_obj = PLSSDesc(txt)
+            tl_obj = TractList(d_obj)
+            tl_obj.tracts_to_list('trs', 'desc', 'qqs')
 
-        Example returns a nested list:
-
-        .. code-block:: python
+        Example returns a nested list::
 
             [
                 ['154n97w14',
@@ -1245,6 +1246,13 @@ class TractList(_TRSTractList):
                 'Northwest Quarter, North Half South West Quarter',
                 ['NENW', 'NWNW', 'SENW', 'SWNW', 'NESW', 'NWSW']]
             ]
+
+        :param attributes: The names (strings) of whichever attributes
+        should be included (see documentation on ``Tract`` objects
+        for the names of relevant attributes).
+
+        :return: List of lists, containing the requested data for each
+        ``Tract``.
         """
         attributes = clean_attributes(attributes)
         return [t.to_list(attributes) for t in self]
@@ -1255,11 +1263,7 @@ class TractList(_TRSTractList):
         string, containing the requested attributes only, and return a
         single string of the data.
 
-        :param attributes: The names (strings) of whichever attributes
-        should be included (see documentation on ``Tract`` objects
-        for the names of relevant attributes).
-
-        :Example:
+        Example:
 
         .. code-block:: python
 
@@ -1271,9 +1275,7 @@ class TractList(_TRSTractList):
             tl_obj.tracts_to_str('trs', 'desc', 'qqs')
 
         Example returns a multi-line string that looks like this when
-        printed:
-
-        .. code-block:: python
+        printed::
 
             Tract 1 / 2
             trs  : 154n97w14
@@ -1284,6 +1286,13 @@ class TractList(_TRSTractList):
             trs  : 154n97w15
             desc : Northwest Quarter, North Half South West Quarter
             qqs  : NENW, NWNW, SENW, SWNW, NESW, NWSW
+
+        :param attributes: The names (strings) of whichever attributes
+        should be included (see documentation on ``Tract`` objects
+        for the names of relevant attributes).
+
+        :return: An orderly string containing the requested data for
+        each ``Tract``.
         """
         attributes = clean_attributes(attributes)
 
@@ -1408,30 +1417,31 @@ class TractList(_TRSTractList):
         Returns the full description of all ``Tract`` objects as a
         single, orderly string.
 
-        :param delim: Specify what separates Twp/Rge/Sec from the
-        corresponding description block (i.e. what comes between
-        ``.trs`` and ``.desc``).  (Defaults to ``': '``).
-        :param newline: Specify what separates each ``Tract`` from one
-        another.  (Defaults to ``'\n'``).
-
         :Example:
 
         .. code-block:: python
 
-        txt = '''154N-97W
-        Sec 14: NE/4
-        Sec 15: Northwest Quarter, North Half South West Quarter'''
-        d_obj = PLSSDesc(txt)
-        tl_obj = TractList(d_obj)
-        tl_obj.quick_desc()
+            txt = '''154N-97W
+            Sec 14: NE/4
+            Sec 15: Northwest Quarter, North Half South West Quarter'''
+            d_obj = PLSSDesc(txt)
+            tl_obj = TractList(d_obj)
+            tl_obj.quick_desc()
 
         Example returns a multi-line string that looks like this when
-        printed:
-
-        .. code-block:: python
+        printed::
 
             154n97w14: NE/4
             154n97w15: Northwest Quarter, North Half South West Quarter
+
+        :param delim: Specify what separates Twp/Rge/Sec from the
+        corresponding description block (i.e. what comes between
+        ``.trs`` and ``.desc``).  (Defaults to ``': '``).
+
+        :param newline: Specify what separates each ``Tract`` from one
+        another.  (Defaults to ``'\n'``).
+
+        :return: A string of the complete description.
         """
         dlist = [t.quick_desc(delim=delim) for t in self]
         return newline.join(dlist)
@@ -1567,13 +1577,13 @@ class TractList(_TRSTractList):
         """
         Get a list all Twp/Rge/Sections in all ``Tract`` objects.
         Optionally remove duplicates from the returned list with
-        ``remove_duplicates=True``. (Duplicates are NOT removed in the
+        ``remove_duplicates=True``. (Duplicates are NOT removed from the
         original.)
 
-        NOTE: The original order is maintained in the returned list.
+        The original order is maintained in the returned list.
 
-        NOTE ALSO: Each Twp/Rge/Sec in the resulting list is a string,
-        and NOT a ``TRS`` object. If ``TRS`` objects are required, cast
+        NOTE: Each Twp/Rge/Sec in the resulting list is a string, and
+        NOT a ``TRS`` object. If ``TRS`` objects are required, cast
         the resulting list as a ``TRSList`` -- i.e.
         ``TRSList(some_tractlist.list_trs())``.
 

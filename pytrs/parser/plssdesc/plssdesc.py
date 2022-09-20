@@ -737,11 +737,7 @@ class PLSSDesc:
         of those dicts (the returned list being equal in length to
         ``.tracts``).
 
-        :param attributes: The names (strings) of whichever attributes
-        should be included (see documentation on ``Tract`` objects
-        for the names of relevant attributes).
-
-        :Example:
+        Example:
 
         .. code-block:: python
 
@@ -752,9 +748,7 @@ class PLSSDesc:
             tract_data = d_obj.tracts_to_dict('trs', 'desc', 'qqs')
 
 
-        Example returns a list of two dicts:
-
-        .. code-block:: python
+        Example returns a list of two dicts::
 
             [
             {'trs': '154n97w14',
@@ -765,6 +759,13 @@ class PLSSDesc:
             'desc': 'Northwest Quarter, North Half South West Quarter',
             'qqs': ['NENW', 'NWNW', 'SENW', 'SWNW', 'NESW', 'NWSW']}
             ]
+
+        :param attributes: The names (strings) of whichever attributes
+        should be included (see documentation on ``Tract`` objects
+        for the names of relevant attributes).
+
+        :return: List of dicts, containing the requested data for each
+        ``Tract``.
         """
         # This functionality is handled by TractList method.
         return self.tracts.tracts_to_dict(attributes)
@@ -776,11 +777,7 @@ class PLSSDesc:
         and return a nested list of those lists (the returned list being
         equal in length to ``.tracts``).
 
-        :param attributes: The names (strings) of whichever attributes
-        should be included (see documentation on ``Tract`` objects
-        for the names of relevant attributes).
-
-        :Example:
+        Example:
 
         .. code-block:: python
 
@@ -790,9 +787,7 @@ class PLSSDesc:
             d_obj = pytrs.PLSSDesc(txt, parse_qq=True)
             d_obj.tracts_to_list('trs', 'desc', 'qqs')
 
-        Example returns a nested list:
-
-        .. code-block:: python
+        Example returns a nested list::
 
             [
                 ['154n97w14',
@@ -803,6 +798,13 @@ class PLSSDesc:
                 'Northwest Quarter, North Half South West Quarter',
                 ['NENW', 'NWNW', 'SENW', 'SWNW', 'NESW', 'NWSW']]
             ]
+
+        :param attributes: The names (strings) of whichever attributes
+        should be included (see documentation on ``Tract`` objects
+        for the names of relevant attributes).
+
+        :return: List of lists, containing the requested data for each
+        ``Tract``.
         """
         # This functionality is handled by TractList method.
         return self.tracts.tracts_to_list(attributes)
@@ -841,24 +843,18 @@ class PLSSDesc:
         an orderly string, containing the requested attributes only, and
         return a single string of the data.
 
-        :param attributes: The names (strings) of whichever attributes
-        should be included (see documentation on ``Tract`` objects
-        for the names of relevant attributes).
-
-        :Example:
+        Example:
 
         .. code-block:: python
 
-        txt = '''154N-97W
-        Sec 14: NE/4
-        Sec 15: Northwest Quarter, North Half South West Quarter'''
-        d_obj = pytrs.PLSSDesc(txt, parse_qq=True)
-        d_obj.tracts_to_str('trs', 'desc', 'qqs')
+            txt = '''154N-97W
+            Sec 14: NE/4
+            Sec 15: Northwest Quarter, North Half South West Quarter'''
+            d_obj = pytrs.PLSSDesc(txt, parse_qq=True)
+            d_obj.tracts_to_str('trs', 'desc', 'qqs')
 
         Example returns a multi-line string that looks like this when
-        printed:
-
-        .. code-block:: python
+        printed::
 
             Tract 1 / 2
             trs  : 154n97w14
@@ -869,6 +865,13 @@ class PLSSDesc:
             trs  : 154n97w15
             desc : Northwest Quarter, North Half South West Quarter
             qqs  : NENW, NWNW, SENW, SWNW, NESW, NWSW
+
+        :param attributes: The names (strings) of whichever attributes
+        should be included (see documentation on ``Tract`` objects
+        for the names of relevant attributes).
+
+        :return: An orderly string containing the requested data for
+        each ``Tract``.
         """
         # This functionality is handled by TractList method.
         return self.tracts.tracts_to_str(attributes)
@@ -913,29 +916,31 @@ class PLSSDesc:
         Returns the full description of all ``Tract`` objects in the
         ``.tracts`` attribute as a single, orderly string.
 
-        :param delim: Specify what separates Twp/Rge/Sec from the
-        corresponding description block (i.e. what comes between
-        ``.trs`` and ``.desc``).  (Defaults to ``': '``).
-        :param newline: Specify what separates each ``Tract`` from one
-        another.  (Defaults to ``'\n'``).
-
         :Example:
 
         .. code-block:: python
 
-        txt = '''154N-97W
-        Sec 14: NE/4
-        Sec 15: Northwest Quarter, North Half South West Quarter'''
-        d_obj = pytrs.PLSSDesc(txt)
-        d_obj.quick_desc()
+            txt = '''154N-97W
+            Sec 14: NE/4
+            Sec 15: Northwest Quarter, North Half South West Quarter'''
+            d_obj = pytrs.PLSSDesc(txt)
+            d_obj.quick_desc()
 
         Example returns a multi-line string that looks like this when
-        printed:
-
-        .. code-block:: python
+        printed::
 
             154n97w14: NE/4
             154n97w15: Northwest Quarter, North Half South West Quarter
+
+
+        :param delim: Specify what separates Twp/Rge/Sec from the
+        corresponding description block (i.e. what comes between
+        ``.trs`` and ``.desc``).  (Defaults to ``': '``).
+
+        :param newline: Specify what separates each ``Tract`` from one
+        another.  (Defaults to ``'\n'``).
+
+        :return: A string of the complete description.
         """
         # This functionality is handled by TractList method.
         return self.tracts.quick_desc(delim=delim, newline=newline)
@@ -963,12 +968,12 @@ class PLSSDesc:
         Get a list all Twp/Rge/Sections in all ``Tract`` objects in the
         ``.tracts`` attribute.  Optionally remove duplicates from the
         returned list with ``remove_duplicates=True``. (Duplicates are
-        NOT removed in the original.)
+        NOT removed from the original.)
 
-        NOTE: The original order is maintained in the returned list.
+        The original order is maintained in the returned list.
 
-        NOTE ALSO: Each Twp/Rge/Sec in the resulting list is a string,
-        and NOT a ``TRS`` object. If ``TRS`` objects are required, cast
+        NOTE: Each Twp/Rge/Sec in the resulting list is a string, and
+        NOT a ``TRS`` object. If ``TRS`` objects are required, cast
         the resulting list as a ``TRSList`` -- i.e.
         ``TRSList(some_plssdesc.list_trs())``.
 
@@ -1053,39 +1058,55 @@ class PLSSDesc:
         self.tracts.print_data(attributes)
         return
 
-    def sort_tracts(self, key: str = 'i,s,r,t'):
+    def sort_tracts(self, key: str = 'i,s,r,t', reverse=False):
         """
-        Sort the Tract objects stored in the ``.parse_tracts``
-        attributes, in-situ.
+        Sort the ``Tract`` objects stored in the ``.tracts`` attribute.
 
-        key options:
+        The standard ``list.sort(key=<lambda>, reverse=<bool>)`` keyword
+        arguments can be used here, but this method has additional
+        customized key options.  (Note that the keyword argument
+        ``reverse=<bool>`` applies only to lambda sorts, and NOT to the
+        custom keys detailed below.)
 
-        'i' -> 'i' -> Sort by the original order they were created.
+        Customized key options::
 
-        't' -> Sort by Township.
-               'num'    --> Sort by raw number, ignoring N/S. (default)
-               'ns'     --> Sort from north-to-south
-               'sn'     --> Sort from south-to-north
+            'i' -> Sort Tracts by the order in which they were created.
 
-        'r' -> Sort by Range.
-               'num'    --> Sort by raw number, ignoring E/W. (default)
-               'ew'     --> Sort from east-to-west **
-               'we'     --> Sort from west-to-east **
-                (** NOTE: These do not account for Principal Meridians.)
+            't' -> Sort by Township.
+                    't.num'    --> Sort by raw number, ignoring N/S. (*)
+                    't.ns'     --> Sort from north-to-south
+                    't.sn'     --> Sort from south-to-north
+                        (* Denotes default behavior.)
 
-        's' -> Sort by Section number.
+            'r' -> Sort by Range.
+                    'r.num'    --> Sort by raw number, ignoring E/W. (*)
+                    'r.ew'     --> Sort from east-to-west (**)
+                    'r.we'     --> Sort from west-to-east (**)
+                        (* Denotes default behavior.)
+                        (** NOTE: These do not account for Principal
+                            Meridians.)
 
-        Reverse any or all of the keys by adding '.reverse' (or '.rev')
-        at the end of it.
+            's' -> Sort by Section number.
+
+        Reverse any of the keys by adding ``'.reverse'`` (or ``'.rev'``)
+        at the end of each desired key(s) to be reversed.
 
         Use as many sort keys as you want. They will be applied in order
         from left-to-right, so place the highest 'priority' sort last.
+
+        Twp/Rge's that are errors (i.e. `'XXXzXXXz'`) will be sorted to
+        the end of the list when sorting on Twp and/or Rge (whether by
+        number, north-to-south, south-to-north, east-to-west, or west-
+        to-east).  Similarly, error Sections (i.e. `'XX'`) will be
+        sorted to the end of the list when sorting on section.  (The
+        exception is if the sort is reversed, in which case, they come
+        first.)
 
         Construct all keys as a single string, separated by comma
         (spaces are optional). The components of each key should be
         separated by a period.
 
-        Example keys:
+        Example keys::
 
             's.reverse,r.ew,t.ns'
                 ->  Sort by section number (reversed, so largest-to-
@@ -1103,11 +1124,19 @@ class PLSSDesc:
                 -> Return to the original order as parsed in this
                     PLSSDesc object.
 
-        :param key: A str, specifying which sort(s) should be done.
-        :return: None. (TractList is sorted in-situ.)
+        Example::
+
+            some_plssdesc.sort_tract(key='s.reverse,r.ew,t.ns')
+
+        (See also ``TractList.custom_sort()`` and
+        ``TRSList.custom_sort()`` for a fuller write-up on sorting.
+
+        :param key: A string specifying which sort(s) should be done.
+
+        :return: None
         """
         # This functionality is handled by TractList method.
-        self.tracts.sort_tracts(key=key)
+        self.tracts.sort_tracts(key=key, reverse=reverse)
         return None
 
     def group_nested(
