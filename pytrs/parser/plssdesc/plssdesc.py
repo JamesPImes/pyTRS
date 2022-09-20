@@ -297,10 +297,13 @@ class PLSSDesc:
     @property
     def require_colon(self):
         """
-        Check ``sec_colon_required`` and ``sec_colon_cautious`` to
-        determine whether to require colon after section number.
-        :return: True, False, or SecFinder.SEC_COLON_CAUTIOUS. (The
-        PLSSParser will know what to do with these values.)
+        Check values of ``.sec_colon_required`` and
+        ``.sec_colon_cautious`` to determine whether to require_colon
+        after section number (i.e. determine the value to pass to
+        ``require_colon=`` in the ``PLSSParser``).
+
+        :return: True, False, or ``SecFinder.SEC_COLON_CAUTIOUS``.
+        (The ``PLSSParser`` will know what to do with these values.)
         """
         required = self.sec_colon_required
         if self.sec_colon_cautious:
