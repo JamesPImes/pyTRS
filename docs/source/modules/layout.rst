@@ -124,6 +124,13 @@ description block itself, like so::
     That part of the NE/4 of Section 14 lying north of the river, in
     T154N-R97W
 
+...or...
+
+::
+
+    That part of the NE/4 of Section 14, T154N-R97W, lying north of the
+    river
+
 That's a target area for improvement in future versions.
 
 *(These two examples would both be interpreted as follows, assuming the
