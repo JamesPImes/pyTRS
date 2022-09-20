@@ -49,7 +49,7 @@ class PLSSDesc:
 
     These are the notable attributes of a ``PLSSDesc`` object. For the
     tract-level information (i.e. the data fields you might want to
-    write to a spreadsheet or table), look into the attributes o
+    write to a spreadsheet or table), look into the attributes of
     ``Tract`` objects. (Tract-level data can be extracted in bulk from
     ``PLSSDesc`` objects with methods discussed in the *next* section.)
 
