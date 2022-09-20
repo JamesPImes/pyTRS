@@ -321,27 +321,27 @@ class PLSSDesc:
 
     def __getitem__(self, item):
         """
-        `PLSSDesc` are LIMITEDLY subscriptable, in that you can ACCESS
-        elements (i.e. `pytrs.Tract` objects) of the `.tracts`
-        (a `pytrs.TractList`), thus (where `some_plssdesc` is a parsed
-        `PLSSDesc` object):
-        `some_plssdesc[0]` is the same as
-        `some_plssdesc.tracts[0]`
+        ``PLSSDesc`` are LIMITEDLY subscriptable, in that you can ACCESS
+        elements (i.e. ``Tract`` objects) of the ``.tracts``
+        (a ``TractList``). Therefore:
+            ``some_plssdesc[0]`` is the same as
+            ``some_plssdesc.tracts[0]``
 
         ...and we can slice, thus:
-        `some_plssdesc[:2]` is the same as
-        `some_plssdesc.tracts[:2]`
+            ``some_plssdesc[:2]`` is the same as
+            ``some_plssdesc.tracts[:2]``
 
-        ...and we can iterate over all its Tract objects:
-        `for tract in some_plssdesc: <...>` is the same as
-        `for tract in some_plssdesc.tracts: <...>`
+        ...and we can iterate over all its ``Tract`` objects:
+            ``for tract in some_plssdesc: <...>`` is the same as
+            ``for tract in some_plssdesc.tracts: <...>``
 
-        But you CANNOT assign, pop, or insert with a `PLSSDesc`
+        But you CANNOT assign, pop, or insert with a ``PLSSDesc``
         directly. If any of that functionality is required, work
-        directly with the `.tracts` attribute. Or, get a new
-        `pytrs.TractList` to work with, thus:
-        `new_tractlist = some_plssdesc.parse(commit=False)`
-        (`TractList` is a subclass of the built-in `list`.)
+        directly with the ``.tracts`` attribute (a ``TractList`` object)
+        or get a new ``TractList`` to work with by re-parsing the
+        ``PLSSDesc``, thus:
+            ``new_tractlist = some_plssdesc.parse(commit=False)``
+        (``TractList`` is an emulation of the built-in ``list``.)
         """
         return self.tracts.__getitem__(item)
 
