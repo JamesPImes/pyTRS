@@ -850,15 +850,15 @@ def deduce_layout(text: str, candidates: list = None):
 
     :param candidates: A list of which layouts are to be considered.
     If passed as ``None`` (the default), it will consider all currently
-    implemented meaningful layouts (i.e. 'TRS_desc', 'desc_STR',
-    'S_desc_TR', and 'TR_desc_S'), but will also consider 'copy_all' if
-    an apparently flawed description is found. If specifying fewer than
-    all candidates, ensure that at least one layout from
-    ``pytrs.IMPLEMENTED_LAYOUTS`` is in the list. (Strings not in
-    ``pytrs.IMPLEMENTED_LAYOUTS`` will have no effect.)
+    implemented meaningful layouts (i.e. ``'TRS_desc'``, ``'desc_STR'``,
+    ``'S_desc_TR'``, and ``'TR_desc_S'``), but will also consider
+    ``'copy_all'`` if an apparently flawed description is found. If
+    specifying fewer than all candidates, ensure that at least one
+    layout from ``pytrs.IMPLEMENTED_LAYOUTS`` is in the list. (Strings
+    not in ``pytrs.IMPLEMENTED_LAYOUTS`` will have no effect.)
 
-    :return: Returns the algorithm's best guess at the layout (i.e.
-    a string).
+    :return: Returns the algorithm's best guess at the layout (a
+    string).
     """
 
     if candidates is None:
