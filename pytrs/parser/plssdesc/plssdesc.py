@@ -232,7 +232,7 @@ class PLSSDesc:
         # These two attributes control whether we should require a colon
         # between Section ## and tract description (for TRS_DESC and
         # S_DESC_TR layouts only).
-        self.sec_colon_cautious = False
+        self.sec_colon_cautious = None
         self.sec_colon_required = False
 
         # Whether to suppress any divisions of lots.
@@ -306,7 +306,7 @@ class PLSSDesc:
         (The ``PLSSParser`` will know what to do with these values.)
         """
         required = self.sec_colon_required
-        if self.sec_colon_cautious:
+        if self.sec_colon_cautious and not self.sec_colon_required:
             required = SecFinder.SEC_COLON_CAUTIOUS
         return required
 
