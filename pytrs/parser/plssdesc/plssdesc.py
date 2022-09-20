@@ -531,7 +531,7 @@ class PLSSDesc:
             ocr_scrub = self.ocr_scrub
 
         # NOTE: If layout was specified at init or when calling
-        # `.parse(layout=<string>)`, PLSSParser._parse_segment() will be
+        # `.parse(layout=<string>)`, PLSSParser.parse_chunk() will be
         # prevented from deducing it.  Leave as None to allow the parser
         # to deduce.
 
@@ -570,7 +570,9 @@ class PLSSDesc:
             "clean_up": clean_up,
             "parse_qq": parse_qq,
             "clean_qq": clean_qq,
-            # Culmination of sec_colon_required and sec_colon_cautious.
+            # require_colon is the culmination of sec_colon_required and
+            # sec_colon_cautious. The PLSSParser takes one of three
+            # values (True, False, or SecFinder.SEC_COLON_CAUTIOUS).
             "require_colon": require_colon,
 
             "segment": segment,
