@@ -106,32 +106,6 @@ class PLSSDesc:
           text).
 
 
-    **Assuming unspecified N/S and E/W for Township/Range**
-
-    If direction for Township (N/S) or Range (E/W) is not provided in
-    the text being parsed, it will be assumed. Specify ``default_ns``
-    and ``default_ew`` for each ``PLSSDesc`` object to control how these
-    should be assumed (as a ``config=`` parameter at init, or as an
-    argument in the appropriate method).
-
-    Alternatively, we can change ``MasterConfig.default_ns`` and
-    `MasterConfig.default_ew`` (class variables) to control ALL
-    unspecified ``default_ns`` and ``default_ew`` (these class variables
-    will control for both ``PLSSDesc`` and ``Tract`` objects). However,
-    specifying ``default_ns`` and ``default_ew`` for a given object will
-    override the master defaults for that particular object.
-
-    The default settings are for North (``'n'``) and West (``'w'``).
-
-    .. warning::
-        When specifying ``default_ns``, ``default_ew``,
-        ``MasterConfig.default_ns``, or ``MasterConfig.default_ew``, be
-        sure to use *only* single, lower-case letters (``'n'``, ``'s'``,
-        ``'e'``, and ``'w'``). Or don't worry about it, and just set
-        them as ``MasterConfig.NORTH``, ``MasterConfig.SOUTH``,
-        ``MasterConfig.EAST``, or ``MasterConfig.WEST``.
-
-
     **STREAMLINED OUTPUT OF THE PARSED TRACT DATA**
 
     See the notable attributes listed in the ``Tract`` documentation.
@@ -214,6 +188,35 @@ class PLSSDesc:
         - Get a new ``TractList`` of duplicate ``Tract`` objects, and
           optionally remove them from the original ``TractList`` (i.e.
           from the ``.tracts`` attribute).
+
+
+    **Assuming unspecified N/S and E/W for Township/Range**
+
+    If direction for Township (N/S) or Range (E/W) is not provided in
+    the text being parsed, it will be assumed. Specify ``default_ns``
+    and ``default_ew`` for each ``PLSSDesc`` object to control how these
+    should be assumed (as a ``config=`` parameter at init, or as an
+    argument in the appropriate method).
+
+    Alternatively, we can change ``MasterConfig.default_ns`` and
+    ``MasterConfig.default_ew`` (class variables) to control *all*
+    unspecified ``default_ns`` and ``default_ew`` (these class variables
+    will control for both ``PLSSDesc`` and ``Tract`` objects). However,
+    specifying ``default_ns`` and ``default_ew`` for a given object will
+    override the master defaults for that particular object.
+
+    The default settings are for North (``'n'``) and West (``'w'``).
+
+    .. warning::
+        When specifying ``default_ns``, ``default_ew``,
+        ``MasterConfig.default_ns``, or ``MasterConfig.default_ew``, be
+        sure to use *only* single, lower-case letters (``'n'``, ``'s'``,
+        ``'e'``, and ``'w'``). Or don't worry about it, and just set
+        them as ``MasterConfig.NORTH``, ``MasterConfig.SOUTH``,
+        ``MasterConfig.EAST``, or ``MasterConfig.WEST``.
+
+        Illegal values will raise a ``DefaultNSError`` or
+        ``DefaultEWError``.
     """
 
     def __init__(
