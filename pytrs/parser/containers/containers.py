@@ -1551,8 +1551,21 @@ class TractList(_TRSTractList):
 
     def list_trs(self, remove_duplicates=False):
         """
-        Return a list all the TRS's in this `TractList`. Optionally
-        remove duplicates with remove_duplicates=True.
+        Get a list all Twp/Rge/Sections in all ``Tract`` objects.
+        Optionally remove duplicates from the returned list with
+        ``remove_duplicates=True``. (Duplicates are NOT removed in the
+        original.)
+
+        NOTE: The original order is maintained in the returned list.
+
+        NOTE ALSO: Each Twp/Rge/Sec in the resulting list is a string,
+        and NOT a ``TRS`` object. If ``TRS`` objects are required, cast
+        the resulting list as a ``TRSList`` -- i.e.
+        ``TRSList(some_tractlist.list_trs())``.
+
+        :param remove_duplicates: Whether to remove duplicate
+        Twp/Rge/Sec from the resulting list. (They are not removed in
+        the original.)  Defaults to ``False``.
         """
         unique_trs = []
         all_trs = []

@@ -960,8 +960,21 @@ class PLSSDesc:
 
     def list_trs(self, remove_duplicates=False):
         """
-        Return a list all the TRS's in .tracts list. Optionally
-        remove duplicates with remove_duplicates=True.
+        Get a list all Twp/Rge/Sections in all ``Tract`` objects in the
+        ``.tracts`` attribute.  Optionally remove duplicates from the
+        returned list with ``remove_duplicates=True``. (Duplicates are
+        NOT removed in the original.)
+
+        NOTE: The original order is maintained in the returned list.
+
+        NOTE ALSO: Each Twp/Rge/Sec in the resulting list is a string,
+        and NOT a ``TRS`` object. If ``TRS`` objects are required, cast
+        the resulting list as a ``TRSList`` -- i.e.
+        ``TRSList(some_plssdesc.list_trs())``.
+
+        :param remove_duplicates: Whether to remove duplicate
+        Twp/Rge/Sec from the resulting list. (They are not removed in
+        the original.)  Defaults to ``False``.
         """
         # This functionality is handled by TractList method.
         return self.tracts.list_trs(remove_duplicates=remove_duplicates)
