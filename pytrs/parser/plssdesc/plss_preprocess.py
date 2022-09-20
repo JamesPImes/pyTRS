@@ -39,20 +39,20 @@ class PLSSPreprocessor:
     def __init__(
             self,
             orig_text: str,
-            default_ns=None,
-            default_ew=None,
+            default_ns=MasterConfig.default_ns,
+            default_ew=MasterConfig.default_ew,
             ocr_scrub=False):
         """
+        A class for preprocessing text for the ``PLSSParser``.
 
-        :param orig_text: The text to be preprocessed.
-        :param default_ns: How to interpret townships for which N/S was
-        not specified -- i.e. either 'n' or 's'. (Defaults to
-        ``MasterConfig.default_ns``, which is 'n' unless otherwise
-        specified.)
-        :param default_ew: How to interpret ranges for which E/W was not
-        specified -- i.e. either 'e' or 'w'. (Defaults to
-        ``MasterConfig.default_ew``, which is 'w' unless otherwise
-        specified.)
+        :param default_ns: How to interpret townships for which
+        direction was not specified -- i.e. either ``'n'`` or ``'s'``.
+        (Defaults to ``MasterConfig.default_ns`` which is ``'n'``
+        unless otherwise configured.)
+        :param default_ew: How to interpret ranges for which direction
+        was not specified -- i.e. either ``'e'`` or ``'w'``. (Defaults
+        to ``MasterConfig.default_ew`` which is ``'w'`` unless otherwise
+        configured.)
         :param ocr_scrub: Whether to try to iron out common OCR
         'artifacts'. May cause unintended changes. (Defaults to
         ``False``)
@@ -60,10 +60,6 @@ class PLSSPreprocessor:
 
         self.orig_text = orig_text
         self.ocr_scrub = ocr_scrub
-        if not default_ns:
-            default_ns = MasterConfig.default_ns
-        if not default_ew:
-            default_ew = MasterConfig.default_ew
         self.default_ns = default_ns
         self.default_ew = default_ew
 
@@ -79,7 +75,17 @@ class PLSSPreprocessor:
             default_ns=None,
             default_ew=None,
             ocr_scrub=None,
-            commit=False):
+            commit=False) -> tuple:
+        """
+        Preprocess the PLSS description to iron out common kinks in
+        the input data. Stores the results to ``.text`` attribute and
+        a list of fixed Twp/Rges to ``.fixed_twprges``.
+
+        See documentation for ``PLSSDesc.preprocess()`` for fuller
+        write-up. (Note that this returns a 2-tuple of the preprocessed
+        string AND a list of Twp/Rges that were 'fixed' (i.e. to which
+        NS and/or EW was added.)
+        """
         if default_ns is None:
             default_ns = self.default_ns
         if default_ew is None:
@@ -98,14 +104,20 @@ def plss_preprocess(
         txt: str,
         default_ns: str = None,
         default_ew: str = None,
-        ocr_scrub: bool = False):
+        ocr_scrub: bool = False) -> tuple:
     """
     Preprocess the PLSS description to iron out common kinks in
     the input data. Stores the results to ``.text`` attribute and
     a list of fixed Twp/Rges to ``.fixed_twprges``.
 
-    :return: The preprocessed string, and a list of Twp/Rge's that were
-    fixed (i.e. that had been missing N/S, E/W, or both).
+    See documentation for ``PLSSDesc.preprocess()`` for fuller
+    write-up. (Note that this returns a 2-tuple of the preprocessed
+    string AND a list of Twp/Rges that were 'fixed' (i.e. to which NS
+    and/or EW was added.)
+
+    :return: A 2-tuple of the preprocessed string AND a list of
+    Twp/Rge's that were fixed (i.e. that had been missing N/S, E/W, or
+    both).
     """
 
     if default_ns is None:

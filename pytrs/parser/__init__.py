@@ -32,7 +32,7 @@ from .trs import (
 from .containers import (
     TractList,
     TRSList,
-    group_tracts,
+    group_tracts_by,
     sort_grouped_tracts,
 )
 from .config import (

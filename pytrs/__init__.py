@@ -43,7 +43,7 @@ from pytrs.parser import (
     trs_to_dict,    # parser.trs submodule
 
     # For grouping / sorting Tract objects
-    group_tracts,   # parser.containers submodule
+    group_tracts_by,   # parser.containers submodule
     sort_grouped_tracts,    # parser.containers submodule
 
     # A tuple of currently implemented layouts
