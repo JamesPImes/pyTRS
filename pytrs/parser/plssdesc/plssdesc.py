@@ -910,13 +910,18 @@ class PLSSDesc:
 
     def quick_desc(self, delim=': ', newline='\n') -> str:
         """
-        Returns the entire .tracts list as a single string.
-        :param delim: Specify what separates TRS from the desc.
-        (defaults to ': ').
-        :param newline: Specify what separates Tracts from one another.
-        (defaults to '\n').
+        Returns the full description of all ``Tract`` objects in the
+        ``.tracts`` attribute as a single, orderly string.
+
+        :param delim: Specify what separates TRS from the corresponding
+        description block (i.e. what comes between ``.trs`` and
+        ``.desc``).  (Defaults to ': ').
+        :param newline: Specify what separates each ``Tract`` from one
+        another.  (Defaults to '\n').
 
         :Example:
+
+        .. code-block:: python
 
         txt = '''154N-97W
         Sec 14: NE/4
@@ -926,6 +931,8 @@ class PLSSDesc:
 
         Example returns a multi-line string that looks like this when
         printed:
+
+        .. code-block:: python
 
             154n97w14: NE/4
             154n97w15: Northwest Quarter, North Half South West Quarter
