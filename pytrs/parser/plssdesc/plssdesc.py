@@ -1,7 +1,7 @@
 
 """
 A class to represent a full PLSS land description and parse it into
-Tract objects.
+``Tract`` objects.
 """
 
 from ..config import (
@@ -24,15 +24,15 @@ class PLSSDesc:
     """
     Each object of this class is a full PLSS description, taking the raw
     text of the original description as input, and parsing it into one
-    or more pytrs.Tract objects (each Tract containing one Twp/Rge/Sec
-    combo and the corresponding description of the land within that TRS,
-    optionally with lots and quarter-quarters, or QQ's, broken out --
-    see pytrs.Tract documentation for more details).
+    or more ``Tract`` objects (each ``Tract`` containing one Twp/Rge/Sec
+    combo and the corresponding description of the land within that
+    Twp/Rge/Sec, optionally with lots and aliquot quarter-quarters
+    broken out -- see ``Tract`` documentation for more details).
 
     Configure the parsing algorithm with config parameters at init,
-    passed in `config=` (taking either a pytrs.Config object or a string
+    passed in ``config=`` (taking either a ``Config`` object or a string
     containing equivalent config parameters -- see documentation on
-    pytrs.Config objects for possible parameters).
+    ``Config`` objects for possible parameters).
 
     NOTE: If direction for Township (N/S) or Range (E/W) is not provided
     in the text being parsed, it will be assumed. Specify ``default_ns``
@@ -41,17 +41,18 @@ class PLSSDesc:
     argument in the appropriate method). Alternatively, we can change
     ``MasterConfig.default_ns`` and ``MasterConfig.default_ew`` (class
     variables) to control ALL unspecified ``default_ns`` and
-    ``default_ew`` for (these class variables will control for both
-    PLSSDesc and Tract objects). However, specifying ``default_ns`` and
-    ``default_ew`` for a given object will override the master defaults
-    for that particular object.
+    ``default_ew`` (these class variables will control for both
+    ``PLSSDesc`` and ``Tract`` objects). However, specifying
+    ``default_ns`` and ``default_ew`` for a given object will override
+    the master defaults for that particular object.
     The default settings are for North (``'n'``) and West (``'w'``).
+
     IMPORTANT: When specifying ``default_ns``, ``default_ew``,
-    ``MasterConfig.default_ns`` or ``MasterConfig.default_ew``, be
+    ``MasterConfig.default_ns``, or ``MasterConfig.default_ew``, be
     sure to use ONLY single, lower-case letters (``'n'``, ``'s'``,
-    ``'e'``, and ``'w'``). Or don't worry about it, and just use
+    ``'e'``, and ``'w'``). Or don't worry about it, and just set them as
     ``MasterConfig.NORTH``, ``MasterConfig.SOUTH``, ``MasterConfig.EAST``,
-    and ``MasterConfig.WEST``.
+    or ``MasterConfig.WEST``.
 
     ____ PARSING ____
     ``PLSSDesc`` are automatically parsed into ``Tract`` objects upon
@@ -59,95 +60,106 @@ class PLSSDesc:
     some point after init.
 
     ____ IMPORTANT INSTANCE VARIABLES AFTER PARSING ____
-    These are the notable attributes of a PLSSDesc object. For the tract
-    information (i.e. the data fields you might want to write to a
-    spreadsheet or table), look into the attributes of Tract objects
-    (which can be created by a PLSSDesc).
+    These are the notable attributes of a ``PLSSDesc`` object. For the
+    tract information (i.e. the data fields you might want to write to a
+    spreadsheet or table), look into the attributes of ``Tract`` objects
+    (which can be created by a ``PLSSDesc``).
 
-    .orig_desc -- The original text. (Gets set from the first positional
+    ``.orig_desc`` -- The original text. (Set from the first positional
         argument at init.)
-    .tracts -- A pytrs.TractList object (i.e. a list) containing the
-        ``Tract`` objects that were generated from parsing this object.
-    .pp_desc -- The preprocessed description. (If the object has not yet
-        been preprocessed, it will be equivalent to ``.orig_desc``)
-    .source -- (Optional) Any value of any type (probably a str or int)
-        specifying where the description came from. Useful if parsing
-        multiple descriptions and need to internally keep track where
-        they came from. (Optionally specify at init with parameter
-        ``source=<str, int, etc.>``.)
-    .w_flags -- a list of warning flags (strings) generated during
+    ``.tracts`` -- A ``TractList`` object (an emulated list) containing
+        the ``Tract`` objects that were generated from parsing this
+        object.
+    ``.pp_desc`` -- The preprocessed description. (If the object has not
+        yet been preprocessed, it will be equivalent to ``.orig_desc``.)
+    ``.source`` -- (Optional) Any value of any type (probably a ``str``
+        or ``int``) specifying where the description came from. Useful
+        if parsing multiple descriptions and need to internally keep
+        track where they came from. (Optionally specify at init with
+        parameter ``source=<whatever>``.) Will also be inherited by any
+        ``Tract`` objects created by this ``PLSSDesc``.
+    ``.w_flags`` -- a list of warning flags (strings) generated during
         preprocessing and/or parsing.
-    .w_flag_lines -- a list of 2-tuples, each being a warning flag and the
-        line or context from the description that caused the warning.
-    .e_flags -- a list of error flags (strings) generated during
+    ``.w_flag_lines`` -- a list of 2-tuples, each being a warning flag
+        and the line or context from the description that caused the
+        warning.
+    ``.e_flags`` -- a list of error flags (strings) generated during
         preprocessing and/or parsing.
-    .e_flag_lines -- a list of 2-tuples, each being an error flag and the
-        line or context from the description that caused the error.
-    .flags -- a combined list of Warning & Error flags.
-    .flag_lines -- a combined lines of 2-tuples, for Warning & Error
-        flags.
-    .desc_is_flawed -- a bool, whether an apparently fatal flaw was
-        discovered during parsing.
-    .layout -- The user-dictated or algorithm-deduced layout of the
+    ``.e_flag_lines`` -- a list of 2-tuples, each being an error flag
+        and the line or context from the description that caused the
+        error.
+    ``.flags`` -- a combined list of warning and error flags.
+    ``.flag_lines`` -- a combined lines of 2-tuples, for warning and
+        error flags.
+    ``.desc_is_flawed`` -- a bool, whether an apparently fatal flaw was
+        discovered during parsing. (If there is anything in ``.e_flags``
+        it will be considered flawed.)
+    ``.layout`` -- The user-dictated or algorithm-deduced layout of the
         description (controls how the parsing algorithm interprets the
         text).
 
 
     ____ STREAMLINED OUTPUT OF THE PARSED TRACT DATA ____
-    See the notable instance variables listed in the pytrs.Tract object
-    documentation. Those variables can be compiled with these PLSSDesc
-    methods:
+    See the notable attributes listed in the ``Tract`` documentation.
+    Those variables can be compiled with these ``PLSSDesc`` methods:
 
-    .quick_desc() -- Returns a string of the entire parsed description.
+    ``.quick_desc()`` -- Returns a string of the entire parsed
+        description.
 
-    .print_desc() -- Does the same thing, but prints to console.
+    ``.print_desc()`` -- Does the same thing, but prints to console.
 
-    .tracts_to_dict() -- Compile the requested attributes for each Tract
-        into a dict, and returns a list of those dicts (i.e. the list is
-        equal in length to `.tracts` TractList).
+    ``.tracts_to_dict()`` -- Compile the requested attributes for each
+        ``Tract`` into a dict, and returns a list of those dicts (i.e.
+        the list is equal in length to the ``TractList`` stored at
+        ``.tracts``).
 
-    .tracts_to_list() -- Compile the requested attributes for each Tract
-        into a list, and returns a nested list of those list (i.e. the
-        top-level list is equal in length to `.tracts` TractList).
+    ``.tracts_to_list()`` -- Compile the requested attributes for each
+        ``Tract`` into a list, and returns a nested list of those list
+        (i.e. the top-level list is equal in length to the ``TractList``
+        stored at ``.tracts``).
 
-    .iter_to_dict() -- Identical to `.tracts_to_dict()`, but returns a
-        generator of dicts for the Tract data.
+    ``.iter_to_dict()`` -- Identical to ``.tracts_to_dict()``, but
+        returns a generator of dicts for the ``Tract`` data.
 
-    .iter_to_list() -- Identical to `.tracts_to_list()`, but returns a
-        generator of lists for the Tract data.
+    ``.iter_to_list()`` -- Identical to ``.tracts_to_list()``, but
+        returns a generator of lists for the ``Tract`` data.
 
-    .tracts_to_csv() -- Compile the requested attributes for each Tract
-        and write them to a .csv file, with one row per Tract.
+    ``.tracts_to_csv()`` -- Compile the requested attributes for each
+        ``Tract`` and write them to a .csv file, with one row per
+        ``Tract``. (See ``pytrs.TractWriter`` class for more robust
+        writing to .csv files.)
 
-    .tracts_to_str() -- Compile the requested attributes for each Tract
-        into a string-based table, and return a single string of all
-        tables.
+    ``.tracts_to_str()`` -- Compile the requested attributes for each
+        ``Tract`` into an orderly string.
 
-    .list_trs() -- Return a list of all twp/rge/sec combinations in the
-        `.tracts` TractList, optionally removing duplicates.
+    ``.print_data()`` -- Equivalent to ``.tracts_to_str()``, but the
+        data is printed to console.
 
-    .print_data() -- Equivalent to `.tracts_to_dict()`, but the data
-        is formatted as a table and printed to console.
+    ``.list_trs()`` -- Return a list of all twp/rge/sec combinations in
+        the ``TractList`` stored in ``.tracts``, optionally removing
+        duplicates.
 
 
     ____ SORTING / GROUPING / FILTERING TRACTS BY ATTRIBUTE VALUES ____
-    These methods will sort, group, or filter the Tract objects
+    These methods will sort, group, or filter the ``Tract`` objects
     contained in the ``.tracts`` attribute:
 
-    .sort_tracts() -- Custom sorting based on the Twp/Rge/Sec or
-    original creation order of each Tract. Can also take parameters from
-    the built-in ``list.sort()`` method.
+    ``.sort_tracts()`` -- Custom sorting based on the Twp/Rge/Sec or
+        original creation order of each ``Tract``. Can also take
+        parameters from the built-in ``list.sort()`` method.
 
-    .group() -- Group Tract objects into a dict of TractList objects,
-    based on their shared attribute values (e.g., by Twp/Rge), and
-    optionally sort them.
+    ``.group()`` -- Group ``Tract`` objects into a dict of ``TractList``
+        objects, based on their shared attribute values (e.g., by
+        Twp/Rge), and optionally sort them.
 
-    .filter() -- Get a new TractList of Tract objects that match some
-    condition, and optionally remove them from the original TractList.
+    ``.filter()`` -- Get a new ``TractList`` of those ``Tract`` objects
+        that match some condition, and optionally remove them from the
+        original ``TractList`` (i.e. from the ``.tracts`` attribute).
 
-    .filter_errors() -- Get a new TractList of Tract objects whose Twp,
-    Rge, and/or Section were an error or undefined, and optionally
-    remove them from the original ``.tracts``.
+    ``.filter_errors()`` -- Get a new ``TractList`` of those ``Tract``
+        objects whose Twp, Rge, and/or Section were an error or
+        undefined, and optionally remove them from the original
+        ``TractList`` (i.e. from the ``.tracts`` attribute).
     """
 
     def __init__(
