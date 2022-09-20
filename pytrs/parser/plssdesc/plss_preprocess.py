@@ -39,20 +39,20 @@ class PLSSPreprocessor:
     def __init__(
             self,
             orig_text: str,
-            default_ns=None,
-            default_ew=None,
+            default_ns=MasterConfig.default_ns,
+            default_ew=MasterConfig.default_ew,
             ocr_scrub=False):
         """
+        A class for preprocessing text for the ``PLSSParser``.
 
-        :param orig_text: The text to be preprocessed.
-        :param default_ns: How to interpret townships for which N/S was
-        not specified -- i.e. either 'n' or 's'. (Defaults to
-        ``MasterConfig.default_ns``, which is 'n' unless otherwise
-        specified.)
-        :param default_ew: How to interpret ranges for which E/W was not
-        specified -- i.e. either 'e' or 'w'. (Defaults to
-        ``MasterConfig.default_ew``, which is 'w' unless otherwise
-        specified.)
+        :param default_ns: How to interpret townships for which
+        direction was not specified -- i.e. either ``'n'`` or ``'s'``.
+        (Defaults to ``MasterConfig.default_ns`` which is ``'n'``
+        unless otherwise configured.)
+        :param default_ew: How to interpret ranges for which direction
+        was not specified -- i.e. either ``'e'`` or ``'w'``. (Defaults
+        to ``MasterConfig.default_ew`` which is ``'w'`` unless otherwise
+        configured.)
         :param ocr_scrub: Whether to try to iron out common OCR
         'artifacts'. May cause unintended changes. (Defaults to
         ``False``)
@@ -60,10 +60,6 @@ class PLSSPreprocessor:
 
         self.orig_text = orig_text
         self.ocr_scrub = ocr_scrub
-        if not default_ns:
-            default_ns = MasterConfig.default_ns
-        if not default_ew:
-            default_ew = MasterConfig.default_ew
         self.default_ns = default_ns
         self.default_ew = default_ew
 
