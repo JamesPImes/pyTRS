@@ -42,7 +42,7 @@ Misc functions:
 Information on layouts:
 
 .. toctree::
-    modules/layouts
+    modules/layout
 
 
 Additional modules
