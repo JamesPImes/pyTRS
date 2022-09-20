@@ -470,7 +470,7 @@ class PLSSDesc:
         attribute.
         :param ocr_scrub: Whether to try to iron out common OCR
         'artifacts'. May cause unintended changes. (Defaults to
-        ``.ocr_scrub`` attribute, which is `False` unless otherwise
+        ``.ocr_scrub`` attribute, which is ``False`` unless otherwise
         configured.)
         :param commit: Whether to commit the results to the appropriate
         instance attributes. Defaults to ``True``.
@@ -686,30 +686,37 @@ class PLSSDesc:
         return deduce_layout(preprocessor.text, candidates=candidates)
 
     def preprocess(
-            self, default_ns=None, default_ew=None, commit=False,
+            self,
+            default_ns=None,
+            default_ew=None,
+            commit=False,
             ocr_scrub=None) -> str:
         """
         Preprocess the PLSS description to iron out common kinks in
         the input data, and optionally store the results to the
-        ``.pp_desc`` attribute.
+        ``.pp_desc`` attribute (NOT committed by default).
 
         NOTE: Regardless whether committed, the description will be
         preprocessed (again) when parsed.
 
-        :param default_ns: How to interpret townships for which direction
-        was not specified -- i.e. either 'n' or 's'. (Defaults to
-        `self.default_ns`, which is 'n' unless otherwise configured.)
+        :param default_ns: How to interpret townships for which
+        direction was not specified -- i.e. either ``'n'`` or ``'s'``.
+        (Defaults to ``.default_ns`` attribute (if configured) or to
+        ``MasterConfig.default_ns`` which is ``'n'`` unless otherwise
+        configured.)
         :param default_ew: How to interpret ranges for which direction
-        was not specified -- i.e. either 'e' or 'w'. (Defaults to
-        `self.default_ew`, which is 'w' unless otherwise configured.)
+        was not specified -- i.e. either ``'e'`` or ``'w'``. (Defaults
+        to ``.default_ew`` attribute (if configured) or to
+        ``MasterConfig.default_ew`` which is ``'w'`` unless otherwise
+        configured.)
         :param ocr_scrub: Whether to try to iron out common OCR
         'artifacts'. May cause unintended changes. (Defaults to
-        `self.ocr_scrub`, which is `False` unless otherwise configured.)
+        ``.ocr_scrub`` attribute, which is ``False`` unless otherwise
+        configured.)
         :param commit: Whether to store the results to ``.pp_desc``.
-        (Defaults to `False`)
+        (Defaults to ``False``)
         :return: The preprocessed string.
         """
-        # Defaults to pulling the text from the orig_desc of the object:
         text = self.orig_desc
         if default_ns is None:
             default_ns = self.default_ns
@@ -717,7 +724,8 @@ class PLSSDesc:
             default_ew = self.default_ew
         if ocr_scrub is None:
             ocr_scrub = self.ocr_scrub
-        pp_desc = PLSSPreprocessor(text, default_ns, default_ew, ocr_scrub).text
+        preprocessor = PLSSPreprocessor(text, default_ns, default_ew, ocr_scrub)
+        pp_desc = preprocessor.text
         if commit:
             self.pp_desc = pp_desc
         return pp_desc
