@@ -1557,8 +1557,8 @@ class TractList(_TRSTractList):
 
     def print_data(self, *attributes) -> None:
         """
-        Simple printing of the arg-specified attributes for each Tract
-        in this TractList.
+        Simple printing of the arg-specified attributes for each
+        ``Tract`` in this ``TractList``.
         """
         print(self.tracts_to_str(attributes))
         return

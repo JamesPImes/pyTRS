@@ -1046,8 +1046,8 @@ class PLSSDesc:
 
     def print_data(self, *attributes) -> None:
         """
-        Simple printing of the arg-specified attributes for each Tract
-        in the .tracts list.
+        Simple printing of the arg-specified attributes for each
+        ``Tract`` in the ``.tracts`` attribute.
         """
         # This functionality is handled by TractList method.
         self.tracts.print_data(attributes)
