@@ -1408,9 +1408,9 @@ class TractList(_TRSTractList):
         Returns the full description of all ``Tract`` objects as a
         single, orderly string.
 
-        :param delim: Specify what separates TRS from the corresponding
-        description block (i.e. what comes between ``.trs`` and
-        ``.desc``).  (Defaults to ``': '``).
+        :param delim: Specify what separates Twp/Rge/Sec from the
+        corresponding description block (i.e. what comes between
+        ``.trs`` and ``.desc``).  (Defaults to ``': '``).
         :param newline: Specify what separates each ``Tract`` from one
         another.  (Defaults to ``'\n'``).
 
@@ -1442,9 +1442,9 @@ class TractList(_TRSTractList):
         single, orderly string -- but caps every line at a length of
         ``max_len``.
 
-        :param delim: Specify what separates TRS from the corresponding
-        description block (i.e. what comes between ``.trs`` and
-        ``.desc``).  (Defaults to ``': '``).
+        :param delim: Specify what separates Twp/Rge/Sec from the
+        corresponding description block (i.e. what comes between
+        ``.trs`` and ``.desc``).  (Defaults to ``': '``).
         :param newline: Specify what separates each ``Tract`` from one
         another.  (Defaults to ``'\n'``).
         :param max_len: Maximum length of each line.
@@ -1456,11 +1456,16 @@ class TractList(_TRSTractList):
 
     def snapshot_inside(self, delim=': ', max_len=30) -> list:
         """
-        Get a list of the descriptions ('.trs' + '.desc') of the Tract
-        objects, shortened to `max_len` as necessary.
-        :param delim: Specify what separates TRS from the desc.
-        (defaults to ': ').
-        :param max_len: Maximum length of each string inside the list.
+        Get a list of the full description of each ``Tract`` object in
+        the ``.tracts`` attribute as a single, orderly string -- but
+        caps every line at a length of ``max_len``.
+
+        :param delim: Specify what separates Twp/Rge/Sec from the
+        corresponding description block (i.e. what comes between
+        ``.trs`` and ``.desc``).  (Defaults to ``': '``).
+        :param newline: Specify what separates each ``Tract`` from one
+        another.  (Defaults to ``'\n'``).
+        :param max_len: Maximum length of each line.
         (Defaults to 30.)
         :return: A list of strings, each no longer than `max_len`.
         """
@@ -1470,10 +1475,11 @@ class TractList(_TRSTractList):
         """
         Simple printing of the parsed description.
 
-        :param delim: Specify what separates TRS from the desc.
-        (defaults to ': ').
-        :param newline: Specify what separates Tracts from one another.
-        (defaults to '\n').
+        :param delim: Specify what separates Twp/Rge/Sec from the
+        corresponding description block (i.e. what comes between
+        ``.trs`` and ``.desc``).  (Defaults to ``': '``).
+        :param newline: Specify what separates each ``Tract`` from one
+        another.  (Defaults to ``'\n'``).
         """
         print(self.quick_desc(delim=delim, newline=newline))
 
