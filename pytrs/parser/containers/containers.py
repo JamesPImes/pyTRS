@@ -1172,25 +1172,30 @@ class TractList(_TRSTractList):
 
     def tracts_to_dict(self, *attributes) -> list:
         """
-        Compile the data for each Tract object into a dict containing
-        the requested attributes only, and return a list of those dicts
-        (the returned list being equal in length to this TractList
-        object).
+        Compile the data for each ``Tract`` object into a dict
+        containing the requested attributes only, and return a list of
+        those dicts (the returned list being equal in length to this
+        ``TractList`` object).
 
         :param attributes: The names (strings) of whichever attributes
-        should be included (see documentation on `pytrs.Tract` objects
+        should be included (see documentation on ``Tract`` objects
         for the names of relevant attributes).
 
         :Example:
 
-        txt = '''154N-97W
-        Sec 14: NE/4
-        Sec 15: Northwest Quarter, North Half South West Quarter'''
-        d_obj = PLSSDesc(txt)
-        tl_obj = d_obj.parse(parse_qq=True, commit=False)
-        tl_obj.tracts_to_dict('trs', 'desc', 'qqs')
+        .. code-block:: python
+
+            txt = '''154N-97W
+            Sec 14: NE/4
+            Sec 15: Northwest Quarter, North Half South West Quarter'''
+            d_obj = PLSSDesc(txt)
+            tl_obj = d_obj.parse(parse_qq=True, commit=False)
+            tl_obj.tracts_to_dict('trs', 'desc', 'qqs')
+
 
         Example returns a list of two dicts:
+
+        .. code-block:: python
 
             [
             {'trs': '154n97w14',
