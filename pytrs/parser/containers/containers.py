@@ -483,7 +483,7 @@ class _TRSTractList:
 
         :param key: A str, specifying which sort(s) should be done, and
         in which order.
-        :return: None. (list is sorted in-situ.)
+        :return: None
         """
 
         def get_max(var):
