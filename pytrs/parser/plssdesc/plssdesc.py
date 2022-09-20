@@ -1139,34 +1139,49 @@ class PLSSDesc:
         self.tracts.sort_tracts(key=key, reverse=reverse)
         return None
 
-    def group_nested(
-            self, by_attribute="twprge", into=None, sort_key=None,
+    def group_by_nested(
+            self, attribute='twprge', into=None, sort_key=None,
             sort_reverse=False):
         """
-        Filter the Tract objects in the ``.tracts`` into a dict
-        of TractLists, keyed by unique values of `by_attribute`. By
-        default, will filter into groups of Tracts that share Twp/Rge
-        (i.e. `'twprge'`).
+        Group the ``Tract`` objects in the ``.tracts`` attribute into a
+        dict of ``TractList`` objects, keyed by unique values of the
+        ``attribute`` (being any ``Tract`` attribute(s) whose value is
+        hashable). By default, will filter into groups of Tracts that
+        share Twp/Rge (i.e. ``attribute='twprge'``).
 
-        :param by_attribute: The str name of an attribute of Tract
-        objects. (Defaults to `'twprge'`). NOTE: Must be a hashable
-        type!
+        Pass ``attribute`` as a LIST of attributes to group by
+        multiple attributes, in which case the returned dict will be a
+        NESTED dict of dicts (one level per attribute), the deepest
+        level of which will be the ``TractList`` objects.
+
+        NOTE: This method is similar to ``.group_by()``, except for how
+        it handles grouping by multiple attributes.  Specifically, this
+        method returns a nested dict when grouping by multiple
+        attributes - whereas ``.group_by()`` will return a single-level
+        dict whose keys will be tuples of each group's matching
+        attributes.
+
+        :param attribute: The str name of an attribute of ``Tract``
+        objects. (Defaults to ``'twprge'``). NOTE: Must be a hashable
+        type!  (Optionally pass as a list of multiple attribute names to
+        do multiple groupings.)
 
         :param into: (Optional) An existing dict into which to group
-        the Tracts. If not specified, will create a new dict. Use this
-        arg if you need to continue adding Tracts to an existing
+        the ``Tract`` objects. If not specified, will create a new dict.
+        Use this arg if you need to continue adding to an existing
         grouped dict.
 
-        :param sort_key: (Optional) How to sort each grouped TractList
-        in the returned dict. Use a string that works with the
-        ``.sort_tracts(key=<str>)`` method (e.g., 'i, s, r.ew, t.ns') or
-        a lambda function, as you would with the builtin
-        ``list.sort(key=<lambda>)`` method. (Defaults to ``None``, i.e.
-        not sorted.)
+        :param sort_key: (Optional) How to sort each grouped
+        ``TractList`` in the returned dict. Use a string that works with
+        the ``.sort_tracts(key=<str>)`` method (e.g.,
+        ``'i, s, r.ew, t.ns'``) or a lambda function, as you would with
+        the builtin ``list.sort(key=<lambda>)`` method. (Defaults to
+        ``None``, i.e. not sorted.)
 
-        May optionally pass `sort_key` as a list of sort keys, to be
+        May optionally pass ``sort_key`` as a list of sort keys, to be
         applied left-to-right. Here, you may mix and match lambdas and
-        ``.sort_tracts()`` strings.
+        ``.sort_tracts()`` strings.  (See documentation on
+        ``TractList.custom_sort()``.)
 
         :param sort_reverse: (Optional) Whether to reverse the sort.
         NOTE: Only has an effect if the ``sort_key`` is passed as a
@@ -1174,47 +1189,64 @@ class PLSSDesc:
 
         NOTE: If ``sort_key`` was passed as a list, then
         ``sort_reverse`` must be passed as EITHER a single bool that
-        will apply to all of the (non-string) sorts, OR as a list or
-        tuple of bools that is equal in length to ``sort_key`` (i.e. the
-        values in ``sort_key`` and ``sort_reverse`` will be matched up
+        will apply to all (non-string) sorts, OR as a list or tuple of
+        bools that is equal in length to ``sort_key`` (i.e. the values
+        in ``sort_key`` and ``sort_reverse`` will be matched up
         one-to-one).
 
-        :return: A dict of TractList objects, each containing the Tracts
-        with matching values of the `by_attribute`.
-        """
-        return self.tracts.group_nested(by_attribute, into, sort_key, sort_reverse)
+        (Again, see documentation on ``TractList.custom_sort()``.)
 
-    def group(
-            self, by_attribute="twprge", into=None, sort_key=None,
+        :return: A dict of ``TractList`` objects, each containing those
+        ``Tract`` object with matching values of the ``attribute``.
+        If multiple attributes were included in ``attribute``, this
+        will return a nested dict of dicts (one level per attribute),
+        the deepest elements of which will be the ``TractList`` objects.
+        """
+        return self.tracts.group_by_nested(
+            attribute, into, sort_key, sort_reverse)
+
+    def group_by(
+            self, attribute="twprge", into=None, sort_key=None,
             sort_reverse=False):
         """
-        Filter the Tract objects in ``.tracts`` into a dict of
-        TractLists, keyed by unique values of ``by_attribute``. By
-        default, will filter into groups of Tracts that share Twp/Rge
-        (i.e. ``'twprge'``). Pass ``by_attribute`` as a list of
-        attributes to group by multiple attributes, in which case the
-        keys of the returned dict will be a tuple whose elements line up
-        with the attributes listed in ``by_attribute``.
+        Group the ``Tract`` objects in the ``.tracts`` attribute into a
+        dict of ``TractList`` objects, keyed by unique values of the
+        ``attribute`` (being any ``Tract`` attribute(s) whose value is
+        hashable). By default, will filter into groups of Tracts that
+        share Twp/Rge (i.e. ``attribute='twprge'``).
 
-        :param by_attribute: The str name of an attribute of Tract
-        objects. (Defaults to ``'twprge'``). NOTE: Attributes must be a
-        hashable type!  (Optionally pass as a list of str names of
-        attributes to do multiple groupings.)
+        Pass ``attribute`` as a LIST of attributes to group by
+        multiple attributes, in which case the keys of the returned dict
+        will be tuples of each group's matching attributes.
 
-        :param into: (Optional) An existing dict into which to group the
-        Tracts. If not specified, will create a new dict. Use this arg if
-        you need to continue adding Tracts to an existing grouped dict.
+        NOTE: This method is similar to ``.group_by_nested()``, except
+        for how it handles grouping by multiple attributes.
+        Specifically, this method returns a single-level dict
+        whose keys will be tuples of each group's attributes when
+        grouping by multiple attributes - whereas ``.group_by_nested()``
+        returns a nested dict (one level per grouping attribute).
 
-        :param sort_key: (Optional) How to sort each grouped TractList
-        in the returned dict. Use a string that works with the
-        ``.sort_tracts(key=<str>)`` method (e.g., 'i, s, r.ew, t.ns') or
-        a lambda function, as you would with the builtin
-        ``list.sort(key=<lambda>)`` method. (Defaults to ``None``, i.e.
-        not sorted.)
+        :param attribute: The str name of an attribute of ``Tract``
+        objects. (Defaults to ``'twprge'``). NOTE: Must be a hashable
+        type!  (Optionally pass as a list of multiple attribute names to
+        do multiple groupings.)
 
-        May optionally pass `sort_key` as a list of sort keys, to be
+        :param into: (Optional) An existing dict into which to group
+        the ``Tract`` objects. If not specified, will create a new dict.
+        Use this arg if you need to continue adding to an existing
+        grouped dict.
+
+        :param sort_key: (Optional) How to sort each grouped
+        ``TractList`` in the returned dict. Use a string that works with
+        the ``.sort_tracts(key=<str>)`` method (e.g.,
+        ``'i, s, r.ew, t.ns'``) or a lambda function, as you would with
+        the builtin ``list.sort(key=<lambda>)`` method. (Defaults to
+        ``None``, i.e. not sorted.)
+
+        May optionally pass ``sort_key`` as a list of sort keys, to be
         applied left-to-right. Here, you may mix and match lambdas and
-        ``.sort_tracts()`` strings.
+        ``.sort_tracts()`` strings.  (See documentation on
+        ``TractList.custom_sort()``.)
 
         :param sort_reverse: (Optional) Whether to reverse the sort.
         NOTE: Only has an effect if the ``sort_key`` is passed as a
@@ -1222,21 +1254,23 @@ class PLSSDesc:
 
         NOTE: If ``sort_key`` was passed as a list, then
         ``sort_reverse`` must be passed as EITHER a single bool that
-        will apply to all of the (non-string) sorts, OR as a list or
-        tuple of bools that is equal in length to ``sort_key`` (i.e. the
-        values in ``sort_key`` and ``sort_reverse`` will be matched up
+        will apply to all (non-string) sorts, OR as a list or tuple of
+        bools that is equal in length to ``sort_key`` (i.e. the values
+        in ``sort_key`` and ``sort_reverse`` will be matched up
         one-to-one).
 
-        :return: A dict of TractList objects, each containing the Tracts
-        with matching values of the ``by_attribute``.  (If
-        ``by_attribute`` was passed as a list of attribute names, then
-        the keys in the returned dict will be a tuple whose values
-        line up with the list passed as ``by_attribute``.)
+        (Again, see documentation on ``TractList.custom_sort()``.)
+
+        :return: A dict of ``TractList`` objects, each containing those
+        ``Tract`` object with matching values of the ``attribute``. If
+        ``attribute`` was passed as a list of attribute names, then the
+        keys in the returned dict will be a tuple whose values line up
+        with the list passed as ``attribute``.)
         """
-        return self.tracts.group(by_attribute, into, sort_key, sort_reverse)
+        return self.tracts.group_by(attribute, into, sort_key, sort_reverse)
 
     # Alias to mirror `sort_tracts`.
-    group_tracts = group
+    group_tracts_by = group_by
 
     def filter(self, key, drop=False):
         """
