@@ -911,15 +911,16 @@ class _TRSTractList:
     @classmethod
     def sort_grouped(cls, group_dict, sort_key, reverse=False) -> dict:
         """
-        Sort the `TractList` objects (or `TRSList` objects) within a
-        grouped dict.
+        Sort the ``TractList`` objects (or ``TRSList`` objects) within a
+        grouped dict (or nested grouped dict).
 
-        Returns the original ``group_dict``, but with the `TractList`
-        (or `TRSList`) objects having been sorted in place.
+        Returns the original ``group_dict``, but with the ``TractList``
+        (or ``TRSList``) objects having been sorted.
 
-        :param group_dict: A dict, as returned by a `TractList` or
-        `TRSList` grouping method or function (e.g., ``.group()``,
-        ``.group_tracts()``, or ``.group_trs()``).
+        :param group_dict: A dict, as returned by a ``TractList`` or
+        ``TRSList`` grouping method or function (e.g., ``.group_by()``,
+        ``.group_tracts_by()``, or ``.group_trs_by()``), whether nested
+        or single-level.
 
         :param sort_key: How to sort the elements in the lists. (Can be
         any value acceptable to the ``.custom_sort()`` method.)
@@ -963,13 +964,13 @@ class _TRSTractList:
         :param reverse: (Optional) Whether to reverse lambda sorts.
         (More detail provided in the docs for ``.custom_sort()``.)
 
-        :return: A new `TractList` (or `TRSList`, as applicable).
+        :return: A new ``TractList`` (or ``TRSList``, as applicable).
         """
         tl = cls()
 
         def unpack(dct):
-            # We place recursion within the `unpack_group()` method
-            # itself to avoid creating multiple `tl` instances.
+            # Do the recursion within the `.unpack_group()` method
+            # itself to leverage the scope of the `tl` we created.
             for v_ in dct.values():
                 if isinstance(v_, dict):
                     # Recursively unpack nested dicts.
