@@ -873,8 +873,8 @@ class _TRSTractList:
 
         Group the elements in this custom list into a dict of custom
         lists of the same type, keyed by unique values of ``attribute``.
-        By default, will filter into groups of objects that share
-        Twp/Rge (i.e. ``'twprge'``).
+        By default, will form groups that share Twp/Rge (i.e.
+        ``attribute='twprge'``).
 
         :trstractlist: A ``TRSList`` or ``TractList`` to be grouped.
 
