@@ -137,6 +137,9 @@ class TRS:
             return False
         return self.trs == other.trs
 
+    def __hash__(self):
+        return hash(self.trs)
+
     @property
     def trs(self):
         return self.__trs_dict['trs']
