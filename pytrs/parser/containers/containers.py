@@ -1189,7 +1189,7 @@ class TractList(_TRSTractList):
             Sec 14: NE/4
             Sec 15: Northwest Quarter, North Half South West Quarter'''
             d_obj = PLSSDesc(txt)
-            tl_obj = d_obj.parse(parse_qq=True, commit=False)
+            tl_obj = TractList(d_obj)
             tl_obj.tracts_to_dict('trs', 'desc', 'qqs')
 
 
@@ -1229,7 +1229,7 @@ class TractList(_TRSTractList):
         Sec 14: NE/4
         Sec 15: Northwest Quarter, North Half South West Quarter'''
         d_obj = PLSSDesc(txt)
-        tl_obj = d_obj.parse(parse_qq=True, commit=False)
+        tl_obj = TractList(d_obj)
         tl_obj.tracts_to_list('trs', 'desc', 'qqs')
 
         Example returns a nested list:
@@ -1267,7 +1267,7 @@ class TractList(_TRSTractList):
             Sec 14: NE/4
             Sec 15: Northwest Quarter, North Half South West Quarter'''
             d_obj = PLSSDesc(txt)
-            tl_obj = d_obj.parse(parse_qq=True, commit=False)
+            tl_obj = TractList(d_obj)
             tl_obj.tracts_to_str('trs', 'desc', 'qqs')
 
         Example returns a multi-line string that looks like this when
@@ -1414,7 +1414,7 @@ class TractList(_TRSTractList):
         Sec 14: NE/4
         Sec 15: Northwest Quarter, North Half South West Quarter'''
         d_obj = PLSSDesc(txt)
-        tl_obj = d_obj.parse(parse_qq=True, commit=False)
+        tl_obj = TractList(d_obj)
         tl_obj.quick_desc()
 
         Example returns a multi-line string that looks like this when
