@@ -70,8 +70,7 @@ class PLSSDesc:
     ``.tracts`` -- A ``TractList`` object (an emulated list) containing
         the ``Tract`` objects that were generated from parsing this
         object.
-    ``.pp_desc`` -- The preprocessed description. (If the object has not
-        yet been preprocessed, it will be equivalent to ``.orig_desc``.)
+    ``.pp_desc`` -- The preprocessed description.
     ``.source`` -- (Optional) Any value of any type (probably a ``str``
         or ``int``) specifying where the description came from. Useful
         if parsing multiple descriptions and need to internally keep
@@ -172,41 +171,36 @@ class PLSSDesc:
             wait_to_parse=False):
         """
         A 'raw' PLSS description of land. Will be parsed into one or
-        more Tract objects, which are stored in the `.tracts`
-        instance variable (a list).
+        more ``Tract`` objects, which are stored in the ``.tracts``
+        attribute.
 
         :param raw_plss: The text of the description to be parsed.
         :param layout: The pyTRS layout. If not specified, will be
         deduced when initialized, and/or when parsed. See available
-        options in `pytrs.IMPLEMENTED_LAYOUTS` and examples in
-        `pytrs.IMPLEMENTED_LAYOUT_EXAMPLES`.
-        :param config: Either a pytrs.Config object, or a string of
-        parameters to configure how the PLSSDesc object should be
-        parsed. (See documentation on pytrs.Config objects for optional
+        options in ``pytrs.IMPLEMENTED_LAYOUTS`` and examples in
+        ``pytrs.IMPLEMENTED_LAYOUT_EXAMPLES``.
+        :param config: Either a ``Config`` object, or a string of
+        parameters to configure how the ``PLSSDesc`` object should be
+        parsed. (See documentation on ``Config`` objects for optional
         config parameters.)
-        :param parse_qq: Whether to parse the Tract objects that result
-        from parsing this PLSSDesc into lots and QQs.
-        NOTE: If `parse_qq` is specified as a kwarg at init, and also
-        specified in the `config` (i.e. config='parse_qq'), then the
-        kwarg `parse_qq=<bool>` will control.
+        :param parse_qq: Whether to parse the ``Tract`` objects that
+        result from parsing this ``PLSSDesc`` into lots and QQs.
+        NOTE: If ``parse_qq`` is specified as a kwarg at init, and also
+        specified in the ``config`` (i.e. ``config='parse_qq'``), then
+        the kwarg ``parse_qq=<bool>`` will control.
         :param source: (Optional) Essentially any value (e.g., a unique
-        identifier number or document id) specifying where the
-        description came from. (Useful if parsing multiple descriptions
-        and need to internally keep track where they came from.)
+        identifier number, document id, or filepath) specifying where
+        the description came from. (Useful if parsing multiple
+        descriptions and need to internally keep track where they came
+        from.)
         :param wait_to_parse: A bool, whether to wait to parse at init.
         (Defaults to ``False`` -- i.e., parse at init.)
         """
-
-        # The original input of the PLSS description:
         self.orig_desc = raw_plss
-
-        # If something other than a string is fed in, raise a TypeError
         if not isinstance(raw_plss, str):
             raise TypeError(
                 f"`raw_plss` must be of type 'string'. "
                 f"Passed as type {type(raw_plss)}.")
-
-        # The source of this PLSS description:
         self.source = source
 
         # The layout of this PLSS description -- Initially None, but may
@@ -215,10 +209,6 @@ class PLSSDesc:
         self.layout = None
         self.current_layout = None
 
-        # If a T&R is identified without 'North/South' specified, or without
-        # 'East/West' specified, fall back on default_ns and default_ew,
-        # respectively. Each will be filled in when `.config` is set
-        # (if applicable), or defaulted to 'n' and 'w' soon.
         self.default_ns = None
         self.default_ew = None
 
@@ -239,22 +229,21 @@ class PLSSDesc:
         # metes-and-bounds, or other hindrances to the parser.)
         self.clean_qq = False
 
-        # Whether we should require a colon between Section ## and tract
-        # description (for TRS_DESC and S_DESC_TR layouts).
+        # These two attributes control whether we should require a colon
+        # between Section ## and tract description (for TRS_DESC and
+        # S_DESC_TR layouts only).
         self.sec_colon_cautious = False
         self.sec_colon_required = False
 
-        # Whether to suppress any divisions of lots
+        # Whether to suppress any divisions of lots.
         # (i.e. 'N/2 of Lot 1' -> 'N2 of L1')
         self.suppress_lot_divs = False
 
         # Whether to iron out common OCR artifacts.
-        # NOTE: Currently only has effect of cleaning up T&R's during
-        # the preprocessing.  May have more effect in a later version.
         self.ocr_scrub = False
 
         # Whether to segment the text during parsing (can /potentially/
-        # capture descriptions with multiple layouts):
+        # capture descriptions with multiple layouts).
         self.segment = False
 
         # Attributes to control how deeply QQ's should be parsed.
@@ -265,16 +254,17 @@ class PLSSDesc:
         self.qq_depth_max = None
         self.break_halves = False
 
-        # Apply settings from `config=`.
+        # Apply settings from `config=`, overwriting the above values,
+        # if specified by user.
         self.config = config
 
-        # list of Tract objs, after parsing (TractList is a subclass of `list`)
+        # list of Tract objs after parsing.
         self.tracts = TractList()
-        # list of warning flags
+        # Warning flags.
         self.w_flags = []
         # list of 2-tuples that caused warning flags (warning flag, text string)
         self.w_flag_lines = []
-        # list of error flags
+        # Error flags.
         self.e_flags = []
         # list of 2-tuples that caused error flags (error flag, text string)
         self.e_flag_lines = []
@@ -299,8 +289,6 @@ class PLSSDesc:
         if self.layout is not None:
             self.layout_specified = True
 
-        # Optionally can run the parse when the object is initialized
-        # (on by default).
         if not self.wait_to_parse:
             self.parse(commit=True)
         else:
