@@ -876,14 +876,18 @@ class PLSSDesc:
     def tracts_to_csv(
             self, attributes, fp, mode, nice_headers=False):
         """
-        Write Tract data to a .csv file.
+        Write all ``Tract`` data to a .csv file (one row per ``Tract``).
+
+        (Note: See ``pytrs.TractWriter`` class for more robust writing
+        to .csv files.)
 
         :param attributes: a list of names (strings) of whichever
         attributes should be included (see documentation on
-        `pytrs.Tract` objects for the names of relevant attributes).
+        ``Tract`` objects for the names of relevant attributes).
         :param fp: The filepath of the .csv file to write to.
-        :param mode: The `mode` in which to open the file we're
-        writing to. Either 'w' (new file) or 'a' (continue a file).
+        :param mode: The ``mode`` in which to open the file we're
+        writing to. Either ``'w'`` (new file) or ``'a'`` (continue a
+        file).
         :param nice_headers: By default, this method will use the
         attribute names as headers. To use custom headers, pass to
         ``nice_headers=`` any of the following:
@@ -894,11 +898,11 @@ class PLSSDesc:
         -- a dict, keyed by attribute name, and whose values are the
         corresponding headers. (Any missing keys will use the attribute
         name.)
-        -- `True` -> use the values in the ``Tract.ATTRIBUTES`` dict for
-        headers. (WARNING: Any value passed that is not a list or dict
-        and that evaluates to `True` will cause this behavior.)
-        -- If not specified (i.e. None), will just use the attribute
-        names themselves.
+        -- ``True`` -> use the values in the ``Tract.ATTRIBUTES`` dict
+        for headers. (WARNING: Any value passed that is not a list or
+        dict and that evaluates to ``True`` will cause this behavior.)
+        -- If not specified (i.e. ``None`` or ``False``), will just use
+        the attribute names themselves (default).
         :return: None
         """
         self.tracts.tracts_to_csv(
