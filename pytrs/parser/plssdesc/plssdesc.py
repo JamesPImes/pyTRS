@@ -352,11 +352,12 @@ class PLSSDesc:
     @config.setter
     def config(self, new_config):
         """
-        Apply the relevant settings from a Config object to this object;
-        takes either a string (i.e. config text) or a Config object.
+        Apply the relevant settings from a ``Config`` object to this
+        object; takes either a string (i.e. config text) or a ``Config``
+        object.
 
-        :param new_config: Either a pytrs.Config object, or equivalent
-        config parameters. (See pytrs.Config documentation for optional
+        :param new_config: Either a ``Config`` object, or equivalent
+        config parameters. (See ``Config`` documentation for optional
         parameters.)
         """
         if isinstance(new_config, str) or new_config is None:
