@@ -1274,20 +1274,22 @@ class PLSSDesc:
 
     def filter(self, key, drop=False):
         """
-        Extract from ``.tracts`` all Tract objects that match the
-        `key` (a lambda function that returns a bool or bool-like
-        value when applied to each Tract object).
+        Extract from ``.tracts`` all ``Tract`` objects that match the
+        ``key`` (a lambda or other function that returns a bool or
+        bool-like value when applied to each ``Tract`` object).
 
-        Returns a new TractList of all of the selected Tract objects.
+        Returns a new ``TractList`` of the selected ``Tract`` objects.
 
-        :param key: a lambda function that returns a bool or bool-like
-        value when applied to a Tract object in ``.tracts``.
-        (True or True-like returned values will result in the inclusion
-        of that Tract).
+        :param key: a lambda or other function that returns a bool or
+        bool-like value when applied to a ``Tract`` object in the
+        ``.tracts`` attribute.  (Note: ``True`` or ``True``-like
+        returned values will result in the inclusion of that ``Tract``).
+
         :param drop: Whether to drop the matching Tracts from the
         original ``.tracts``. (Defaults to ``False``)
-        :return: A new TractList of the selected Tract objects. (The
-        original ``.tracts`` will still hold all other Tract
+
+        :return: A new ``TractList`` of the selected ``Tract`` objects.
+        (The original ``.tracts`` will still hold all other ``Tract``
         objects, unless ``drop=True`` was passed.)
         """
         return self.tracts.filter(key, drop)
@@ -1297,27 +1299,32 @@ class PLSSDesc:
 
     def filter_errors(self, twp=True, rge=True, sec=True, undef=False, drop=False):
         """
-        Extract from ``.tracts`` all Tract objects that were
+        Extract from ``.tracts`` all ``Tract`` objects that were
         parsed with an error. Specifically extract Twp/Rge errors with
-        ``twp=True`` and ``rge=True``; and get Sec errors with
+        ``twp=True`` and ``rge=True``; and get Section errors with
         ``sec=True`` (all of which are on by default).
 
-        Returns a new TractList of all of the selected Tract objects.
+        Returns a new ``TractList`` of the selected ``Tract`` objects.
 
         :param twp: a bool, whether to get Twp errors. (Defaults to
         ``True``)
+
         :param rge: a bool, whether to get Rge errors. (Defaults to
         ``True``)
+
         :param sec: a bool, whether to get Sec errors. (Defaults to
         ``True``)
+
         :param undef: a bool, whether to get consider Twps, Rges, or
         Sections that were UNDEFINED to also be errors. (Defaults to
         ``False``)  (NOTE: Undefined Twp/Rge/Sec will never occur in a
         ``PLSSDesc`` object unless a ``Tract`` was manually appended to
         the ``.tracts`` attribute.)
-        :param drop: Whether to drop the selected Tracts from the
-        original ``.tracts``. (Defaults to ``False``)
-        :return: A new TractList containing all of the selected Tract
+
+        :param drop: Whether to drop the selected ``Tract`` objects from
+        the original ``.tracts`` attribute. (Defaults to ``False``)
+
+        :return: A new ``TractList`` containing the selected ``Tract``
         objects.
         """
         return self.tracts.filter_errors(twp, rge, sec, undef, drop)
@@ -1327,46 +1334,51 @@ class PLSSDesc:
 
     def filter_duplicates(self, method='instance', drop=False):
         """
-        Find the duplicate Tracts in ``.tracts``, get a new
-        TractList of those Tract objects that were duplicates, and
-        optionally `drop` the duplicates from the original TractList.
-        (To be clear, if there are THREE identical Tracts in the
-        ``.tracts``, the returned ``TractList`` will contain only
-        TWO Tracts, and the original ``.tracts`` will still have
-        one.)
+        Find the duplicate ``Tract`` objects in ``.tracts``, get a new
+        ``TractList`` of those that were duplicates, and optionally
+        ``drop`` the duplicates from the original ``.tracts`` attribute.
 
-        Control how to assess whether `Tract` objects are duplicates by
-        ONE of the following methods:
+        To be clear, if there are three identical ``Tract`` objects in
+        the ``.tracts``, the returned ``TractList`` will contain only
+        two of them, and the original ``.tracts`` will still have one,
+        being the first one.
 
-        `method='instance'` (the default) -> Whether two objects are
-        actually the same instance -- i.e. literally the same object.
-        (By definition, this will also apply even if one of the other
-        two methods is used.)  (This should never happen in a
-        ``PLSSDesc`` object, unless a Tract was manually appended to
-        ``.tracts``.)
+        Control how to assess whether elements in the list are
+        duplicates by passing one of the following values to
+        ``method=``::
 
-        `method='lots_qqs'`  -> Whether the `.lots_qqs` attribute
-        contains the same lots/aliquots (after removing duplicates
-        there).  NOTE: Lots/aliquots must have been parsed for a given
-        Tract object, or it will NOT match as a duplicate with this
-        parameter.
-                Ex: Will match these as duplicate tracts, assuming they
-                were parsed with identical `config` settings:
-                    `154n97w14: Lots 1 - 3, S/2NE/4`
-                    `154n97w14: Lot 3, S/2NE/4, Lots 1, 2`
+            method='instance' (the default)  --> Whether two objects are
+                actually the same instance -- i.e. literally the same
+                object. (By definition, this will also apply even if one
+                of the other two methods is used.)  (This should never
+                happen in a PLSSDesc object, unless a Tract was manually
+                appended to the .tracts attribute of the PLSSDesc.)
 
-        `method='desc'` -> Whether the `.trs` and `.pp_desc` (i.e.
-        preprocessed description) combine to form an identical tract.
-                Ex: Will match these as duplicate tracts:
-                    `154n97w14: NE/4`
-                    `154n97w14: Northeast Quarter`
+            method='lots_qqs'  --> Whether the `.trs` matches AND
+                `.lots_qqs` attribute contains the same lots/aliquots
+                (after removing duplicates), and  match.  NOTE: Lots and
+                aliquots must have been parsed for a given Tract object,
+                or it will NOT match as a duplicate with this parameter.
+                    Ex: Will match these as duplicate tracts, assuming
+                    they were parsed with identical `config` settings:
+                        154n97w14: Lots 1 - 3, S/2NE/4
+                        154n97w14: Lot 3, S/2NE/4, Lots 1, 2
 
-        :param method: Specify how to assess whether Tract objects are
-        duplicates (either 'instance', 'lots_qqs', or 'desc'). See above
-        for example behavior of each.
+            method='desc'  --> Whether the `.trs` and `.pp_desc` (i.e.
+                preprocessed description) combine to form an identical
+                Tract.
+                    Ex: Will match these as duplicate tracts:
+                        154n97w14: NE/4
+                        154n97w14: Northeast Quarter
+
+        :param method: Specify how to assess whether ``Tract`` objects
+        are duplicates (either ``'instance'``, ``'lots_qqs'``, or
+        ``'desc'``). See above for example behavior of each.
+
         :param drop: Whether to remove the identified duplicates from
         the original list.
-        :return: A new TractList.
+
+        :return: A new ``TractList``.
         """
         return self.tracts.filter_duplicates(method, drop)
 

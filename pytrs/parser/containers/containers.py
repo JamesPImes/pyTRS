@@ -149,25 +149,25 @@ class _TRSTractList:
 
     def filter(self, key, drop=False):
         """
-        Extract from this custom list all elements that match the `key`
-        (a lambda function that returns a bool or bool-like value when
-        applied to each element).
+        Extract from this custom list all elements that match the
+        ``key`` (a lambda or other function that returns a bool or
+        bool-like value when applied to each element).
 
-        Returns a new `TractList` of all of the selected `Tract` objects
-        (or a `TRSList` of the selected `TRS` objects, if called as a
-        `TRSList` method).
+        Returns a new `TractList` of the selected ``Tract`` objects
+        (or a ``TRSList`` of the selected ``TRS`` objects, if called as
+        a ``TRSList`` method).
 
-        :param key: a lambda function that returns a bool or bool-like
-        value when applied to an element in this list. (True or
-        True-like returned values will result in the inclusion of that
-        element).
+        :param key: a lambda or other function that returns a bool or
+        bool-like value when applied to an element in this list. (Note:
+        ``True`` or ``True``-like returned values will result in the
+        inclusion of that element).
 
         :param drop: Whether to drop the matching elements from the
         original list. (Defaults to ``False``)
 
-        :return: A new `TractList` (or `TRSList`) of the selected
-        elements. (The original list will still hold all other elements,
-        unless ``drop=True`` was passed.)
+        :return: A new ``TractList`` (or ``TRSList``, if applicable) of
+        the selected elements. (The original list will still hold all
+        other elements, unless ``drop=True`` was passed.)
         """
         indexes_to_include = []
         for i, element in enumerate(self):
@@ -179,11 +179,11 @@ class _TRSTractList:
         """
         Extract from this custom list all elements that were parsed
         with an error. Specifically extract Twp/Rge errors with
-        ``twp=True`` and ``rge=True``; and get Sec errors with
+        ``twp=True`` and ``rge=True``; and get Section errors with
         ``sec=True`` (all of which are on by default).
 
-        Returns a new `TractList` (or `TRSList`, as applicable) of all
-        of the selected elements.
+        Returns a new ``TractList`` (or ``TRSList``, as applicable) of
+        the selected elements.
 
         :param twp: a bool, whether to get Twp errors. (Defaults to
         ``True``)
@@ -201,8 +201,8 @@ class _TRSTractList:
         :param drop: Whether to drop the selected elements from the
         original list. (Defaults to ``False``)
 
-        :return: A new `TractList` (or `TRSList`, as applicable)
-        containing all of the selected elements.
+        :return: A new ``TractList`` (or ``TRSList``, as applicable)
+        containing the selected elements.
         """
         indexes_to_include = []
         for i, element in enumerate(self):
@@ -214,59 +214,64 @@ class _TRSTractList:
 
     def filter_duplicates(self, method='default', drop=False):
         """
-        Find the duplicate Tracts (or `TRS` objects) in this custom
+        Find the duplicate ``Tract`` (or ``TRS`` objects) in this custom
         list, get a new custom list of the elements that were
-        duplicates, and optionally `drop` the duplicates from the
+        duplicates, and optionally ``drop`` the duplicates from the
         original list.
 
-        (To be clear, if there are THREE identical Tracts in the
-        ``TractList``, the returned ``TractList`` will contain only TWO
-        Tracts, and the original ``TractList`` will still have one.)
+        To be clear, if there are three identical elements in the list,
+        the returned ``TractList`` (or ``TRSList``, as applicable) will
+        contain only two of them, and the original will still have one,
+        being the first one.
 
         Control how to assess whether elements in the list are
-        duplicates by ONE of the following methods:
+        duplicates by passing one of the following values to
+        ``method=``::
 
-        `method='instance'` -> Whether two objects are actually the same
-        instance -- i.e. literally the same object. (By definition, this
-        will also apply even if one of the other methods is used.)
+            method='instance'  --> Whether two objects are actually the
+                same instance -- i.e. literally the same object. (By
+                definition, this will also apply even if one of the
+                other two methods is used.)
 
-        `method='lots_qqs'`  -> Whether the `.lots_qqs` attribute
-        contains the same lots/aliquots (after removing duplicates
-        there).  NOTE: Lots/aliquots must have been parsed for a given
-        `Tract` object, or it will NOT match as a duplicate with this
-        parameter.
-                Ex: Will match these as duplicate tracts, assuming they
-                were parsed with identical `config` settings:
-                    `154n97w14: Lots 1 - 3, S/2NE/4`
-                    `154n97w14: Lot 3, S/2NE/4, Lots 1, 2`
-        NOTE: `'lots_qqs'` option has no effect when used on a `TRSList`
-        object.
+            method='lots_qqs'  --> Whether the `.trs` matches AND
+                `.lots_qqs` attribute contains the same lots/aliquots
+                (after removing duplicates), and  match.  NOTE: Lots and
+                aliquots must have been parsed for a given Tract object,
+                or it will NOT match as a duplicate with this parameter.
+                    Ex: Will match these as duplicate tracts, assuming
+                    they were parsed with identical `config` settings:
+                        154n97w14: Lots 1 - 3, S/2NE/4
+                        154n97w14: Lot 3, S/2NE/4, Lots 1, 2
+                    NOTE: method='lots_qqs' has no effect when used on a
+                    TRSList, because it does not contain Tracts.
 
-        `method='desc'` -> Whether the `.trs` and `.pp_desc` (i.e.
-        preprocessed description) combine to form an identical tract.
-                Ex: Will match these as duplicate tracts:
-                    `154n97w14: NE/4`
-                    `154n97w14: Northeast Quarter`
-        NOTE: `'desc'` option has no effect when used on a `TRSList`
-        object.
+            method='desc'  --> Whether the `.trs` and `.pp_desc` (i.e.
+                preprocessed description) combine to form an identical
+                Tract.
+                    Ex: Will match these as duplicate tracts:
+                        154n97w14: NE/4
+                        154n97w14: Northeast Quarter
+                    NOTE: method='desc' does work on a TRSList, but
+                    matches only on `.trs` attribute.
 
-        `method='trs'` -> Unique `.trs` attributes.
-        WARNING: This option is NOT recommended when calling the method
-        on a `TractList` object. This is more appropriate when calling
-        it on a `TRSList` object.
+            method='trs'  --> Duplicate `.trs` attributes.
+                WARNING: This option is NOT recommended when calling the
+                method on a ``TractList`` object. This is more
+                appropriate when calling it on a ``TRSList`` object.
 
-        `method='default'` -> Use `'instance'` if working with a
-        `TractList` object, or `'trs'` if working with a `TRSList`
-        object.  (This is the default behavior.)
+            method='default' --> Use 'instance' if working with a
+                TractList object, or 'trs' if working with a TRSList
+                object.  (This is the default behavior.)
 
-        :param method: Specify how to assess whether `Tract` (or `TRS`)
-        objects are duplicates (either 'instance', 'lots_qqs', 'desc',
-        'trs', or 'default'). See above for example behavior of each.
+        :param method: Specify how to assess whether ``Tract`` objects
+        (or ``TRS``, as applicable) objects are duplicates (either
+        ``'instance'``, ``'lots_qqs'``, ``'desc'``, ``'trs'``, or
+        ``'default'``).  See above for example behavior of each.
 
         :param drop: Whether to remove the identified duplicates from
         the original list.
 
-        :return: A new `TractList` (or `TRSList`, as applicable).
+        :return: A new ``TractList`` (or ``TRSList``, as applicable).
         """
         unique = set()
         indexes_to_include = []
@@ -301,9 +306,12 @@ class _TRSTractList:
                 lq = sorted(set(element.lots_qqs))
                 to_check = f"{element.trs}_{lq}"
             if desc:
-                if not isinstance(element, Tract):
-                    continue
-                to_check = f"{element.trs}_{element.pp_desc.strip()}"
+                if isinstance(element, Tract):
+                    # TractList
+                    to_check = f"{element.trs}_{element.pp_desc.strip()}"
+                elif isinstance(element, TRS):
+                    # TRS (uses only .trs attribute)
+                    to_check = element.trs
             if trs:
                 to_check = element.trs
 
@@ -340,6 +348,9 @@ class _TRSTractList:
                 self.pop(ind)
         new_list.reverse()
         return new_list
+
+    def reverse(self):
+        self._elements.reverse()
 
     def custom_sort(self, key='i,s,r,t', reverse=False):
         """
@@ -1168,7 +1179,7 @@ class TractList(_TRSTractList):
     # Aliases to mirror `sort_tracts`
     filter_tracts = _TRSTractList.filter
     filter_tracts_errors = _TRSTractList.filter_errors
-    group_tracts = _TRSTractList.group
+    group_tracts = _TRSTractList.group_by
 
     @staticmethod
     def sort_grouped_tracts(tracts_dict, sort_key, reverse=False) -> dict:
@@ -1790,7 +1801,7 @@ class TRSList(_TRSTractList):
     # Aliases to mirror `sort_trs`
     filter_trs = _TRSTractList.filter
     filter_trs_errors = _TRSTractList.filter_errors
-    group_trs = _TRSTractList.group
+    group_trs = _TRSTractList.group_by
     sort_grouped_trs = _TRSTractList.sort_grouped
 
     @classmethod
