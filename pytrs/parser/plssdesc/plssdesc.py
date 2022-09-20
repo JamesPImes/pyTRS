@@ -609,13 +609,16 @@ class PLSSDesc:
 
     def config_tracts(self, config):
         """
-        Reconfigure all of the Tract objects in ``.tracts``
-        (without reconfiguring this PLSSDesc object).
+        Reconfigure all ``Tract`` objects in ``.tracts`` attribute
+        (without reconfiguring this ``PLSSDesc`` object).
 
-        :param config: Either a pytrs.Config object, or a string of
-        parameters to configure how the Tract object should be parsed.
-        (See documentation on pytrs.Config objects for optional config
-        parameters.)
+        NOTE: Will NOT trigger the ``Tract`` objects to be (re)parsed,
+        even if ``'parse_qq'`` is included in the new config.
+
+        :param config: Either a ``Config`` object, or a string of
+        parameters to configure how the ``Tract`` objects should be
+        parsed.  (See documentation on ``Config`` objects for optional
+        config parameters.)
         :return: None
         """
         return self.tracts.config_tracts(config)

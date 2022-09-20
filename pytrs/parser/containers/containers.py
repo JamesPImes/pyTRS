@@ -1081,13 +1081,16 @@ class TractList(_TRSTractList):
 
     def config_tracts(self, config):
         """
-        Reconfigure all of the Tract objects in this TractList.
+        Reconfigure all ``Tract`` objects in this ``TractList``.
+        (without reconfiguring this ``PLSSDesc`` object).
 
-        :param config: Either a pytrs.Config object, or a string of
-        parameters to configure how the Tract object should be parsed.
-        (See documentation on pytrs.Config objects for optional config
-        parameters.)
-        :return: None
+        NOTE: Will NOT trigger the ``Tract`` objects to be (re)parsed,
+        even if ``'parse_qq'`` is included in the new config.
+
+        :param config: Either a ``Config`` object, or a string of
+        parameters to configure how the ``Tract`` objects should be
+        parsed.  (See documentation on ``Config`` objects for optional
+        config parameters.)
         """
         for tract in self:
             tract.config = config
