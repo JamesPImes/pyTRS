@@ -29,7 +29,9 @@ class DefaultEWError(ValueError):
 class MasterConfig:
     """
     Control ``default_ns`` and ``default_ew`` across all of pytrs, when
-    they are
+    they are not specified for a particular instance of a class, or for
+    a call to a function or method (and not otherwise configured for the
+    object whose method it is).
     """
 
     NORTH = 'n'
