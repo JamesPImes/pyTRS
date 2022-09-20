@@ -37,41 +37,23 @@ class PLSSDesc:
     containing equivalent config parameters -- see documentation on
     ``Config`` objects for possible parameters).
 
-    *Note:* If direction for Township (N/S) or Range (E/W) is not
-    provided in the text being parsed, it will be assumed. Specify
-    ``default_ns`` and ``default_ew`` for each ``PLSSDesc`` object to
-    control how these should be assumed (as a ``config=`` parameter at
-    init, or as an argument in the appropriate method). Alternatively,
-    we can change ``MasterConfig.default_ns`` and
-    `MasterConfig.default_ew`` (class variables) to control ALL
-    unspecified ``default_ns`` and ``default_ew`` (these class variables
-    will control for both ``PLSSDesc`` and ``Tract`` objects). However,
-    specifying ``default_ns`` and ``default_ew`` for a given object will
-    override the master defaults for that particular object.
+    ------------
 
-    The default settings are for North (``'n'``) and West (``'w'``).
+    **PARSING**
 
-    *Important:* When specifying ``default_ns``, ``default_ew``,
-    ``MasterConfig.default_ns``, or ``MasterConfig.default_ew``, be
-    sure to use ONLY single, lower-case letters (``'n'``, ``'s'``,
-    ``'e'``, and ``'w'``). Or don't worry about it, and just set them as
-    ``MasterConfig.NORTH``, ``MasterConfig.SOUTH``,
-    ``MasterConfig.EAST``, or ``MasterConfig.WEST``.
-
-
-    PARSING
-    _______
     ``PLSSDesc`` are automatically parsed into ``Tract`` objects upon
     init. Alternatively / additionally, call the ``.parse()`` method at
     some point after init.
 
+    ------------
 
-    IMPORTANT INSTANCE VARIABLES AFTER PARSING
-    ------------------------------------------
+    **IMPORTANT INSTANCE VARIABLES AFTER PARSING**
+
     These are the notable attributes of a ``PLSSDesc`` object. For the
-    tract information (i.e. the data fields you might want to write to a
-    spreadsheet or table), look into the attributes of ``Tract`` objects
-    (which can be created by a ``PLSSDesc``).
+    tract-level information (i.e. the data fields you might want to
+    write to a spreadsheet or table), look into the attributes o
+    ``Tract`` objects. (Tract-level data can be extracted in bulk from
+    ``PLSSDesc`` objects with methods discussed in the *next* section.)
 
     - ``.orig_desc``
         - The original text. (Set from the first positional argument at
@@ -125,9 +107,37 @@ class PLSSDesc:
           description (controls how the parsing algorithm interprets the
           text).
 
+    ------------
 
-    STREAMLINED OUTPUT OF THE PARSED TRACT DATA
-    -------------------------------------------
+    **Assuming unspecified N/S and E/W for Township/Range**
+
+    If direction for Township (N/S) or Range (E/W) is not provided in
+    the text being parsed, it will be assumed. Specify ``default_ns``
+    and ``default_ew`` for each ``PLSSDesc`` object to control how these
+    should be assumed (as a ``config=`` parameter at init, or as an
+    argument in the appropriate method).
+
+    Alternatively, we can change ``MasterConfig.default_ns`` and
+    `MasterConfig.default_ew`` (class variables) to control ALL
+    unspecified ``default_ns`` and ``default_ew`` (these class variables
+    will control for both ``PLSSDesc`` and ``Tract`` objects). However,
+    specifying ``default_ns`` and ``default_ew`` for a given object will
+    override the master defaults for that particular object.
+
+    The default settings are for North (``'n'``) and West (``'w'``).
+
+    .. warning::
+        When specifying ``default_ns``, ``default_ew``,
+        ``MasterConfig.default_ns``, or ``MasterConfig.default_ew``, be
+        sure to use *only* single, lower-case letters (``'n'``, ``'s'``,
+        ``'e'``, and ``'w'``). Or don't worry about it, and just set
+        them as ``MasterConfig.NORTH``, ``MasterConfig.SOUTH``,
+        ``MasterConfig.EAST``, or ``MasterConfig.WEST``.
+
+    ------------
+
+    **STREAMLINED OUTPUT OF THE PARSED TRACT DATA**
+
     See the notable attributes listed in the ``Tract`` documentation.
     Those variables can be compiled with these ``PLSSDesc`` methods:
 
@@ -158,9 +168,9 @@ class PLSSDesc:
 
     - ``.tracts_to_csv()``
         - Compile the requested attributes for each ``Tract`` and write
-          them to a .csv file, with one row per ``Tract``.
-            - (See ``pytrs.tractwriter.TractWriter`` class for more
-              robust writing to .csv files.)
+          them to a .csv file, with one row per ``Tract``.  (See
+          ``pytrs.tractwriter.TractWriter`` class for more robust
+          writing to .csv files.)
 
     - ``.tracts_to_str()``
         - Compile the requested attributes for each ``Tract`` into an
@@ -175,11 +185,14 @@ class PLSSDesc:
           ``TractList`` stored in ``.tracts``, optionally removing
           duplicates.
 
+    ------------
 
-    SORTING / GROUPING / FILTERING TRACTS BY ATTRIBUTE VALUES
-    ---------------------------------------------------------
+    **SORTING / GROUPING / FILTERING TRACTS BY ATTRIBUTE VALUES**
+
     These methods will sort, group, or filter the ``Tract`` objects
-    contained in the ``.tracts`` attribute:
+    contained in the ``.tracts`` attribute.  (See also ``TractList`` for
+    mostly equivalent functionality that is not limited to a single
+    ``PLSSDesc``.)
 
     - ``.sort_tracts()``
         - Custom sorting based on the Twp/Rge/Sec or original creation
@@ -233,12 +246,16 @@ class PLSSDesc:
          parsed. (See documentation on ``Config`` objects for optional
          config parameters.)
 
-        :param parse_qq: Whether to parse the ``Tract`` objects that
-         result from parsing this ``PLSSDesc`` into lots and QQs.
+        :param parse_qq: After parsing this ``PLSSDesc`` into ``Tract``
+         objects, ``parse_qq=True`` instructs those to be further parsed
+         into lots/aliquots. (Off by default)
 
-         *Note:* If ``parse_qq`` is specified as a kwarg at init, and
-         also specified in ``config`` (i.e. ``config='parse_qq'``), then
-         the parameter ``parse_qq=<bool>`` will control.
+         .. note::
+
+            If parameter ``parse_qq=<bool>`` is specified at init,
+            and also specified in ``config`` (i.e.
+            ``config='parse_qq'``), then the parameter
+            ``parse_qq=<bool>`` will control.
 
         :param source: (Optional) Essentially any value (e.g., a unique
          identifier number, document id, or filepath) specifying where
@@ -376,15 +393,15 @@ class PLSSDesc:
 
     def __getitem__(self, item):
         """
-        ``PLSSDesc`` are LIMITEDLY subscriptable, in that you can ACCESS
-        elements (i.e. ``Tract`` objects) of the ``.tracts``
-        (a ``TractList``). Therefore::
+        ``PLSSDesc`` are *limitedly* subscriptable and iterable, in that
+        you can *access* elements (i.e. ``Tract`` objects) of the
+        ``.tracts`` (a ``TractList``). Therefore::
 
             some_plssdesc[0]
             # is the same as...
             some_plssdesc.tracts[0]
 
-        ...and we can slice, thus::
+        ...and we can slice::
 
             some_plssdesc[:2]
             # is the same as...
@@ -401,10 +418,9 @@ class PLSSDesc:
         But you *cannot* assign, pop, or insert with a ``PLSSDesc``
         directly. If any of that functionality is required, work
         directly with the ``.tracts`` attribute (a ``TractList`` object)
-        or get a new ``TractList`` to work with by re-parsing the
-        ``PLSSDesc``, thus::
+        or cast this ``PLSSDesc`` as a new ``TractList``, thus::
 
-            new_tractlist = some_plssdesc.parse(commit=False)
+            new_tractlist = TractList(some_plssdesc)
         """
         return self.tracts.__getitem__(item)
 
@@ -469,12 +485,13 @@ class PLSSDesc:
         ``.e_flags``, and ``.e_flag_lines``).
 
         Returns only the ``TractList`` object containing the parsed
-        ``Tract`` objects (i.e. what would be stored to ``.tracts`),
+        ``Tract`` objects (i.e. what would be stored to ``.tracts``),
         regardless of ``commit=``.
 
-        *Note:* Any parameters passed here will override the
-        corresponding ``.config`` settings, but any unspecified
-        parameters will defer to ``.config``.
+        .. note::
+            Any parameters passed here will override the corresponding
+            ``.config`` settings, but any unspecified parameters will
+            defer to ``.config``.
 
         :param layout: The layout to be assumed. If not specified,
          defaults to whatever is in ``.layout`` attribute; and if not
@@ -482,24 +499,25 @@ class PLSSDesc:
 
         :param default_ns: How to interpret townships for which
          direction was not specified -- i.e. either ``'n'`` or ``'s'``.
-         (Defaults to ``.default_ns`` attribute (if configured) or to
+         Defaults to ``.default_ns`` attribute (if configured) or to
          ``MasterConfig.default_ns`` which is ``'n'`` unless otherwise
-         configured.)
+         configured.
 
         :param default_ew: How to interpret ranges for which direction
-         was not specified -- i.e. either ``'e'`` or ``'w'``. (Defaults
+         was not specified -- i.e. either ``'e'`` or ``'w'``. Defaults
          to ``.default_ew`` attribute (if configured) or to
          ``MasterConfig.default_ew`` which is ``'w'`` unless otherwise
-         configured.)
+         configured.
 
         :param clean_up: Whether to clean up common 'artifacts' from
          parsing. If not specified, defaults to ``False`` for parsing
          the ``'copy_all'`` layout, and ``True`` for all others.
 
-        :param parse_qq: Whether to parse each resulting ``Tract``
-         into lots and QQs when initialized. If not specified, defaults
-         to whatever is specified in ``.parse_qq`` attribute (``False``
-         unless otherwise configured).
+        :param parse_qq: After parsing this ``PLSSDesc`` into ``Tract``
+         objects, ``parse_qq=True`` instructs those to be further parsed
+         into lots/aliquots. If not specified, defaults to whatever is
+         specified in ``.parse_qq`` attribute (``False`` unless
+         otherwise configured).
 
         :param clean_qq: Whether to expect only clean lots and QQ's
          (i.e. no metes-and-bounds, exceptions, complicated
@@ -698,9 +716,9 @@ class PLSSDesc:
         Reconfigure all ``Tract`` objects in ``.tracts`` attribute
         (without reconfiguring this ``PLSSDesc`` object).
 
-        *Note:* Will *not* trigger the ``Tract`` objects to be
-        (re)parsed, even if ``'parse_qq'`` is included in the new
-        config.
+        .. note:
+            Will *not* trigger the ``Tract`` objects to be (re)parsed,
+            even if ``'parse_qq'`` is included in the new config.
 
         :param config: Either a ``Config`` object, or a string of
          parameters to configure how the ``Tract`` objects should be
@@ -784,19 +802,20 @@ class PLSSDesc:
         the input data, and optionally store the results to the
         ``.pp_desc`` attribute (*not* committed by default).
 
-        *Note:* Regardless whether committed, the description will be
-        preprocessed (again) when parsed.
+        ..note::
+            Regardless whether committed, the description will be
+            preprocessed (again) when parsed.
 
         :param default_ns: How to interpret townships for which
          direction was not specified -- i.e. either ``'n'`` or ``'s'``.
-         (Defaults to ``.default_ns`` attribute (if configured) or to
+         Defaults to ``.default_ns`` attribute (if configured) or to
          ``MasterConfig.default_ns`` which is ``'n'`` unless otherwise
-         configured.)
+         configured.
         :param default_ew: How to interpret ranges for which direction
-         was not specified -- i.e. either ``'e'`` or ``'w'``. (Defaults
+         was not specified -- i.e. either ``'e'`` or ``'w'``. Defaults
          to ``.default_ew`` attribute (if configured) or to
          ``MasterConfig.default_ew`` which is ``'w'`` unless otherwise
-         configured.)
+         configured.
         :param ocr_scrub: Whether to try to iron out common OCR
          'artifacts'. May cause unintended changes. (Defaults to
          ``.ocr_scrub`` attribute, which is ``False`` unless otherwise
@@ -969,8 +988,9 @@ class PLSSDesc:
         """
         Write all ``Tract`` data to a .csv file (one row per ``Tract``).
 
-        (Note: See ``pytrs.tractwriter.TractWriter`` class for more
-        robust writing to .csv files.)
+        ..note::
+            See ``pytrs.tractwriter.TractWriter`` class for more robust
+            writing to .csv files.)
 
         :param attributes: a list of names (strings) of whichever
          attributes should be included (see documentation on
@@ -1074,10 +1094,12 @@ class PLSSDesc:
 
         The original order is maintained in the returned list.
 
-        *Note:* Each Twp/Rge/Sec in the resulting list is a string, and
-        NOT a ``TRS`` object. If ``TRS`` objects are required, cast
-        the resulting list as a ``TRSList`` -- i.e.
-        ``TRSList(some_plssdesc.list_trs())``.
+        .. note::
+            Each Twp/Rge/Sec in the resulting list is a string, and
+            *not* a ``TRS`` object. If ``TRS`` objects are required,
+            cast the resulting list as a ``TRSList``, thus::
+
+                TRSList(some_plssdesc.list_trs())
 
         :param remove_duplicates: Whether to remove duplicate
          Twp/Rge/Sec from the resulting list. (They are not removed in
@@ -1124,9 +1146,9 @@ class PLSSDesc:
          (i.e. as determined by ``word_sec``). To use no justification
          at all, pass an empty string.
 
-         Note: Only linebreaks WITHIN a given ``Tract`` will be
-         justified -- i.e. the start of each ``Tract`` will be
-         left-aligned.
+         .. note::
+            Only linebreaks WITHIN a given ``Tract`` will be justified
+            -- i.e. the start of each ``Tract`` will be left-aligned.
 
         :return: a str of the compiled description.
         """
@@ -1152,9 +1174,9 @@ class PLSSDesc:
          (i.e. as determined by ``word_sec``). To use no justification
          at all, pass an empty string.
 
-         Note: Only linebreaks WITHIN a given ``Tract`` will be
-         justified -- i.e. the start of each ``Tract`` will be
-         left-aligned.
+         .. note::
+            Only linebreaks WITHIN a given ``Tract`` will be justified
+            -- i.e. the start of each ``Tract`` will be left-aligned.
 
         :return: None (prints to console).
         """
@@ -1173,17 +1195,19 @@ class PLSSDesc:
         """
         Sort the ``Tract`` objects stored in the ``.tracts`` attribute.
 
-        The standard ``list.sort(key=<lambda>, reverse=<bool>)`` keyword
-        arguments can be used here, but this method has additional
-        customized key options.  (Note that the keyword argument
-        ``reverse=<bool>`` applies only to lambda sorts, and NOT to the
-        custom keys detailed below.)
+        The standard ``list.sort(key=<lambda>, reverse=<bool>)``
+        parameters can be used here, but this method has additional
+        customized key options.
+
+        .. note::
+            The *parameter* ``reverse=<bool>`` applies only to lambda
+            sorts, and NOT to the custom keys detailed below.  To
+            reverse the custom sort keys, use the ``'.rev'`` encoding
+            discussed below.
 
         Customized key options:
 
-        - ``'i'`` -- Sort tracts by the order in which they were
-          created.
-            - *Note:* ``'i'`` sorting has no effect on a ``TRSList``.
+        - ``'i'`` -- Sort tracts in the order they were created.
 
         - ``'t'`` -- Sort by Township, such as:
             - ``'t.num'`` -- Sort by raw number, ignoring N/S. (†)
@@ -1207,11 +1231,11 @@ class PLSSDesc:
         Use as many sort keys as you want. They will be applied in order
         from left-to-right, so place the highest 'priority' sort last.
 
-        Twp/Rge's that are errors (i.e. `'XXXzXXXz'`) will be sorted to
-        the end of the list when sorting on Twp and/or Rge (whether by
-        number, north-to-south, south-to-north, east-to-west, or west-
-        to-east).  Similarly, error Sections (i.e. `'XX'`) will be
-        sorted to the end of the list when sorting on section.  (The
+        Twp/Rge's that are errors (i.e. ``'XXXzXXXz'``) will be sorted
+        to the end of the list when sorting on Twp and/or Rge (whether
+        by number, north-to-south, south-to-north, east-to-west, or
+        west- to-east).  Similarly, error Sections (i.e. ``'XX'``) will
+        be sorted to the end of the list when sorting on section.  (The
         exception is if the sort is reversed, in which case, they come
         first.)
 
@@ -1456,12 +1480,12 @@ class PLSSDesc:
         them from the original ``.tracts`` attribute.
 
         To be clear, if there are three identical ``Tract`` objects in
-        the ``.tracts``, the returned ``TractList`` will contain only
-        two of them, and the original ``.tracts`` will still have one,
-        being the first one.
+        ``.tracts``, the returned ``TractList`` will contain only two of
+        them, and the original ``.tracts`` will still have one, being
+        the first one (or will still have all three if ``drop=False``).
 
-        Control how to assess whether elements in the list are
-        duplicates by passing one of the following values to ``method``:
+        Control how to assess duplicates by passing one of the following
+        values to ``method``:
 
         - ``method='instance'`` *(the default)*
             - Whether two objects are actually the same instance -- i.e.
@@ -1474,22 +1498,27 @@ class PLSSDesc:
         - ``method='lots_qqs'``
             - Whether the ``.trs`` matches *and* ``.lots_qqs`` attribute
               contains the same lots/aliquots (after removing
-              duplicates).  *Note:* Lots and aliquots must have been
-              parsed for a given ``Tract`` object, or it will not match
-              as a duplicate with this parameter.
+              duplicates).
+
                 - Ex: Will match these as duplicate tracts, assuming
                   they were parsed with identical ``config`` settings::
 
-                      154n97w14: Lots 1 - 3, S/2NE/4
-                      154n97w14: Lot 3, S/2NE/4, Lots 1, 2
+                        154n97w14: Lots 1 - 3, S/2NE/4
+                        154n97w14: Lot 3, S/2NE/4, Lots 1, 2
+
+              .. note::
+                To use ``method='lots_qqs'``, lots and aliquots must
+                have been parsed for a given ``Tract`` object, or it
+                will not match as a duplicate with this parameter.
 
         - ``method='desc'``
             - Whether the ``.trs`` and ``.pp_desc`` (i.e. preprocessed
               description) combine to form an identical tract.
+
                 - Ex: Will match these as duplicate tracts::
 
-                        154n97w14: NE/4
-                        154n97w14: Northeast Quarter
+                    154n97w14: NE/4
+                    154n97w14: Northeast Quarter
 
         :param method: Specify how to assess whether ``Tract`` objects
          are duplicates (either ``'instance'``, ``'lots_qqs'``, or
