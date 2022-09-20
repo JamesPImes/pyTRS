@@ -915,9 +915,9 @@ class PLSSDesc:
 
         :param delim: Specify what separates TRS from the corresponding
         description block (i.e. what comes between ``.trs`` and
-        ``.desc``).  (Defaults to ': ').
+        ``.desc``).  (Defaults to ``': '``).
         :param newline: Specify what separates each ``Tract`` from one
-        another.  (Defaults to '\n').
+        another.  (Defaults to ``'\n'``).
 
         :Example:
 
@@ -942,16 +942,19 @@ class PLSSDesc:
 
     def quick_desc_short(self, delim=': ', newline='\n', max_len=30) -> str:
         """
-        Returns the description (`.trs` + `.desc`) of all Tract objects
-        in `.tracts` as a single string, but trims every line down
-        to `max_len`, if needed.
-        :param delim: Specify what separates TRS from the desc.
-        (defaults to ': ').
-        :param newline: Specify what separates Tracts from one another.
-        (defaults to '\n').
-        :param max_len: Maximum length of each string inside the list.
+        Returns the full description of all ``Tract`` objects in the
+        ``.tracts`` attribute as a single, orderly string -- but caps
+        every line at a length of ``max_len``.
+
+        :param delim: Specify what separates TRS from the corresponding
+        description block (i.e. what comes between ``.trs`` and
+        ``.desc``).  (Defaults to ``': '``).
+        :param newline: Specify what separates each ``Tract`` from one
+        another.  (Defaults to ``'\n'``).
+        :param max_len: Maximum length of each line.
         (Defaults to 30.)
-        :return: A string of the complete description.
+        :return: A string of the complete description (with each line
+        potentially trimmed).
         """
         return self.tracts.quick_desc_short(delim, newline, max_len)
 
