@@ -1366,27 +1366,27 @@ class TractList(_TRSTractList):
 
     def iter_to_dict(self, *attributes):
         """
-        Identical to `.tracts_to_dict()`, but returns a generator of
+        Identical to ``.tracts_to_dict()``, but returns a generator of
         dicts, rather than a list of dicts.
 
         :param attributes: The names (strings) of whichever attributes
-        should be included (see documentation on `pytrs.Tract` objects
-        for the names of relevant attributes).
+        should be included (see documentation on ``Tract`` objects for
+        the names of relevant attributes).
 
-        :return: A generator of data pulled from each Tract, in the form
-        of a dict.
+        :return: A generator of data pulled from each ``Tract``, in the
+        form of a dict.
         """
         for tract in self:
             yield tract.to_dict(attributes)
 
     def iter_to_list(self, *attributes):
         """
-        Identical to `.tracts_to_dict()`, but returns a generator of
+        Identical to ``.tracts_to_list()``, but returns a generator of
         lists, rather than a list of lists.
 
         :param attributes: The names (strings) of whichever attributes
-        should be included (see documentation on `pytrs.Tract` objects
-        for the names of relevant attributes).
+        should be included (see documentation on ``Tract`` objects for
+        the names of relevant attributes).
 
         :return: A generator of data pulled from each Tract, in the form
         of a list.
