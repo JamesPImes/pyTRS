@@ -633,21 +633,22 @@ class PLSSDesc:
             qq_depth=None,
             break_halves=None):
         """
-        Parse (or re-parse) all of the Tract objects in
-        ``.tracts`` into lots/QQ's using the specified
-        parameters. Will NOT pull from this PLSSDesc object's
-        ``.config`` or other attributes, but WILL pull from each Tract
-        object's own ``.config`` (unless otherwise configured here).
-        Optionally reconfigure each Tract object prior to parsing into
-        lots/QQs by using the ``config=`` parameter here, or other
-        kwargs.  (The named kwargs will take priority over ``config``,
-        if there is a conflict.)
+        Parse (or re-parse) all ``Tract`` objects in ``.tracts``
+        attribute into lots/QQ's using the specified parameters.
+        Will NOT pull from this ``PLSSDesc`` object's ``.config`` or
+        other attributes, but WILL pull from each ``Tract`` object's own
+        ``.config`` (unless otherwise configured here).
 
-        The parsed data will be committed to the Tract objects'
+        Optionally reconfigure each ``Tract`` object prior to parsing
+        into lots/QQs by using the ``config=`` parameter here, or other
+        kwargs.  (The kwargs will take priority over ``config``, if
+        there is a conflict.)
+
+        The parsed data will be committed to the ``Tract`` objects'
         attributes, overwriting data from a prior parse.
 
-        :param config: (Optional) New Config parameters to apply to each
-        Tract before parsing. (If there is a conflict
+        :param config: (Optional) New config parameters to apply to each
+        ``Tract`` before parsing.
         :param clean_qq: Same as in ``Tract.parse()`` method.
         :param suppress_lot_divs: Same as in ``Tract.parse()`` method.
         :param qq_depth_min: Same as in ``Tract.parse()`` method.
