@@ -771,24 +771,29 @@ class PLSSDesc:
 
     def tracts_to_list(self, *attributes) -> list:
         """
-        Compile the data for each Tract object in .tracts into a
-        list containing the requested attributes only, and return a
-        nested list of those lists (the returned list being equal in
-        length to .tracts).
+        Compile the data for each ``Tract`` object in the ``.tracts``
+        attribute into a list containing the requested attributes only,
+        and return a nested list of those lists (the returned list being
+        equal in length to ``.tracts``).
 
         :param attributes: The names (strings) of whichever attributes
-        should be included (see documentation on `pytrs.Tract` objects
+        should be included (see documentation on ``Tract`` objects
         for the names of relevant attributes).
 
         :Example:
 
-        txt = '''154N-97W
-        Sec 14: NE/4
-        Sec 15: Northwest Quarter, North Half South West Quarter'''
-        d_obj = pytrs.PLSSDesc(txt, parse_qq=True)
-        d_obj.tracts_to_list('trs', 'desc', 'qqs')
+        .. code-block:: python
+
+            txt = '''154N-97W
+            Sec 14: NE/4
+            Sec 15: Northwest Quarter, North Half South West Quarter'''
+            d_obj = pytrs.PLSSDesc(txt, parse_qq=True)
+            d_obj.tracts_to_list('trs', 'desc', 'qqs')
 
         Example returns a nested list:
+
+        .. code-block:: python
+
             [
                 ['154n97w14',
                 'NE/4',
