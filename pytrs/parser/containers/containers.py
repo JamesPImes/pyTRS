@@ -1484,9 +1484,10 @@ class TractList(_TRSTractList):
         print(self.quick_desc(delim=delim, newline=newline))
 
     def pretty_desc(self, word_sec="Sec ", justify_linebreaks=None):
+        # Note r-string, to escape '\t' character.
         r"""
-        Get a neatened-up description of all of the Tract objects in
-        this TractList.
+        Get a neatened-up description of all ``Tract`` objects in this
+        ``TractList``.
 
         Groups Tracts by Twp/Rge, but only to the extent possible while
         maintaining the current sort order.
@@ -1495,9 +1496,12 @@ class TractList(_TRSTractList):
         the following white space (if any). (Defaults to ``'Sec '``).
 
         :param justify_linebreaks: (Optional) A string specifying how to
-        justify new lines after a linebreak (e.g., ``'\t'`` for a tab).
-        If not specified, will align new lines with the line above. To
-        use no justification at all, pass an empty string.
+        justify new lines after a linebreak -- e.g., ``'\t'`` (a tab).
+        If not specified, will align new lines with the line above (i.e.
+        as determined by ``word_sec``). To use no justification at all,
+        pass an empty string.
+        Note: Only linebreaks WITHIN a given ``Tract`` will be justified
+        -- i.e. the start of each ``Tract`` will be left-aligned.
 
         :return: a str of the compiled description.
         """
@@ -1528,9 +1532,10 @@ class TractList(_TRSTractList):
         return dsc.strip()
 
     def pretty_print_desc(self, word_sec="Sec ", justify_linebreaks=None):
+        # Note r-string, to escape '\t' character.
         r"""
-        Print a neatened-up description of all of the Tract objects in
-        this TractList.
+        Print a neatened-up description of all ``Tract`` objects in this
+        ``TractList``.
 
         Groups Tracts by Twp/Rge, but only to the extent possible while
         maintaining the current sort order.
@@ -1539,9 +1544,12 @@ class TractList(_TRSTractList):
         the following white space (if any). (Defaults to ``'Sec '``).
 
         :param justify_linebreaks: (Optional) A string specifying how to
-        justify new lines after a linebreak (e.g., ``'\t'`` for a tab).
-        If not specified, will align new lines with the line above. To
-        use no justification at all, pass an empty string.
+        justify new lines after a linebreak -- e.g., ``'\t'`` (a tab).
+        If not specified, will align new lines with the line above (i.e.
+        as determined by ``word_sec``). To use no justification at all,
+        pass an empty string.
+        Note: Only linebreaks WITHIN a given ``Tract`` will be justified
+        -- i.e. the start of each ``Tract`` will be left-aligned.
 
         :return: None (prints to console).
         """

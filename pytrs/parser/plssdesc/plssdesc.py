@@ -993,11 +993,12 @@ class PLSSDesc:
         self.tracts.print_desc(delim=delim, newline=newline)
 
     def pretty_desc(self, word_sec='Sec ', justify_linebreaks=None):
+        # Note r-string, to escape '\t' character.
         r"""
-        Get a neatened-up description of all of the Tract objects in
-        ``.tracts``. (Does not access this PLSSDesc object's
-        description. Instead, compiles a cleaned-up description from the
-        Tract objects.)
+        Get a neatened-up description of all ``Tract`` objects in the
+        ``.tracts`` attribute. (Does not directly access the description
+        of this ``PLSSDesc``. Instead, compiles a cleaned-up description
+        from the ``Tract`` objects.)
 
         Groups Tracts by Twp/Rge, but only to the extent possible while
         maintaining the current sort order.
@@ -1006,30 +1007,39 @@ class PLSSDesc:
         the following white space (if any). (Defaults to ``'Sec '``).
 
         :param justify_linebreaks: (Optional) A string specifying how to
-        justify new lines after a linebreak (e.g., ``'\t'`` for a tab).
-        If not specified, will align new lines with the line above. To
-        use no justification at all, pass an empty string.
+        justify new lines after a linebreak -- e.g., ``'\t'`` (a tab).
+        If not specified, will align new lines with the line above (i.e.
+        as determined by ``word_sec``). To use no justification at all,
+        pass an empty string.
+        Note: Only linebreaks WITHIN a given ``Tract`` will be justified
+        -- i.e. the start of each ``Tract`` will be left-aligned.
 
         :return: a str of the compiled description.
         """
         return self.tracts.pretty_desc(word_sec, justify_linebreaks)
 
     def pretty_print_desc(self, word_sec='Sec ', justify_linebreaks=None):
-        """
-        Print a neatened-up description of all of the Tract objects in
-        ``.tracts``. (Does not access this PLSSDesc object's
-        description. Instead, compiles a cleaned-up description from the
-        Tract objects.)
+        # Note r-string, to escape '\t' character.
+        r"""
+        Print a neatened-up description of all ``Tract`` objects in the
+        ``.tracts`` attribute. (Does not directly access the description
+        of this ``PLSSDesc``. Instead, compiles a cleaned-up description
+        from the ``Tract`` objects.)
 
         Groups Tracts by Twp/Rge, but only to the extent possible while
         maintaining the current sort order.
 
         :param word_sec: How the word 'Section' should appear, INCLUDING
         the following white space (if any). (Defaults to ``'Sec '``).
+
         :param justify_linebreaks: (Optional) A string specifying how to
-        justify new lines after a linebreak (e.g., ``'\t'`` for a tab).
-        If not specified, will align new lines with the line above. To
-        use no justification at all, pass an empty string.
+        justify new lines after a linebreak -- e.g., ``'\t'`` (a tab).
+        If not specified, will align new lines with the line above (i.e.
+        as determined by ``word_sec``). To use no justification at all,
+        pass an empty string.
+        Note: Only linebreaks WITHIN a given ``Tract`` will be justified
+        -- i.e. the start of each ``Tract`` will be left-aligned.
+
         :return: None (prints to console).
         """
         self.tracts.pretty_print_desc(word_sec, justify_linebreaks)
