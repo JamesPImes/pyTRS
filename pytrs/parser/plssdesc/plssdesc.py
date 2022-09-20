@@ -837,15 +837,17 @@ class PLSSDesc:
 
     def tracts_to_str(self, *attributes) -> str:
         """
-        Compile the data for all Tract objects in .tracts,
-        containing the requested attributes only, and return a single
-        string of the data.
+        Compile the data for all ``Tract`` objects in ``.tracts`` into
+        an orderly string, containing the requested attributes only, and
+        return a single string of the data.
 
         :param attributes: The names (strings) of whichever attributes
-        should be included (see documentation on `pytrs.Tract` objects
+        should be included (see documentation on ``Tract`` objects
         for the names of relevant attributes).
 
         :Example:
+
+        .. code-block:: python
 
         txt = '''154N-97W
         Sec 14: NE/4
@@ -855,6 +857,8 @@ class PLSSDesc:
 
         Example returns a multi-line string that looks like this when
         printed:
+
+        .. code-block:: python
 
             Tract 1 / 2
             trs  : 154n97w14

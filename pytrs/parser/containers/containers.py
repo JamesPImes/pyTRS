@@ -1251,24 +1251,29 @@ class TractList(_TRSTractList):
 
     def tracts_to_str(self, *attributes) -> str:
         """
-        Compile the data for all Tract objects, containing the requested
-        attributes only, and return a single string of the data.
+        Compile the data for all ``Tract`` objects into an orderly
+        string, containing the requested attributes only, and return a
+        single string of the data.
 
         :param attributes: The names (strings) of whichever attributes
-        should be included (see documentation on `pytrs.Tract` objects
+        should be included (see documentation on ``Tract`` objects
         for the names of relevant attributes).
 
         :Example:
 
-        txt = '''154N-97W
-        Sec 14: NE/4
-        Sec 15: Northwest Quarter, North Half South West Quarter'''
-        d_obj = PLSSDesc(txt)
-        tl_obj = d_obj.parse(parse_qq=True, commit=False)
-        tl_obj.tracts_to_str('trs', 'desc', 'qqs')
+        .. code-block:: python
+
+            txt = '''154N-97W
+            Sec 14: NE/4
+            Sec 15: Northwest Quarter, North Half South West Quarter'''
+            d_obj = PLSSDesc(txt)
+            tl_obj = d_obj.parse(parse_qq=True, commit=False)
+            tl_obj.tracts_to_str('trs', 'desc', 'qqs')
 
         Example returns a multi-line string that looks like this when
         printed:
+
+        .. code-block:: python
 
             Tract 1 / 2
             trs  : 154n97w14
