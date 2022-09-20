@@ -163,8 +163,8 @@ class PLSSDesc:
               robust writing to .csv files.)
 
     - ``.tracts_to_str()``
-        - Compile the requested attributes for each
-          ``Tract`` into an orderly string.
+        - Compile the requested attributes for each ``Tract`` into an
+          orderly string.
 
     - ``.print_data()``
         - Equivalent to ``.tracts_to_str()``, but the data is printed to
@@ -698,8 +698,9 @@ class PLSSDesc:
         Reconfigure all ``Tract`` objects in ``.tracts`` attribute
         (without reconfiguring this ``PLSSDesc`` object).
 
-        *Note:* Will NOT trigger the ``Tract`` objects to be (re)parsed,
-        even if ``'parse_qq'`` is included in the new config.
+        *Note:* Will *not* trigger the ``Tract`` objects to be
+        (re)parsed, even if ``'parse_qq'`` is included in the new
+        config.
 
         :param config: Either a ``Config`` object, or a string of
          parameters to configure how the ``Tract`` objects should be
@@ -728,8 +729,8 @@ class PLSSDesc:
 
         Optionally reconfigure each ``Tract`` object prior to parsing
         into lots/QQs by using the ``config=`` parameter here, or other
-        kwargs.  (The keyword parameters here will take priority over
-        ``config``, if there is a conflict.)
+        parameters.  (The keyword parameters here will take priority
+        over ``config``, if there is a conflict.)
 
         The parsed data will be committed to the ``Tract`` objects'
         attributes, overwriting data from a prior parse.
@@ -1008,7 +1009,8 @@ class PLSSDesc:
             attributes, fp, mode, nice_headers)
 
     def quick_desc(self, delim=': ', newline='\n') -> str:
-        """
+        # Note r-string, to escape '\n' character.
+        r"""
         Returns the full description of all ``Tract`` objects in the
         ``.tracts`` attribute as a single, orderly string.
 
@@ -1042,7 +1044,8 @@ class PLSSDesc:
         return self.tracts.quick_desc(delim=delim, newline=newline)
 
     def quick_desc_short(self, delim=': ', newline='\n', max_len=30) -> str:
-        """
+        # Note r-string, to escape '\n' character.
+        r"""
         Get the full description of all ``Tract`` objects in the
         ``.tracts`` attribute as a single, orderly string -- but caps
         every line at a length of ``max_len``.
@@ -1087,7 +1090,8 @@ class PLSSDesc:
         return self.tracts.list_trs(remove_duplicates=remove_duplicates)
 
     def print_desc(self, delim=': ', newline='\n') -> None:
-        """
+        # Note r-string, to escape '\n' character.
+        r"""
         Simple printing of the parsed description.
 
         :param delim: Specify what separates Twp/Rge/Sec from the
