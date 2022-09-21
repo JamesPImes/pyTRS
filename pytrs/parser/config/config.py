@@ -285,7 +285,7 @@ class Config:
         self.break_halves = None
 
         # Break up text.
-        self.text_to_attributes(config_text)
+        self._text_to_attributes(config_text)
 
     def __str__(self):
         return self.decompile_to_text()
@@ -293,8 +293,9 @@ class Config:
     def __repr__(self):
         return f"Config<{self.decompile_to_text()!r}>"
 
-    def text_to_attributes(self, config_text: str) -> None:
+    def _text_to_attributes(self, config_text: str) -> None:
         """
+        INTERNAL USE:
         Convert the text into ``Config`` values and store them to the
         appropriate ``Config`` attributes.
 
