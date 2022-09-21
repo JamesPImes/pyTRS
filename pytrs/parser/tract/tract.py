@@ -25,24 +25,27 @@ class Tract:
     optionally can be parsed into aliquot quarter-quarters (called QQ's)
     and lots.
 
-    Configure the parsing algorithm with config settings at init, passed
-    as a single string to ``config=<str>``. (See documentation on
-    ``Config`` objects for all possible settings).
-
 
     **PARSING**
 
-    Parse the text into lots/QQs with the ``.parse()`` method at some
-    point after init. Alternatively, trigger the parse at init in one of
-    two ways:
+    Configure the parsing algorithm with config settings at init, passed
+    as a single string to ``config=<str>``. (See documentation on
+    ``Config`` objects for all possible settings.)
+
+    Parse the text into lots/aliquots with the ``.parse()`` method at
+    some point after init. Alternatively, trigger the parse at init in
+    one of two ways:
 
     - Use init parameter `parse_qq=True`
 
     - Include 'parse_qq' in the config parameters that are passed in
       ``config=`` at init.
 
+    (``.lots`` and ``.qqs`` and related attributes will be empty until
+    parsed.)
 
-    **IMPORTANT INSTANCE VARIABLES & PROPERTIES AFTER PARSING**
+
+    **IMPORTANT ATTRIBUTES**
 
     - ``.trs`` -- The Twp/Rge/Sec combination in the standardized format
       (ex: ``'154n97w01'`` for 'T154N-R97W Sec 1') (†)
@@ -150,7 +153,10 @@ class Tract:
 
     **STREAMLINED OUTPUT OF THE PARSED DATA**
 
-    The Tract attributes above can be compiled with these methods:
+    Extract the above attributes from multiple ``Tract`` objects in bulk
+    using various ``PLSSDesc`` or ``TractWriter`` methods.
+    Alternatively, extract them from individual ``Tract`` attributes
+    with the methods:
 
     - ``.quick_desc()`` -- Returns a string of the Twp/Rge/Sec and
       description.
