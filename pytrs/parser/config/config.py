@@ -27,7 +27,9 @@ class Config:
     A class to configure how ``PLSSDesc`` and ``Tract`` objects should
     be parsed.
 
-    All possible parameters:
+    Below are all possible config settings.  Join desired settings
+    together in a single string, separated by comma, with spaces
+    optional (e.g., ``'s, e, clean_qq'``).
 
     - ``'n'`` -- set ``default_ns='n'``
     - ``'s'`` -- set ``default_ns='s'``
@@ -81,8 +83,8 @@ class Config:
     - ``'copy_all'`` -- force ``PLSSDesc`` to be parsed as this
       ``layout``.
 
-    († denotes config settings that affect only ``Tract`` objects, but
-    which can be used with ``PLSSDesc`` objects to impact their
+    († Denotes config settings that affect only ``Tract`` objects, but
+    which can also be used with ``PLSSDesc`` objects to impact their
     subordinate ``Tract`` objects.)
 
     (‡ ``sec_colon_required`` and ``sec_colon_cautious`` only have any
