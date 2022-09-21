@@ -7,8 +7,9 @@ Misc. tools for parsing, etc.
 
 def num_to_alpha(num):
     """
-    Convert a number (integer) into an alpha (1 --> 'A', 26 --> 'Z',
-    27 -- > 'AA') -- from A through ZZ.
+    Convert a number (integer) into an alpha (``1`` --> ``'A'``,
+    ``'26'`` --> ``'Z'``, ``27`` -- > ``'AA'``) -- from ``A`` through
+    ``ZZ``.
     """
     return (
         ((num - 1) // 26 > 0) * chr((num - 1) // 26 + ord('A') - 1)
@@ -18,8 +19,9 @@ def num_to_alpha(num):
 
 def alpha_to_num(alpha):
     """
-    Convert an alpha into an integer ('A' --> 1, 'Z' --> 26,
-    'AA' --> 27) -- from A through ZZ.
+    Convert an alpha into an integer (``'A'`` --> `1`,
+    ``'Z'`` --> ``26``, ``'AA'`` --> ``27``) -- from ``A`` through
+    ``ZZ``.
     """
     val = 0
     if len(alpha) > 2:
@@ -50,15 +52,15 @@ def flatten(list_or_tuple):
 
 def gen_uid(num, sub, total_sub, just=4):
     """
-    Generate a unique ID string in the format:  "0001.a-d"
+    Generate a unique ID string in the format:  ``'0001.a-d'``
 
-    :example:  ``gen_uid(1, 1, 4)`` --> "0001.a-d"
-    :example:  ``gen_uid(234, 3, 11)`` --> "0234.c-k"
+    :example:  ``gen_uid(1, 1, 4)`` --> ``'0001.a-d'``
+    :example:  ``gen_uid(234, 3, 11)`` --> ``'0234.c-k'``
 
     :param num: The number to appear left of the period.
     :param sub: An int, indicating which entry this is for ``num``.
     :param total_sub: An int, being how many total entries there will be
-    for this ``num``.
+     for this ``num``.
     :param just: How many places to justify (defaults to 4).
     :return: The UID string.
     """
