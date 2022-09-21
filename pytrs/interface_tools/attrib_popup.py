@@ -108,6 +108,7 @@ class PromptAttrib(tk.Frame):
         'lots',
         'ilots',
         'qqs',
+        'aliquots_whole',
         'lots_qqs',
         'w_flags',
         'w_flag_lines',
