@@ -1729,8 +1729,9 @@ class TRSList(_TRSTractList):
     objects hold only ``TRS`` objects, and ``TractList`` objects hold
     only ``Tract`` objects.
 
-    ADDING TWP/RGE/SEC's TO THE TRSLIST
-    -----------------------------------
+
+    **ADDING TWP/RGE/SEC's TO THE TRSLIST**
+
     A ``TRSList`` will hold only ``TRS`` objects. However, if you try to
     add a string to it, it will first be converted to a ``TRS`` object.
     Similarly, if you try to add a ``Tract`` object, its ``.trs``
@@ -1767,15 +1768,15 @@ class TRSList(_TRSTractList):
             some_other_trs_list)
 
 
-    STREAMLINED OUTPUT OF THE TWP/RGE/SEC DATA
-    ------------------------------------------
+    **STREAMLINED OUTPUT OF THE TWP/RGE/SEC DATA**
+
     - ``.to_strings()``
         - Return a plain list of all ``TRS`` objects, converted to
           strings.
 
 
-    SORTING / GROUPING / FILTERING ``TRS`` BY ATTRIBUTE VALUES
-    ----------------------------------------------------------
+    **SORTING / GROUPING / FILTERING ``TRS`` BY ATTRIBUTE VALUES**
+
     - ``.sort_trs()``
         - Custom sorting based on the Twp/Rge/Sec. Can also take
           parameters from the built-in ``list.sort()`` method.
