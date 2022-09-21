@@ -194,18 +194,18 @@ def find_twprge(
         preprocess: bool = False,
         ocr_scrub: bool = False) -> list:
     """
-    Returns a list of all Twp/Rge's in the text (formatted as '000n000w'
-    or with fewer digits as needed).
+    Returns a list of all Twp/Rge's in the text (formatted as
+    ``'000n000w'`` or with fewer digits as needed).
 
     :param text: The text to scour for Twp/Rge's.
     :param default_ns: If N/S is not specified for the Twp, assume this
-    direction.
+     direction.
     :param default_ew: If E/W is not specified for the Twp, assume this
-    direction.
+     direction.
     :param preprocess: A bool, whether to preprocess the text before
-    searching for Twp/Rge's. (Defaults to ``False``)
+     searching for Twp/Rge's. (Defaults to ``False``)
     :param ocr_scrub: Whether to pass the text through the ocr scrubber
-    (defaults to ``False``).
+     (defaults to ``False``).
     """
     if ocr_scrub:
         preprocess = True
