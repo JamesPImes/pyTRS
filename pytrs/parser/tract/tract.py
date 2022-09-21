@@ -640,13 +640,12 @@ class Tract:
         the same as __init__(), except that ``trs=`` is replaced with
         ``twp=``, ``rge=``, and ``sec=``.
 
-        (If N/S or E/W are not
-        specified, will pull defaults from ``default_ns`` and
-        ``default_ew`` -- or failing that, from ``config`` parameters.
-        If not specified in any of those places, will default to
-        ``MasterConfig.default_ns`` and ``MasterConfig.default_ns``,
-        which are `'n'` and `'w'`, respectively, unless configured
-        otherwise.)
+        (If N/S or E/W are not specified, will pull defaults from
+        ``default_ns`` and ``default_ew`` -- or failing that, from
+        ``config`` parameters. If not specified in any of those places,
+        will default to ``MasterConfig.default_ns`` and
+        ``MasterConfig.default_ns``, which are `'n'` and `'w'`,
+        respectively, unless configured otherwise.)
 
         :param desc: Same as initializing a ``Tract`` object.
 
