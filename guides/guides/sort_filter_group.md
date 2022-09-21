@@ -94,13 +94,13 @@ t_list = pytrs.TractList.from_multiple([<some large list of tracts>])
 new_list3 = t_list.filter(key=lambda tract: tract.twp == '154n', drop=True)
 ```
 
-## `.group()`
+## `.group_by()`
 
-We can group `Tract` objects by attribute -- e.g., by Twp/Rge (all tracts in T154N-R97W, all those in T155N-R97W, etc.) -- into a dict, by using the `.group()` method on a `TractList` or `PLSSDesc`.
+We can group `Tract` objects by attribute -- e.g., by Twp/Rge (all tracts in T154N-R97W, all those in T155N-R97W, etc.) -- into a dict, by using the `.group_by()` method on a `TractList` or `PLSSDesc`.
 
 ```
 t_list = pytrs.TractList.from_multiple([<some large list of tracts>])
-grouped_tracts = t_list.group(by_attribute='twprge')
+grouped_tracts = t_list.group_by(attribute='twprge')
 ```
 
 It's hard to depict, but the dict stored above to var `grouped_tracts` looks like this, with each key being a unique `twprge` value among the tracts in the original `TractList`:
@@ -119,7 +119,7 @@ To demonstrate a bit more intuitively, let's get the `Tract` objects whose `.twp
 t_list = pytrs.TractList.from_multiple([<some large list of tracts>])
 
 # Group by `.twprge` attribute values.
-grouped_tracts = t_list.group(by_attribute='twprge')
+grouped_tracts = t_list.group_by(attribute='twprge')
 
 # Get the tracts whose `.twprge` is '154n97w'.
 t_list_154n97w = grouped_tracts['154n97w']
@@ -153,13 +153,13 @@ desc : W/2
 
 #### Grouping by multiple attributes
 
-If we pass a list of attribute names to `by_attributes=[<list of attribute names>]` instead of a single attribute, then the keys of the returned dict will be tuples, the elements of which line up with the listed attributes in `by_attributes`.
+If we pass a list of attribute names to `attributes=[<list of attribute names>]` instead of a single attribute, then the keys of the returned dict will be tuples, the elements of which line up with the listed attributes in `attributes`.
 
 ```
 t_list = pytrs.TractList.from_multiple([<some large list of tracts>])
 
 # Group by `.twp` and then by `.rge` attribute values.
-grouped_tracts = t_list.group(by_attribute=['twp', 'rge'])
+grouped_tracts = t_list.group_by(attribute=['twp', 'rge'])
 ```
 Again, it's hard to depict, but the dict stored to variable `grouped_tracts` looks like this, keyed by unique tuples of (`.twp`, `.rge` value pairs). Each value is still a `TractList` of the `Tract` objects whose corresponding attributes match the key tuple.
 ```
@@ -181,7 +181,7 @@ To demonstrate, we'll get the `Tract` objects whose `.twp` was `'154n'` and whos
 t_list = pytrs.TractList.from_multiple([<some large list of tracts>])
 
 # Group by `.twp` and then by `.rge` attribute values.
-grouped_tracts = t_list.group(by_attribute=['twp', 'rge'])
+grouped_tracts = t_list.group_by(attribute=['twp', 'rge'])
 
 # Get the tracts whose `.twp` is '154n' and `.rge` is '97w'.
 t_list_154n97w = grouped_tracts[('154n', '97w')]
@@ -219,12 +219,12 @@ Use the `into=<dict>` parameter to add additional tracts to an existing dict of 
 
 ```
 t_list_1 = pytrs.TractList.from_multiple([<some large list of tracts>])
-grouped_tracts = t_list_1.group(by_attribute='twprge')
+grouped_tracts = t_list_1.group_by(attribute='twprge')
 
 grouped_tracts.keys()       # -> dict_keys(['154n97w', '155n97w'])
 
 t_list_2 = pytrs.TractList.from_multiple([<some other list of tracts>])
-t_list_2.group(by_attribute='twprge', into=grouped_tracts)
+t_list_2.group_by(attribute='twprge', into=grouped_tracts)
 
 grouped_tracts.keys()       # -> dict_keys(['154n97w', '155n97w', '154n96w'])
 ```
@@ -238,14 +238,14 @@ Use the parameters `sort_key=` (and optionally `reverse=`) to sort *__each__* of
 An example using the `TractList` custom sort keys -- sorting by Range (number), then Township (north-to-south):
 ```
 t_list = pytrs.TractList.from_multiple([<some large list of tracts>])
-sorted_grouped_tracts = t_list.group(by_attribute='twprge', sort_key='r,t.ns')
+sorted_grouped_tracts = t_list.group_by(attribute='twprge', sort_key='r,t.ns')
 ```
 
 An example using a lambda (i.e. using the built-in `list.sort()` functionality) -- in this case by the number of aliquots in each `Tract` (i.e. length of `.qqs` attribute):
 ```
 t_list = pytrs.TractList.from_multiple([<some large list of tracts>])
-sorted_grouped_tracts = t_list.group(
-    by_attribute='twprge',
+sorted_grouped_tracts = t_list.group_by(
+    attribute='twprge',
     sort_key=lambda tract: len(tract.qqs),
     reverse=True)
 ```
@@ -256,7 +256,7 @@ Sort or resort a group without creating a new dict by using the `sort_grouped_tr
 
 ```
 t_list = pytrs.TractList.from_multiple([<some large list of tracts>])
-grouped_tracts = t_list.group(by_attribute='twprge')
+grouped_tracts = t_list.group_by(attribute='twprge')
 
 pytrs.sort_grouped_tracts(grouped_tracts, sort_key='r,t.ns')
 ```
