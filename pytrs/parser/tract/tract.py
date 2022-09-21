@@ -235,7 +235,7 @@ class Tract:
     .. note::
 
         ‡ Note that error parses do *not* qualify as 'undefined', but
-        undefined and error values are both stored as None.
+        undefined and error values are both stored as ``None``.
         ``.twp_undef``, ``.rge_undef``, and ``.sec_undef`` are included
         to differentiate between error vs. undefined, in case that
         distinction is needed.
