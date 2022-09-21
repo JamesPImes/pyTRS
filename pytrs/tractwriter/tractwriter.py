@@ -51,8 +51,8 @@ class TractWriter:
            attribute name.)
 
          - ``True`` -- use the values in the ``Tract.ATTRIBUTES`` dict
-           for headers. (WARNING: Any value passed that is not a list or
-           dict and that evaluates to ``True`` will cause this
+           for headers. (*Warning:* Any value passed that is not a list
+           or dict and that evaluates to ``True`` will cause this
            behavior.)
 
          - If not specified (i.e. ``None`` or ``False``), will just use
@@ -122,6 +122,7 @@ class TractWriter:
     def write_headers(self):
         """
         Write headers.
+
         :return: None
         """
         header_row = Tract.get_headers(
@@ -134,12 +135,15 @@ class TractWriter:
     def write(self, to_write, plus_cols=None):
         """
         Write the data from ``to_write`` to the csv.
-        :param to_write: a ``Tract``, a ``PLSSDesc`` object, a
-         ``TractList``, or an iterable containing any number and
-         combination of those object types.
+
+        :param to_write: a ``Tract``, ``PLSSDesc`` , ``TractList``, or
+         an iterable container of any number and combination of those
+         object types.
+
         :param plus_cols: (Optional) a list of additional data to write
          for each of the written rows. (Will write the same data for
          every row written.)
+
         :return: The number of rows written (an int).
         """
         if not self.is_open:
