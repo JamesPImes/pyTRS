@@ -20,150 +20,219 @@ from .tract_parse import TractParser
 class Tract:
     """
     Each object of this class is a discrete tract of land, limited to
-    one Twp/Rge/Sec combination (often shorted to 'TRS' in this module)
-    and the description of the land within that TRS, which optionally
-    can be parsed into aliquot quarter-quarters (called QQ's) and lots.
+    one Twp/Rge/Sec combination (often shorted to 'TRS' in this library)
+    and the description of the land within that Twp/Rge/Sec, which
+    optionally can be parsed into aliquot quarter-quarters (called QQ's)
+    and lots.
 
-    Configure the parsing algorithm with config parameters at init,
-    passed in `config=` (taking either a pytrs.Config object or a string
-    containing equivalent config parameters -- see documentation on
-    Config objects for possible parameters).
+    Configure the parsing algorithm with config settings at init, passed
+    as a single string to ``config=<str>``. (See documentation on
+    ``Config`` objects for all possible settings).
 
-    ____ PARSING ____
-    Parse the text into lots/QQs with the `.parse()` method at some
+
+    **PARSING**
+
+    Parse the text into lots/QQs with the ``.parse()`` method at some
     point after init. Alternatively, trigger the parse at init in one of
     two ways:
-    -- Use init parameter `parse_qq=True`
-    -- Include 'parse_qq' in the config parameters that are passed in
-        `config=` at init.
 
-    ____ IMPORTANT INSTANCE VARIABLES & PROPERTIES AFTER PARSING ____
-    .trs -- The Twp/Rge/Sec combination in the standard pyTRS format.
-            Ex: Sec 1, T154N-R97W -> '154n97w01'
-                Sec 14, T1S-R9E -> '1s9e14'
-    NOTE: If there was a flawed parse where Twp/Rge and/or Sec could not
-        be successfully identified, ``.trs`` may contain 'XXXzXXXz' (for
-        Twp/Rge) and/or 'XX' (for Section) -- i.e. 'XXXzXXXzXX' for the
-        entire Twp/Rge/Sec. Similarly, Tract objects created without
-        specifying any Twp/Rge/Sec would appear as '___z___z__'.
-    NOTE ALSO: Setting a Tract object's ``.trs`` attribute at any time
-        (using the standard pyTRS format, e.g., '154n97w14' or '1s9e01')
-        will populate all of the corresponding properties (``.twp``,
-        ``.rge``, etc.). Alternatively, when the Twp/Rge/Sec components
-        have not yet been compiled into the pyTRS format, you can set it
-        with the ``.set_twprgesec()`` method.
-    .twp -- The Twp portion of .trs, a string (ex: '154n')
-    .twp_num -- The Twp portion of .trs, as an int or None (ex: 154)
-    .twp_ns -- The N/S portion of .trs, as a str or None (ex: 'n')
-    .rge -- The Rge portion of .trs, a string (ex: '97w')
-    .rge_num -- The Rge portion of .trs, as an int or None (ex: 97)
-    .rge_ew -- The E/W portion of .trs, as a str or None (ex: 'w')
-    .twprge -- The Twp/Rge portion of .trs, a string (ex: '154n97w')
-    .sec -- The Sec portion of .trs, a string (ex: '01')
-    .sec_num -- The Sec portion of .trs, as an int or None (ex: 1)
-    .desc -- The description block within this TRS.
-    .qqs -- A list of identified QQ's (or smaller) formatted as 4
-    characters (or more, if there are further divisions).
-        Ex:     Northeast Quarter -> ['NENE', 'NWNE', 'NENW', 'NWNW']
-        Ex:     N/2SE/4SE/4 -> ['N2SESE']
-    .lots -- A list of identified lots.
-        Ex:     Lot 1, North Half of Lot 2 -> ['L1', 'N2 of L2']
-        NOTE: Divisions of lots can be suppressed with config parameter
-            'suppress_lot_divs' (i.e. ['L1', 'L2'] in this example).
-    .ilots -- The identified lots as a list of integers, with any
-        divisions discared.
-    .lots_qqs -- A joined list of identified lots and QQ's. (Technically
-        a property)
-        Ex:     ['L1', 'N2 of L2', 'NENE', 'NWNE', 'NENW', 'NWNW']
-    .lot_acres -- A dict of lot names and their apparent gross acreages,
-    as stated in the original description.
-        Ex:     Lots 1(38.29), 2(39.22), 3(39.78)
-                    -> {'L1': '38.29', 'L2':'39.22', 'L3':'39.78'}
-    .pp_desc -- The preprocessed description. (If the object has not yet
-        been parsed, it will be equivalent to .desc)
-    .source -- (Optional) Any value of any type (probably a str or int)
-        specifying where the description came from. Useful if parsing
-        multiple descriptions and need to internally keep track where
-        they came from. (Optionally specify at init with parameter
-        `source=<str, int, etc.>`.)
-    .orig_desc -- The full, original text of the parent PLSSDesc object,
-        if any.
-    .orig_index -- An integer represeting the order in which this Tract
-        object was created while parsing the parent PLSSDesc object, if
-        any.
-    .w_flags -- a list of warning flags (strings) generated during
-        preprocessing and/or parsing.
-    .w_flag_lines -- a list of 2-tuples, each being a warning flag and the
-        line or context from the description that caused the warning.
-    .e_flags -- a list of error flags (strings) generated during
-        preprocessing and/or parsing.
-    .e_flag_lines -- a list of 2-tuples, each being an error flag and the
-        line or context from the description that caused the error.
-    .flags -- a combined list of warning and error flags. (Technically a
-        property)
-    .flag_lines -- a combined list of warning and error flag_lines.
-        (Technically a property)
-    .desc_is_flawed -- a bool, whether or not an apparently fatal flaw was
-        discovered during parsing of the parent PLSSDesc object, if any.
-        (Tract objects themselves are agnostic to fatal flaws.)
+    - Use init parameter `parse_qq=True`
 
-    ____ STREAMLINED OUTPUT OF THE PARSED DATA ____
-    The instance variables above can be compiled with these methods:
-    .quick_desc() -- Returns a string of the TRS + description.
-    .to_dict() -- Compile the requested attributes into a dict.
-    .to_list() -- Compile the requested attributes into a list.
+    - Include 'parse_qq' in the config parameters that are passed in
+      ``config=`` at init.
 
-    ____ SETTING TOWNSHIP / RANGE / SECTION ____
-    Twp/Rge/Sec will be set automatically if a Tract is created by a
-    parsed PLSSDesc. However, it can also be manually set in one of four
-    ways.
 
-    At init, in the ``trs=`` kwarg (taking the standard pyTRS format):
-        Ex: ``some_tract = Tract(desc='NE/4', trs='154n97w14')
+    **IMPORTANT INSTANCE VARIABLES & PROPERTIES AFTER PARSING**
 
-    At init, but using Twp/Rge/Sec components, using the
-    ``.from_twprgesec()`` method:
-        Ex:
-            ```
-            some_tract = Tract.from_twprgesec(
-                desc='NE/4', twp=154, rge=97, sec=14, default_ns='n',
-                default_ew='w')
-            ```
+    - ``.trs`` -- The Twp/Rge/Sec combination in the standardized format
+      (ex: ``'154n97w01'`` for 'T154N-R97W Sec 1') (†)
 
-    Once the Tract has already been created, we can set the Twp/Rge/Sec
-    by assigning the ``.trs`` attribute a string value in the standard
-    pyTRS format.
-        Ex: ``some_tract.trs = '154n97w14'``
-            ``some_tract.trs = '1s87e01'``
+    - ``.twp`` -- The Twp portion of ``.trs``, a string (ex: ``'154n'``)
+
+    - ``.twp_num`` -- The Twp portion of ``.trs``, as an int or None
+      (ex: ``154``)
+
+    - ``.twp_ns`` -- The N/S portion of ``.trs``, as a str or None (ex:
+      ``'n'``)
+
+    - ``.rge`` -- The Rge portion of ``.trs``, a string (ex: ``'97w'``)
+
+    - ``.rge_num`` -- The Rge portion of ``.trs``, as an int or None
+      (ex: ``97``)
+
+    - ``.rge_ew`` -- The E/W portion of ``.trs``, as a str or None (ex:
+      ``'w'``)
+
+    - ``.twprge`` -- The Twp/Rge portion of ``.trs``, a string (ex:
+      ``'154n97w'``)
+
+    - ``.sec`` -- The Sec portion of ``.trs``, a string (ex: ``'01'``)
+
+    - ``.sec_num`` -- The Sec portion of .trs, as an int or None (ex: 1)
+
+    - ``.desc`` -- The description block within this TRS.
+
+    - ``.qqs`` -- A list of identified QQ's (or smaller) formatted as 4
+      characters (or more, if there are further divisions) -- ex:
+      ``['NENW', 'NWNW']`` from ``'N/2NW/4'``.
+
+        .. note::
+            Adjust the degree of granularity of aliquot parsing with
+            config settings ``qq_depth_min.<number>``,
+            ``qq_depth_max.<number>``, and/or ``qq_depth.<number>``.
+
+            (And see also ``break_halves`` config setting.)
+
+    - ``.lots`` -- A list of identified lots. (ex:
+      ``['L1', 'N2 of L2']`` from ``'Lot 1, North Half of Lot 2'``)
+
+        .. note::
+            Divisions of lots can be suppressed with config parameter
+            ``'suppress_lot_divs'`` (i.e. ``['L1', 'L2']`` in this
+            example).
+
+    - ``.ilots`` -- The identified lots as a list of integers, with any
+      divisions discarded (ex: ``[1, 2]`` from ``'Lot 1, North Half of
+      Lot 2'``)
+
+    - ``.lots_qqs`` -- A joined list of identified lots and QQ's. (Ex:
+      ``['L1', 'N2 of L2', 'NENE', 'NWNE', 'NENW', 'NWNW']``)
+
+    - ``.lot_acres`` -- A dict of lot names and their apparent gross acreages,
+      as stated in the original description.  (Ex: ``{'L1': '38.29'}``
+      from ``'Lot 1(38.29), Lot 2'``)
+
+    - ``.pp_desc`` -- The preprocessed description. (If the object has
+      not yet been parsed, it will be equivalent to ``.desc``.)
+
+    - ``.source`` -- (Optional) Any value of any type (probably a str or
+      int) specifying where the description came from. Useful if parsing
+      multiple descriptions and need to internally keep track where they
+      came from. (Optionally specify at init with parameter
+      ``source=<whatever>``.)
+
+    - ``.orig_desc`` -- The full, original text of the parent
+      ``PLSSDesc`` object, if any.
+
+    - ``.orig_index`` -- An integer representing the order in which this
+      ``Tract`` object was created while parsing the parent ``PLSSDesc``
+       object, if any.
+
+    - ``.w_flags`` -- a list of warning flags (strings) generated during
+      preprocessing and/or parsing.
+
+    - ``.w_flag_lines`` -- a list of 2-tuples, each being a warning flag
+      and the line or context from the description that caused the
+      warning.
+
+    - ``.e_flags`` -- a list of error flags (strings) generated during
+      preprocessing and/or parsing.
+
+    - ``.e_flag_lines`` -- a list of 2-tuples, each being an error flag
+      and the line or context from the description that caused the
+      error.
+
+    - ``.flags`` -- a combined list of warning and error flags.
+
+    - ``.flag_lines`` -- a combined list of warning and error flag
+      lines.
+
+    - ``.desc_is_flawed`` -- whether an apparently fatal flaw was
+      discovered during parsing of the parent ``PLSSDesc`` object, if
+      any. (``Tract`` objects themselves are agnostic to fatal flaws, so
+      this can only be ``True`` if a ``Tract`` was created via
+      ``PLSSDesc``.)
+
+    † Setting the ``.trs`` attribute at any time will populate all
+    corresponding properties (``.twp``, ``.rge``, etc.). Alternatively,
+    it can be set with the ``set_twprgesec()`` method.
+
+
+    **STREAMLINED OUTPUT OF THE PARSED DATA**
+
+    The Tract attributes above can be compiled with these methods:
+
+    - ``.quick_desc()`` -- Returns a string of the Twp/Rge/Sec and
+      description.
+    - ``.to_dict()`` -- Compile the requested attributes into a dict.
+    - ``.to_list()`` -- Compile the requested attributes into a list.
+
+
+    **SETTING TOWNSHIP / RANGE / SECTION**
+
+    Twp/Rge/Sec will be set automatically if a ``Tract`` is created by a
+    parsed ``PLSSDesc``. However, it can also be manually set in one of
+    four ways.
+
+    At init, in the ``trs=<str>`` parameter, taking a string in the
+    standardized format:
+
+    .. code-block:: python
+
+        some_tract = Tract(desc='NE/4', trs='154n97w14')
+
+    When creating a ``Tract`` with the ``.from_twprgesec()`` method:
+
+    .. code-block:: python
+
+        # Set Twp as 'n', and Rge as 'w'
+        some_tract = Tract.from_twprgesec(
+            desc='NE/4',
+            twp=154,
+            rge=97,
+            sec=14,
+            default_ns='n',
+            default_ew='w')
+        some_tract.trs  # '154n97w14'
+
+    Once a ``Tract`` has already been created, we can set the
+    Twp/Rge/Sec by assigning the ``.trs`` attribute a string value in
+    the standardized format:
+
+    .. code-block:: python
+
+        some_tract = Tract('NE/4')  # Twp/Rge/Sec not specified.
+        some_tract.trs = '154n97w14'
+        some_tract.trs = '1s87e01'
 
     Alternatively, set Twp/Rge/Sec from the uncompiled components, with
     the ``.set_twprgesec()`` method:
-        Ex:
-            ```
-            some_tract.set_twprgesec(
-                154, 97, 14, default_ns='n', default_ew='w')
+
+    .. code-block:: python
+        some_tract = Tract('NE/4')  # Twp/Rge/Sec not specified.
+        some_tract.set_twprgesec(
+            twp=154,
+            rge=97,
+            sec=14,
+            default_ns='n',
+            default_ew='w')
+        some_tract.trs  # '154n97w14'
             ```
 
     Setting Twp/Rge/Sec by any of the above methods will break down the
-    Twp/Rge/Sec into various data:
+    Twp/Rge/Sec into various data::
+
             .trs        -> The full Twp/Rge/Sec combination.
             .twp        -> Twp number + direction (a str or None)
             .twp_num    -> Twp number (an int or None)
             .twp_ns     -> Twp direction ('n', 's', or None)
             .ns         -> same as `.twp_ns`
-            .twp_undef  -> whether the Twp was undefined. **
+            .twp_undef  -> whether the Twp was undefined. (‡)
             .rge        -> Rge number + direction (a str or None)
             .rge_num    -> Rge num (an int or None)
             .rge_ew     -> Rge direction ('e', 'w', or None)
             .ew         -> same as `.rge_ew`
-            .rge_undef  -> whether the Rge was undefined. **
+            .rge_undef  -> whether the Rge was undefined. (‡)
             .sec_num    -> Sec number (an int or None)
-            .sec_undef  -> whether the Sec was undefined. **
+            .sec_undef  -> whether the Sec was undefined. (‡)
 
-    ** Note that error parses do NOT qualify as 'undefined', but
-    undefined and error values are both stored as None. 'twp_undef',
-    'rge_undef', and 'sec_undef' are included to differentiate between
-    error vs. undefined, in case that distinction is needed.
+    .. note::
+
+        ‡ Note that error parses do *not* qualify as 'undefined', but
+        undefined and error values are both stored as None.
+        ``.twp_undef``, ``.rge_undef``, and ``.sec_undef`` are included
+        to differentiate between error vs. undefined, in case that
+        distinction is needed.
     """
 
     # Tract instance variables and a "header"-like definition of each.
@@ -211,28 +280,31 @@ class Tract:
             orig_index=0):
         """
         :param desc: The description block within this TRS. (What will
-        be processed if this Tract object gets parsed into lots/QQs.)
-        :param trs: Specify the TRS of the Tract. Formatted such that
-        Twp and Rge are 1 to 3 digits + direction, and section is 2
-        digits, and North/South and East/West are represented with the
-        lowercase first letter.
-            Ex: Sec 1, T154N-R97W -> '154n97w01'
-                Sec 14, T1S-R9E -> '1s9e14'
-        :param config: Either a pytrs.Config object, or a string of
-        parameters to configure how the Tract object should be parsed.
-        (See documentation on pytrs.Config objects for optional config
-        parameters.)
-        :param parse_qq: Whether to parse the `desc` into lots/QQs at
-        init. (Defaults to False)
+         be processed if this Tract object gets parsed into lots/QQs.)
+
+        :param trs: Specify the Twp/Rge/Sec of the ``Tract``, using the
+         standardized format (ex: ``'154n97w01'``, meaning 'T154N-R97W
+         Sec 1').
+
+        :param config: A string of ``Config`` settings to control how
+         the ``Tract`` object should parse lots/aliquots.  (See
+         documentation on ``Config`` objects for all optional config
+         settings.)
+
+        :param parse_qq: Whether to parse the ``desc`` into
+         lots/aliquots at init. (Defaults to ``False``)
+
         :param source: (Optional) Essentially any value (e.g., a unique
-        identifier number or document id) specifying where the
-        description came from. (Useful if parsing multiple descriptions
-        and need to internally keep track where they came from.)
-        :param orig_desc: The full, original text of the parent PLSSDesc
-        object, if any.
-        :param orig_index: An integer representing the order in which this
-        Tract object was created while parsing the parent PLSSDesc
-        object, if any
+         identifier number or document id) specifying where the
+         description came from. (Useful if parsing multiple descriptions
+         and need to internally keep track where they came from.)
+
+        :param orig_desc: The full, original text of the parent
+         ``PLSSDesc`` object, if any.
+
+        :param orig_index: An int representing the order in which this
+         ``Tract`` object was created while parsing the parent
+         ``PLSSDesc`` object, if any
         """
 
         if not isinstance(trs, (str, TRS)) and trs is not None:
@@ -355,9 +427,9 @@ class Tract:
         """
         Accessing the ``.trs`` property actually pulls the ``.trs``
         attribute (a str) of the protected ``TRS`` object stored in
-        ``.__trs``. This contrasts with SETTING the ``.trs`` attribute,
-        which populates a new ``TRS`` object in ``.__trs`` instead.
-        :return:
+        ``.__trs``. This contrasts with *setting* the ``.trs``
+        attribute, which populates a new ``TRS`` object in ``.__trs``
+        instead.
         """
         return self.__trs.trs
 
@@ -365,8 +437,8 @@ class Tract:
     def trs(self, new_trs):
         """
         Setting the ``.trs`` attribute populates all of the associated
-        properties via a pytrs.TRS objects.
-        :param new_trs: A Twp/Rge/Sec in the standard pyTRS format.
+        properties via a new ``TRS`` object.
+        :param new_trs: A Twp/Rge/Sec string in the standardized format.
         """
         if isinstance(new_trs, TRS):
             new_trs = new_trs.trs
@@ -376,26 +448,33 @@ class Tract:
             self, twp=None, rge=None, sec=None, default_ns=None,
             default_ew=None, ocr_scrub=None):
         """
-        Set the Twp/Rge/Sec of this Tract from the component parts, and
-        populate the corresponding properties for this Tract object.
-        Returns the compiled Twp/Rge/Sec (in the pyTRS format).
+        Set the Twp/Rge/Sec of this ``Tract`` from the component parts,
+        and populate the corresponding properties for this ``Tract``
+        object.  Returns the compiled Twp/Rge/Sec string in the
+        standardized format.
 
         :param twp: Township (a str or int).
+
         :param rge: Range (a str or int).
+
         :param sec: Section (a str or int)
-        :param default_ns: (Optional) If `twp` wasn't specified as N or
-        S, assume `default_ns` (pass as 'n' or 's'). If not specified,
-        will fall back to ``MasterConfig.default_ns`` (which is 'n'
-        unless configured otherwise).
-        :param default_ew: (Optional) If `rge` wasn't specified as E or
-        W, assume `default_ew` (pass as 'e' or 'w'). If not specified,
-        will fall back to ``MasterConfig.default_ew`` (which is 'w'
-        unless configured otherwise).
+
+        :param default_ns: (Optional) If ``twp`` wasn't specified as N
+         or S, assume ``default_ns`` (pass as ``'n'`` or ``'s'``). If
+         not specified, will fall back to ``MasterConfig.default_ns``
+         (which is ``'n'`` unless configured otherwise).
+
+        :param default_ew: (Optional) If ``rge`` wasn't specified as E
+         or W, assume ``default_ew`` (pass as ``'e'`` or ``'w'``). If
+         not specified, will fall back to ``MasterConfig.default_ew``
+         (which is ``'w'`` unless configured otherwise).
+
         :param ocr_scrub: A bool, whether to try to scrub common OCR
-        artifacts from the Twp, Rge, and Sec -- if any of them are
-        passed as a str. (Defaults to whatever was set in ``.config``,
-        which is ``False`` unless configured otherwise.)
-        :return: The compiled Twp/Rge/Sec in the pyTRS format.
+         artifacts from the Twp, Rge, and Sec -- if any of them are
+         passed as a str. (Defaults to whatever was set in ``.config``,
+         which is ``False`` unless configured otherwise.)
+
+        :return: The compiled Twp/Rge/Sec in the standardized format.
         """
         if not default_ns:
             default_ns = self.default_ns
@@ -444,23 +523,29 @@ class Tract:
         return self.__trs.twprge
 
     def pretty_twprge(
-            self, t="T", delim="-", r="R", n=None, s=None, e=None, w=None,
+            self, t="T",
+            delim="-",
+            r="R",
+            n=None,
+            s=None,
+            e=None,
+            w=None,
             undef="---X"):
         """
         Convert the Twp/Rge info into a clean str. By default, will
         return in the format 'T154N-R97W', but control the output with
         the various optional parameters.
 
-        :param t: How "Township" should appear. ('T' by default)
-        :param delim: How Twp should be separated from Rge. ('-' by
-        default)
-        :param r: How "Range" should appear. ("R" by default)
+        :param t: How "Township" should appear. (``'T'`` by default)
+        :param delim: How Twp should be separated from Rge. (``'-'`` by
+         default)
+        :param r: How "Range" should appear. (``'R'`` by default)
         :param n: How "North" (if found) should appear.
         :param s: How "South" (if found) should appear.
         :param e: How "East" (if found) should appear.
         :param w: How "West" (if found) should appear.
         :param undef: How undefined (or error) Twp or Rge should be
-        represented, including the direction. ('---X' by default)
+         represented, including the direction. (``'---X'`` by default)
         :return: A str of the clean Twp/Rge.
         """
         return self.__trs.pretty_twprge(t, delim, r, n, s, e, w, undef)
@@ -488,22 +573,22 @@ class Tract:
     def trs_is_undef(self, twp=True, rge=True, sec=True):
         """
         Check if any component of this Tract's Twp/Rge/Sec is undefined.
-        (Checks against Twp, Rge, and Sec by default, and returns True
-        if any is undefined.)
+        (Checks against Twp, Rge, and Sec by default, and returns
+        ``True`` if any is undefined.)
 
         :param twp: Check if Twp is undefined.
         :param rge: Check if Rge is undefined.
         :param sec: Check if Sec is undefined.
         :return: A bool, whether ANY of the checked values are
-        undefined.
+         undefined.
         """
         return self.__trs.is_undef(twp, rge, sec)
 
     def trs_is_error(self, twp=True, rge=True, sec=True):
         """
-        Check if any component of this Tract's Twp/Rge/Sec is an error.
-        (Checks against Twp, Rge, and Sec by default, and returns True
-        if any is an error.)
+        Check if any component of this ``Tract`` object's Twp/Rge/Sec is
+        an error. (Checks against Twp, Rge, and Sec by default, and
+        returns ``True`` if any is an error.)
 
         :param twp: Check if Twp is an error.
         :param rge: Check if Rge is an error.
@@ -544,40 +629,48 @@ class Tract:
             orig_desc=None,
             orig_index=0):
         """
-        Create a Tract object from separate Twp, Rge, and Sec components
-        rather than joined Twp/Rge/Sec. All parameters are the same as
-        __init__(), except that `trs=` is replaced with `twp=`, `rge=`,
-        and `sec=`. (If N/S or E/W are not specified, will pull defaults
-        from `default_ns` and `default_ew` -- or failing that, from
-        `config` parameters. If not specified in any of those places,
-        will default to ``MasterConfig.default_ns`` and
-        ``MasterConfig.default_ns``, which are `'n'` and `'w'`,
-        respectively, unless configured otherwise.)
+        Create a ``Tract`` object from separate Twp, Rge, and Sec
+        components rather than joined Twp/Rge/Sec. All parameters are
+        the same as __init__(), except that ``trs=`` is replaced with
+        ``twp=``, ``rge=``, and ``sec=``.
 
-        :param desc: Same as initializing a Tract object.
-        :param twp: Township. Pass as a string (i.e. '154n'). If passed
-        as an int, the N/S will be pulled from `default_ew` or `config`
-        parameters, or defaulted to 'n' if not specified.
-        :param rge: Range. Pass as a string (i.e. '97w'). If passed as
-        an int, the E/W will be pulled from `default_ew` or `config`
-        parameters, or defaulted to 'w' if not specified.
+        (If N/S or E/W are not
+        specified, will pull defaults from ``default_ns`` and
+        ``default_ew`` -- or failing that, from ``config`` parameters.
+        If not specified in any of those places, will default to
+        ``MasterConfig.default_ns`` and ``MasterConfig.default_ns``,
+        which are `'n'` and `'w'`, respectively, unless configured
+        otherwise.)
+
+        :param desc: Same as initializing a ``Tract`` object.
+
+        :param twp: Township. Pass as a string (i.e. ``'154n'``). If
+         passed as an int, the N/S will be pulled from ``default_ns`` or
+         ``config`` parameters, or defaulted to
+         ``MasterConfig.default_ns``, which is ``'n'`` unless configured
+          otherwise.
+
+        :param rge: Range. Pass as a string (i.e. ``'97w'``). If passed
+         as an int, the E/W will be pulled from ``default_ns`` or
+         ``config`` parameters, or defaulted to
+         ``MasterConfig.default_ns``, which is ``'n'`` unless configured
+          otherwise.
+
         :param sec: Section. Pass as a str or an int (up to 2 digits).
-        :param default_ns: How to interpret townships for which direction
-        was not specified -- i.e. either 'n' or 's'. (Defaults to what
-        is specified in the ``config=`` parameters, if any; and if not
-        there, then to ``MasterConfig.default_ns``, which is 'n' unless
-        otherwise specified.)
+
+        :param default_ns: How to interpret townships for which
+         direction was not specified -- i.e. either ``'n'`` or ``'s'``.
+
         :param default_ew: How to interpret ranges for which direction
-        was not specified -- i.e. either 'e' or 'w'. (Defaults to what
-        is specified in the ``config=`` parameters, if any; and if not
-        there, then to ``MasterConfig.default_ew``, which is 'w' unless
-        otherwise specified.)
-        :param source: Same as when initializing a Tract object.
-        :param orig_desc: Same as when initializing a Tract object.
-        :param orig_index: Same as when initializing a Tract object.
-        :param config: Same as when initializing a Tract object.
-        :param parse_qq: Same as when initializing a Tract object.
-        :return: The new Tract object, with the ``.trs`` compiled here.
+         was not specified -- i.e. either 'e' or 'w'.
+
+        :param source: Same as when initializing a ``Tract`` object.
+        :param orig_desc: Same as when initializing a ``Tract`` object.
+        :param orig_index: Same as when initializing a ``Tract`` object.
+        :param config: Same as when initializing a ``Tract`` object.
+        :param parse_qq: Same as when initializing a ``Tract`` object.
+        :return: The new ``Tract`` object, with the ``.trs`` compiled
+         here.
         """
 
         # Compile the `config=` data into a Config object (or use the
@@ -616,12 +709,13 @@ class Tract:
     @config.setter
     def config(self, new_config):
         """
-        Apply the relevant settings from a Config object to this object;
-        takes either a string (i.e. config text) or a Config object.
+        Apply the relevant settings from a ``Config`` object to this
+        object; takes either a string (i.e. config text) or a ``Config``
+        object.
 
-        :param new_config: Either a pytrs.Config object, or equivalent
-        config parameters. (See pytrs.Config documentation for optional
-        parameters.)
+        :param new_config: Either a ``Config`` object, or equivalent
+        config settings. (See ``Config`` documentation for all optional
+        settings.)
         """
         if isinstance(new_config, str) or new_config is None:
             new_config = Config(new_config)
@@ -649,46 +743,114 @@ class Tract:
             qq_depth=None,
             break_halves=None):
         """
-        Parse the description block of this Tract into lots and QQ's.
+        Parse the description block of this ``Tract`` into lots and
+        aliquots.
+
+        ``qq_depth_min``, ``qq_depth_max``, and/or ``qq_depth`` affect
+        how 'deeply' to parse aliquots -- i.e. to 160-acre divisions
+        (quarter sections), 40-acre divisions (quarter-quarters),
+        10-acre divisions, etc.
+
+        By default, aliquots are parsed down to *at least*
+        quarter-quarters::
+
+            # If qq_depth_min is 2 (the default).
+            'N/2NE/4'  -->  ['NENE', 'NWNE']
+
+        But smaller divisions that exist in the text will also be
+        reported::
+
+            # If qq_depth_min is 2 (the default).
+            'S/2N/2NE/4'  -->  ['S2NENE', 'S2NWNE']
+
+        Such smaller divisions can be curtailed by specifying
+        ``qq_depth_max``. For example, if set to 2, anything smaller
+        than quarter-quarter will be discarded::
+
+            # If qq_depth_max is set to 2.
+            'N/2NE/4'  -->  ['NENE', 'NWNE']
+            'S/2N/2NE/4'  -->  ['NENE', 'NWNE']
+
+        We can force parsing to smaller aliquots by increasing the
+        ``qq_depth_min``::
+
+            # If qq_depth_max is set to 3.
+            'NW/4NE/4'  -->  ['NENWNE', 'NWNWNE', 'SENWNE', 'SWNWNE']
+            'S/2NW/4NE/4'  -->  ['SENWNE', 'SWNWNE']
+
+        We can force parsing to an *exact* depth by specifying
+        ``qq_depth`` (which will override both ``qq_depth_min`` and
+        ``qq_depth_max``)::
+
+            # If qq_depth is set to 1 (i.e. quarters).
+            'N/2'  -->  ['NE', 'NW']
+            'S/2N/2'  -->  ['NE', 'NW']
+
+            # If qq_depth is set to 2 (i.e. quarter-quarters).
+            'NE/4'  -->  ['NENE', 'NWNE', 'SENE', 'SWNE']
+            'N/2NE/4'  -->  ['NENE', 'NWNE']
+            'S/2N/2NE/4'  -->  ['NENE', 'NWNE']
+
+            # If qq_depth is set to 3.
+            'NW/4NE/4'  -->  ['NENWNE', 'NWNWNE', 'SENWNE', 'SWNWNE']
+            'S/2N/2NE/4'  -->  ['SENENE', 'SWNENE', 'SENWNE', 'SWNWNE']
+
+        Finally, we can use ``break_halves`` to split halves into
+        quarters, even if they occur beyond the specified
+        ``qq_depth_min``::
+
+            # If qq_depth_min is set to 2, but also using break_halves.
+            'NW/4NE/4'  -->  ['NWNE']
+            'S/2NW/4NE/4'  -->  ['SENWNE', 'SWNWNE']
+
+
+        .. warning::
+            Do not set ``qq_depth_max`` to be less than
+            ``qq_depth_min``. Doing so will result in reporting aliquots
+            that do not actually exist.
+
+        .. warning::
+            Setting ``qq_depth_min`` or ``qq_depth`` to a number larger
+            than 4 will quickly start to be resource- and
+            time-intensive, because each additional number is another
+            exponential division.
 
         :param commit: Whether to commit the results to the appropriate
-        instance attributes. Defaults to `True`.
-        :param clean_qq: Whether to expect only clean lots and QQ's (i.e.
-        no metes-and-bounds, exceptions, complicated descriptions,
-        etc.). Defaults to whatever is specified in `self.clean_qq`
-        (which is False, unless configured otherwise).
-        :param suppress_lot_divs: Whether to report divisions of lots.
-        Defaults to whatever is specified in the ``.suppress_lot_divs``
-        attribute of this ``Tract`` object (which is False, unless
-        configured otherwise).
-            ex:  North Half of Lot 1
-                    `True` -> 'N2 of L1'
-                    `False` -> 'L1'
-        :param qq_depth_min: An int, specifying the minimum depth of the
-        parse. If not set here, will default to settings from init (if
-        any), which in turn default to 2, i.e. to quarter-quarters
-        (e.g., 'N/2NE/4' -> ['NENE', 'NENE']). Setting to 3 would return
-        10-acre subdivisions (i.e. dividing the 'NENE' into ['NENENE',
-        'NWNENE', 'SENENE', 'SWNENE']), and so forth.
-        WARNING: Higher than a few levels of depth will result in very
-        slow performance.
-        :param qq_depth_max: (Optional) An int, specifying the maximum
-        depth of the parse. If set as 2, any subdivision smaller than
-        quarter-quarter (e.g., 'NENE') would be discarded -- so, for
-        example, the 'N/2NE/4NE/4' would simply become the 'NENE'. Must
-        be greater than or equal to `qq_depth_min`. (Defaults to None --
-        i.e. no maximum. Can also be configured at init.)
-        :param qq_depth: (Optional) An int, specifying both the min and
-        max depth of the parse. If specified, will override both
-        `qq_depth_min` and `qq_depth_max`. (Defaults to None -- i.e. use
-        qq_depth_min and optionally qq_depth_max; but can also be
-        configured at init.)
-        :param break_halves: Whether to break halves into quarters,
-        even if we're beyond the qq_depth_min. (False by default, but can
-        be configured at init.)
-        :return: Returns the a single list of identified lots and QQ's.
-        """
+         instance attributes. Defaults to ``True``.
 
+        :param clean_qq: Whether to expect only clean lots and aliquots
+         no metes-and-bounds, exceptions, complicated descriptions,
+         etc.). Defaults to whatever is specified in ``.clean_qq``
+         attribute (which is ``False``, unless configured otherwise).
+
+         .. warning::
+            Use ``'clean_qq'`` only if the data you're working with has
+            nothing but simple aliquots and lots (i.e. no metes-and-
+            bounds descriptions, exceptions, etc.).
+
+        :param suppress_lot_divs: Whether to discard any divisions of
+         lots -- e.g., report 'N/2 of Lot 1' as ``'L1'``. The default
+         behavior is to include lot divisions -- i.e. will report as
+         ``'N2 of L1'`` unless ``suppress_lot_divs=True`` is used.
+
+        :param qq_depth_min: An int, specifying the minimum depth of the
+         parse. (See above for explanation. Defaults to ``2``.)
+
+        :param qq_depth_max: (Optional) An int, specifying the maximum
+         depth of the parse. (See above for explanation. Defaults to no
+         maximum.)
+
+        :param qq_depth: (Optional) An int, specifying the maximum
+         depth of the parse. (See above for explanation. Defaults to
+         ``None`` -- i.e. use ``qq_depth_min`` and also ``qq_depth_max``
+         if specified.)
+
+        :param break_halves: Whether to break halves into quarters,
+         even if we're beyond the ``qq_depth_min``. (``False`` by
+         default.)
+
+        :return: Returns a single list of identified lots and aliquots.
+        """
         # --------------------------------------------------------------
         # Note that this method is actually a wrapper for initializing
         # a PLSSParser object and extracting the relevant attributes
@@ -764,15 +926,23 @@ class Tract:
         input data, and optionally store the results to ``.pp_desc``
         attribute (with ``commit=True``).
 
-        NOTE: Regardless whether committed, the description will be
-        preprocessed (again) when parsed.
+        .. note::
+            Regardless whether committed, the description will be
+            preprocessed (again) when parsed.
 
-        :param clean_qq: Whether to expect only clean lots and QQ's
-        (i.e. no metes-and-bounds, exceptions, complicated descriptions,
-        etc.). Defaults to whatever is specified in `self.clean_qq`
-        (which is False, unless configured otherwise).
+        :param clean_qq: Whether to expect only clean lots and aliquots
+         no metes-and-bounds, exceptions, complicated descriptions,
+         etc.). Defaults to whatever is specified in ``.clean_qq``
+         attribute (which is ``False``, unless configured otherwise).
+
+         .. warning::
+            Use ``'clean_qq'`` only if the data you're working with has
+            nothing but simple aliquots and lots (i.e. no metes-and-
+            bounds descriptions, exceptions, etc.).
+
         :param commit: Whether to store the results to ``.pp_desc``.
-        (Defaults to `False`)
+         (Defaults to ``False``)
+
         :return: The preprocessed string.
         """
         text = self.desc
@@ -789,7 +959,7 @@ class Tract:
         Compile the requested attributes into a dict.
 
         :param attributes: The attribute names (instance variables) to
-        include.
+         include.
         :return: A dict, keyed by attribute.
         """
 
@@ -801,7 +971,7 @@ class Tract:
         Compile the requested attributes into a list.
 
         :param attributes: The attribute names (instance variables) to
-        include.
+         include.
         :return: A list of attribute values.
         """
 
@@ -810,24 +980,28 @@ class Tract:
 
     def quick_desc(self, delim=': ') -> str:
         """
-        Return a string of the TRS + description.
+        Return a string of the Twp/Rge/Sec and description.
 
-        :param delim: The string that should separate TRS from the
-        description. (Defaults to ': ')
-        :return: A string of the TRS + description.
+        :param delim: Specify what separates Twp/Rge/Sec from the
+         corresponding description block (i.e. what comes between
+         ``.trs`` and ``.desc``).  (Defaults to ``': '``).
+        :return: A string of the complete description, potentially
+         trimmed.
         """
         return f"{self.trs}{delim}{self.desc}"
 
     def quick_desc_short(self, delim=': ', max_len=30) -> str:
         """
-        Get the `.quick_desc()` of this Tract, but if the resulting str
-        is longer than `max_len`, shorten it to that length.
+        Get the ``.quick_desc()`` of this ``Tract``, but cap the
+        resulting str at a length of ``max_len``.
 
-        :param delim: The string that should separate TRS from the
-        description. (Defaults to ': ')
-        :param max_len: Maximum length of the returned string. (Defaults
-        to 30.)
-        :return: A string, no longer than `max_len`.
+        :param delim: Specify what separates Twp/Rge/Sec from the
+         corresponding description block (i.e. what comes between
+         ``.trs`` and ``.desc``).  (Defaults to ``': '``).
+        :param max_len: Maximum length of each line.
+         (Defaults to 30.)
+        :return: A string of the complete description, potentially
+         trimmed.
         """
         qd = self.quick_desc(delim)
         if len(qd) > max_len:
@@ -841,25 +1015,33 @@ class Tract:
         from ``nice_headers`` (a bool, list, or dict).
 
         :param attributes: a list of names (strings) of whichever
-        attributes should be included (see documentation on
-        `pytrs.Tract` objects for the names of relevant attributes).
+         attributes should be included (see documentation on
+         ``Tract`` objects for the names of relevant attributes).
+
         :param nice_headers: By default, this method will use the
-        attribute names as headers. To use custom headers, pass to
-        ``nice_headers=`` any of the following:
-        -- a list of strings to use. (Should be equal in length to the
-        list passed as ``attributes``, but will not raise an error if
-        that's not the case. The resulting column headers will just be
-        fewer than the actual number of columns.)
-        -- a dict, keyed by attribute name, and whose values are the
-        corresponding headers. (Any missing keys will use the attribute
-        name.)
-        -- `True` -> use the values in the ``Tract.ATTRIBUTES`` dict for
-        headers. (WARNING: Any value passed that is not a list or dict
-        and that evaluates to ``True`` will cause this behavior.)
-        -- If not specified (i.e. None), will just use the attribute
-        names themselves.
+         attribute names as headers. To use custom headers, pass to
+         ``nice_headers=`` any of the following:
+
+         - a list of strings to use. (Should be equal in length to the
+           list passed as ``attributes``, but will not raise an error
+           if that's not the case. The resulting column headers will
+           just be fewer than the actual number of columns.)
+
+         - a dict, keyed by attribute name, and whose values are the
+           corresponding headers. (Any missing keys will use the
+           attribute name.)
+
+         - ``True`` -- use the values in the ``Tract.ATTRIBUTES`` dict
+           for headers. (WARNING: Any value passed that is not a list or
+           dict and that evaluates to ``True`` will cause this
+           behavior.)
+
+         - If not specified (i.e. ``None`` or ``False``), will just use
+           the attribute names themselves (default).
+
         :param plus_cols:  (Optional) a list of additional headers to
-        write that are not covered by the Tract attributes.
+         write that are not covered by the ``Tract`` attributes.
+
         :return: A new list of header strings.
         """
         header_row = attributes.copy()
@@ -875,5 +1057,5 @@ class Tract:
 
 
 __all__ = [
-    'Tract'
+    'Tract',
 ]
