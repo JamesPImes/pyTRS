@@ -120,7 +120,7 @@ class Tract:
 
     - ``.orig_index`` -- An integer representing the order in which this
       ``Tract`` object was created while parsing the parent ``PLSSDesc``
-       object, if any.
+      object, if any.
 
     - ``.w_flags`` -- a list of warning flags (strings) generated during
       preprocessing and/or parsing.
@@ -206,6 +206,7 @@ class Tract:
     the ``.set_twprgesec()`` method:
 
     .. code-block:: python
+
         some_tract = Tract('NE/4')  # Twp/Rge/Sec not specified.
         some_tract.set_twprgesec(
             twp=154,
@@ -653,13 +654,13 @@ class Tract:
          passed as an int, the N/S will be pulled from ``default_ns`` or
          ``config`` parameters, or defaulted to
          ``MasterConfig.default_ns``, which is ``'n'`` unless configured
-          otherwise.
+         otherwise.
 
         :param rge: Range. Pass as a string (i.e. ``'97w'``). If passed
-         as an int, the E/W will be pulled from ``default_ns`` or
+         as an int, the E/W will be pulled from ``default_ew`` or
          ``config`` parameters, or defaulted to
-         ``MasterConfig.default_ns``, which is ``'n'`` unless configured
-          otherwise.
+         ``MasterConfig.default_ew``, which is ``'w'`` unless configured
+         otherwise.
 
         :param sec: Section. Pass as a str or an int (up to 2 digits).
 
