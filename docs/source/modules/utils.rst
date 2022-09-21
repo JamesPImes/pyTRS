@@ -1,6 +1,6 @@
 
 ``utils`` module
-=========
+================
 
 Not imported with ``pytrs`` by default.
 
