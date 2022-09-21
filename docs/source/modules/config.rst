@@ -32,11 +32,13 @@ class:
         config='s, w, clean_qq',
         parse_qq=True)
 
-(Implemented at ``pytrs.parser.config.Config`` but automatically
-imported as a top-level class, ``pytrs.Config``.)
 
 
-See below for a list of all possible ``config`` settings.
+All config settings and methods
+-------------------------------
+
+See below for a list of all possible ``config`` settings, and a misc.
+``Config`` methods.
 
 .. autoclass:: pytrs.Config
     :members:
