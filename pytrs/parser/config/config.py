@@ -225,39 +225,15 @@ class Config:
         'break_halves',
     )
 
-    def __init__(self, config_text=None, config_name=''):
+    def __init__(self, config_text: str = None, config_name=''):
         """
         Compile a Config object from a string ``config_text=``, with
-        optional kwarg ``config_name=`` that does not affect parsing.
+        optional parameter ``config_name=`` that does not affect
+        parsing.
 
-        Pass config parameters as a single string, with each parameter
-        separated by comma. Spaces are optional and have no effect.
-            ex: 'n,s,clean_qq,suppress_lot_divs.False'
-
-        All possible parameters (call ``pytrs.utils.config_parameters()``
-        for definitions) -- any unspecified parameters will fall back to
-        default parsing behavior:
-        -- 'n'  <or>  'default_ns.n'  vs.  's'  <or>  'default_ns.s'
-        -- 'e'  <or>  'default_ew.e'  vs.  'w'  <or>  'default_ew.w'
-        -- 'wait_to_parse'  vs.  'wait_to_parse.False'
-        -- 'parse_qq'  vs.  'parse_qq.False'
-        -- 'clean_qq'  vs.  'clean_qq.False'
-        -- 'sec_colon_required'     # TODO: clarify docstring
-        -- 'sec_colon_cautious'     # TODO: clarify docstring
-        -- 'suppress_lot_divs'  vs.  'suppress_lot_divs.False'
-        -- 'ocr_scrub'  vs.  'ocr_scrub.False'
-        -- 'segment'  vs.  'segment.False'
-        -- 'qq_depth_min.<int>'  (defaults to 'qq_depth_min.2')
-        -- 'qq_depth_max.<int>'  (defaults to 'qq_depth_max.None')
-        -- 'qq_depth.<int>'  (defaults to 'qq_depth.None')
-        -- 'break_halves'  vs.  'break_halves.False'
-        Only one of the following may be passed -- and none of these are
-        recommended:
-        -- 'TRS_desc'  <or>  'layout.TRS_desc'
-        -- 'desc_STR'  <or>  'layout.desc_STR'
-        -- 'S_desc_TR'  <or>  'layout.S_desc_TR'
-        -- 'TR_desc_S'  <or>  'layout.TR_desc_S'
-        -- 'copy_all'  <or>  'layout.copy_all'
+        Pass config parameters as a single string, with each setting
+        separated by comma, and spaces optional.
+            ex: ``'n, w, clean_qq, suppress_lot_divs'``
         """
 
         # All attributes (except config_name) are defaulted to `None`,
@@ -301,12 +277,12 @@ class Config:
     def __repr__(self):
         return f"Config<{self.decompile_to_text()!r}>"
 
-    def text_to_attributes(self, config_text) -> None:
+    def text_to_attributes(self, config_text: str) -> None:
         """
-        Convert the text into Config values and store them to the
-        appropriate Config attributes.
+        Convert the text into ``Config`` values and store them to the
+        appropriate ``Config`` attributes.
 
-        :param config_text: Standard Config text.
+        :param config_text: standard ``Config`` text.
         :return: None.
         """
         config_text = re.sub(r'\s*', '', config_text)
@@ -342,12 +318,11 @@ class Config:
         Compile and return a ``Config`` object from the settings in a
         ``PLSSDesc`` object or ``Tract`` object.
 
-        :param parent: A ``PLSSDesc`` or ``Tract`` object whose config
-        parameters should be compiled into this ``Config`` object.
+        :param parent: A ``PLSSDesc`` or ``Tract`` object.
         :param config_name: An optional string, being the name of this
-        ``Config`` object.
+         ``Config`` object.
         :param suppress_layout: Whether to include the ``.layout``
-        attribute from the parent object. (Defaults to ``False``)
+         attribute from the parent (if any). (Defaults to ``False``)
         """
         config = cls(config_name=config_name)
         config.layout = getattr(parent, 'layout', None)
@@ -366,11 +341,14 @@ class Config:
         Get a new ``Config`` from a dict, keyed by parameter name. Uses
         only the keys found in the dict, and ignores any keys that do
         not correspond to ``Config`` attribute names.
+
         :param parameters: A dict of parameter names and corresponding
-        values for the ``Config``.
+         values for the ``Config``.
+
         :param config_name: An optional string, being the name of this
-        ``Config`` object. (If specified, will override a 'config_name'
-        key in the ``parameters`` dict, if any.)
+         ``Config`` object. (If specified, will override a 'config_name'
+         key in the ``parameters`` dict, if any.)
+
         :return: A new ``Config``.
         """
         if config_name:
@@ -405,16 +383,20 @@ class Config:
         Get a new ``Config`` from kwargs, keyed by parameter name. Uses
         only the args provided, and ignores any parameters keys that do
         not correspond to ``Config`` attribute names.
-        :param kwargs:
+
+        :param kwargs: Keyword arguments that line up with appropriate
+         ``Config`` settings and values.
+
         :param config_name: An optional string, being the name of this
-        ``Config`` object.
+         ``Config`` object.
+
         :return: A new ``Config``.
         """
         return cls.from_dict(kwargs, config_name)
 
     def decompile_to_text(self) -> str:
         """
-        Decompile a Config object into its equivalent string.
+        Decompile a ``Config`` object into its equivalent string.
         """
         write_vals = []
         for att in Config._CONFIG_ATTRIBUTES:
@@ -428,8 +410,8 @@ class Config:
         INTERNAL USE:
 
         Take in a string of an attribute/value pair (in the format
-        'attribute.value' or 'attribute=value') and set the appropriate
-        value of the attribute.
+        ``'attribute.value'`` or ``'attribute=value'``) and set the
+        appropriate value of the attribute to this ``Config`` object.
         """
         try:
             # split attribute/value pair by : or . or =
