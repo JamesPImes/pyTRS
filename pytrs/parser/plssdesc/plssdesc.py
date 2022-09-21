@@ -1023,8 +1023,7 @@ class PLSSDesc:
 
         :return: None
         """
-        self.tracts.tracts_to_csv(
-            attributes, fp, mode, nice_headers)
+        self.tracts.tracts_to_csv(attributes, fp, mode, nice_headers)
 
     def quick_desc(self, delim=': ', newline='\n') -> str:
         # Note r-string, to escape '\n' character.
