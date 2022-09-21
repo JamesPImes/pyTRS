@@ -1,12 +1,12 @@
 
-__version__ = '1.1.2'
-__version_date__ = '6/12/2021'
+__version__ = '2.0.0'
+__version_date__ = '9/21/2022'
 __author__ = 'James P. Imes'
 __email__ = 'jamesimes@gmail.com'
 __website__ = 'https://github.com/JamesPImes/pyTRS'
 
 __license__ = (
-    "Copyright (c) 2020-2021, James P. Imes, all rights reserved.\n\n"
+    "Copyright (c) 2020-2022, James P. Imes, all rights reserved.\n\n"
     "pyTRS, together with all accompanying programs and modules, is licensed "
     "under a 'Modified Academic Public License', modified from the OMNeT++ "
     "license, which was written by Andras Varga (license text is in public "
@@ -14,8 +14,8 @@ __license__ = (
     "modified license generally allows 'non-commercial' use and modification, "
     "but DISALLOWS ANY COMMERCIAL OR FOR-PROFIT USE, MODIFICATION, AND "
     "DISTRIBUTION.\n\n"
-    "Read pytrs\\LICENSE.txt for the full terms and conditions, also available "
-    f"in full at <{__website__}>.\n\n"
+    "Read LICENSE.txt for the full terms and conditions, available in full "
+    f"at <{__website__}>.\n\n"
     f"Contact <{__email__}> with inquiries regarding commercial or for-profit "
     "use."
 )

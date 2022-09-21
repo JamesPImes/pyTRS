@@ -1,25 +1,23 @@
-
+import setuptools
 from setuptools import setup
 
 
 description = (
-    'A library for parsing Public Land Survey System (PLSS) '
-    'land descriptions into their component parts'
+    'A library for parsing Public Land Survey System (PLSS) land '
+    'descriptions.'
 )
 
 long_description = (
     'pyTRS (imported as `pytrs`) is a pure Python library for parsing '
     'Public Land Survey System (PLSS) land descriptions (or "legal '
-    'descriptions") into their component parts, in a format that is '
-    'more useful for data analysis, GIS mapping, spreadsheets, and '
-    'databases generally. It accounts for common variations in layout, '
-    'abbreviations, typos, etc. and can therefore process a range of '
-    'real-world data.'
+    'descriptions") for use in data analysis, GIS mapping, spreadsheets, '
+    'etc. It accounts for common variations in layout, abbreviations, '
+    'typos, etc. and can therefore process a range of real-world data.'
     "\n\n"
     "Visit [the GitHub repository](https://github.com/JamesPImes/pyTRS) "
-    "for a quickstart guide."
+    "for a quickstart guide, or read the "
+    "[official documentation](https://pytrs.readthedocs.io/)."
 )
-
 
 MODULE_DIR = "pytrs"
 
@@ -42,14 +40,7 @@ def get_constant(constant):
 setup(
     name='pyTRS',
     version=get_constant("version"),
-    packages=[
-        'pytrs',
-        'pytrs.parser',
-        'pytrs.quick',
-        'pytrs.utils',
-        'pytrs.interface_tools',
-        'pytrs.tractwriter'
-    ],
+    packages=setuptools.find_packages(),
     url=get_constant("url"),
     license='Modified Academic Public License',
     author=get_constant("author"),

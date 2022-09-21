@@ -1,1 +1,0 @@
-A confession: I made the cardinal sin of developing the core of pyTRS without unittests. I've started the slow process of backfilling tests. I've started by writing tests for most of the high-level functionality (e.g., checking the output of an entire parse against the expected results), and over time I plan to write proper tests to check the results of each intermediate step.

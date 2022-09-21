@@ -1,4 +1,4 @@
-# Copyright (c) 2020-2021, James P. Imes, all rights reserved.
+# Copyright (c) 2020-2022, James P. Imes, all rights reserved.
 
 """
 pyTRS - a pure Python library for parsing Public Land Survey System
@@ -8,7 +8,7 @@ spreadsheets, and databases generally. It accounts for common variations
 in layout, abbreviations, typos, etc. and can therefore process a range
 of real-world data.
 
-Copyright (c) 2020-2021, James P. Imes, all rights reserved.
+Copyright (c) 2020-2022, James P. Imes, all rights reserved.
 
 THIS LIBRARY IS NOT TO BE USED FOR ANY UNLICENSED COMMERCIAL PURPOSES OR
 FOR GENERATING OR MODIFYING LEGAL DESCRIPTIONS IN ANY LEGAL DOCUMENT!
@@ -27,31 +27,31 @@ __disclaimer__ = _constants.__disclaimer__
 __website__ = _constants.__website__
 
 
-# Import the main parsing functionality as top-level classes, vars, etc.
+# Import only the main parsing functionality as top-level classes, vars, etc.
 from pytrs.parser import (
     # Primary parsing classes and their helper classes
-    PLSSDesc,
-    Tract,
-    TractList,
-    TRS,
-    TRSList,
-    Config,
+    PLSSDesc,   # parser.plssdesc submodule
+    Tract,      # parser.tract submodule
+    TRS,        # parser.trs submodule
+    TractList,  # parser.container submodule
+    TRSList,    # parser.container submodule
+    Config,     # parser.config.config submodule
+    MasterConfig,   # parser.config.master_config submodule
 
     # Misc. functions for examining / handling descriptions
-    find_twprge,
-    find_sec,
-    find_multisec,
-    trs_to_dict,
+    find_twprge,    # parser.plss_preprocess submodule
+    find_sec,       # parser.plss_preprocess submodule
+    trs_to_dict,    # parser.trs submodule
 
     # For grouping / sorting Tract objects
-    group_tracts,
-    sort_grouped_tracts,
+    group_tracts_by,   # parser.containers submodule
+    sort_grouped_tracts,    # parser.containers submodule
 
     # A tuple of currently implemented layouts
-    IMPLEMENTED_LAYOUTS,
+    IMPLEMENTED_LAYOUTS,    # parser.config.layouts submodule
 
     # Examples of the currently implemented layouts
-    IMPLEMENTED_LAYOUT_EXAMPLES
+    IMPLEMENTED_LAYOUT_EXAMPLES     # parser.config.layouts submodule
 )
 
 
