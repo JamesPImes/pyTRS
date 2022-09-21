@@ -683,7 +683,8 @@ class PromptConfig(tk.Frame):
 
     def compile_config_text(self):
         """
-        Compile and return the config text. (Returns None if cancelled.)
+        Compile and return the config text. (Returns ``None`` if
+        cancelled.)
         """
         param_vals = []
 
@@ -767,7 +768,7 @@ class PromptConfig(tk.Frame):
 
     def cancel_clicked(self):
         """
-        Set it to the target config variable to 'CANCEL'. Show
+        Set it to the target config variable to ``'CANCEL'``. Show
         configured confirm_cancel_prompt message (if any),
         and destroy the window (if so configured).
         """
