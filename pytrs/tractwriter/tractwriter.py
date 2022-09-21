@@ -160,15 +160,18 @@ class TractWriter:
                 uid = gen_uid(
                     self.uid, written + 1, total_to_write, just=self.uid_just)
                 row.append(uid)
-            row = TractWriter.scrub_row(row)
+            row = TractWriter._scrub_row(row)
             self.writer.writerow(row)
             written += 1
         self.uid += 1
         return written
 
     @staticmethod
-    def scrub_row(data):
-        """Convert lists/dicts in a row to strings."""
+    def _scrub_row(data):
+        """
+        INTERNAL USE:
+        Convert lists/dicts in a row to strings.
+        """
         scrubbed = []
         for elem in data:
             if isinstance(elem, dict):
