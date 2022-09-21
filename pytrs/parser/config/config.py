@@ -27,17 +27,20 @@ class Config:
     A class to configure how ``PLSSDesc`` and ``Tract`` objects should
     be parsed.
 
-    Below are all possible config settings.  Join desired settings
-    together in a single string, separated by comma, with spaces
-    optional (e.g., ``'s, e, clean_qq'``).
+    Join desired settings together in a single string, separated by
+    comma, with spaces optional (e.g., ``'s, e, clean_qq'``).
+
+    **ALL POSSIBLE CONFIG SETTINGS**
 
     - ``'n'`` -- set ``default_ns='n'``
     - ``'s'`` -- set ``default_ns='s'``
     - ``'e'`` -- set ``default_ew='e'``
     - ``'w'`` -- set ``default_ew='w'``
-    - ``parse_qq`` -- Instruct ``Tract`` objects to parse into lots/qqs
-      when initialized. (†)
-    - ``clean_qq`` -- Allow broader recognition of aliquots. (†)
+
+    - ``'parse_qq'`` -- Instruct ``Tract`` objects to parse into
+      lots/qqs when initialized. (†)
+
+    - ``'clean_qq'`` -- Allow broader recognition of aliquots. (†)
 
       .. warning::
             Use ``'clean_qq'`` only if the data you're working with has
@@ -46,40 +49,53 @@ class Config:
 
     - ``'sec_colon_required'`` -- Require colon after section number.
       (‡)
+
     - ``'sec_colon_cautious'`` -- Require colon after section number,
       but do a second pass if no valid section is discovered during the
       first pass. (‡)
-    - 'suppress_lot_divs' -- Discard any divisions of lots -- e.g.,
+
+    - ``'suppress_lot_divs'`` -- Discard any divisions of lots -- e.g.,
       report 'N/2 of Lot 1' as ``'L1'``. The default behavior is to
       include lot divisions -- i.e. will report as ``'N2 of L1'`` unless
       ``'suppress_lot_divs'`` is used. (†)
+
     - ``'ocr_scrub'`` -- Scrub common OCR artefacts from the
       description.
+
     - ``'segment'`` -- Break up a PLSS description into chunks before
       parsing into tracts. (Might capture scenarios where the
       description changes ``layout`` partway through, but could also
       prevent the parser from generating proper warning flags.)
+
     - ``'qq_depth_min.<number>'`` -- Sets the minimum ``qq_depth`` to
       the specified <number>. (◊, †)
+
         - (Defaults to ``'qq_depth_min.2'`` -- i.e. parse to at least
           quarter-quarters.)
+
     - ``'qq_depth_max.<number>'`` -- Sets the maximum ``qq_depth`` to
       the specified <number>. (◊, †)
+
     - ``'qq_depth.<int>'`` -- Set the minimum *and* maximum ``qq_depth``
       to the specified <number> -- i.e. parse to the exact ``qq_depth``.
       (◊, †)
+
     - ``'break_halves'`` - break all aliquot halves into quarters, *even
       if* we're at divisions smaller than the specified
       ``qq_depth_min``. (†)
 
     - ``'TRS_desc'`` -- force ``PLSSDesc`` to be parsed as this
       ``layout``.
+
     - ``'desc_STR'`` -- force ``PLSSDesc`` to be parsed as this
       ``layout``.
-    - 'S_desc_TR' -- force ``PLSSDesc`` to be parsed as this
+
+    - ``'S_desc_TR'`` -- force ``PLSSDesc`` to be parsed as this
       ``layout``.
+
     - ``'TR_desc_S'`` -- force ``PLSSDesc`` to be parsed as this
       ``layout``.
+
     - ``'copy_all'`` -- force ``PLSSDesc`` to be parsed as this
       ``layout``.
 
