@@ -39,30 +39,38 @@ def prompt_config(
         cancel_button_text='Cancel',
         confirm_cancel_prompt=None):
     """
-    Launch a ``PromptConfig`` tkinter frame, for the user to set config
-    parameters. Will wait for the PromptConfig window to close, and then
-    will return the config parameters as a string.
+    Launch a ``PromptConfig`` ``tkinter`` frame, for the user to set
+    config parameters. Will wait for the ``tkinter`` window to close,
+    and then will return the config parameters as a string.
 
     IMPORTANT: If allowing the user to see the Cancel button, be aware
-    that clicking Cancel will return the string 'CANCEL'.
+    that clicking Cancel will return the string ``'CANCEL'``.
 
-    If the user exits out of the window, it will return 'EXIT'.
+    If the user exits out of the window, it will return ``'EXIT'``.
 
     All parameters have the same effect as they do in __init__() for a
-    PromptAttrib object, although not all parameters are available in
-    this function.
+    ``PromptAttrib`` object, although not all parameters are available
+    in this function.
+
     :param parameters: Which parameters choices to expose to the user.
+
     :param show_ok: Whether to show the OK button.
+
     :param show_cancel: Whether to show the Cancel button.
+
     :param prompt_after_ok: (Optional) The text to display after OK is
-    clicked. If None, there will be no prompt.
+     clicked. If ``None``, there will be no prompt.
+
     :param ok_button_text: The text to show inside the OK button.
-    (Defaults to 'Confirm Config Parameters'.)
+     (Defaults to ``'Confirm Config Parameters'``.)
+
     :param cancel_button_text: The text to show inside the Cancel
-    button.
+     button.
+
     :param confirm_cancel_prompt: (Optional) The text to display after
-    Cancel is clicked, allowing the user to change their mind. If None,
-    there will be no confirmation prompt.
+     Cancel is clicked, allowing the user to change their mind. If
+     ``None``, there will be no confirmation prompt.
+
     :return: A string of the user's chosen config parameters.
     """
 
