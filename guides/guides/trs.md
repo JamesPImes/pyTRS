@@ -3,9 +3,10 @@
 
 pyTRS uses a standard format for representing Township / Range / Section, detailed below.
 
-The [`TRS` class](https://github.com/JamesPImes/pyTRS/blob/master/guides/guides/trs.md#trs-objects) can be used to compile a string in this format, from the Twp/Rge/Sec components. It can also be used to [extract the components](https://github.com/JamesPImes/pyTRS/blob/master/guides/guides/trs.md#trs-attribute-table) from a pyTRS-standardized Twp/Rge/Sec.
+The [`TRS` class](#trs-objects) can be used to compile a string in this format, from the Twp/Rge/Sec components. It can also be used to [extract the components](#trs-attributes) from a pyTRS-standardized Twp/Rge/Sec.
 
-## Standard pyTRS format for Twp/Rge/Sec
+
+## <a name='standard'>Standard pyTRS format for Twp/Rge/Sec</a>
 
 pyTRS uses a standardized format for representing Township / Range / Section:
 
@@ -20,7 +21,7 @@ These are combined to form the `trs` in a standardized format:
 * `Section 14 of T154N-R97W` becomes `'154n97w14'`
 * `Section 1 of T7S-R9E` becomes `'7s9e01'`
 
-#### Undefined Twp/Rge/Sec
+#### <a name='undefined'>Undefined Twp/Rge/Sec</a>
 
 When a `Tract` or `TRS` object is created without specifying Twp/Rge/Sec, its `trs` is set to the undefined value, `'___z___z__'`, i.e.:
 
@@ -30,7 +31,7 @@ When a `Tract` or `TRS` object is created without specifying Twp/Rge/Sec, its `t
 | Range     | `'___z'` |
 | Section   | `'__'`   |
 
-#### Error Twp/Rge/Sec
+#### <a name='error'>Error Twp/Rge/Sec</a>
 
 When a `Tract` or `TRS` object is created with a `trs` that couldn't be deciphered (or when a `PLSSDesc` couldn't parse a Twp/Rge/Sec that made sense), the `trs` is set to the error value, `'XXXzXXXzXX'`, i.e.:
 
@@ -40,7 +41,7 @@ When a `Tract` or `TRS` object is created with a `trs` that couldn't be decipher
 | Range     | `'XXXz'` |
 | Section   | `'XX'`   |
 
-## `TRS` objects
+## <a name='trs-objects'>`TRS` objects</a>
 
 A `TRS` object will take the `trs` in the pyTRS standard format and break it into is component parts. Pass the appropriately formatted string as the sole argument when creating a `TRS` object.
 
@@ -78,25 +79,25 @@ trs2.rge        # -> '97w'
 Footnotes:
 1) If `twp` is passed as an int, or as a string that doesn't encode North/South (e.g., `'154'` instead of `'154n'`), it will fall back to what is specified in `default_ns` (if any). Similarly, if `rge` is passed as an int or as a string that doesn't encode East/West (e.g., `'97'` instead of `'97w'`), it will default to `default_ew`. If not specified there, it will fall back to `MasterConfig.default_ns` and `MasterConfig.default_ew`, which are `'n'` and `'w'` unless changed by the user. 
 
-## TRS Attribute Table
+## <a name='trs-attributes'>TRS Attribute Table</a>
 
-| Attribute         | Explanation                                                           | Possible Type(s) 	| Footnote |
-|:------------------|:----------------------------------------------------------------------|------------------	|:--------:|
-| `.trs`            | The Twp/Rge/Sec combination in the [standard pyTRS format](https://github.com/JamesPImes/pyTRS/blob/master/guides/guides/trs.md#standard-pytrs-format-for-twprgesec)              | str              	| |
-| `.twp`            | Twp portion of `.trs`                                                 | str              	| | 
-| `.twp_num`        | Twp portion of `.trs` (without N/S), as an int or None                 | int, None        	| 1 |
-| `.twp_ns`         | N/S portion of `.trs`, as a str or None                               | str, None        	| 1 |
-| `.twp_undef`      | Whether the Twp was undefined. | bool | 1 |
-| `.ns`         | same as `.twp_ns`                               | str, None        	|  1 |
-| `.rge`            | Rge portion of `.trs`                                                 | str              	| |
-| `.rge_num`        | Rge portion of `.trs` (without E/W), as an int or None                | int, None        	| 1 |
-| `.rge_ew`         | E/W portion of `.trs`, as a str or None                               | str, None        	| 1 |
-| `.ew` | same as `.rge_ew` | str, None | 1 |
-| `.rge_undef`      | Whether the Rge was undefined. | bool | 1 |
-| `.twprge`         | Twp/Rge portion of `.trs`                                             | str              	| |
-| `.sec`            | Section portion of `.trs`, as a str                                   | str              	| |
-| `.sec_num`        | Section portion of `.trs`, as an int or None                          | int, None        	| 1 |
-| `.sec_undef`      | Whether the Section was undefined. | bool | 1 |
+| Attribute         | Explanation                                                                                                   | Possible Type(s) 	| Footnote |
+|:------------------|:--------------------------------------------------------------------------------------------------------------|------------------	|:--------:|
+| `.trs`            | The Twp/Rge/Sec combination in the [standard pyTRS format](#standard)              | str              	| |
+| `.twp`            | Twp portion of `.trs`                                                                                         | str              	| | 
+| `.twp_num`        | Twp portion of `.trs` (without N/S), as an int or None                                                        | int, None        	| 1 |
+| `.twp_ns`         | N/S portion of `.trs`, as a str or None                                                                       | str, None        	| 1 |
+| `.twp_undef`      | Whether the Twp was undefined.                                                                                | bool | 1 |
+| `.ns`         | same as `.twp_ns`                                                                                             | str, None        	|  1 |
+| `.rge`            | Rge portion of `.trs`                                                                                         | str              	| |
+| `.rge_num`        | Rge portion of `.trs` (without E/W), as an int or None                                                        | int, None        	| 1 |
+| `.rge_ew`         | E/W portion of `.trs`, as a str or None                                                                       | str, None        	| 1 |
+| `.ew` | same as `.rge_ew`                                                                                             | str, None | 1 |
+| `.rge_undef`      | Whether the Rge was undefined.                                                                                | bool | 1 |
+| `.twprge`         | Twp/Rge portion of `.trs`                                                                                     | str              	| |
+| `.sec`            | Section portion of `.trs`, as a str                                                                           | str              	| |
+| `.sec_num`        | Section portion of `.trs`, as an int or None                                                                  | int, None        	| 1 |
+| `.sec_undef`      | Whether the Section was undefined.                                                                            | bool | 1 |
 
 1) When a `trs` was an error or was undefined, `twp_num`, `twp_ns`, `ns`, `rge_num`, `rge_ew`, `ew`, and `sec_num` are all set to `None`. To know whether it was undefined an error is specified in the `twp_undef`, `rge_undef`, and `sec_undef` attribute, respectively. As an example:
 
@@ -108,7 +109,7 @@ Footnotes:
 
 ## `TRSList` objects
 
-The class `TRSList` is very similar to [`TractList`](https://github.com/JamesPImes/pyTRS/blob/master/guides/guides/tractlist.md) (in fact they are both subclassed from the same superclass and contain many of the same methods), but it holds `TRS` objects instead of `Tract` objects.
+The class `TRSList` is very similar to [`TractList`](tractlist.md) (in fact they are both subclassed from the same superclass and contain many of the same methods), but it holds `TRS` objects instead of `Tract` objects.
 
 If you add to a `TRSList` a string, the string will first be converted to a `TRS` object.
 
@@ -141,7 +142,7 @@ trs_list = pytrs.TRSList(plssdesc)
 
 ### Sorting / Filtering / Grouping
 
-We can sort, filter, or group `TRSList` objects, essentially the same [as with `TractList` objects](https://github.com/JamesPImes/pyTRS/blob/master/guides/guides/sort_filter_group.md#guide-to-sorting--filtering--grouping-tract-objects-in-a-tractlist-or-plssdesc):
+We can sort, filter, or group `TRSList` objects, essentially the same [as with `TractList` objects](sort_filter_group.md):
 ```
 trs_list = pytrs.TRSList(['154n97w14', '154n97w14', '154n97w15', '155n97w22'])
 trs_list.custom_sort(sort_key='s,r,t')

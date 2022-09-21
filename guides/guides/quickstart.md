@@ -5,7 +5,7 @@
 
 pyTRS is imported as `pytrs`.
 
-The two primary parsing classes in the library are [`PLSSDesc`](https://github.com/JamesPImes/pyTRS/blob/master/guides/guides/plssdesc.md#guide-to-plssdesc-objects) and [`Tract`](https://github.com/JamesPImes/pyTRS/blob/master/guides/guides/tract.md#guide-to-tract-objects), which are automatically imported as top-level classes when importing `pytrs` (accessable as `pytrs.PLSSDesc` and `pytrs.Tract`, even though they are implemented as `pytrs.parser.parser.PLSSDesc` and `pytrs.parser.parser.Tract`).
+The two primary parsing classes in the library are [`PLSSDesc`](plssdesc.md) and [`Tract`](tract.md), which are automatically imported as top-level classes when importing `pytrs` (accessable as `pytrs.PLSSDesc` and `pytrs.Tract`, even though they are implemented as `pytrs.parser.parser.PLSSDesc` and `pytrs.parser.parser.Tract`).
 
 The conceptual difference between these two classes is that a `Tract` object represents land within a single, specific section; whereas a `PLSSDesc` object can represent land across any number of sections (in a single township, or across multiple townships).
 
@@ -13,7 +13,7 @@ Parsing a `PLSSDesc` object will create one or more `Tract` objects, which are s
 
 `Tract` objects can also be created directly, for when our dataset already has the description blocks separated from their respective Twp/Rge/Sec.
 
-__Important Note:__ Twp/Rge/Sec is represented in this library as a string, using a standardized format. `Section 14 of T154N-R97W` becomes `'154n97w14'`; whereas `Section 1 of T7S-R9E` becomes `'7s9e01'`.  See [the guide on `TRS` objects](https://github.com/JamesPImes/pyTRS/blob/master/guides/guides/trs.md#guide-to-trs-objects) more information.
+__Important Note:__ Twp/Rge/Sec is represented in this library as a string, using a standardized format. `Section 14 of T154N-R97W` becomes `'154n97w14'`; whereas `Section 1 of T7S-R9E` becomes `'7s9e01'`.  See [the guide on `TRS` objects](trs.md#standard) more information.
 
 
 
@@ -49,9 +49,9 @@ sec  : 15
 desc : W/2
 ```
 
-See [the table here](https://github.com/JamesPImes/pyTRS/blob/master/guides/guides/tract_attributes.md#tract-attribute-table) for all of the relevant data that can be extracted from a parsed `PLSSDesc` object.
+See [the table here](tract_attributes.md#tract-attributes) for all of the relevant data that can be extracted from a parsed `PLSSDesc` object.
 
-There are various methods that extract data to more useful formats than just printing to console. See [the guide on extracting in bulk](https://github.com/JamesPImes/pyTRS/blob/master/guides/guides/extracting_data.md#guide-to-extracting-data-in-bulk-from-parsed-objects).
+There are various methods that extract data to more useful formats than just printing to console. See [the guide on extracting in bulk](extracting_data.md#extracting-bulk).
 
 
 ### Parsing tracts into lots/aliquots with `Tract` objects
@@ -152,9 +152,11 @@ plssdesc_1 = pytrs.PLSSDesc('T154N-R97W Sec 14: NE/4', config='n,w,clean_qq')
 tract_1 = pytrs.Tract('NE/4', trs='154n97w14', config='clean_qq')
 ```
 
-The specific config options are beyond the scope of this quickstart guide, but [take a look at the guide on that topic](https://github.com/JamesPImes/pyTRS/blob/master/guides/guides/config.md#guide-to-config-parameters).
+The specific config options are beyond the scope of this quickstart guide, but [take a look at the guide on that topic](config.md).
 
 
 ### What else?
 
-Beyond that, it depends what your needs are. Check the [table of contents](https://github.com/JamesPImes/pyTRS/blob/master/guides/readme.md) for other useful functionality.
+Beyond that, it depends what your needs are. Check the [table of contents](../readme.md) for other useful functionality.
+
+See also the [official documentation](https://pytrs.readthedocs.io/) on ReadTheDocs.

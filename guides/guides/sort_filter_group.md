@@ -1,12 +1,12 @@
 # Guide to Sorting / Filtering / Grouping `Tract` objects in a `TractList` or `PLSSDesc`
 
-`PLSSDesc` has equivalent methods for [sorting](https://github.com/JamesPImes/pyTRS/blob/master/guides/guides/sort_filter_group.md#sort_tracts) / [filtering](https://github.com/JamesPImes/pyTRS/blob/master/guides/guides/sort_filter_group.md#filter) / [grouping](https://github.com/JamesPImes/pyTRS/blob/master/guides/guides/sort_filter_group.md#group) the `Tract` objects in its `.tracts` attribute.
+`PLSSDesc` has equivalent methods for [sorting](#sort) / [filtering](#filter) / [grouping](#group) the `Tract` objects in its `.tracts` attribute.
 
-## `.sort_tracts()`
+## <a name='sort'>`.sort_tracts()`</a>
 
 Sort the `Tract` objects stored in this `TractList` (in place), with optional custom sort keys (see below).
 
-Firstly, `sort_key=<lambda>` and `reverse=<bool>` parameters can be used here -- identical in behavior to the built-in `list.sort(key=<lambda>, reverse=<bool>)`, but note the parameter name here is `sort_key`, rather than `key`. (This is named `sort_key` because it is also a parameter in [the grouping methods](https://github.com/JamesPImes/pyTRS/blob/master/guides/guides/sort_filter_group.md#group), and it serves the same purpose there.)
+Firstly, `sort_key=<lambda>` and `reverse=<bool>` parameters can be used here -- identical in behavior to the built-in `list.sort(key=<lambda>, reverse=<bool>)`, but note the parameter name here is `sort_key`, rather than `key`. (This is named `sort_key` because it is also a parameter in [the grouping methods](sort_filter_group.md#group), and it serves the same purpose there.)
 
 ```
 t_list = pytrs.TractList.from_multiple([<some large list of tracts>])
@@ -73,11 +73,11 @@ t_list.sort_tracts(sort_key='s.reverse,r.ew,t.ns')
 ```
 
 
-Note that Twp/Rge's that [are errors or undefined (i.e. `'XXXzXXXz'` or `'___z___z'`)](https://github.com/JamesPImes/pyTRS/blob/master/guides/guides/trs.md#standard-pytrs-format-for-twprgesec) will be sorted to the end of the list when sorting on Twp and/or Rge (whether by number, north-to-south, south-to-north, east-to-west, or west-to-east).  Similarly, [error Sections and undefined sections (i.e. `'XX'` or `'__'`)](https://github.com/JamesPImes/pyTRS/blob/master/guides/guides/trs.md#standard-pytrs-format-for-twprgesec) will be sorted to the end of the list when sorting on section.  (The exception is if the sort is reversed, in which case, they come first.)
+Note that Twp/Rge's that are [errors](trs.md#error) or [undefined](trs.md#undefined) (i.e. `'XXXzXXXz'` or `'___z___z'`) will be sorted to the end of the list when sorting on Twp and/or Rge (whether by number, north-to-south, south-to-north, east-to-west, or west-to-east).  Similarly, [error Sections](trs.md#error) and [undefined sections](trs.md#undefined) (i.e. `'XX'` or `'__'`)](trs.md#error) will be sorted to the end of the list when sorting on section.  (The exception is if the sort is reversed, in which case, they come first.)
 
 
 
-## `.filter()`
+## <a name='filter'>`.filter()`</a>
 
 Filter into a new `TractList` those `Tract` objects that meet some condition (passed as a lambda or other function that returns a bool or bool-like value).
 
@@ -94,7 +94,7 @@ t_list = pytrs.TractList.from_multiple([<some large list of tracts>])
 new_list3 = t_list.filter(key=lambda tract: tract.twp == '154n', drop=True)
 ```
 
-## `.group_by()`
+## <a name='group'>`.group_by()`</a>
 
 We can group `Tract` objects by attribute -- e.g., by Twp/Rge (all tracts in T154N-R97W, all those in T155N-R97W, etc.) -- into a dict, by using the `.group_by()` method on a `TractList` or `PLSSDesc`.
 
@@ -233,7 +233,7 @@ Note: In the above example, the tracts are added to the `grouped_tracts` dict (b
 
 #### Sort the grouped tracts
 
-Use the parameters `sort_key=` (and optionally `reverse=`) to sort *__each__* of the `TractList` objects in the dict of group tracts. (Takes any of the [options available in `.sort_tracts()` method](https://github.com/JamesPImes/pyTRS/blob/master/guides/guides/sort_filter_group.md#sort_tracts).)
+Use the parameters `sort_key=` (and optionally `reverse=`) to sort *__each__* of the `TractList` objects in the dict of group tracts. (Takes any of the [options available in `.sort_tracts()` method](sort_filter_group.md#sort).)
 
 An example using the `TractList` custom sort keys -- sorting by Range (number), then Township (north-to-south):
 ```

@@ -5,17 +5,17 @@ A `PLSSDesc` object takes the raw text of a full PLSS land description and parse
 
 ## Table of Contents
 
-1) [Creating a `PLSSDesc`](https://github.com/JamesPImes/pyTRS/blob/master/guides/guides/plssdesc.md#creating-a-plssdesc-object) object / optional init parameters.
+1) [Creating a `PLSSDesc`](#creating) object / optional init parameters.
 
-2) [How to parse](https://github.com/JamesPImes/pyTRS/blob/master/guides/guides/plssdesc.md#parsing-a-plssdesc-into-tract-objects) the text into `Tract` attributes.
+2) [How to parse](#parsing) the text into `Tract` attributes.
 
-3) [How to populate lots/aliquots](https://github.com/JamesPImes/pyTRS/blob/master/guides/guides/plssdesc.md#populate-lotsaliquots-in-the-subordinate-tract-objects) in those `Tract` objects.
+3) [How to populate lots/aliquots](plssdesc.md#tract-parsing) in those `Tract` objects.
 
-4) How to extract the parsed data in bulk. (Separate guide [here](https://github.com/JamesPImes/pyTRS/blob/master/guides/guides/extracting_data.md#guide-to-extracting-data-in-bulk-from-parsed-objects).)
+4) How to extract the parsed data in bulk. (Separate guide [here](extracting_data.md#extracting-bulk).)
 
-5) [The syntax of PLSS descriptions](https://github.com/JamesPImes/pyTRS/blob/master/guides/guides/plssdesc.md#layout-syntax-of-twprgesecdesc) that can be handled by pyTRS (called `layout` in the terminology of this library).
+5) [The syntax of PLSS descriptions](plssdesc.md#layout) that can be handled by pyTRS (called `layout` in the terminology of this library).
 
-## Creating a `PLSSDesc` object
+## <a name='creating'>Creating a `PLSSDesc` object</a>
 
 A `PLSSDesc` object takes raw text and immediately parses it into `Tract` objects.
 ```
@@ -51,9 +51,9 @@ desc : W/2
 |`source=<any>`         | Specify where this description came from.                            | 3       |
 |`wait_to_parse=<bool>` | Do not parse at init.                                                |         |
 
-1) The parser will deduce the `layout` if not specified here. Generally, you should let the parser deduce it unless you're certain that your dataset contains only one type of `layout`. (See more information on `layout` [here](https://github.com/JamesPImes/pyTRS/blob/master/guides/guides/plssdesc.md#layout-syntax-of-twprgesecdesc).)
+1) The parser will deduce the `layout` if not specified here. Generally, you should let the parser deduce it unless you're certain that your dataset contains only one type of `layout`. (See more information on `layout` [here](layout).)
 
-2) See [the `config=` guide](https://github.com/JamesPImes/pyTRS/blob/master/guides/guides/config.md#guide-to-config-parameters) for more information on `config=` options.
+2) See [the `config=` guide](config.md) for more information on `config=` options.
 
 3) `source` does not affect the behavior of the parse in any way. Instead, it is meant as an internal record of where the description originally came from. It will be passed down to any `Tract` objects created by this `PLSSDesc`.(For example, if it came from a particular report, or a specific row in a spreadsheet, etc.) This can be useful for parsing numerous land descriptions (e.g., processing a large spreadsheet). It gets stored to the `.source` attribute (in both `PLSSDesc` and `Tract` objects).
 
@@ -75,7 +75,7 @@ len(a_plssdesc.tracts)   # -> 2  (we found 2 Tracts)
 Any unspecified parameters in `.parse()` will default to the corresponding values configured when the `PLSSDesc` was created (or reconfigured since).
 
 
-## Parsing a `PLSSDesc` into `Tract` objects
+## <a name='parsing'>Parsing a `PLSSDesc` into `Tract` objects</a>
 
 ##### Parse automatically when created.
 
@@ -101,7 +101,7 @@ new_parsed_tracts = dsc1.parse(
 ``` 
 
 
-## Populate lots/aliquots in the subordinate `Tract` objects
+## <a name='tract-parsing'>Populate lots/aliquots in the subordinate `Tract` objects</a>
 
 The parameter `parse_qq=True` at init, or in `.parse()` will cause the resulting `Tract` objects to also populate their lots/aliquots (i.e. their `.lots`, `.qqs`, `.lots_qqs`, and `.lot_acres` attributes).
 
@@ -125,10 +125,10 @@ dsc1.parse_tracts()
 
 ## Extracting data from the parsed `Tract` objects in bulk
 
-See [the guide on extracting `Tract` data](https://github.com/JamesPImes/pyTRS/blob/master/guides/guides/extracting_data.md), as well as [this guide on the relevant data fields](https://github.com/JamesPImes/pyTRS/blob/master/guides/guides/tract_attributes.md#tract-attribute-table) created via parsing.
+See [the guide on extracting `Tract` data](extracting_data.md), as well as [this guide on the relevant data fields](tract_attributes.md#tract-attributes) created via parsing.
 
 
-## `layout` (syntax of Twp/Rge/Sec/Desc)
+## <a name='layout'>`layout` (syntax of Twp/Rge/Sec/Desc)</a>
 
 The PLSS itself does not place many strict limitations on the syntax of Township, Range, Section, and 'description block' -- i.e., they can appear in essentially any order (except that Township pretty much always comes before Range). Below are the different permutations (called `layout`) that can be handled by pyTRS:
 
@@ -142,7 +142,7 @@ The PLSS itself does not place many strict limitations on the syntax of Township
 
 Because the components can appear in varying order, a PLSS description will be parsed differently, which is why the concept of `layout` exists in this library at all.
 
-In general, the parsing algorithm is capable of deducing the `layout` of the input data. However, the `layout` can also be dictated by the user ([via `config=` init parameter](https://github.com/JamesPImes/pyTRS/blob/master/guides/guides/config.md#guide-to-config-parameters); although doing so is not recommended, unless you reliably know the layout of your dataset and want to capture errors very strictly.
+In general, the parsing algorithm is capable of deducing the `layout` of the input data. However, the `layout` can also be dictated by the user ([via `config=` init parameter](config.md); although doing so is not recommended, unless you reliably know the layout of your dataset and want to capture errors very strictly.
 
 Get a tuple of all currently implemented `layout` options in `pytrs.IMPLEMENTED_LAYOUTS`. Get a string containing examples of each in `pytrs.IMPLEMENTED_LAYOUT_EXAMPLES`
 
