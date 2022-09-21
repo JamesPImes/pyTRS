@@ -5,8 +5,8 @@ A GUI application to parse PLSS descriptions in a .csv file, and write
 the parsed results at the end of each row, inserting rows as necessary
 such that there is one Tract per row. Saves to a new .csv file.
 
-(Demonstrates PromptConfig and PromptAttrib classes in the
-pytrs.interface_tools package.)
+(Demonstrates ``PromptConfig`` and ``PromptAttrib`` classes in the
+``pytrs.interface_tools`` package.)
 """
 
 import csv
@@ -20,8 +20,8 @@ import pytrs.interface_tools
 from pytrs.utils import gen_uid, alpha_to_num, num_to_alpha, flatten
 
 
-__version__ = '0.4.0'
-__version_date__ = '4/11/2021'
+__version__ = '0.5.0'
+__version_date__ = '9/21/2022'
 __author__ = 'James P. Imes'
 __email__ = 'jamesimes@gmail.com'
 
@@ -52,48 +52,51 @@ def parse_csv(
 
     :param in_file: Filepath to the .csv to read from.
     :param desc_col: Integer, specifying which column to read from for
-    the PLSS descriptions to parse. (Indexed from 1, rather than 0.)
+     the PLSS descriptions to parse. (Indexed from 1, rather than 0.)
     :param first_row: An integer, specifying the row containing the
-    first description to parse. (Indexed from 1, rather than 0.)
+     first description to parse. (Indexed from 1, rather than 0.)
     :param last_row: An integer, specifying the row after which to stop
-    parsing. If not specified, will parse all rows. (Indexed from 1,
-    rather than 0.)
+     parsing. If not specified, will parse all rows. (Indexed from 1,
+     rather than 0.)
     :param header_row: An integer specifying the row in the input file
-    containing headers, if any. (Indexed from 1, rather than 0.)
+     containing headers, if any. (Indexed from 1, rather than 0.)
     :param attributes: Which pytrs.Tract attributes to write to the csv.
-    Pass as a list of strings, or as a single string with attribute
-    names separated by comma. (If not specified, will default to basic
-    data for each description.)
+     Pass as a list of strings, or as a single string with attribute
+     names separated by comma. (If not specified, will default to basic
+     data for each description.)
     :param out_file: Filepath to the .csv to write to. (If not
-    specified, will default to a variation of the input filename, with a
-    timestamp.)
+     specified, will default to a variation of the input filename, with
+     a timestamp.)
     :param config_col: (Optional) Column in the .csv file containing the
-    pyTRS config parameters to use for parsing that row.
-    :param config: (Optional) Standard pyTRS config parameters to be
-    used for every description, entered as a string with parameters
-    separated by comma, or as a pytrs.Config object.
-    NOTE: If `config_col` is specified, then `config=` will be ignored
-    (assuming the `config_col` actually contains data).
+     ``config`` parameters to use for parsing that row.
+    :param config: (Optional) Standard ``config`` parameters to be used
+     for every description, entered as a string with parameters
+     separated by comma, or as a ``Config`` object.
+
+    .. note::
+        If ``config_col`` is specified, then ``config=`` will be ignored
+        (assuming the ``config_col`` actually contains data).
     :param layout_col: (Optional) Column in the .csv file containing the
-    pyTRS layout name to use for that row. (If not specified, will use
-    `config=` parameters or `config_col`; and if not specified there,
-    will deduce it when parsed.)
-    :param write_headers: Whether to write headers. Defaults to True.
+     ``layout`` name to use for that row. (If not specified, will use
+     ``config=`` parameters or ``config_col``; and if not specified
+     there, will deduce it when parsed.)
+    :param write_headers: Whether to write headers. Defaults to
+     ``True``.
     :param unpack: Whether to try to flatten and join lists, or
-    simply write them as they appear. (Defaults to `False`)
-    :param copy_data: Copy the the unparsed data for every new row (i.e.
-    whether to copy the data OTHER than the parsed descriptions, or to
-    just leave it in the original row). Defaults to False.
+     simply write them as they appear. (Defaults to ``False``)
+    :param copy_data: Copy the unparsed data for every new row (i.e.
+     whether to copy the data *other* than the parsed descriptions, or
+     to just leave it in the original row). Defaults to ``False``.
     :param tract_level: If the .csv already has lands broken into one
-    Twp/Rge/Sec combo (TRS) per row, specify `tract_level=True` to parse
-    the text into lots and QQs only. Defaults to False.
+     Twp/Rge/Sec per row, specify ``tract_level=True`` to parse the text
+     into lots and QQs only. Defaults to ``False``.
     :param include_uid: Include a unique identifier number for each row
-    in the format '0000-a.g' (where the digits refer to the count of
-    descriptions parsed, and the letters refer to how many rows were
-    written by the parser for each description -- i.e. how many tracts
-    were identified per description). Defaults to False.
+     in the format ``'0000-a.g'`` (where the digits refer to the count
+     of descriptions parsed, and the letters refer to how many rows were
+     written by the parser for each description -- i.e. how many tracts
+     were identified per description). Defaults to ``False``.
     :param include_unparsed: Copy rows that were not parsed. Defaults to
-    True.
+     ``True``.
     :return: Returns the filepath of the output file.
     """
 
@@ -258,7 +261,7 @@ class ParserAppWindow(tk.Tk):
     SPLASH_INFO = (
         f"pyTRS CSV Parser v{__version__} - {__version_date__}.\n"
         f"Built on pyTRS {pytrs.version()}.\n"
-        "Copyright © 2020-2021, James P. Imes, all rights reserved.\n\n"
+        "Copyright © 2020-2022, James P. Imes, all rights reserved.\n\n"
         f"Contact: <{__email__}>\n\n"
         "A program for parsing PLSS land descriptions ('legal "
         "descriptions') in a .csv file into their component parts.\n\n"
@@ -270,7 +273,8 @@ class ParserAppWindow(tk.Tk):
     # `parse_csv()`. The integers control whether each option is checked
     # on or off by default.
     OUTPUT_PARAM_DICT = {
-        'tract_level': ["Tract parsing (TRS and desc. block are already separate)", 0],
+        'tract_level':
+            ["Tract parsing (TRS and desc. block are already separate)", 0],
         'write_headers': ["Write headers", 1],
         'include_uid': ["Generate Unique ID (UID) for each parsed row", 1],
         'copy_data': ["Copy existing data into newly inserted rows", 0],
@@ -523,9 +527,9 @@ class ParserAppWindow(tk.Tk):
 
     def cf_btn_clicked(self):
         """
-        Config button was clicked; launch popup window to get Config
-        parameters from user (results are stored in StringVar
-        `self.config_text`).
+        Config button was clicked; launch popup window to get ``Config``
+        parameters from user (results are stored in a
+        ``tkinter.StringVar`` at ``.config_text``).
         """
         try:
             self.config_popup_tk.destroy()
@@ -538,15 +542,19 @@ class ParserAppWindow(tk.Tk):
             master=self.config_popup_tk,
             target_var=self.config_text,
             parameters=[
+                'default_ns',
+                'default_ew',
                 'clean_qq',
-                'include_lot_divs',
-                'require_colon',
+                'suppress_lot_divs',
+                'sec_colon_required',
+                'sec_colon_cautious',
                 'ocr_scrub',
                 'segment',
                 'layout',
                 'qq_depth_min',
                 'qq_depth_max',
-                'qq_depth'
+                'qq_depth',
+                'break_halves',
             ],
             show_cancel=False,
             exit_after_ok=True)
