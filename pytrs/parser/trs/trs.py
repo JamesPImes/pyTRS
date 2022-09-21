@@ -56,31 +56,37 @@ def compile_trs_unpacker_regex(
 
 class TRS:
     """
-    A container for Twp/Rge/Section in the standard pyTRS format.
-    Automatically breaks the TRS down into its component parts, which
-    can be accessed as properties:
-        .trs        -> The full Twp/Rge/Sec combination. *
+    A container for Twp/Rge/Section in the standardized format.
+    Automatically breaks the Twp/Rge/Sec down into its component parts,
+    which can be accessed as properties -- and which are equivalent to
+    properties in ``Tract`` objects::
+
+        .trs        -> The full Twp/Rge/Sec combination.
         .twp        -> Twp number + direction (a str or None)
         .twp_num    -> Twp number (an int or None)
         .twp_ns     -> Twp direction ('n', 's', or None)
         .ns         -> same as `.twp_ns`
-        .twp_undef  -> whether the Twp was undefined. **
+        .twp_undef  -> whether the Twp was undefined. (‡)
         .rge        -> Rge number + direction (a str or None)
         .rge_num    -> Rge num (an int or None)
         .rge_ew     -> Rge direction ('e', 'w', or None)
         .ew         -> same as `.rge_ew`
-        .rge_undef  -> whether the Rge was undefined. **
+        .rge_undef  -> whether the Rge was undefined. (‡)
         .sec_num    -> Sec number (an int or None)
-        .sec_undef  -> whether the Sec was undefined. **
+        .sec_undef  -> whether the Sec was undefined. (‡)
 
-    * Note that setting ``.trs`` will cause the other properties to be
-    recalculated. (Optionally set the ``.trs`` using the separate
-    Twp/Rge/Sec components with the ``.set_twprgesec()`` method.)
+    .. note::
 
-    ** Note that error parses do NOT qualify as 'undefined', but
-    undefined and error values are both stored as None. 'twp_undef',
-    'rge_undef', and 'sec_undef' are included to differentiate between
-    error vs. undefined, in case that distinction is needed.
+        ‡ Note that error parses do *not* qualify as 'undefined', but
+        undefined and error values are both stored as None.
+        ``.twp_undef``, ``.rge_undef``, and ``.sec_undef`` are included
+        to differentiate between error vs. undefined, in case that
+        distinction is needed.
+
+    .. note::
+        Setting ``.trs`` will cause the other properties to be
+        recalculated. (Optionally set the ``.trs`` using the separate
+        Twp/Rge/Sec components with the ``.set_twprgesec()`` method.)
     """
 
     # Regex patterns for unpacking Twp/Rge/Sec
@@ -112,7 +118,7 @@ class TRS:
     _USE_CACHE = True
     __CACHE = {}
 
-    def __init__(self, trs=None):
+    def __init__(self, trs: str = None):
         if trs in ['', None]:
             trs = MC._UNDEF_TRS
         self.__trs_dict = None
@@ -192,16 +198,16 @@ class TRS:
         return in the format 'T154N-R97W', but control the output with
         the various optional parameters.
 
-        :param t: How 'Township' should appear. ('T' by default)
-        :param delim: How Twp should be separated from Rge. ('-' by
-        default)
-        :param r: How 'Range' should appear. ('R' by default)
-        :param n: How 'North' (if found) should appear.
-        :param s: How 'South' (if found) should appear.
-        :param e: How 'East' (if found) should appear.
-        :param w: How 'West' (if found) should appear.
+        :param t: How "Township" should appear. (``'T'`` by default)
+        :param delim: How Twp should be separated from Rge. (``'-'`` by
+         default)
+        :param r: How "Range" should appear. (``'R'`` by default)
+        :param n: How "North" (if found) should appear.
+        :param s: How "South" (if found) should appear.
+        :param e: How "East" (if found) should appear.
+        :param w: How "West" (if found) should appear.
         :param undef: How undefined (or error) Twp or Rge should be
-        represented, including the direction. ('---X' by default)
+         represented, including the direction. (``'---X'`` by default)
         :return: A str of the clean Twp/Rge.
         """
         twp_num = self.twp_num
@@ -253,15 +259,15 @@ class TRS:
 
     def is_undef(self, twp=True, rge=True, sec=True) -> bool:
         """
-        Check if any component of this TRS is undefined.  (Checks
-        against Twp, Rge, and Sec by default, and returns True if any
-        is undefined.)
+        Check if any component of this ``TRS`` is undefined.  (Checks
+        against Twp, Rge, and Sec by default, and returns ``True`` if
+        any is undefined.)
 
         :param twp: Check if Twp is undefined.
         :param rge: Check if Rge is undefined.
         :param sec: Check if Sec is undefined.
-        :return: A bool, whether ANY of the checked values are
-        undefined.
+        :return: A bool, whether *any* of the checked values are
+         undefined.
         """
         return ((twp and self.twp_undef)
                 or (rge and self.rge_undef)
@@ -269,44 +275,56 @@ class TRS:
 
     def is_error(self, twp=True, rge=True, sec=True) -> bool:
         """
-        Check if any component of this TRS is an error.  (Checks
-        against Twp, Rge, and Sec by default, and returns True if any
-        is an error.)
+        Check if any component of this ``TRS`` is an error.  (Checks
+        against Twp, Rge, and Sec by default, and returns ``True`` if
+        any is an error.)
 
-        For this method, undefined values do NOT count as an error.
+        For this method, undefined values do *not* count as an error.
 
         :param twp: Check if Twp is an error.
         :param rge: Check if Rge is an error.
         :param sec: Check if Sec is an error.
-        :return: A bool, whether ANY of the checked values are errors.
+        :return: A bool, whether *any* of the checked values are errors.
         """
         return ((twp and self.twp_num is None and not self.twp_undef)
                 or (rge and self.rge_num is None and not self.rge_undef)
                 or (sec and self.sec_num is None and not self.sec_undef))
 
     def set_twprgesec(
-            self, twp, rge, sec, default_ns=None, default_ew=None,
+            self,
+            twp,
+            rge,
+            sec,
+            default_ns=None,
+            default_ew=None,
             ocr_scrub=False):
         """
-        Set the Twp/Rge/Sec of this TRS object by its component parts.
-        Returns the compiled `trs` string after setting the various
-        components to the appropriate attributes.
+        Set the Twp/Rge/Sec of this ``TRS`` object by its component
+        parts. Returns the compiled Twp/Rge/Sec string in the
+        standardized format.
 
         :param twp: Township (a str or int).
+
         :param rge: Range (a str or int).
+
         :param sec: Section (a str or int)
-        :param default_ns: (Optional) If `twp` wasn't specified as N or
-        S, assume `default_ns` (pass as 'n' or 's'). If not specified,
-        will fall back to PLSSDesc.MASTER_DEFAULT_NS (which is 'n'
-        unless configured otherwise).
-        :param default_ew: (Optional) If `rge` wasn't specified as E or
-        W, assume `default_ew` (pass as 'e' or 'w'). If not specified,
-        will fall back to PLSSDesc.MASTER_DEFAULT_EW (which is 'w'
-        unless configured otherwise).
+
+        :param default_ns: (Optional) If ``twp`` wasn't specified as N
+         or S, assume ``default_ns`` (pass as ``'n'`` or ``'s'``). If
+         not specified, will fall back to ``MasterConfig.default_ns``
+         (which is ``'n'`` unless configured otherwise).
+
+        :param default_ew: (Optional) If ``rge`` wasn't specified as E
+         or W, assume ``default_ew`` (pass as ``'e'`` or ``'w'``). If
+         not specified, will fall back to ``MasterConfig.default_ew``
+         (which is ``'w'`` unless configured otherwise).
+
         :param ocr_scrub: A bool, whether to try to scrub common OCR
-        artifacts from the Twp, Rge, and Sec -- if any of them are
-        passed as a str. (Defaults to ``False``.)
-        :return: The compiled Twp/Rge/Sec in the pyTRS format.
+         artifacts from the Twp, Rge, and Sec -- if any of them are
+         passed as a str. (Defaults to whatever was set in ``.config``,
+         which is ``False`` unless configured otherwise.)
+
+        :return: The compiled Twp/Rge/Sec in the standardized format.
         """
         trs = TRS.construct_trs(
             twp, rge, sec, default_ns, default_ew, ocr_scrub)
@@ -315,26 +333,46 @@ class TRS:
 
     @staticmethod
     def from_twprgesec(
-            twp=None, rge=None, sec=None, default_ns=None, default_ew=None,
+            twp=None,
+            rge=None,
+            sec=None,
+            default_ns=None,
+            default_ew=None,
             ocr_scrub=False):
         """
-        Create and return a new TRS object by defining its Twp/Rge/Sec
-        from its component parts.
+        Create a new ``TRS`` object from its Twp/Rge/Sec component
+        parts.
 
-        :param twp: Township (a str or int).
-        :param rge: Range (a str or int).
-        :param sec: Section (a str or int)
-        :param default_ns: (Optional) If `twp` wasn't specified as N or
-        S, assume `default_ns` (pass as 'n' or 's'). If not specified,
-        will fall back to PLSSDesc.MASTER_DEFAULT_NS (which is 'n'
-        unless configured otherwise).
-        :param default_ew: (Optional) If `rge` wasn't specified as E or
-        W, assume `default_ew` (pass as 'e' or 'w'). If not specified,
-        will fall back to PLSSDesc.MASTER_DEFAULT_EW (which is 'w'
-        unless configured otherwise).
-        :param ocr_scrub: A bool, whether to try to scrub common OCR
-        artifacts from the Twp, Rge, and Sec -- if any of them are
-        passed as a str. (Defaults to ``False``.)
+        (If N/S or E/W are not specified, will pull defaults from
+        ``default_ns`` and ``default_ew``. If not specified there, will
+        default to ``MasterConfig.default_ns`` and
+        ``MasterConfig.default_ns``, which are `'n'` and `'w'`,
+        respectively, unless configured otherwise.)
+
+        :param twp: Township. Pass as a string (i.e. ``'154n'``). If
+         passed as an int, the N/S will be pulled from ``default_ns`` or
+         ``config`` parameters, or defaulted to
+         ``MasterConfig.default_ns``, which is ``'n'`` unless configured
+         otherwise.
+
+        :param rge: Range. Pass as a string (i.e. ``'97w'``). If passed
+         as an int, the E/W will be pulled from ``default_ns`` or
+         ``config`` parameters, or defaulted to
+         ``MasterConfig.default_ns``, which is ``'n'`` unless configured
+         otherwise.
+
+        :param sec: Section. Pass as a str or an int (up to 2 digits).
+
+        :param default_ns: How to interpret townships for which
+         direction was not specified -- i.e. either ``'n'`` or ``'s'``.
+
+        :param default_ew: How to interpret ranges for which direction
+         was not specified -- i.e. either 'e' or 'w'.
+
+        :param ocr_scrub: Whether to try to iron out common OCR
+         'artifacts' from the Twp, Rge, and Sec -- if any of them are
+         passed as a str. (Defaults to ``False``.)
+
         :return: The new ``TRS`` object.
         """
         trs = TRS.construct_trs(
@@ -343,26 +381,47 @@ class TRS:
 
     @staticmethod
     def construct_trs(
-            twp, rge, sec, default_ns=None, default_ew=None, ocr_scrub=False):
+            twp,
+            rge,
+            sec,
+            default_ns=None,
+            default_ew=None,
+            ocr_scrub=False):
         """
-        Build a Twp/Rge/Sec in the pyTRS format from component parts.
-        Get back a string of that Twp/Rge/Sec.
+        Build a Twp/Rge/Sec in the standardized format from component
+        parts.
 
-        :param twp: Township (a str or int -- ``'154n'`` or ``154``).
-        :param rge: Range (a str or int -- ``'97w'`` or ``97``).
-        :param sec: Section (a str or int -- ``'14'`` or ``14``).
-        :param default_ns: (Optional) If `twp` wasn't specified as N or
-        S, assume `default_ns` (pass as 'n' or 's'). If not specified,
-        will fall back to PLSSDesc.MASTER_DEFAULT_NS (which is 'n'
-        unless configured otherwise).
-        :param default_ew: (Optional) If `rge` wasn't specified as E or
-        W, assume `default_ew` (pass as 'e' or 'w'). If not specified,
-        will fall back to PLSSDesc.MASTER_DEFAULT_EW (which is 'w'
-        unless configured otherwise).
-        :param ocr_scrub: A bool, whether to try to scrub common OCR
-        artifacts from the Twp, Rge, and Sec -- if any of them are
-        passed as a str. (Defaults to ``False``.)
-        :return: The compiled Twp/Rge/Sec in the pyTRS format.
+        (If N/S or E/W are not specified, will pull defaults from
+        ``default_ns`` and ``default_ew``. If not specified there, will
+        default to ``MasterConfig.default_ns`` and
+        ``MasterConfig.default_ns``, which are `'n'` and `'w'`,
+        respectively, unless configured otherwise.)
+
+        :param twp: Township. Pass as a string (i.e. ``'154n'``). If
+         passed as an int, the N/S will be pulled from ``default_ns`` or
+         ``config`` parameters, or defaulted to
+         ``MasterConfig.default_ns``, which is ``'n'`` unless configured
+         otherwise.
+
+        :param rge: Range. Pass as a string (i.e. ``'97w'``). If passed
+         as an int, the E/W will be pulled from ``default_ns`` or
+         ``config`` parameters, or defaulted to
+         ``MasterConfig.default_ns``, which is ``'n'`` unless configured
+         otherwise.
+
+        :param sec: Section. Pass as a str or an int (up to 2 digits).
+
+        :param default_ns: How to interpret townships for which
+         direction was not specified -- i.e. either ``'n'`` or ``'s'``.
+
+        :param default_ew: How to interpret ranges for which direction
+         was not specified -- i.e. either 'e' or 'w'.
+
+        :param ocr_scrub: Whether to try to iron out common OCR
+         'artifacts' from the Twp, Rge, and Sec -- if any of them are
+         passed as a str. (Defaults to ``False``.)
+
+        :return: The compiled Twp/Rge/Sec in the standardized format.
         """
 
         if default_ns is None:
@@ -486,31 +545,36 @@ class TRS:
     def trs_to_dict(trs) -> dict:
         """
         Take a compiled Twp/Rge/Sec (in the standard pyTRS format) and
-        break it into a dict, keyed as follows:
-            'twp'       -> Twp number + direction (a str or None)
-            'twp_num'   -> Twp number (an int or None);
-            'twp_ns'    -> Twp direction ('n', 's', or None);
-            'twp_undef' -> whether the Twp was undefined. **
-            'rge'       -> Rge number + direction (a str or None)
-            'rge_num'   -> Rge num (an int or None);
-            'rge_ew'    -> Rge direction ('e', 'w', or None)
-            'rge_undef' -> whether the Rge was undefined. **
-            'sec_num'   -> Sec number (an int or None)
-            'sec_undef' -> whether the Sec was undefined. **
+        break it into a dict, keyed as follows::
 
-        ** Note that error parses do NOT qualify as 'undefined'.
-        Undefined and error values are both stored as None. 'twp_undef',
-        'rge_undef', and 'sec_undef' are included to differentiate
-        between error vs. undefined, in case that distinction is needed.
+            'trs'        -> The full Twp/Rge/Sec combination.
+            'twp'        -> Twp number + direction (a str or None)
+            'twp_num'    -> Twp number (an int or None)
+            'twp_ns'     -> Twp direction ('n', 's', or None)
+            'ns'         -> same as 'twp_ns'
+            'twp_undef'  -> whether the Twp was undefined. (‡)
+            'rge'        -> Rge number + direction (a str or None)
+            'rge_num'    -> Rge num (an int or None)
+            'rge_ew'     -> Rge direction ('e', 'w', or None)
+            'ew'         -> same as 'rge_ew'
+            'rge_undef'  -> whether the Rge was undefined. (‡)
+            'sec_num'    -> Sec number (an int or None)
+            'sec_undef'  -> whether the Sec was undefined. (‡)
 
-        :param trs: The Twp/Rge/Sec (in the pyTRS format) to be broken
-        apart.
+        .. note::
+
+            ‡ Note that error parses do *not* qualify as 'undefined',
+            but undefined and error values are both stored as None.
+            ``'twp_undef'``, ``'rge_undef'``, and ``'sec_undef'`` are
+            included to differentiate between error vs. undefined, in
+            case that distinction is needed.
+
+        :param trs: The Twp/Rge/Sec (in the standardized format) to be
+         broken apart.
         :return: A dict with the various elements.
         """
-
         if isinstance(trs, TRS):
             trs = trs.trs
-
         dct = {
             'trs': MC._ERR_TRS,
             'twp': MC._ERR_TWP,
@@ -525,7 +589,6 @@ class TRS:
             'sec_num': None,
             'sec_undef': False
         }
-
         # Default empty TRS to the undefined version (as opposed to an
         # error version, which would result otherwise).
         if trs in ['', None]:
@@ -533,7 +596,6 @@ class TRS:
 
         # Enforce lowercase to match pyTRS standard.
         trs = str(trs).lower()
-
         mo = TRS._TRS_UNPACKER_REGEX.search(trs)
         if not mo:
             return dct
@@ -608,8 +670,8 @@ class TRS:
         meaning in regex patterns, generally.)
 
         :return: The newly compiled re.Pattern object (which will also
-        have been set to the ``TRS._TRS_UNPACKER_REGEX`` class
-        attribute).
+         have been set to the ``TRS._TRS_UNPACKER_REGEX`` class
+         attribute).
         """
         new_rgx = compile_trs_unpacker_regex(
             twp_rgx=TRS._TWP_RGX,
@@ -638,25 +700,33 @@ class TRS:
 def trs_to_dict(trs) -> dict:
     """
     Take a compiled Twp/Rge/Sec (in the standard pyTRS format) and break
-    it into a dict, keyed as follows:
-        "twp"       -> Twp number + direction (a str or None)
-        "twp_num"   -> Twp number (an int or None);
-        "twp_ns"    -> Twp direction ('n', 's', or None);
-        "twp_undef" -> whether the Twp was undefined. **
-        "rge"       -> Rge number + direction (a str or None)
-        "rge_num"   -> Rge num (an int or None);
-        "rge_ew"    -> Rge direction ('e', 'w', or None)
-        "rge_undef" -> whether the Rge was undefined. **
-        "sec_num"   -> Sec number (an int or None)
-        "sec_undef" -> whether the Sec was undefined. **
+    it into a dict, keyed as follows::
 
-    ** Note that error parses do NOT qualify as 'undefined'. Undefined
-    and error values are both stored as None. 'twp_undef', 'rge_undef',
-    and 'sec_undef' are included to differentiate between error vs.
-    undefined, in case that distinction is needed.
+            'trs'        -> The full Twp/Rge/Sec combination.
+            'twp'        -> Twp number + direction (a str or None)
+            'twp_num'    -> Twp number (an int or None)
+            'twp_ns'     -> Twp direction ('n', 's', or None)
+            'ns'         -> same as 'twp_ns'
+            'twp_undef'  -> whether the Twp was undefined. (‡)
+            'rge'        -> Rge number + direction (a str or None)
+            'rge_num'    -> Rge num (an int or None)
+            'rge_ew'     -> Rge direction ('e', 'w', or None)
+            'ew'         -> same as 'rge_ew'
+            'rge_undef'  -> whether the Rge was undefined. (‡)
+            'sec_num'    -> Sec number (an int or None)
+            'sec_undef'  -> whether the Sec was undefined. (‡)
 
-    :param trs: The Twp/Rge/Sec (in the pyTRS format) to be broken
-    apart.
+        .. note::
+
+            ‡ Note that error parses do *not* qualify as 'undefined',
+            but undefined and error values are both stored as None.
+            ``'twp_undef'``, ``'rge_undef'``, and ``'sec_undef'`` are
+            included to differentiate between error vs. undefined, in
+            case that distinction is needed.
+
+    :param trs: The Twp/Rge/Sec (in the standardized format) to be
+     broken apart.
+
     :return: A dict with the various elements.
     """
     return TRS.trs_to_dict(trs)
