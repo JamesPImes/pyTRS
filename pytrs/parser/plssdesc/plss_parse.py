@@ -496,6 +496,7 @@ class PLSSParser:
 
         for chunk in self.blocks:
             self.parse_chunk(chunk)
+            self.gen_flags_chunk(chunk)
             examine_unused()
 
         self.check_error_tracts()
@@ -749,7 +750,7 @@ class PLSSParser:
         add an appropriate error flag.
         :return: ``None`` (flags are added to attributes).
         """
-        error_found = any(tract.trs_is_error for tract in self.tracts)
+        error_found = any(tract.trs_is_error() for tract in self.tracts)
         if error_found:
             flag = _E_FLAG_TWPRGE_ERR
             self.e_flags.append(flag)
