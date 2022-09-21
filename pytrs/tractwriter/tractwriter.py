@@ -21,8 +21,8 @@ class TractWriter:
         data.
 
         :param attributes: The ``Tract`` attributes to write for each
-        ``Tract``. (See documentation for ``Tract`` class for all
-        important attributes.)
+         ``Tract``. (See documentation for ``Tract`` class for all
+         important attributes.)
 
         :param fp: Filepath to the .csv file to write to.
 
