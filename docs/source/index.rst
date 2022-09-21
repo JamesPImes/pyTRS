@@ -5,6 +5,30 @@ pyTRS
 .. automodule:: pytrs
 
 
+Bird's-eye View
+---------------
+
+.. code-block:: python
+
+    import pytrs
+
+The two primary parsing classes in the library are ``PLSSDesc`` and
+``Tract``, which are automatically imported as top-level classes.
+
+The conceptual difference between these two classes is that a ``Tract``
+represents land within a single specific section; whereas a ``PLSSDesc``
+can represent land across any number of sections in any number of
+townships (i.e. one or more tracts).
+
+Parsing a ``PLSSDesc`` object will create one or more ``Tract`` objects.
+
+``Tract`` objects can also be created directly, for when our dataset
+already has the description blocks separated from their respective
+Twp/Rge/Sec.
+
+``Tract`` objects can also be parsed, in which case they will break down
+their respective descriptions into lots and aliquot "quarter-quarters".
+
 Top-level classes and functions
 -------------------------------
 
