@@ -24,44 +24,148 @@ class ConfigError(TypeError):
 
 class Config:
     """
-    A class to configure how PLSSDesc and Tract objects should be
-    parsed.
+    A class to configure how ``PLSSDesc`` and ``Tract`` objects should
+    be parsed.
 
-    For a list of all parameter options, printed to console (must first
-    import ``pytrs.utils``):
-        ``pytrs.utils.config_parameters()``
+    All possible parameters:
 
-    Or launch the Config GUI application (must first import
-    ``pytrs.interface_tools``):
-        ``pytrs.interface_tools.prompt_config()``
+    - ``'n'`` -- set ``default_ns='n'``
+    - ``'s'`` -- set ``default_ns='s'``
+    - ``'e'`` -- set ``default_ew='e'``
+    - ``'w'`` -- set ``default_ew='w'``
+    - ``parse_qq`` -- Instruct ``Tract`` objects to parse into lots/qqs
+      when initialized. (†)
+    - ``clean_qq`` -- Allow broader recognition of aliquots. (†)
 
-    For a guide to using Config objects general, printed to console
-    (must first import ``pytrs.utils``):
-        ``pytrs.utils.config_help()``
+      .. warning::
+            Use ``'clean_qq'`` only if the data you're working with has
+            nothing but simple aliquots and lots (i.e. no metes-and-
+            bounds descriptions, exceptions, etc.).
 
-    All possible parameters (call ``pytrs.utils.config_parameters()``
-    for definitions) -- any unspecified parameters will fall back to
-    default parsing behavior:
-        -- 'n'  <or>  'default_ns.n'  vs.  's'  <or>  'default_ns.s'
-        -- 'e'  <or>  'default_ew.e'  vs.  'w'  <or>  'default_ew.w'
-        -- 'parse_qq'  vs.  'parse_qq.False'
-        -- 'clean_qq'  vs.  'clean_qq.False'
-        -- 'sec_colon_required'     # TODO: clarify docstring
-        -- 'sec_colon_cautious'     # TODO: clarify docstring
-        -- 'suppress_lot_divs'  vs.  'suppress_lot_divs.False'
-        -- 'ocr_scrub'  vs.  'ocr_scrub.False'
-        -- 'segment'  vs.  'segment.False'
-        -- 'qq_depth_min.<int>'  (defaults to 'qq_depth_min.2')
-        -- 'qq_depth_max.<int>'  (defaults to 'qq_depth_max.None')
-        -- 'qq_depth.<int>'  (defaults to 'qq_depth.None')
-        -- 'break_halves'  vs.  'break_halves.False'
-        Only one of the following may be passed -- and none of these are
-        recommended:
-        -- 'TRS_desc'  <or>  'layout.TRS_desc'
-        -- 'desc_STR'  <or>  'layout.desc_STR'
-        -- 'S_desc_TR'  <or>  'layout.S_desc_TR'
-        -- 'TR_desc_S'  <or>  'layout.TR_desc_S'
-        -- 'copy_all'  <or>  'layout.copy_all'
+    - ``'sec_colon_required'`` -- Require colon after section number.
+      (‡)
+    - ``'sec_colon_cautious'`` -- Require colon after section number,
+      but do a second pass if no valid section is discovered during the
+      first pass. (‡)
+    - 'suppress_lot_divs' -- Discard any divisions of lots -- e.g.,
+      report 'N/2 of Lot 1' as ``'L1'``. The default behavior is to
+      include lot divisions -- i.e. will report as ``'N2 of L1'`` unless
+      ``'suppress_lot_divs'`` is used. (†)
+    - ``'ocr_scrub'`` -- Scrub common OCR artefacts from the
+      description.
+    - ``'segment'`` -- Break up a PLSS description into chunks before
+      parsing into tracts. (Might capture scenarios where the
+      description changes ``layout`` partway through, but could also
+      prevent the parser from generating proper warning flags.)
+    - ``'qq_depth_min.<number>'`` -- Sets the minimum ``qq_depth`` to
+      the specified <number>. (◊, †)
+        - (Defaults to ``'qq_depth_min.2'`` -- i.e. parse to at least
+          quarter-quarters.)
+    - ``'qq_depth_max.<number>'`` -- Sets the maximum ``qq_depth`` to
+      the specified <number>. (◊, †)
+    - ``'qq_depth.<int>'`` -- Set the minimum *and* maximum ``qq_depth``
+      to the specified <number> -- i.e. parse to the exact ``qq_depth``.
+      (◊, †)
+    - ``'break_halves'`` - break all aliquot halves into quarters, *even
+      if* we're at divisions smaller than the specified
+      ``qq_depth_min``. (†)
+
+    - ``'TRS_desc'`` -- force ``PLSSDesc`` to be parsed as this
+      ``layout``.
+    - ``'desc_STR'`` -- force ``PLSSDesc`` to be parsed as this
+      ``layout``.
+    - 'S_desc_TR' -- force ``PLSSDesc`` to be parsed as this
+      ``layout``.
+    - ``'TR_desc_S'`` -- force ``PLSSDesc`` to be parsed as this
+      ``layout``.
+    - ``'copy_all'`` -- force ``PLSSDesc`` to be parsed as this
+      ``layout``.
+
+    († denotes config settings that affect only ``Tract`` objects, but
+    which can be used with ``PLSSDesc`` objects to impact their
+    subordinate ``Tract`` objects.)
+
+    (‡ ``sec_colon_required`` and ``sec_colon_cautious`` only have any
+    effect on ``TRS_desc`` and ``S_desc_TR`` layouts -- i.e. those
+    layouts in which the description block follows the section number.
+    Moreover, if ``sec_colon_required`` is used, then
+    ``sec_colon_cautious`` will have no effect.)
+
+    (◊ See below discussion regarding ``qq_depth``.)
+
+    ``qq_depth_min``, ``qq_depth_max``, and/or ``qq_depth`` affect how
+    'deeply' to parse aliquots -- i.e. to 160-acre divisions (quarter
+    sections), 40-acre divisions (quarter-quarters), 10-acre divisions,
+    etc.
+
+    By default, aliquots are parsed down to *at least*
+    quarter-quarters::
+
+        # If qq_depth_min is 2 (the default).
+        'N/2NE/4'  -->  ['NENE', 'NWNE']
+
+    But smaller divisions that exist in the text will also be reported::
+
+        # If qq_depth_min is 2 (the default).
+        'S/2N/2NE/4'  -->  ['S2NENE', 'S2NWNE']
+
+    Such smaller divisions can be curtailed by specifying
+    ``qq_depth_max``. For example, if set to 2, anything smaller than
+    quarter-quarter will be discarded::
+
+        # If qq_depth_max is set to 2.
+        'N/2NE/4'  -->  ['NENE', 'NWNE']
+        'S/2N/2NE/4'  -->  ['NENE', 'NWNE']
+
+    We can force parsing to smaller aliquots by increasing the
+    ``qq_depth_min``::
+
+        # If qq_depth_max is set to 3.
+        'NW/4NE/4'  -->  ['NENWNE', 'NWNWNE', 'SENWNE', 'SWNWNE']
+        'S/2NW/4NE/4'  -->  ['SENWNE', 'SWNWNE']
+
+    We can force parsing to an *exact* depth by specifying ``qq_depth``
+    (which will override both ``qq_depth_min`` and ``qq_depth_max``)::
+
+        # If qq_depth is set to 1 (i.e. quarters).
+        'N/2'  -->  ['NE', 'NW']
+        'S/2N/2'  -->  ['NE', 'NW']
+
+        # If qq_depth is set to 2 (i.e. quarter-quarters).
+        'NE/4'  -->  ['NENE', 'NWNE', 'SENE', 'SWNE']
+        'N/2NE/4'  -->  ['NENE', 'NWNE']
+        'S/2N/2NE/4'  -->  ['NENE', 'NWNE']
+
+        # If qq_depth is set to 3.
+        'NW/4NE/4'  -->  ['NENWNE', 'NWNWNE', 'SENWNE', 'SWNWNE']
+        'S/2N/2NE/4'  -->  ['SENENE', 'SWNENE', 'SENWNE', 'SWNWNE']
+
+    Finally, we can use ``break_halves`` to split halves into quarters,
+    even if they occur beyond the specified ``qq_depth_min``::
+
+        # If qq_depth_min is set to 2, but also using break_halves.
+        'NW/4NE/4'  -->  ['NWNE']
+        'S/2NW/4NE/4'  -->  ['SENWNE', 'SWNWNE']
+
+    .. warning::
+        Do not set ``qq_depth_max`` to be less than ``qq_depth_min``.
+        Doing so will result in reporting aliquots that do not actually
+        exist.
+
+    .. warning::
+        Setting ``qq_depth_min`` or ``qq_depth`` to a number larger than
+        4 will quickly start to be resource- and time-intensive, because
+        each additional number is another exponential division.
+
+
+    For a GUI application for viewing and selecting ``Config`` options,
+    import and launch ``prompt_config()`` from the
+    ``pytrs.interface_tools`` module:
+
+    .. code-block:: python
+
+        import pytrs.interface_tools
+        pytrs.interface_tools.prompt_config()
     """
 
     # Implemented settings that are settable via Config object:
