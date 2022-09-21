@@ -102,7 +102,7 @@ class TractListTests(unittest.TestCase):
 
     def test_group(self):
         tl = TractList.from_multiple(ALL_SAMPLES)
-        grouped = tl.group(by_attribute=['twprge'])
+        grouped = tl.group_by(attribute=['twprge'])
         for twprge, expected_tract_strs in GROUPED_BY_TWPRGE.items():
             tl_tracts = grouped[twprge]
             # We're comparing stringified tracts, rather than Tract objects,
@@ -164,7 +164,7 @@ class TRSListTests(unittest.TestCase):
 
     def test_group(self):
         tl = TRSList.from_multiple(ALL_SAMPLES)
-        grouped = tl.group(by_attribute=['twprge'])
+        grouped = tl.group_by(attribute=['twprge'])
         for twprge, expected_tract_strs in GROUPED_BY_TWPRGE.items():
             tl_trses = grouped[twprge]
             # We're comparing stringified TRS's, rather than TRS objects,
