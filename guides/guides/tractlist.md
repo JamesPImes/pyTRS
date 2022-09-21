@@ -1,7 +1,7 @@
 
 # Guide to `TractList` objects
 
-`TractList` objects are a subclass of the built-in `list`, with added functionality to:
+`TractList` objects are an emulation of the built-in `list`, with added functionality to:
 
 * type-check any objects that are added to it (if an object other than a `Tract` is appended, it will raise a `TypeError`, although it can also unpack `Tract` objects out of `PLSSDesc`, `TractList` or other iterables that hold any of those object types -- see the `.from_multiple()` method).
 
@@ -15,13 +15,11 @@
 
 With only a few exceptions\*\*, any method in the `TractList` class has an equivalent method in the `PLSSDesc` class. The `PLSSDesc` will apply the method to its own tracts (i.e. the `Tract` objects in its `.tracts` attribute, which is a `TractList` itself).
 
-*\*\* `PLSSDesc` objects do not have the constructor methods `.from_multiple()` and `.iter_from_multiple()`, nor some of the non-public methods, nor any of the built-in `list` methods.*
+*\*\* `PLSSDesc` objects do not have the constructor method `.from_multiple()`, nor some of the non-public methods, nor emulations of any built-in `list` methods.*
 
 ## Creating a `TractList` (or equivalent `generator`)
 
 If we need a collection of `Tract` objects, create a `TractList` by [initializing with `TractList()`](https://github.com/JamesPImes/pyTRS/blob/master/guides/guides/tractlist.md#creating-a-tractlist-or-equivalent-generator) or with the [more robust `TractList.from_multiple()` method](https://github.com/JamesPImes/pyTRS/blob/master/guides/guides/tractlist.md#robustly-construct-a-tractlist-from-multiple-sources-with-from_multiple).
-
-If we just want to iterate over `Tract` objects, [create a `generator` with the `TractList.iter_from_multiple()` static method](https://github.com/JamesPImes/pyTRS/blob/master/guides/guides/tractlist.md#construct-a-generator-of-tract-objects-with-tractlistiter_from_multiple).
 
 
 ### Constructing a `TractList` from a single iterable
@@ -63,24 +61,6 @@ some_tractlist = pytrs.TractList.from_multiple(nested_list)
 ```
 some_tractlist = pytrs.TractList.from_multiple(tract1, tract2, some_plssdesc)
 ``` 
-
-
-### Construct a `generator` of `Tract` objects with `TractList.iter_from_multiple()`
-
-`TractList.iter_from_multiple()` is a static method and does not actually create a `TractList`. Instead, it creates a `generator` that produces the `Tract` objects in the same order they *would* be in if put in a `TractList` with `.from_multiple()`.
-
-```
-some_tractlist = pytrs.TractList.from_multiple(
-    plssdesc, tract1, another_tractlist)
-
-tract_generator = pytrs.TractList.iter_from_multiple(
-    plssdesc, tract1, another_tractlist)
-
-# The tracts are in the same order in both.
-for tract in some_tractlist:
-    assert tract == next(tract_generator)      # -> True
-```
-
 
 
 ## Extracting `Tract` data in bulk
