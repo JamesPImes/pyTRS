@@ -1,9 +1,11 @@
 # Guide to pyTRS
-Copyright © 2021, James P. Imes. All rights reserved.
+Copyright © 2021-2022, James P. Imes. All rights reserved.
 
 *__Note:__ pyTRS is NOT licensed for any commercial or for-profit use. [Contact me](mailto:jamesimes@gmail.com) for licensing inquiries, or to inquire about my consulting, or just to say hello / offer feedback.*
 
 __Note also:__ These guides are not intended to cover all of the functionality of pyTRS, but they will get you up and running for most purposes.
+
+*__WARNING:__ As of v2.0.0 (September 2022) these guides are likely to be slightly outdated. I am working on updating them for the new version. The proper documentation is the most accurate source of information. You may want to go there after you read the quickstart.*
 
 
 ## Table of Contents
@@ -49,4 +51,4 @@ Sciton 14: Norhaest qrter
 ```
 ...becomes `'154n97w14: Norhaest qrter` (or `'154s97w14'` if configured to assume 'South' townships).
 
-And I should also point out that all of the examples in these guides and in the code and its comments are dummy data or arbitrarily chosen.
+And I should also point out that all examples in these guides and in the code and its comments are dummy data or arbitrarily chosen.
