@@ -1,5 +1,8 @@
 # Copyright (c) 2020-2022, James P. Imes, all rights reserved
 
+# Please don't judge me too harshly for this code. I wrote it a really
+# long time ago, and it's not really worth cleaning up.
+
 """
 A GUI app for choosing config parameters for parsing.
 
@@ -36,7 +39,7 @@ def prompt_config(
         cancel_button_text='Cancel',
         confirm_cancel_prompt=None):
     """
-    Launch a PromptConfig tkinter frame, for the user to set config
+    Launch a ``PromptConfig`` tkinter frame, for the user to set config
     parameters. Will wait for the PromptConfig window to close, and then
     will return the config parameters as a string.
 
@@ -83,24 +86,26 @@ def prompt_config(
 
 class PromptConfig(tk.Frame):
     """
-    A tkinter frame for configuring parsing parameters (i.e. ``Config``
-    objects).
+    A ``tkinter`` frame for obtaining config parsing parameters from the
+    user.
 
-    NOTE: You can customize the behavior of this class by modifying the
-    class attributes before creating one:
-        .ALL_PARAMETERS
-        .RB_PARAMETERS
-        .QQ_DEPTH_CONTROLS
-        .COMBO_PARAMS
-        .COMBO_WIDTH_NSEW
-        .COMBO_WIDTH_OTHER
-        .COMBO_VALUES
-        .COMBO_LABELS
-        .HELP_TEXT
+    .. note::
+        You can customize the behavior of this class by modifying the
+        class attributes before initializing one::
 
-    ...but depending on what gets changed, it might break the compiler
-    or other functionality. So, that functionality is not officially
-    supported.
+            .ALL_PARAMETERS
+            .CB_PARAMS
+            .QQ_DEPTH_CONTROLS
+            .COMBO_PARAMS
+            .COMBO_WIDTH_NSEW
+            .COMBO_WIDTH_OTHER
+            .COMBO_VALUES
+            .COMBO_LABELS
+            .HELP_TEXT
+
+        ...but depending on what gets changed, it might break the
+        compiler or other functionality. So, that functionality is not
+        officially supported.
     """
 
     # Exposing these dicts, etc. as class attributes allows for some
@@ -110,15 +115,14 @@ class PromptConfig(tk.Frame):
     # The options that will be populated if `attributes='all'` at init.
     ALL_PARAMETERS = list(Config._CONFIG_ATTRIBUTES)
 
-    # Parameters that are set via radiobuttons:
-    RB_PARAMS = [
+    # Parameters that are set via checkbuttons:
+    CB_PARAMS = [
         'clean_qq',
         'suppress_lot_divs',
         'sec_colon_required',
         'sec_colon_cautious',
         'ocr_scrub',
         'segment',
-        'init_preprocess',
         'wait_to_parse',
         'parse_qq',
         'break_halves'
@@ -194,15 +198,13 @@ class PromptConfig(tk.Frame):
         'default_ns': (
             "If the dataset contains a Township whose N/S "
             "direction was not specified, the program will assume "
-            "this specified direction. (And if not specified here, "
-            "will assumed North.)"
+            "this specified direction."
         ),
 
         'default_ew': (
             "If the dataset contains a Range whose E/W direction "
             "was not specified, the program will assume this "
-            "specified direction. (And if not specified here, "
-            "will assumed West.)"
+            "specified direction."
         ),
 
         'layout': (
@@ -226,26 +228,24 @@ class PromptConfig(tk.Frame):
             "matches, if the dataset is not simple and clean. For "
             "example, 'Northernmost one hundred feet of the NW/4' "
             "would match as 'Northernmost oNE¼ hundred feet of "
-            "the NW¼'.\n\n"
-            "Default: off (`False`)"
+            "the NW¼'."
         ),
 
         'suppress_lot_divs': (
             "If parsing lots, suppress reporting any divisions of lots. "
-            "For example, if this setting is not used, then 'N/2 of Lot 1' "
+            "For example, if this setting is NOT used, then 'N/2 of Lot 1' "
             "would be reported as 'N2 of L1'. If this is turned on, it "
-            "would be reported as simply 'L1'.\n\n"
-            "Default: off (`False`)"
+            "would be reported as simply 'L1'."
         ),
 
         'sec_colon_required': (
-            "Instruct a PLSSDesc object (whose layout is "
-            "`TRS_desc` or `S_desc_TR`) to require a colon "
-            "between the section number and the following "
-            "description -- i.e. 'Section 14 NE/4' would NOT be "
-            "picked up if 'sec_colon_required' is on (`True`).  If "
-            "turned off (`False`, the default), then 'Section 14 NE/4' "
-            "would be captured. However, this may result in false "
+            "Instruct the parser to require a colon between the section "
+            "number and the following description (if the PLSS description"
+            "has so-called `'TRS_desc'` or `S_desc_TRS` layout).\n\n"
+            "For example, 'Section 14 NE/4' would NOT be picked up if "
+            "'sec_colon_required' is on.\n\n"
+            "If turned off (the default), then 'Section 14 NE/4' "
+            "WOULD be captured. However, this may result in false "
             "matches, depending on the dataset.\n\n"
             "See also `sec_colon_cautious` setting, which will do a "
             "second pass if no section is found during the first pass.\n\n"
@@ -256,13 +256,15 @@ class PromptConfig(tk.Frame):
         'sec_colon_cautious': (
             "Similar to `sec_colon_required`, except that this will do a "
             "potential second pass. Specifically, during the first pass while "
-            "parsing a PLSSDesc (whose layout is `TRS_desc` or `S_desc_TR`), "
-            "it will require a colon to between the section number and the "
-            "following description -- i.e. 'Section 14 NE/4' would NOT be "
-            "picked up during the first pass.\n\n"
+            "parsing a PLSS description (whose layout is `TRS_desc` or "
+            "`S_desc_TR`), it will require a colon to between the section "
+            "number and the following description.\n\n"
+            "For example, 'Section 14 NE/4' would NOT be picked up "
+            "during the first pass.\n\n"
             "However, if no section is identified during the first pass, "
             "a second pass will be conducted during which colons are not "
-            "required.\n\n"
+            "required -- and in this case, 'Section 14 NE/4' would be "
+            "captured.\n\n"
             "(Note: If both `sec_colon_required` AND `sec_colon_cautious` "
             "are set, then `sec_colon_required` will control.)"
         ),
@@ -271,44 +273,34 @@ class PromptConfig(tk.Frame):
             "Attempt to iron out common OCR artifacts in a "
             "PLSSDesc object or Tract object (e.g., 'TIS4N-R97W' "
             "that should have been 'T154N-R97W'). (WARNING: may "
-            "cause other issues.)\n\n"
-            "Default: off (`False`)."
+            "cause other issues.)"
         ),
 
         'segment': (
-            "While parsing, segment each description by T&R "
-            "before identifying tracts, which MIGHT capture SOME "
-            "descriptions whose layout changes partway through. "
+            "While parsing a PLSS description, segment each description "
+            "by Twp/Rge before identifying tracts, which MIGHT capture "
+            "SOME descriptions whose layout changes partway through. "
             "(However, this cannot capture ALL changes in "
-            "layouts.)\n\n"
-            "Default: off (`False`)"
-        ),
-
-        'init_preprocess': (
-            "Preprocess PLSS descriptions and Tracts upon "
-            "initialization.\n\n"
-            "Default: on (`True`)"
+            "layouts.)"
         ),
 
         'wait_to_parse': (
             "Wait to parse PLSS descriptions upon initialization, "
-            "rather than doing it automatically.\n\n"
-            "Default: off (`False` -- i.e. do parse by default)"
+            "rather than doing it automatically."
         ),
 
         'parse_qq': (
-            "Parse Tracts into lots and QQ's upon initialization. "
-            "(If used with a PLSS description, its resulting Tracts "
-            "will be parsed into lots/QQs.)\n\n"
-            "Default: off (`False`)"
+            "Parse Tracts into lots and aliquot quarter-quarters upon "
+            "initialization. (If used with a PLSS description, its "
+            "resulting Tracts will be parsed into lots/aliquots.)"
         ),
 
         'qq_depth_min': (
-            "Specify the MINIMUM 'depth' to which to parse "
-            "aliquots -- i.e. 2 will result in divisions NO "
-            "LARGER THAN quarter-quarters (QQs, e.g., 'NENE'); "
+            "Specify the MINIMUM depth (or granularity) to which to parse "
+            "aliquots. A value of 2 will result in divisions no "
+            "larger than quarter-quarters (~40 acres -- e.g., 'NENE'); "
             "whereas 1 will result in divisions no larger than "
-            "quarter sections (e.g., 'NE'). Will still include "
+            "quarter sections (~160 acres -- e.g., 'NE'). Will still include "
             "smaller divisions if they exist in the data (i.e. "
             "'E/2NE/4NE/4' would become ['E2NENE'] if this is set "
             "to 2; or ['NENENE', 'SENENE'] if set to 3).\n\n"
@@ -325,19 +317,19 @@ class PromptConfig(tk.Frame):
 
             "[etc.]\n\n\n"
 
-            "Default: 2 (i.e. QQs)"
+            "Default: 2 (i.e. 40-acre quarter-quarters)"
         ),
 
         'qq_depth_max': (
-            "Specify the MAXIMUM 'depth' to which to parse "
-            "aliquots -- i.e. 2 will result in divisions NO "
-            "SMALLER THAN quarter-quarters (QQs, e.g., 'NENE'); "
+            "Specify the MAXIMUM depth (or granularity) to which to parse "
+            "aliquots -- i.e. a value of 2 will result in divisions no "
+            "smaller than quarter-quarters (~40 acres -- e.g., 'NENE'); "
             "whereas 1 will result in divisions no smaller than "
-            "quarters (e.g., 'NE'). Will NOT include smaller"
+            "quarters (~160 acres -- e.g., 'NE'). Will NOT include smaller "
             "divisions if they exist in the data (i.e."
             "'E/2NE/4NE/4' would become ['NENE'] if this is set "
             "to 2).\n\n"
-            "NOTE: qq_depth_max should be greater than or equal to "
+            "WARNING: qq_depth_max should be greater than or equal to "
             "qq_depth_min.\n\n\n"
 
             "Examples (parsing the 'NE/4'):\n\n"
@@ -356,9 +348,9 @@ class PromptConfig(tk.Frame):
         ),
 
         'qq_depth': (
-            "Specify the EXACT 'depth' to which to parse "
-            "aliquots -- i.e. 2 will result in exactly "
-            "quarter-quarters (QQs, e.g., 'NENE'), even if smaller "
+            "Specify the EXACT depth (or granularity) to which to parse "
+            "aliquots. A value of 2 will result in exactly "
+            "quarter-quarters (~40 acres -- e.g., 'NENE'), even if smaller "
             "divisions exist in the data. This is equivalent to "
             "setting qq_depth_min equal to qq_depth_max.\n\n"
             "NOTE: Using `qq_depth` will override `qq_depth_min` "
@@ -374,8 +366,7 @@ class PromptConfig(tk.Frame):
             "'NWSENE', 'SESENE', 'SWSENE', 'NESWNE', 'NWSWNE', "
             "'SESWNE', 'SWSWNE'\n\n"
 
-            "[etc.]\n\n\n"
-            "Default: 2 (i.e. QQs)"
+            "[etc.]"
         ),
 
         'break_halves': (
@@ -406,37 +397,55 @@ class PromptConfig(tk.Frame):
             confirm_cancel_prompt=None,
             **kw):
         """
-        A tkinter Frame for setting pyTRS config parameters.
-        IMPORTANT: If the Cancel button (or the OK button, if parameter
-        `exit_after_ok=True` is used at init) is used, it will destroy
-        `master`, and not just `self`.
+        A ``tkinter`` frame for obtaining config parsing parameters from
+        the user.
 
-        :param master: The tkinter master (same as for tkinter.Frame)
-        :param target_var: A tk.StringVar to which Config data should be
-        stored when the OK button is clicked.
+        .. note::
+            If the Cancel button (or the OK button, if parameter
+            ``exit_after_ok=True`` is used at init) is used, it will
+            destroy ``master``, and not just itself.
+
+        :param master: The ``tkinter`` master (same as for
+         ``tkinter.Frame``)
+
+        :param target_var: A ``tkinter.StringVar`` to which ``Config``
+         data should be stored when the OK button is clicked.
+
         :param parameters: A list or string containing the parameters
-        that should be available to the user. If `parameters='all'`,
-        will display all possible parameters. If passed as a string,
-        parameter names should be separate by a comma and no spaces.
+         that should be available to the user. If ``parameters='all'``,
+         will display all possible parameters. If passed as a string,
+         parameter names should be separate by a comma and no spaces.
+
         :param show_ok: Include the OK button.
+
         :param ok_button_text: A string, for custom text for the OK
-        button.
+         button.
+
         :param prompt_after_ok: A string to display in a messagebox
-        after the OK button has been clicked. Defaults to None.
-        :param exit_after_ok: Whether to close the window after OK 
-        button is clicked. Defaults to False.
+         after the OK button has been clicked. Defaults to ``None``.
+
+        :param exit_after_ok: Whether to close the window after OK
+         button is clicked. Defaults to ``False``.
+
         :param cancel_button_text: A string, for custom text for the
-        Cancel button.
+         Cancel button.
+
         :param show_cancel: Include the Cancel button.
-        IMPORTANT: If the Cancel button is clicked, it will set the
-        `target_var` to the string 'CANCEL' and close the window.
+
+            .. note::
+                If the Cancel button is clicked, the ``target_var`` will
+                be set to the string ``'CANCEL'``, and the window will
+                close.
+
         :param confirm_cancel_prompt: A string to display in a
-        yes/no messagebox when the Cancel button is clicked. Defaults
-        to None.
-        :param external_var_dict: A dict with the key 'config_text',
-        to which the compiled config parameters should be set. (Only
-        used by `prompt_config()` -- probably ignore this parameter.)
-        :param kw: Kwargs to pass through to tkinter.Frame at init.
+         yes/no messagebox when the Cancel button is clicked. Defaults
+         to ``None``.
+
+        :param external_var_dict: A dict with the key ``'config_text'``,
+         to which the compiled config parameters should be set. (Only
+         used by ``prompt_config()`` -- probably ignore this parameter.)
+
+        :param kw: Kwargs to pass through to ``tkinter.Frame`` at init.
         """
         default_master = False
         if master is None:
@@ -512,7 +521,7 @@ class PromptConfig(tk.Frame):
         for pr in self.COMBO_PARAMS:
             if pr not in parameters:
                 continue
-            self.ConfigComboGen(
+            self._ConfigComboGen(
                 master=combo_frame,
                 top_owner=self,
                 attribute=pr,
@@ -522,7 +531,7 @@ class PromptConfig(tk.Frame):
             )
 
         # --------------------------------------------------------------
-        # Parameters set via radiobuttons (i.e. RB_PARAMS)
+        # Parameters set via checkbuttons (i.e. CB_PARAMS)
 
         lbl = tk.Label(self, text='')
         lbl.grid(row=self.MAIN_ROW, column=1)
@@ -532,7 +541,7 @@ class PromptConfig(tk.Frame):
         #   i.e. var_name 'clean_qq' -> `self.clean_qq_var`, storing a
         #   tk.IntVar; and set this tk.IntVar to the `self.CONFIG_DEF`
         #   dict for 'clean_qq' (etc.)
-        for var_name in self.RB_PARAMS:
+        for var_name in self.CB_PARAMS:
             new_var = tk.IntVar()
             setattr(self, f"{var_name}_var", new_var)
             self.CONFIG_DEF[var_name]['var'] = new_var
@@ -543,14 +552,12 @@ class PromptConfig(tk.Frame):
             self.CONFIG_DEF[var_name]['var'] = new_var
 
         # --------------------------------------------------------------
-        # Generate radiobuttons for the remaining parameters
-        pr = self.RadioSetter(self, writing_header=True)
-        pr.grid(row=self.MAIN_ROW, column=1, sticky='w')
+        # Generate checkbuttons for the remaining parameters
         self.MAIN_ROW += 1
         for cf in parameters:
-            if cf not in self.RB_PARAMS:
+            if cf not in self.CB_PARAMS:
                 continue
-            pr = self.RadioSetter(
+            pr = self._CheckSetter(
                 self, parameter=cf, target_var=self.CONFIG_DEF[cf]['var'])
             pr.grid(row=self.MAIN_ROW, column=1, sticky='w')
 
@@ -608,7 +615,7 @@ class PromptConfig(tk.Frame):
 
     def set_defaults(self):
         """Set or reset all config variables to their defaults."""
-        for var_name in self.RB_PARAMS:
+        for var_name in self.CB_PARAMS:
             # Pull the tk.IntVar associated with this var_name, and set to -1
             tkintvar = getattr(self, f"{var_name}_var")
             tkintvar.set(-1)
@@ -618,51 +625,32 @@ class PromptConfig(tk.Frame):
     def cf_help_clicked(self, attrib):
         tk.messagebox.showinfo(attrib, self.CONFIG_DEF[attrib]['help'])
 
-    class RadioSetter(tk.Frame):
+    class _CheckSetter(tk.Frame):
         """
-        A sub-widget for setting a config parameter with 3 radiobuttons.
+        A sub-widget for setting a config parameter with checkbutton.
         """
 
-        RB_COL_WIDTH = 5
+        LEFT_COL_WIDTH = 20
 
         def __init__(
                 self,
                 master=None,
-                writing_header=False,
                 parameter=None,
                 target_var=None,
                 **kw):
             tk.Frame.__init__(self, master, **kw)
             self.master = master
 
-            if writing_header:
-                # If `writing_header`, will only write these:
-                rlabel_1 = tk.Label(self, text='Off', width=self.RB_COL_WIDTH)
-                rlabel_2 = tk.Label(self, text='Default', width=self.RB_COL_WIDTH)
-                rlabel_3 = tk.Label(self, text='On', width=self.RB_COL_WIDTH)
-                rlabel_1.grid(column=1, row=0, sticky='w')
-                rlabel_2.grid(column=2, row=0, sticky='w')
-                rlabel_3.grid(column=3, row=0, sticky='w')
-                return
-
-            for i in range(1, 4):
-                lbl = tk.Label(self, width=self.RB_COL_WIDTH)
-                lbl.grid(column=i, row=0)
-
-            cb = tk.Radiobutton(self, value=0, variable=target_var)
-            cb.grid(column=1, row=0, sticky='n')
-            cb = tk.Radiobutton(self, value=-1, variable=target_var)
-            cb.grid(column=2, row=0, sticky='n')
-            cb = tk.Radiobutton(self, value=1, variable=target_var)
-            cb.grid(column=3, row=0, sticky='n')
-
+            lbl = tk.Label(self, width=self.LEFT_COL_WIDTH)
+            lbl.grid(column=1, row=0)
+            lbl = tk.Label(self, text=parameter, padx=5)
+            lbl.grid(column=1, row=0, sticky='e')
             help_btn = tk.Button(
                 self, text='?', padx=5,
                 command=lambda: self.master.cf_help_clicked(parameter))
-            help_btn.grid(column=4, row=0)
-
-            lbl = tk.Label(self, text=parameter)
-            lbl.grid(column=5, row=0)
+            help_btn.grid(column=2, row=0)
+            cb = tk.Checkbutton(self, variable=target_var, padx=5)
+            cb.grid(column=3, row=0, sticky='n')
 
     @staticmethod
     def warn_deep_depths(num):
@@ -703,7 +691,7 @@ class PromptConfig(tk.Frame):
 
         # Check each of the requested variables. If not default (i.e. -1),
         # then append the parameter+value.
-        for param in set(self.RB_PARAMS).intersection(set(self.parameters)):
+        for param in set(self.CB_PARAMS).intersection(set(self.parameters)):
             val = self.CONFIG_DEF[param]['var'].get()
             if val != -1:
                 param_vals.append(f"{param}.{bool(val)}")
@@ -778,7 +766,7 @@ class PromptConfig(tk.Frame):
             self.external_var_dict['config_text'] = 'CANCEL'
             self.master.destroy()
 
-    class ConfigComboGen:
+    class _ConfigComboGen:
         """Generate a Combobox and associated buttons / labels."""
         def __init__(
                 self,
@@ -793,9 +781,9 @@ class PromptConfig(tk.Frame):
             :param master: The frame holding this Combobox etc.
             :param top_owner: The PromptConfig object.
             :param attribute: The name of the attribute being controlled
-            by this Combobox.
+             by this Combobox.
             :param values: A tuple of the optional values to choose
-            from.
+             from.
             :param label_txt: The label next to the Combobox.
             :param width: Width of the Combobox.
             :param kw: kwargs to pass through to the Combobox.
