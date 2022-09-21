@@ -757,6 +757,54 @@ class PLSSParser:
             self.e_flag_lines.append((flag, flag))
         return None
 
+    def gen_flags_chunk(self, chunk):
+        """
+        Generate warning flags and corresponding context lines.
+        :return: ``None`` (results stored to ``.w_flags`` and
+         ``.w_flag_lines``).
+        """
+        # regex pattern : (flag, (context len before, context len after))
+        rgx_and_how_to_hand = {
+            well_regex: ("well", (5, 25)),
+            depth_regex: ("depth", (10, 20)),
+            including_regex: ("including", (0, 40)),
+            less_except_regex: ("less_except", (0, 40)),
+            isfa_regex: ("insofar", (0, 40)),
+        }
+        max_end = len(chunk)
+        for rgx, how_to_handle in rgx_and_how_to_hand.items():
+            flag, (left_context, right_context) = how_to_handle
+            start_pos = 0
+            while True:
+                start_mo = rgx.search(chunk, pos=start_pos)
+                if not start_mo:
+                    break
+
+                # Get context substring, searching for any additional matches
+                # of this same regex; and if any additional matches are found,
+                # then keep extending the context right. (To reduce redundant
+                # flags.)
+                end_mo = start_mo
+                final_end_mo = end_mo
+                while True:
+                    # Continue extending context rightward until we no
+                    # longer find another match of this regex pattern.
+                    left_bound = end_mo.end()
+                    right_bound = min((max_end, end_mo.end() + right_context))
+                    end_mo = rgx.search(chunk, pos=left_bound, endpos=right_bound)
+                    if not end_mo:
+                        break
+                    final_end_mo = end_mo
+                i = max((0, start_mo.start() - left_context))
+                j = min((final_end_mo.end() + right_context, max_end))
+                context = chunk[i:j]
+                context = context.replace('\n', ' ').strip()
+                context = f"<{context}>"
+                self.w_flags.append(flag)
+                self.w_flag_lines.append((flag, context))
+                # Start next search from the end of this context string.
+                start_pos = j
+
 
 class PLSSChunker:
     """
