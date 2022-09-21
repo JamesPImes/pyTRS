@@ -1074,8 +1074,8 @@ class TractList(_TRSTractList):
     only ``TRS`` objects.
 
 
-    STREAMLINED OUTPUT OF THE PARSED TRACT DATA
-    -------------------------------------------
+    **STREAMLINED OUTPUT OF THE PARSED TRACT DATA**
+
     These methods have essentially the same effect as in ``PLSSDesc``
     objects.
 
@@ -1105,9 +1105,9 @@ class TractList(_TRSTractList):
 
     - ``.tracts_to_csv()``
         - Compile the requested attributes for each ``Tract`` and write
-          them to a .csv file, with one row per ``Tract``.
-            - (See ``pytrs.tractwriter.TractWriter`` class for more
-              robust writing to .csv files.)
+          them to a .csv file, with one row per ``Tract``.  (See
+          ``pytrs.tractwriter.TractWriter`` class for more robust
+          writing to .csv files.)
 
     - ``.tracts_to_str()``
         - Compile the requested attributes for each ``Tract`` into an
@@ -1119,14 +1119,12 @@ class TractList(_TRSTractList):
 
     - ``.list_trs()``
         - Return a list of all twp/rge/sec combinations in the
-          ``TractList`` stored in ``.tracts``, optionally removing
-          duplicates.
+          ``TractList``, optionally removing duplicates.
 
 
-    SORTING / GROUPING / FILTERING TRACTS BY ATTRIBUTE VALUES
-    ---------------------------------------------------------
+    **SORTING / GROUPING / FILTERING TRACTS BY ATTRIBUTE VALUES**
 
-    - ``.sort_tracts()``
+    - ``.custom_sort()``
         - Custom sorting based on the Twp/Rge/Sec or original creation
           order of each ``Tract``. Can also take parameters from the
           built-in ``list.sort()`` method.
@@ -1169,7 +1167,6 @@ class TractList(_TRSTractList):
     def config_tracts(self, config):
         """
         Reconfigure all ``Tract`` objects in this ``TractList``.
-        (without reconfiguring this ``PLSSDesc`` object).
 
         NOTE: Will NOT trigger the ``Tract`` objects to be (re)parsed,
         even if ``'parse_qq'`` is included in the new config.
@@ -1555,9 +1552,9 @@ class TractList(_TRSTractList):
 
     def snapshot_inside(self, delim=': ', max_len=30) -> list:
         r"""
-        Get a list of the full description of each ``Tract`` object in
-        the ``.tracts`` attribute as a single, orderly string -- but
-        caps every line at a length of ``max_len``.
+        Get a list of the full description of each ``Tract`` object as a
+        single, orderly string -- but caps every line at a length of
+        ``max_len``.
 
         :param delim: Specify what separates Twp/Rge/Sec from the
          corresponding description block (i.e. what comes between
@@ -1678,7 +1675,7 @@ class TractList(_TRSTractList):
 
         *Note:* Each Twp/Rge/Sec in the resulting list is a string, and
         *not* a ``TRS`` object. If ``TRS`` objects are required, cast
-        the resulting list as a ``TRSList`` -- i.e.:
+        the resulting list as a ``TRSList``:
 
         .. code-block:: python
 
