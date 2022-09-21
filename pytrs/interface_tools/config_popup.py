@@ -414,7 +414,8 @@ class PromptConfig(tk.Frame):
             destroy ``master``, and not just itself.
 
         :param master: The ``tkinter`` master (same as for
-         ``tkinter.Frame``)
+         ``tkinter.Frame``). If not provided, will function as its own
+         window.
 
         :param target_var: A ``tkinter.StringVar`` to which ``Config``
          data should be stored when the OK button is clicked.
