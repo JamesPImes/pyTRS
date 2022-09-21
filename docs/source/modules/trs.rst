@@ -5,8 +5,7 @@
 Standardized TRS format
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-The pyTRS library uses a standardized format to represented Twp/Rge/Sec
-in a short form.
+The pyTRS library uses a standardized format to represent Twp/Rge/Sec.
 
 +------------+------------------------------------------------------------+-------------+
 | Component  | Format                                                     | Example     |
