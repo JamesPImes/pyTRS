@@ -2,6 +2,10 @@
 ``Config``
 ==========
 
+Use the settings specified below to control how ``PLSSDesc`` objects are
+parsed into tracts, and/or how ``Tract`` objects are parsed into
+lots/aliquots.
+
 Feed to ``Config`` all desired config settings as a single string,
 separated by comma, with spaces optional::
 
