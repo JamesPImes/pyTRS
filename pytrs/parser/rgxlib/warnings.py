@@ -1,18 +1,25 @@
 
+"""
+Regex patterns for generating warning flags.
+"""
+
 import re
 
 
-# Pattern to look for possible wellbore exceptions.
-well_regex = re.compile(r'(wellbore|well)', re.IGNORECASE)
+# Possible wellbore exceptions.
+well_regex = re.compile(r'\b(wellbore|well)\b', re.IGNORECASE)
 
-# Pattern to look for possible depth limitations.
-depth_regex = re.compile(r'(depth|formation|surf|down|form|top|base)', re.IGNORECASE)
+# Possible depth limitations.
+depth_regex = re.compile(
+    r'(depths?|surf(ace)?|\bdown\b|form(ation)?|\btop\b|\bbase\b)',
+    re.IGNORECASE)
 
-# Pattern to look for possible 'including' language.
-including_regex = re.compile(r'incl', re.IGNORECASE)
+# Possible 'including' language.
+including_regex = re.compile(r'\bincl', re.IGNORECASE)
 
-# Pattern to look for possible exceptions/limitations.
-less_except_regex = re.compile(r'(less|except|limit)', re.IGNORECASE)
+# Possible exceptions/limitations.
+less_except_regex = re.compile(
+    r'(\bless(\s*and\s*except)?|\bexcept|\blimit)', re.IGNORECASE)
 
-# Pattern to look for 'insofar' language.
-isfa_regex = re.compile(r'(in\s?so\s?far)', re.IGNORECASE)
+# Look for 'insofar' language.
+isfa_regex = re.compile(r'((but\s*)?only\s*)?(in\s*so\s*far)', re.IGNORECASE)
