@@ -28,8 +28,8 @@ from .plss_preprocess import (
     find_twprge,
 )
 
-_E_FLAG_SECERR = 'SecERROR'
-_E_FLAG_TWPRGE_ERR = 'TwpRgeERROR'
+_E_FLAG_SECERR = 'sec_error'
+_E_FLAG_TWPRGE_ERR = 'twprge_error'
 
 
 class TwpRgeFinder:
@@ -473,11 +473,11 @@ class PLSSParser:
         """
         def flag_unused(unused_text):
             """
-            Create a warning flag and flag line for unused text.
+            Create an error flag and flag line for unused text.
             """
             flag = f"unused_desc<{unused_text}>"
-            self.w_flags.append(flag)
-            self.w_flag_lines.append((flag, unused_text))
+            self.e_flags.append(flag)
+            self.e_flag_lines.append((flag, unused_text))
 
         def examine_unused():
             """
@@ -497,6 +497,8 @@ class PLSSParser:
         for chunk in self.blocks:
             self.parse_chunk(chunk)
             examine_unused()
+
+        self.check_error_tracts()
 
         self.hand_down_flags()
 
@@ -738,6 +740,21 @@ class PLSSParser:
             return self.working_sec_list.pop(0)
         else:
             return [MasterConfig._ERR_SEC]
+
+    def check_error_tracts(self):
+        """
+        INTERNAL USE:
+
+        Check if any Tract objects have error Twp/Rge/Sec, and if so,
+        add an appropriate error flag.
+        :return: ``None`` (flags are added to attributes).
+        """
+        error_found = any(tract.trs_is_error for tract in self.tracts)
+        if error_found:
+            flag = _E_FLAG_TWPRGE_ERR
+            self.e_flags.append(flag)
+            self.e_flag_lines.append((flag, flag))
+        return None
 
 
 class PLSSChunker:
