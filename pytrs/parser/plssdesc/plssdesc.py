@@ -45,7 +45,7 @@ class PLSSDesc:
     some point after init.
 
 
-    **IMPORTANT INSTANCE VARIABLES AFTER PARSING**
+    **IMPORTANT ATTRIBUTES AFTER PARSING**
 
     These are the notable attributes of a ``PLSSDesc`` object. For the
     tract-level information (i.e. the data fields you might want to
