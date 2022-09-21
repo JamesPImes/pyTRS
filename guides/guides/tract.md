@@ -99,7 +99,7 @@ tract_object = pytrs.Tract.from_twprgesec(
 
 4) `orig_desc`, `orig_index`, and `desc_is_flawed` are inherited by a `Tract` from a parent `PLSSDesc` object, if any. They *can* be set here, but there is probably not much reason for it.
 
-5) If `twp` is passed as an int, or as a string that doesn't encode North/South (e.g., `'154'` instead of `'154n'`), it will fall back to what is specified in `default_ns` (if any), and if not there, then to `config=`. Similarly, if `rge` is passed as an int or as a string that doesn't encode East/West (e.g., `'97'` instead of `'97w'`), it will default to `default_ew` and then to `config=`. If not specified in any of those places, it will fall back to `PLSSDesc.MASTER_DEFAULT_NS` and `PLSSDesc.MASTER_DEFAULT_EW`, which are `'n'` and `'w'` unless changed by the user. 
+5) If `twp` is passed as an int, or as a string that doesn't encode North/South (e.g., `'154'` instead of `'154n'`), it will fall back to what is specified in `default_ns` (if any), and if not there, then to `config=`. Similarly, if `rge` is passed as an int or as a string that doesn't encode East/West (e.g., `'97'` instead of `'97w'`), it will default to `default_ew` and then to `config=`. If not specified in any of those places, it will fall back to `MasterConfig.default_ns` and `MasterConfig.default_ew`, which are `'n'` and `'w'` unless changed by the user. 
 
 
 ### Populating lots/aliquots
