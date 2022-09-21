@@ -82,7 +82,7 @@ To create a `Tract` object without first compiling the Twp/Rge/Sec into the pyTR
 ```
 import pytrs
 
-tract_1 = pytrs.Tract(
+tract_1 = pytrs.Tract.from_twprgesec(
     'NE/4', twp=154, rge=97, sec=14, default_ns='n', default_ew='w', 
     parse_qq=True)
 
