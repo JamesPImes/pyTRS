@@ -4,6 +4,8 @@ Misc. top-level functions
 
 .. autofunction:: pytrs.find_twprge
 
+.. autofunction:: pytrs.find_sec
+
 .. autofunction:: pytrs.trs_to_dict
 
 (See also ``TRS`` class.)

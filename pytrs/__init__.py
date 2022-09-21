@@ -40,6 +40,7 @@ from pytrs.parser import (
 
     # Misc. functions for examining / handling descriptions
     find_twprge,    # parser.plss_preprocess submodule
+    find_sec,       # parser.plss_preprocess submodule
     trs_to_dict,    # parser.trs submodule
 
     # For grouping / sorting Tract objects

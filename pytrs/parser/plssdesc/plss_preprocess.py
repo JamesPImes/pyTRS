@@ -7,6 +7,7 @@ import re
 
 from ..rgxlib import *
 from ..unpack import (
+    SecUnpacker,
     unpack_twprge,
 )
 from ..config import (
@@ -218,8 +219,26 @@ def find_twprge(
     return tr_list
 
 
+def find_sec(text):
+    """
+    Returns a list of all identified Section numbers (including unpacked
+    section numbers) in the text (formatted as ``'00'``).
+
+    :return: A list of 2-digit section numbers (as strings).
+    """
+
+    # Search for all Section markers occurring anywhere:
+    sec_mo_list = multisec_regex.finditer(text)
+    sec_list = []
+    for sec_mo in sec_mo_list:
+        unpacker = SecUnpacker(sec_mo.group())
+        sec_list.extend(unpacker.sec_list)
+    return sec_list
+
+
 __all__ = [
     'PLSSPreprocessor',
     'find_twprge',
+    'find_sec',
     'reduce_whitespace',
 ]

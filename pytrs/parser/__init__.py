@@ -22,7 +22,10 @@ The main parsing package. Primary classes:
 from .plssdesc import PLSSDesc
 from .plssdesc.plss_parse import (
     deduce_layout,
+)
+from .plssdesc.plss_preprocess import (
     find_twprge,
+    find_sec,
 )
 from .tract import Tract
 from .trs import (
