@@ -5,6 +5,10 @@ pyTRS
 .. automodule:: pytrs
 
 
+Feel free to reach out on
+`my GitHub <https://github.com/JamesPImes/pyTRS//>`_
+with feedback or inquiries.
+
 Bird's-eye View
 ---------------
 
@@ -92,6 +96,11 @@ Misc. utility functions:
 
 .. toctree::
     modules/utils
+
+License
+
+.. toctree::
+    modules/license
 
 Indices and tables
 ==================
