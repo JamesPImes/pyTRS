@@ -71,9 +71,10 @@ class Tract:
 
     - ``.sec`` -- The Sec portion of ``.trs``, a string (ex: ``'01'``)
 
-    - ``.sec_num`` -- The Sec portion of .trs, as an int or None (ex: 1)
+    - ``.sec_num`` -- The Sec portion of .trs, as an int or None (ex:
+      ``1``)
 
-    - ``.desc`` -- The description block within this TRS.
+    - ``.desc`` -- The description block within this Twp/Rge/Sec.
 
     - ``.qqs`` -- A list of identified QQ's (or smaller) formatted as 4
       characters (or more, if there are further divisions) -- ex:
