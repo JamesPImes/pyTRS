@@ -106,6 +106,9 @@ class Tract:
       as stated in the original description.  (Ex: ``{'L1': '38.29'}``
       from ``'Lot 1(38.29), Lot 2'``)
 
+    - ``.aliquots_whole`` -- A list of cleaned-up aliquots identified in
+      the original description, not broken down into quarter-quarters.
+
     - ``.pp_desc`` -- The preprocessed description. (If the object has
       not yet been parsed, it will be equivalent to ``.desc``.)
 
@@ -353,6 +356,9 @@ class Tract:
         # A list of QQ's (or smaller) with no quarter fractions
         # i.e. ['NENE', 'NENW', 'N2SENW', ... ]:
         self.qqs = []
+
+        # A list of whole aliquots, as identified in the original.
+        self.aliquots_whole = []
 
         # Attributes to control how deeply QQ's should be parsed.
         # If `.qq_depth` is set, it will override `.qq_depth_min` and

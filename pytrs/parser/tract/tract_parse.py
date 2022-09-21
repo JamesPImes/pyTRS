@@ -41,6 +41,7 @@ class TractParser:
         "lots",
         "qqs",
         "lot_acres",
+        "aliquots_whole",
         "w_flags",
         "w_flag_lines",
         "e_flags",
@@ -78,6 +79,7 @@ class TractParser:
         self.lots = []
         self.qqs = []
         self.lot_acres = {}
+        self.aliquots_whole = []
         self.w_flags = []
         self.e_flags = []
         self.w_flag_lines = []
@@ -153,8 +155,7 @@ class TractParser:
             new_lots = unpacker.lot_list
             if not suppress_lot_divs and leading_aliquot is not None:
                 # Combine the aliquot(s) with the lot(s).
-                leading_aliquot = leading_aliquot.replace('¼', '')
-                leading_aliquot = leading_aliquot.replace('½', '2')
+                leading_aliquot = remove_fractions(leading_aliquot)
                 for idx in range(unpacker.aliquots_through):
                     new_lots[idx] = f"{leading_aliquot} of {new_lots[idx]}"
 
@@ -178,9 +179,12 @@ class TractParser:
             else:
                 # TODO: Implement context awareness. Should not pull aliquots
                 #   before "of Section ##", for example.
-                aliquot_blocks.append(aliq_mo.group())
+                aliq_block = aliq_mo.group()
+                aliquot_blocks.append(aliq_block)
                 start, end = aliq_mo.start(), aliq_mo.end()
                 remaining_text = f"{remaining_text[:start]};;{remaining_text[end:]}"
+                # Strip fractions and store the whole aliquot.
+                self.aliquots_whole.append(remove_fractions(aliq_block))
         text = remaining_text
 
         # And also pull out "ALL" as an aliquot if it is clear of any
@@ -241,6 +245,19 @@ class TractParser:
             flag = f"dup_qq<{','.join(dup_qqs)}>"
             self.w_flags.append(flag)
             self.w_flag_lines.append((flag, flag))
+
+def remove_fractions(aliquot):
+    """
+    INTERNAL USE:
+
+    Remove fractions from a preprocessed aliquot. (Replace ``'½'`` with
+    ``'2'``, and delete ``'¼'`` altogether.)
+    :param aliquot: A preprocessed aliquot string.
+    :return: The same aliquot with fractions removed.
+    """
+    aliquot = aliquot.replace('¼', '')
+    aliquot = aliquot.replace('½', '2')
+    return aliquot
 
 
 __all__ = [
