@@ -5,9 +5,13 @@ pyTRS
 .. automodule:: pytrs
 
 
-Feel free to reach out on
+Feel free to reach out via
 `my GitHub <https://github.com/JamesPImes/pyTRS//>`_
-with feedback or inquiries.
+with feedback or inquiries, or to let me know if you run into any
+issues.
+
+Also visit the GitHub page for a
+`quickstart guide <https://github.com/JamesPImes/pyTRS/blob/master/guides/guides/quickstart.md>`_.
 
 Bird's-eye View
 ---------------
