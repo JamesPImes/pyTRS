@@ -214,7 +214,6 @@ class Tract:
             default_ns='n',
             default_ew='w')
         some_tract.trs  # '154n97w14'
-            ```
 
     Setting Twp/Rge/Sec by any of the above methods will break down the
     Twp/Rge/Sec into various data::
