@@ -43,10 +43,12 @@ def prompt_config(
     config parameters. Will wait for the ``tkinter`` window to close,
     and then will return the config parameters as a string.
 
-    IMPORTANT: If allowing the user to see the Cancel button, be aware
-    that clicking Cancel will return the string ``'CANCEL'``.
+    .. note::
+        If allowing the user to see the Cancel button, be aware that
+        clicking Cancel will return the string ``'CANCEL'``.
 
-    If the user exits out of the window, it will return ``'EXIT'``.
+    .. note::
+        If the user exits out of the window, it will return ``'EXIT'``.
 
     All parameters have the same effect as they do in __init__() for a
     ``PromptAttrib`` object, although not all parameters are available
@@ -71,7 +73,9 @@ def prompt_config(
      Cancel is clicked, allowing the user to change their mind. If
      ``None``, there will be no confirmation prompt.
 
-    :return: A string of the user's chosen config parameters.
+    :return: A string of the user's chosen config parameters. (Or
+     'CANCEL' if the Cancel button is clicked; or 'EXIT' if the window
+     is exited.)
     """
 
     config_holder = {'config_text': 'EXIT'}
