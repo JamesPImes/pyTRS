@@ -1913,8 +1913,8 @@ def group_tracts_by(
 
     Instead of a method on a ``TractList`` object, this function takes
     an additional first positional argument ``to_group``, being an
-    iterable container ``Tract`` objects, ``PLSSDesc`` objects, or
-    ``TractList`` objects.
+    iterable container of ``Tract`` objects, ``PLSSDesc`` objects,
+    and/or ``TractList`` objects.
 
     :return: A dict of ``TractList`` objects each containing those
      tracts with matching values of the ``attribute``. If ``attribute``
