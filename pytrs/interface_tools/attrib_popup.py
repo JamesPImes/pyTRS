@@ -1,5 +1,8 @@
 # Copyright (c) 2020-2022, James P. Imes, all rights reserved
 
+# Please don't judge me too harshly for this code. I wrote it a really
+# long time ago, and it's not really worth cleaning up.
+
 """
 A GUI app for choosing ``Tract`` attributes.
 A ``PromptAttrib`` object can be used directly in a tkinter application;
@@ -23,37 +26,49 @@ def prompt_attrib(
         confirm_cancel_prompt=None,
         prompt_after_ok=None):
     """
-    Launch a PromptAttrib tkinter frame, for the user to choose from
-    pytrs.Tract attributes. Will wait for the PromptAttrib window to
-    close, and then will return the chosen attribute names as a list of
-    strings.
+    Launch a ``PromptAttrib`` ``tkinter`` frame, for the user to choose
+    from ``Tract`` attributes. Will wait for the window to close, and
+    then will return the chosen attribute names as a list of strings.
 
-    If the user hits the Cancel button, it will return as `['CANCEL']`.
-    If the user exits the window, it will return as `['EXIT']`.
+    .. note::
+        If the user hits the Cancel button, it will return as
+        ``['CANCEL']``.
+
+    .. note::
+        If the user exits the window, it will return as ``['EXIT']``.
 
     All parameters have the same effect as they do in __init__() for a
-    PromptAttrib object, although not all parameters are available in
-    this function.
+    ``PromptAttrib`` object, although not all parameters are available
+    in this function.
 
     :param attributes: Which attributes to allow the user to select
-    from; may be passed as a list, or as a string with attributes
-    separated by commas (defaults to 'standard')
+     from; may be passed as a list, or as a string with attributes
+     separated by commas (defaults to ``'standard'``)
+
     :param header: Text to be placed above the attribute options.
+
     :param show_ok: Include the OK button.
+
     :param ok_button_text: A string, for custom text for the OK
-    button.
+     button.
     :param prompt_after_ok: A string to display in a messagebox
-    after the OK button has been clicked. Defaults to None.
+     after the OK button has been clicked. Defaults to ``None``.
+
     :param cancel_button_text: A string, for custom text for the
-    Cancel button.
+     Cancel button.
+
     :param show_cancel: Include the Cancel button.
-    IMPORTANT: If the Cancel button is clicked, it will set the
-    `target_var` to the string 'CANCEL' and close the window.
+
+        .. note::
+            If the Cancel button is clicked, this will return
+            ``['CANCEL']``.
+
     :param confirm_cancel_prompt: A string to display in a
-    yes/no messagebox when the Cancel button is clicked. Defaults
-    to None.
+     yes/no messagebox when the Cancel button is clicked. Defaults
+     to ``None``.
+
     :return: Returns a list of the attribute names that were chosen
-    (i.e. a list of strings).
+     (i.e. a list of strings).
     """
 
     attrib_holder = {'attrib_list': ['EXIT']}
@@ -77,8 +92,8 @@ def prompt_attrib(
 
 class PromptAttrib(tk.Frame):
     """
-    A tkinter frame for configuring which attributes should be
-    returned from parsed ``PLSSDesc`` and/or ``Tract`` objects.
+    A ``tkinter`` frame for the user to select which attributes should
+    be extracted from ``Tract`` objects.
     """
 
     # These will be options in the prompt.
@@ -120,7 +135,7 @@ class PromptAttrib(tk.Frame):
         att: [Tract.ATTRIBUTES[att], 0] for att in STANDARD_OPTIONS
     }
 
-    # And one for ALL of the attributes. (Turned on with `attributes='all'`)
+    # And one for ALL attributes. (Turned on with `attributes='all'`)
     ALL_ATTRIBUTES = {
         att: [val, 0] for att, val in Tract.ATTRIBUTES.items()
     }
@@ -146,35 +161,52 @@ class PromptAttrib(tk.Frame):
             external_var_dict=None,
             **kw):
         """
-        :param master: The tkinter master (same as for tkinter.Frame)
-        :param target_var: A tk.StringVar to which the chosen
-        attributes should be stored when the OK button is clicked.
-        Stored as a single string, with attribute names separated by
-        a comma and no spaces.
+        :param master: The ``tkinter`` master (same as for
+         ``tkinter.Frame``). If not provided, will function as its own
+         window.
+
+        :param target_var: A ``tkinter.StringVar`` to which the chosen
+         attributes should be stored when the OK button is clicked.
+         Stored as a single string, with attribute names separated by
+         a comma and no spaces.
+
         :param attributes: Which attributes to allow the user to select
-        from; may be passed as a list, or as a string with attributes
-        separated by commas (defaults to 'standard')
+         from; may be passed as a list, or as a string with attributes
+         separated by commas (defaults to ``'standard'``).
+
         :param header: Text to be placed above the attribute options.
+
         :param show_ok: Include the OK button.
+
         :param ok_button_text: A string, for custom text for the OK
-        button.
+         button.
+
         :param prompt_after_ok: A string to display in a messagebox
-        after the OK button has been clicked. Defaults to None.
+         after the OK button has been clicked. Defaults to ``None`` (no
+         message).
+
         :param exit_after_ok: Whether to close the window after OK
-        button is clicked. Defaults to False.
+         button is clicked. Defaults to ``False``.
+
         :param cancel_button_text: A string, for custom text for the
-        Cancel button.
-        :param show_cancel: Include the Cancel button.
-        IMPORTANT: If the Cancel button is clicked, it will set the
-        `target_var` to the string 'CANCEL' and close the window.
+         Cancel button.
+
+        :param show_cancel: Whether to include the Cancel button.
+
+            .. note::
+                If the Cancel button is clicked, it will set the
+                ``target_var`` to the string ``'CANCEL'`` and close
+                the window.
+
         :param confirm_cancel_prompt: A string to display in a
-        yes/no messagebox when the Cancel button is clicked. Defaults
-        to None.
-        :param external_var_dict: A dict with the key 'attrib_list',
-        to which the chosen attributes should be set (as a list of
-        strings). (Only used by `prompt_attrib()` -- probably ignore
-        this parameter.)
-        :param kw: Kwargs to pass through to tkinter.Frame at init.
+         yes/no messagebox when the Cancel button is clicked. Defaults
+         to ``None`` (no message).
+
+        :param external_var_dict: A dict with the key ``'attrib_list'``,
+         to which the chosen attributes should be set (as a list of
+         strings). (Only used by ``prompt_attrib()`` -- probably ignore
+         this parameter.)
+        :param kw: Kwargs to pass through to ``tkinter.Frame`` at init.
         """
 
         default_master = False
