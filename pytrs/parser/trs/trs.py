@@ -78,7 +78,7 @@ class TRS:
     .. note::
 
         ‡ Note that error parses do *not* qualify as 'undefined', but
-        undefined and error values are both stored as None.
+        undefined and error values are both stored as ``None``.
         ``.twp_undef``, ``.rge_undef``, and ``.sec_undef`` are included
         to differentiate between error vs. undefined, in case that
         distinction is needed.
@@ -564,7 +564,7 @@ class TRS:
         .. note::
 
             ‡ Note that error parses do *not* qualify as 'undefined',
-            but undefined and error values are both stored as None.
+            but undefined and error values are both stored as ``None``.
             ``'twp_undef'``, ``'rge_undef'``, and ``'sec_undef'`` are
             included to differentiate between error vs. undefined, in
             case that distinction is needed.
@@ -702,27 +702,27 @@ def trs_to_dict(trs) -> dict:
     Take a compiled Twp/Rge/Sec (in the standard pyTRS format) and break
     it into a dict, keyed as follows::
 
-            'trs'        -> The full Twp/Rge/Sec combination.
-            'twp'        -> Twp number + direction (a str or None)
-            'twp_num'    -> Twp number (an int or None)
-            'twp_ns'     -> Twp direction ('n', 's', or None)
-            'ns'         -> same as 'twp_ns'
-            'twp_undef'  -> whether the Twp was undefined. (‡)
-            'rge'        -> Rge number + direction (a str or None)
-            'rge_num'    -> Rge num (an int or None)
-            'rge_ew'     -> Rge direction ('e', 'w', or None)
-            'ew'         -> same as 'rge_ew'
-            'rge_undef'  -> whether the Rge was undefined. (‡)
-            'sec_num'    -> Sec number (an int or None)
-            'sec_undef'  -> whether the Sec was undefined. (‡)
+        'trs'        -> The full Twp/Rge/Sec combination.
+        'twp'        -> Twp number + direction (a str or None)
+        'twp_num'    -> Twp number (an int or None)
+        'twp_ns'     -> Twp direction ('n', 's', or None)
+        'ns'         -> same as 'twp_ns'
+        'twp_undef'  -> whether the Twp was undefined. (‡)
+        'rge'        -> Rge number + direction (a str or None)
+        'rge_num'    -> Rge num (an int or None)
+        'rge_ew'     -> Rge direction ('e', 'w', or None)
+        'ew'         -> same as 'rge_ew'
+        'rge_undef'  -> whether the Rge was undefined. (‡)
+        'sec_num'    -> Sec number (an int or None)
+        'sec_undef'  -> whether the Sec was undefined. (‡)
 
-        .. note::
+    .. note::
 
-            ‡ Note that error parses do *not* qualify as 'undefined',
-            but undefined and error values are both stored as None.
-            ``'twp_undef'``, ``'rge_undef'``, and ``'sec_undef'`` are
-            included to differentiate between error vs. undefined, in
-            case that distinction is needed.
+        ‡ Note that error parses do *not* qualify as 'undefined',
+        but undefined and error values are both stored as ``None``.
+        ``'twp_undef'``, ``'rge_undef'``, and ``'sec_undef'`` are
+        included to differentiate between error vs. undefined, in
+        case that distinction is needed.
 
     :param trs: The Twp/Rge/Sec (in the standardized format) to be
      broken apart.
