@@ -674,7 +674,7 @@ class Tract:
          direction was not specified -- i.e. either ``'n'`` or ``'s'``.
 
         :param default_ew: How to interpret ranges for which direction
-         was not specified -- i.e. either 'e' or 'w'.
+         was not specified -- i.e. either ``'e'`` or ``'w'``.
 
         :param source: Same as when initializing a ``Tract`` object.
         :param orig_desc: Same as when initializing a ``Tract`` object.
