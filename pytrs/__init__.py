@@ -1,12 +1,11 @@
 # Copyright (c) 2020-2022, James P. Imes, all rights reserved.
 
 """
-pyTRS - a pure Python library for parsing Public Land Survey System
-(PLSS) land descriptions (or "legal descriptions") into their component
-parts, in a format that is more useful for data analysis, GIS mapping,
-spreadsheets, and databases generally. It accounts for common variations
-in layout, abbreviations, typos, etc. and can therefore process a range
-of real-world data.
+pyTRS (imported as ``pytrs``) is a pure Python library for parsing
+Public Land Survey System (PLSS) land descriptions (or "legal
+descriptions") for use in data analysis, GIS mapping, spreadsheets, etc.
+It accounts for common variations in layout, abbreviations, typos, etc.
+and can therefore process a range of real-world data.
 
 Copyright (c) 2020-2022, James P. Imes, all rights reserved.
 
