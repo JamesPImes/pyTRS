@@ -151,6 +151,25 @@ trs  : 154n97w17
 desc : W/2
 ```
 
+#### Group by non-standard attributes
+
+Grouping is *__not__* limited to only the `Tract` attributes that come standard in this library. You can assign custom attributes to the `Tract` objects and then group by that, so long as the values are a hashable type.
+
+In this example, tracts are grouped by the number of aliquot quarter-quarters identified in each:
+
+```
+for tract in some_tractlist:
+    tract.num_qqs = len(tract.qqs)
+grouped_tracts = some_tractlist.group_by('num_qqs')
+```
+
+...Or whether any lot acreages were defined:
+```
+for tract in some_tractlist:
+    tract.acres_defined = len(tract.lot_acres) > 0
+grouped_tracts = some_tractlist.group_by('acres_defined')
+```
+
 #### Grouping by multiple attributes
 
 If we pass a list of attribute names to `attributes=[<list of attribute names>]` instead of a single attribute, then the keys of the returned dict will be tuples, the elements of which line up with the listed attributes in `attributes`.
