@@ -986,9 +986,9 @@ class _TRSTractList:
         if ``group_dict`` contains ``TractList`` objects, this method
         must be called as ``TractList.unpack_group()``.
 
-        :param group_dict: A dict, as returned by ``.group()`` or
-         ``.group_nested()`` (or a nested dict inside what was returned
-         by ``.group_nested()``).
+        :param group_dict: A dict, as returned by ``.group_by()`` or
+         ``.group_by_nested()`` (or a nested dict inside what was
+         returned by ``.group_by_nested()``).
 
         :param sort_key: (Optional) How to sort the elements in the
          returned list.  NOT applied to the original lists inside the
@@ -1924,7 +1924,7 @@ def group_tracts_by(
      passed as ``attribute``.)
     """
     tl = TractList.from_multiple(to_group)
-    return tl.group(attribute, into, sort_key, sort_reverse)
+    return tl.group_by(attribute, into, sort_key, sort_reverse)
 
 
 def sort_grouped_tracts(group_dict, sort_key, reverse=False) -> dict:
