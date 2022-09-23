@@ -1057,11 +1057,11 @@ class Tract:
 
         :return: A new list of header strings.
         """
-        header_row = attributes.copy()
+        header_row = list(attributes)
         if isinstance(nice_headers, dict):
             header_row = [nice_headers.get(att, att) for att in attributes]
-        elif isinstance(nice_headers, list):
-            header_row = nice_headers.copy()
+        elif isinstance(nice_headers, (list, tuple)):
+            header_row = list(nice_headers)
         elif nice_headers:
             header_row = [Tract.ATTRIBUTES.get(att, att) for att in attributes]
         if plus_cols:
