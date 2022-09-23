@@ -5,12 +5,17 @@
 By design, the Public Land Survey System itself does not place many
 strict limitations on the syntax of Township, Range, Section, and
 'description block' -- i.e., they can appear in essentially any order
-(except that Township pretty much always comes before Range). Below are the different
-permutations (called ``layout`` in this library) that can be handled by
-pyTRS:
+(except that Township pretty much always comes before Range).
+
+
+``layout`` options
+------------------
+Below are the different permutations (called ``layout`` in this library)
+that can be handled by pyTRS:
+
 
 ``'TRS_desc'``
---------------
+~~~~~~~~~~~~~~
 
 *Twp > Rge > Sec > Descripton Block*
 
@@ -27,7 +32,7 @@ Examples::
 
 
 ``'TR_desc_S'``
----------------
+~~~~~~~~~~~~~~~
 
 *Twp > Rge > Description Block > Sec*
 
@@ -42,7 +47,7 @@ Examples::
 
 
 ``'desc_STR'``
---------------
+~~~~~~~~~~~~~~
 
 *Description Block > Sec > Twp > Rge*
 
@@ -56,7 +61,7 @@ Examples::
 
 
 ``'S_desc_TR'``
----------------
+~~~~~~~~~~~~~~~
 
 *Sec > Description Block > Twp > Rge*
 
@@ -72,7 +77,7 @@ Examples::
 
 
 ``'copy_all'``
---------------
+~~~~~~~~~~~~~~
 
 This is a stopgap layout used by pyTRS to ensure that the text is
 maintained in the event that a more meaningful layout cannot be
@@ -81,7 +86,7 @@ misspelling of section, township, or range).
 
 
 Usage
-^^^^^
+-----
 
 Because the components can appear in varying order, a PLSS description
 will be parsed differently, which is why the concept of ``layout``
@@ -107,8 +112,8 @@ layout of your dataset and want to capture errors very strictly.
     of each in ``pytrs.IMPLEMENTED_LAYOUT_EXAMPLES``.
 
 
-Limitations / ``'sec_within'`` config setting
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Limitations
+-----------
 
 You will notice that the above ``layout`` options do not account
 for descriptions where the Section is couched within the
@@ -128,6 +133,19 @@ description block itself, like so::
 ::
 
     That part of Section 14, T154N-R97W, lying north of the river
+
+By default, each of these would be parsed into the following ``Tract``,
+assuming parser is allowed to deduce the ``layout``::
+
+    154n97w14: That part of Section 14
+
+...and would generate an error flag of
+``'unused_desc<lying north of the river>'`` (with slight variations
+depending on the ``layout``).
+
+
+``'sec_within'`` config setting
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 As of ``v2.1.0``, these descriptions can now be parsed by using the
 ``'sec_within'`` config setting, **but only** where *exactly* one tract
@@ -151,3 +169,24 @@ The above prints this to console::
 
 Expanding this capability to multiple (unique) tracts per PLSS
 description is a target area for improvement in future versions.
+
+Combining ``'sec_within'`` and ``'segment'`` config settings *might*
+allow or capture multiple tracts, but still only one tract per Twp/Rge.
+
+.. code-block:: python
+
+    txt = """T153N-R97W
+    Sec 1: S/2N/2
+    T154N-R97W
+    That part of Sec 13 - 15 lying north of the river"""
+    parsed = PLSSDesc(txt, config='segment, sec_within')
+    parsed.pretty_print_desc()
+
+The above prints this to console::
+
+    T153N-R97W
+    Sec 01: S/2N/2
+    T154N-R97W
+    Sec 13: That part lying north of the river
+    Sec 14: That part lying north of the river
+    Sec 15: That part lying north of the river
