@@ -824,14 +824,11 @@ class ChunkParser:
             self.e_flags.append(flag)
             self.e_flag_lines.append((flag, flag))
 
-        if self.parent.sec_within and len(self.tract_components) == 1:
-            desc = self.tract_components[0]['desc']
-            for unused in self.unused_components.copy():
-                unused = cleanup_desc(unused[1])
-                if len(unused) >= self.parent.MIN_REPORTABLE_UNUSED_LEN:
-                    desc = f"{desc} {unused}"
-                    self.unused_components.remove(unused)
-            self.tract_components[0]['desc'] = desc
+        if self.parent.sec_within:
+            # Note: Only works if a single tract candidate was identified. Will
+            # have no effect if more than one tract was found (but considers a
+            # multi-section to correspond with a single tract).
+            self.rebuild_sec_within()
 
         # Convert the tract data into actual Tract objects.
         new_tracts = self.construct_tracts()
@@ -1021,6 +1018,42 @@ class ChunkParser:
             # tie them back together if needed.
             self.unused_components.append((len(self.tract_components), block))
         return None
+
+    def rebuild_sec_within(self):
+        """
+        Reattach unused block of text to the description portion of a
+        tract (that has not yet been compiled to a ``Tract`` object).
+        If successful, will deplete the ``.unused_components`` list.
+
+        .. note::
+            This only works if *exactly* one tract candidate was
+            identified. It will have no effect if more than one tract
+            was found (but considers a multi-section equivalent to a
+            single tract -- i.e. ``'That part of Sections 1 - 3 lying
+            within the right-of-way...'`` would be considered a single
+            tract for the purposes of this method.
+
+        :return: None
+        """
+        if len(self.tract_components) != 1:
+            return None
+
+        repaired_tract = self.tract_components[0]
+
+        desc = repaired_tract['desc']
+        staged = []
+        while self.unused_components:
+            i, unused = self.unused_components.pop(0)
+            staged.append((i, unused))
+            unused = cleanup_desc(unused)
+            if len(unused) >= self.parent.MIN_REPORTABLE_UNUSED_LEN:
+                if i == 0:
+                    # Unused description came before the captured description.
+                    desc = f"{unused} {desc}"
+                else:
+                    # Unused came after the captured description.
+                    desc = f"{desc} {unused}"
+        repaired_tract['desc'] = desc
 
     def construct_tracts(self):
         """
