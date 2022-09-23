@@ -322,6 +322,10 @@ class PLSSDesc:
         self.qq_depth_max = None
         self.break_halves = False
 
+        # Whether to tack on unused text blocks to parsed tract descriptions
+        # (for descs like 'That part of NE/4 of Sec 14 lying within RoW').
+        self.sec_within = False
+
         # Apply settings from `config=`, overwriting the above values,
         # if specified by user.
         self.config = config
@@ -471,6 +475,7 @@ class PLSSDesc:
             sec_colon_required=None,
             segment=None,
             ocr_scrub=None,
+            sec_within=None,
             commit=True,
             qq_depth_min=None,
             qq_depth_max=None,
@@ -568,6 +573,19 @@ class PLSSDesc:
          ``.ocr_scrub`` attribute, which is ``False`` unless otherwise
          configured.)
 
+        :param sec_within: Use when expecting the section number (and
+         possibly Twp/Rge) to occur *within* the description block.
+
+        .. note::
+            This only works if *exactly* one ``Tract`` was identified in
+            the text. It will have no effect if more than one Tract
+            was found, but considers a multi-section equivalent to a
+            single tract -- i.e. ``'That part of Sec 1 - 3 lying within
+            the right-of-way...'`` would be considered a single tract
+            for the purposes of this setting. But using ``'segment'``
+            setting too *might* allow or capture more than one (but
+            still only one per Twp/Rge).
+
         :param commit: Whether to commit the results to the appropriate
          instance attributes. Defaults to ``True``.
 
@@ -632,6 +650,9 @@ class PLSSDesc:
         if ocr_scrub is None:
             ocr_scrub = self.ocr_scrub
 
+        if sec_within is None:
+            sec_within = self.sec_within
+
         # NOTE: If layout was specified at init or when calling
         # `.parse(layout=<string>)`, PLSSParser.parse_chunk() will be
         # prevented from deducing it.  Leave as None to allow the parser
@@ -669,6 +690,7 @@ class PLSSDesc:
             "default_ns": default_ns,
             "default_ew": default_ew,
             "ocr_scrub": ocr_scrub,
+            "sec_within": sec_within,
             "clean_up": clean_up,
             "parse_qq": parse_qq,
             "clean_qq": clean_qq,
