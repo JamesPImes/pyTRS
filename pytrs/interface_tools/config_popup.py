@@ -254,7 +254,7 @@ class PromptConfig(tk.Frame):
         'sec_colon_required': (
             "Instruct the parser to require a colon between the section "
             "number and the following description (if the PLSS description"
-            "has so-called `'TRS_desc'` or `S_desc_TRS` layout).\n\n"
+            "has so-called 'TRS_desc' or 'S_desc_TRS' layout).\n\n"
             "For example, 'Section 14 NE/4' would NOT be picked up if "
             "'sec_colon_required' is on.\n\n"
             "If turned off (the default), then 'Section 14 NE/4' "
