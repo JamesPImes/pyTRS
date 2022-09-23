@@ -31,6 +31,13 @@ from .plss_preprocess import (
 _E_FLAG_SECERR = 'sec_error'
 _E_FLAG_TWPRGE_ERR = 'twprge_error'
 
+TWPRGE_START = 'TWPRGE_START'
+TWPRGE_END = 'TWPRGE_END'
+SEC_START = 'SEC_START'
+SEC_END = 'SEC_END'
+TEXT_START = 'TEXT_START'
+TEXT_END = 'TEXT_END'
+
 
 class TwpRgeFinder:
     """
@@ -239,7 +246,7 @@ class SecFinder:
             flag = f"pulled_sec_without_colon<{','.join(sec_nums)}>"
             self.flags.append((flag, flag))
             return None
-        if require_colon == self.SEC_COLON_CAUTIOUS and layout in [TRS_DESC, S_DESC_TR]:
+        if require_colon == SEC_COLON_CAUTIOUS and layout in [TRS_DESC, S_DESC_TR]:
             # Do a second pass.
             self.findall_matching_sec(
                 text, layout=layout, require_colon=self.SECOND_PASS)
@@ -726,13 +733,6 @@ class ChunkParser:
     the parent ``PLSSParser``.
     """
 
-    TWPRGE_START = 'TWPRGE_START'
-    TWPRGE_END = 'TWPRGE_END'
-    SEC_START = 'SEC_START'
-    SEC_END = 'SEC_END'
-    TEXT_START = 'TEXT_START'
-    TEXT_END = 'TEXT_END'
-
     def __init__(self, text, layout, parent: PLSSParser):
         self.text = text
         self.layout = layout
@@ -884,15 +884,15 @@ class ChunkParser:
         """
         # TEXT_START and TEXT_END may get overwritten, if the start or end
         # of a Twp/Rge or Sec was matched there.
-        self.markers_dict[0] = self.TEXT_START
-        self.markers_dict[len(text)] = self.TEXT_END
+        self.markers_dict[0] = TEXT_START
+        self.markers_dict[len(text)] = TEXT_END
         for kind, val, start, end in self.sec_matches:
-            self.markers_dict[start] = self.SEC_START
-            self.markers_dict[end] = self.SEC_END
+            self.markers_dict[start] = SEC_START
+            self.markers_dict[end] = SEC_END
             self.working_sec_list.append(val)
         for kind, val, start, end in self.twprge_matches:
-            self.markers_dict[start] = self.TWPRGE_START
-            self.markers_dict[end] = self.TWPRGE_END
+            self.markers_dict[start] = TWPRGE_START
+            self.markers_dict[end] = TWPRGE_END
             self.working_twprge_list.append(val)
         self.markers_list = sorted(self.markers_dict.keys())
         return None
@@ -979,30 +979,30 @@ class ChunkParser:
             next_marker_pos = self.markers_list[min((final, count + 1))]
             next_marker_type = self.markers_dict[next_marker_pos]
 
-            if marker_type == self.TWPRGE_START:
+            if marker_type == TWPRGE_START:
                 self.get_next_twprge()
                 continue
-            elif marker_type == self.SEC_START:
+            elif marker_type == SEC_START:
                 self.get_next_sec()
                 continue
 
             # Get the block of text.
             block = None
-            if marker_type in [self.TEXT_START, self.TWPRGE_END, self.SEC_END]:
+            if marker_type in [TEXT_START, TWPRGE_END, SEC_END]:
                 block = txt[marker_pos:next_marker_pos]
-            elif marker_type == self.TEXT_END:
+            elif marker_type == TEXT_END:
                 continue
             if block is None:
                 continue
 
             # Decide if the block should go in a Tract, or if it should
             # go in unused.
-            if layout in s_desc_lays and marker_type == self.SEC_END:
+            if layout in s_desc_lays and marker_type == SEC_END:
                 # These layouts mandate sec -> desc, so reaching the end of a
                 # section means we've identified a new tract.
                 prep_new_tract(block)
                 continue
-            elif layout not in s_desc_lays and next_marker_type == self.SEC_START:
+            elif layout not in s_desc_lays and next_marker_type == SEC_START:
                 # These layouts mandate desc -> sec, so looking ahead to the
                 # start of a section means we've identified a new tract.
                 prep_new_tract(block)
