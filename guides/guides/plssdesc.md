@@ -165,7 +165,25 @@ That part of the NE/4 of Section 14 lying north of the river
 ```
 That part of the NE/4 of Section 14 lying north of the river, in T154N-R97W
 ```
+...or...
+```
+That part of the NE/4 of Section 14, T154N-R97W, lying north of the river, in T154N-R97W
+```
 
-That's a target area for improvement in future versions.
+These descriptions can now be parsed by using the ``'sec_within'`` config setting, *__but only__* where exactly one tract was identified in the text. That said, the parser considers a multi-section equivalent to a single tract for the purpose of this setting:
 
-(*These two examples would both be interpreted as `"154n97w14: That part of the NE/4"`, assuming the parser is allowed to deduce the layout.*)
+```
+txt = 'That part of Sections 13 - 15, T154N-R97W lying north of the river'
+parsed = pytrs.PLSSDesc(txt, config='sec_within')
+parsed.pretty_print_desc()
+```
+
+The above prints this to console:
+```
+T154N-R97W
+Sec 13: That part lying north of the river
+Sec 14: That part lying north of the river
+Sec 15: That part lying north of the river
+```
+
+Expanding this capability to multiple (unique) tracts per PLSS description is a target area for improvement in future versions.

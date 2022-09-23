@@ -134,6 +134,7 @@ class PromptConfig(tk.Frame):
         'sec_colon_required',
         'sec_colon_cautious',
         'ocr_scrub',
+        'sec_within',
         'segment',
         'wait_to_parse',
         'parse_qq',
@@ -253,7 +254,7 @@ class PromptConfig(tk.Frame):
         'sec_colon_required': (
             "Instruct the parser to require a colon between the section "
             "number and the following description (if the PLSS description"
-            "has so-called `'TRS_desc'` or `S_desc_TRS` layout).\n\n"
+            "has so-called 'TRS_desc' or 'S_desc_TRS' layout).\n\n"
             "For example, 'Section 14 NE/4' would NOT be picked up if "
             "'sec_colon_required' is on.\n\n"
             "If turned off (the default), then 'Section 14 NE/4' "
@@ -286,6 +287,21 @@ class PromptConfig(tk.Frame):
             "PLSSDesc object or Tract object (e.g., 'TIS4N-R97W' "
             "that should have been 'T154N-R97W'). (WARNING: may "
             "cause other issues.)"
+        ),
+
+        'sec_within': (
+            "This setting can attempt to parse descriptions whose section "
+            "number (and possibly Twp/Rge) occur WITHIN the description "
+            "block (e.g., 'That part of NE/4 of Sec 14, T154N-R97W, lying "
+            "north of the river').\n\n"
+            "Currently will only work when exactly one tract was "
+            "identified in the text, but considers a multi-section "
+            "equivalent to a single tract "
+            "-- i.e. 'That part of Sec 1 - 3 lying within the "
+            "right-of-way...' would be considered a single tract for the "
+            "purposes of this setting.\n\n"
+            "Using 'segment' setting too MIGHT allow or capture more "
+            "than one (but still only one per Twp/Rge)."
         ),
 
         'segment': (

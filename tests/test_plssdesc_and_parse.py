@@ -160,6 +160,28 @@ class PLSSParseTests(unittest.TestCase):
         d2 = PLSSDesc(clean_desc)
         self.assertFalse(d2.desc_is_flawed)
 
+    def test_sec_within(self):
+        txts = (
+            # Twp/Rge before
+            'T154N-R97W: That part of the NE/4 of Sec 13 - 15 lying within RoW',
+            'T154N-R97W\nThat part of the NE/4 of Sec 13 - 15 lying within RoW',
+            # Twp/Rge within
+            'That part of the NE/4 of Sec 13 - 15, T154N-R97W lying within RoW',
+            # Twp/Rge after
+            'That part of the NE/4 of Sec 13 - 15 lying within RoW, T154N-R97W'
+        )
+        expected_desc = 'That part of the NE/4 lying within RoW'
+        expected_trs = ['154n97w13', '154n97w14', '154n97w15']
+        expected_flag = "sec_within<{}>"  # To be filled in with .trx
+
+        for txt in txts:
+            d = PLSSDesc(txt, config='sec_within')
+            for i, trs in enumerate(expected_trs):
+                self.assertEqual(trs, d.tracts[i].trs)
+                self.assertEqual(expected_desc, d.tracts[i].desc)
+                # Check that the appropriate
+                self.assertIn(expected_flag.format(trs), d.w_flags)
+
 
 if __name__ == '__main__':
     unittest.main()

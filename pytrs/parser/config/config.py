@@ -67,6 +67,25 @@ class Config:
       description changes ``layout`` partway through, but could also
       prevent the parser from generating proper warning flags.)
 
+    - ``'sec_within'`` -- Use when expecting the section number (and
+      possibly Twp/Rge) to occur *within* the description block.
+
+      .. note::
+            Currently this only works if *exactly* one ``Tract`` was
+            identified in the text. It will have no effect if more than
+            one tract was found, but considers a multi-section
+            equivalent to a single tract -- i.e.
+            ``'That part of Sec 1 - 3 lying within the right-of-way...'``
+            would be considered a single tract for the purposes of this
+            setting. But using ``'segment'`` setting as well *might*
+            allow or capture more than one (but still only one per
+            Twp/Rge).
+
+      .. warning::
+             ``'sec_within'`` might cause the parser to over-match and
+             tack *intentionally* unused text onto the description of a
+             ``Tract``.
+
     - ``'qq_depth_min.<number>'`` -- Sets the minimum ``qq_depth`` to
       the specified <number>. (◊, †)
 
@@ -203,6 +222,7 @@ class Config:
         'qq_depth_min',
         'qq_depth_max',
         'break_halves',
+        'sec_within',
     )
 
     # A list of attribute names whose values should be a bool:
@@ -216,6 +236,7 @@ class Config:
         'ocr_scrub',
         'segment',
         'break_halves',
+        'sec_within',
     )
 
     _INT_TYPE_ATTRIBUTES = (
@@ -283,6 +304,7 @@ class Config:
         self.qq_depth_min = None
         self.qq_depth_max = None
         self.break_halves = None
+        self.sec_within = None
 
         # Break up text.
         self._text_to_attributes(config_text)
