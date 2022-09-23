@@ -156,6 +156,9 @@ class PLSSParseTests(unittest.TestCase):
         error_desc = """Sec 22: W/2, T154N-R97W Sec 14: NE/4, Sec 15: S/2"""
         d = PLSSDesc(error_desc)
         self.assertTrue(d.desc_is_flawed)
+        clean_desc = "T154N-R97W Sec 14: NE/4, Sec 15: W/2"
+        d2 = PLSSDesc(clean_desc)
+        self.assertFalse(d2.desc_is_flawed)
 
 
 if __name__ == '__main__':
