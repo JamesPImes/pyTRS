@@ -1,5 +1,5 @@
 
-__version__ = '2.0.1'
+__version__ = '2.1.0'
 __version_date__ = '9/23/2022'
 __author__ = 'James P. Imes'
 __email__ = 'jamesimes@gmail.com'
