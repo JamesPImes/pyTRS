@@ -19,7 +19,7 @@ def num_to_alpha(num):
 
 def alpha_to_num(alpha):
     """
-    Convert an alpha into an integer (``'A'`` --> `1`,
+    Convert an alpha into an integer (``'A'`` --> ``1``,
     ``'Z'`` --> ``26``, ``'AA'`` --> ``27``) -- from ``A`` through
     ``ZZ``.
     """
