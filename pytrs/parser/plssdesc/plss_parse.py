@@ -356,6 +356,8 @@ class PLSSParser:
         self.ocr_scrub = ocr_scrub
         self.require_colon = require_colon
         self.sec_within = True
+        # Keep track of which tracts were repaired with 'sec_within'.
+        self.sec_within_indexes = []
 
         # These exclusively affect the parsing of subordinate Tracts.
         self.clean_qq = clean_qq
@@ -365,6 +367,7 @@ class PLSSParser:
         self.break_halves = break_halves
 
         # These are temporary data.
+        self.tract_components = []
         self.unused_components = []
         self.blocks = [self.text]
         self.next_tract_uid = 0
@@ -417,7 +420,9 @@ class PLSSParser:
             Generate a warning flag for each block of unused text longer
             than a few characters, then reset the unused components.
             """
-            for unused_bit in self.unused_components:
+            # Discard the integer (first element in each 2-tuple), which would
+            # only be used (elsewhere) with config setting 'sec_within'.
+            for _, unused_bit in self.unused_components:
                 if len(unused_bit) >= self.MIN_REPORTABLE_UNUSED_LEN:
                     flag_unused(unused_bit)
 
@@ -434,9 +439,32 @@ class PLSSParser:
             # attributes (tracts, flags, unused_components).
             ChunkParser(chunk, layout=chunk_layout, parent=self)
 
+        if self.sec_within:
+            # This only works if a single tract has been identified, but
+            # won't cause any fatal issues if that's not the case.
+            rebuild_sec_within(
+                self.tract_components,
+                self.unused_components,
+                min_length=self.MIN_REPORTABLE_UNUSED_LEN)
+
+        self.construct_tracts()
         examine_unused()
+        self.check_sec_within_tracts()
         self.check_error_tracts()
         self.hand_down_flags()
+
+    def check_sec_within_tracts(self):
+        """
+        Generated the appropriate warning flag to any sections that were
+        fixed with ``'sec_within'`` config setting.
+        :return: None
+        """
+        for i in self.sec_within_indexes:
+            tract = self.tracts[i]
+            flag = f"sec_within<{tract.trs}>"
+            context = tract.quick_desc_short()
+            self.w_flags.append(flag)
+            self.w_flag_lines.append((flag, context))
 
     def hand_down_flags(self):
         """
@@ -465,53 +493,33 @@ class PLSSParser:
             self.e_flag_lines.append((flag, flag))
         return None
 
-    def gen_flags_chunk(self, chunk):
+    def construct_tracts(self):
         """
-        Generate warning flags and corresponding context lines.
-        :return: ``None`` (results stored to ``.w_flags`` and
-         ``.w_flag_lines``).
+        Convert the parsed data components in ``.tract_components``
+        into ``Tract`` objects, and append them to the ``.tracts`` list.
         """
-        # regex pattern : (flag, (context len before, context len after))
-        rgx_and_how_to_hand = {
-            well_regex: ("well", (5, 25)),
-            depth_regex: ("depth", (10, 20)),
-            including_regex: ("including", (0, 40)),
-            less_except_regex: ("less_except", (0, 40)),
-            isfa_regex: ("insofar", (0, 40)),
-        }
-        max_end = len(chunk)
-        for rgx, how_to_handle in rgx_and_how_to_hand.items():
-            flag, (left_context, right_context) = how_to_handle
-            start_pos = 0
-            while True:
-                start_mo = rgx.search(chunk, pos=start_pos)
-                if not start_mo:
-                    break
-
-                # Get context substring, searching for any additional matches
-                # of this same regex; and if any additional matches are found,
-                # then keep extending the context right. (To reduce redundant
-                # flags.)
-                end_mo = start_mo
-                final_end_mo = end_mo
-                while True:
-                    # Continue extending context rightward until we no
-                    # longer find another match of this regex pattern.
-                    left_bound = end_mo.end()
-                    right_bound = min((max_end, end_mo.end() + right_context))
-                    end_mo = rgx.search(chunk, pos=left_bound, endpos=right_bound)
-                    if not end_mo:
-                        break
-                    final_end_mo = end_mo
-                i = max((0, start_mo.start() - left_context))
-                j = min((final_end_mo.end() + right_context, max_end))
-                context = chunk[i:j]
-                context = context.replace('\n', ' ').strip()
-                context = f"<{context}>"
-                self.w_flags.append(flag)
-                self.w_flag_lines.append((flag, context))
-                # Start next search from the end of this context string.
-                start_pos = j
+        new_tracts = []
+        for tract_data in self.tract_components:
+            desc = tract_data['desc']
+            if self.clean_up:
+                desc = cleanup_desc(desc)
+            for sec in tract_data['sec']:
+                trs = f"{tract_data['twprge']}{sec}"
+                new_tract = Tract(
+                    desc,
+                    trs,
+                    config=self.handed_down_config,
+                    parse_qq=self.parse_qq,
+                    source=self.source,
+                    orig_desc=self.orig_text,
+                    orig_index=self.next_tract_uid
+                )
+                self.tracts.append(new_tract)
+                new_tracts.append(new_tract)
+                if tract_data['sec_within']:
+                    self.sec_within_indexes.append(self.next_tract_uid)
+                self.next_tract_uid += 1
+        return new_tracts
 
 
 class PLSSChunker:
@@ -537,6 +545,9 @@ class PLSSChunker:
         self.text = text
         self.layout = layout
         self.blocks = []
+        # A list of 2-tuples, being (<0 or 1>, <block of unused text>).
+        # 0 indicates text that came before a valid chunk; 1 indicates
+        # that it came after.
         self.unused_blocks = []
         self.segment(layout=layout)
 
@@ -582,7 +593,7 @@ class PLSSChunker:
             if i == 0 and start != 0:
                 # String starts with something other than a Twp/Rge, in
                 # a layout that requires Twp/Rge to occur first.
-                self.unused_blocks.append(text[:start])
+                self.unused_blocks.append((0, text[:start]))
 
             new_block = text[start:next_start]
             new_block = cleanup_desc(new_block)
@@ -607,7 +618,7 @@ class PLSSChunker:
                 # The last element is not the final character in the string.
                 # In other words, text ends with something other than a Twp/Rge,
                 # in a layout that requires Twp/Rge to occur last.
-                self.unused_blocks.append(text[end:])
+                self.unused_blocks.append((1, text[end:]))
 
             new_block = text[previous_end:end]
             new_block = cleanup_desc(new_block)
@@ -776,6 +787,7 @@ class ChunkParser:
         parent.w_flag_lines.extend(self.w_flag_lines)
         parent.e_flags.extend(self.e_flags)
         parent.e_flag_lines.extend(self.e_flag_lines)
+        parent.tract_components.extend(self.tract_components)
 
         # Discard the Tract index before passing unused chunks to parent, which
         # would only have been used with config setting 'sec_within'.
@@ -800,8 +812,7 @@ class ChunkParser:
         # tract, and return.
         if chunk_layout == COPY_ALL:
             self._parse_copyall(chunk)
-            new_tracts = self.construct_tracts()
-            return new_tracts
+            return None
 
         # Populate the tract data (self.tract_components).
         self._parse_meaningful(chunk, chunk_layout)
@@ -828,23 +839,23 @@ class ChunkParser:
             # Note: Only works if a single tract candidate was identified. Will
             # have no effect if more than one tract was found (but considers a
             # multi-section to correspond with a single tract).
-            self.rebuild_sec_within()
+            rebuild_sec_within(
+                self.tract_components,
+                self.unused_components,
+                min_length=self.parent.MIN_REPORTABLE_UNUSED_LEN)
 
-        # Convert the tract data into actual Tract objects.
-        new_tracts = self.construct_tracts()
-        if not new_tracts:
+        if not self.tract_components:
             # If no tracts identified, rerun this chunk as copy_all layout.
-            # And steal the staged flags from the replacement to hand off
-            # to the parent PLSSParser object.
+            # And steal the staged flags, etc. from the replacement to
+            # hand off to the parent PLSSParser object.
             replacement = ChunkParser(self.text, COPY_ALL, self.parent)
-            new_tracts = replacement.construct_tracts()
             replacement_attributes = (
                 'w_flags', 'w_flag_lines', 'e_flags', 'e_flag_lines',
-                'unused_components'
+                'unused_components', 'tract_components'
             )
             for attr in replacement_attributes:
                 setattr(self, attr, getattr(replacement, attr))
-        return new_tracts
+        return None
 
     def find_matches(self, text, layout):
         """
@@ -940,7 +951,8 @@ class ChunkParser:
         copyall_tract = {
             'desc': txt,
             'sec': sec,
-            'twprge': twprge
+            'twprge': twprge,
+            'sec_within': False,
         }
         self.tract_components.append(copyall_tract)
 
@@ -960,6 +972,7 @@ class ChunkParser:
                 'desc': desc,
                 'sec': self.working_sec,
                 'twprge': self.working_twprge,
+                'sec_within': False,
             }
             self.tract_components.append(new)
             self.last_sec_used = True
@@ -1019,70 +1032,6 @@ class ChunkParser:
             self.unused_components.append((len(self.tract_components), block))
         return None
 
-    def rebuild_sec_within(self):
-        """
-        Reattach unused block of text to the description portion of a
-        tract (that has not yet been compiled to a ``Tract`` object).
-        If successful, will deplete the ``.unused_components`` list.
-
-        .. note::
-            This only works if *exactly* one tract candidate was
-            identified. It will have no effect if more than one tract
-            was found (but considers a multi-section equivalent to a
-            single tract -- i.e. ``'That part of Sections 1 - 3 lying
-            within the right-of-way...'`` would be considered a single
-            tract for the purposes of this method.
-
-        :return: None
-        """
-        if len(self.tract_components) != 1:
-            return None
-
-        repaired_tract = self.tract_components[0]
-
-        desc = repaired_tract['desc']
-        staged = []
-        while self.unused_components:
-            i, unused = self.unused_components.pop(0)
-            staged.append((i, unused))
-            unused = cleanup_desc(unused)
-            if len(unused) >= self.parent.MIN_REPORTABLE_UNUSED_LEN:
-                if i == 0:
-                    # Unused description came before the captured description.
-                    desc = f"{unused} {desc}"
-                else:
-                    # Unused came after the captured description.
-                    desc = f"{desc} {unused}"
-        repaired_tract['desc'] = desc
-
-    def construct_tracts(self):
-        """
-        Convert the parsed data components in ``self.tract_components``
-        into ``Tract`` objects, and append them to the ``self.tracts``
-        list.
-        """
-        parent = self.parent
-        new_tracts = []
-        for tract_data in self.tract_components:
-            desc = tract_data['desc']
-            if parent.clean_up:
-                desc = cleanup_desc(desc)
-            for sec in tract_data['sec']:
-                trs = f"{tract_data['twprge']}{sec}"
-                new_tract = Tract(
-                    desc,
-                    trs,
-                    config=parent.handed_down_config,
-                    parse_qq=parent.parse_qq,
-                    source=parent.source,
-                    orig_desc=parent.orig_text,
-                    orig_index=parent.next_tract_uid
-                )
-                parent.tracts.append(new_tract)
-                new_tracts.append(new_tract)
-                self.parent.next_tract_uid += 1
-        return new_tracts
-
     def gen_flags_chunk(self):
         """
         Generate warning flags and corresponding context lines.
@@ -1131,6 +1080,61 @@ class ChunkParser:
                 self.parent.w_flag_lines.append((flag, context))
                 # Start next search from the end of this context string.
                 start_pos = j
+
+
+def rebuild_sec_within(
+        tract_components: list, unused_components: list, min_length: int = 4):
+    """
+    INTERNAL USE:
+
+    Reattach unused block of text to the description portion of a tract
+    (that has not yet been compiled to a ``Tract`` object). If
+    successful, will empty the ``.unused_components`` list.
+
+    .. note::
+        This only works if *exactly* one tract candidate was identified.
+        It will have no effect if more than one tract was found, but
+        considers a multi-section equivalent to a single tract -- i.e.
+        ``'That part of Sec 1 - 3 lying within the right-of-way...'``
+        would be considered a single tract for the purposes of this
+        method.
+
+    :param tract_components: A list of dicts representing tracts
+     that are yet to be compiled, with keys, ``'desc'``, ``'twp'``,
+     and ``'sec'`` (although only ``'desc'`` gets used in this
+     function).
+    :param unused_components: A list of 2-tuples, being an integer
+     to indicate whether this text component should come *before*
+     the description text (``0``) or *after* it (``1`` or greater).
+    :param min_length: The minimum length that an unused block of
+     text has to be before it gets reported.
+    :return: A list of indexes of the not-yet-compiled tract(s) that
+     were repaired.
+
+     .. note::
+            Currently, this can only return ``[]`` (empty list, being no
+            repairs), or ``[0]`` (referring to the first and only tract
+            in the list). This was designed this way in case future
+            versions successfully expand this functionality to multiple
+            tracts.
+    """
+    if len(tract_components) != 1:
+        return []
+    repaired_tract = tract_components[0]
+    desc = repaired_tract['desc']
+    while unused_components:
+        i, unused = unused_components.pop(0)
+        unused = cleanup_desc(unused)
+        if len(unused) >= min_length:
+            if i == 0:
+                # Unused description came before the captured description.
+                desc = f"{unused} {desc}"
+            else:
+                # Unused came after the captured description.
+                desc = f"{desc} {unused}"
+    repaired_tract['sec_within'] = True
+    repaired_tract['desc'] = desc
+    return [0]
 
 
 __all__ = [
