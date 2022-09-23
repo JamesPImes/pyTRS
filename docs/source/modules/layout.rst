@@ -107,35 +107,47 @@ layout of your dataset and want to capture errors very strictly.
     of each in ``pytrs.IMPLEMENTED_LAYOUT_EXAMPLES``.
 
 
-Limitations
-^^^^^^^^^^^
+Limitations / ``'sec_within'`` config setting
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 You will notice that the above ``layout`` options do not account
 for descriptions where the Section is couched within the
 description block itself, like so::
 
     T154N-R97W
-    That part of the NE/4 of Section 14 lying north of the river
+    That part of Section 14 lying north of the river
 
 ...or...
 
 ::
 
-    That part of the NE/4 of Section 14 lying north of the river, in
+    That part of Section 14 lying north of the river, in T154N-R97W
+
+...or...
+
+::
+
+    That part of Section 14, T154N-R97W, lying north of the river
+
+As of ``v2.1.0``, these descriptions can now be parsed by using the
+``'sec_within'`` config setting, **but only** where *exactly* one tract
+was identified in the text.
+
+That said, the parser considers a multi-section to be equivalent to a
+single tract for the purpose of this setting:
+
+.. code-block:: python
+
+    txt = 'That part of Sections 13 - 15, T154N-R97W lying north of the river'
+    parsed = pytrs.PLSSDesc(txt, config='sec_within')
+    parsed.pretty_print_desc()
+
+The above prints this to console::
+
     T154N-R97W
+    Sec 13: That part lying north of the river
+    Sec 14: That part lying north of the river
+    Sec 15: That part lying north of the river
 
-...or...
-
-::
-
-    That part of the NE/4 of Section 14, T154N-R97W, lying north of the
-    river
-
-That's a target area for improvement in future versions.
-
-*(These two examples would both be interpreted as follows, assuming the
-parser is allowed to deduce the layout.)*
-
-::
-
-    154n97w14: That part of the NE/4
+Expanding this capability to multiple (unique) tracts per PLSS
+description is a target area for improvement in future versions.
