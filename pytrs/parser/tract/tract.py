@@ -652,7 +652,7 @@ class Tract:
         ``default_ns`` and ``default_ew`` -- or failing that, from
         ``config`` parameters. If not specified in any of those places,
         will default to ``MasterConfig.default_ns`` and
-        ``MasterConfig.default_ns``, which are `'n'` and `'w'`,
+        ``MasterConfig.default_ew``, which are `'n'` and `'w'`,
         respectively, unless configured otherwise.)
 
         :param desc: Same as initializing a ``Tract`` object.
