@@ -576,15 +576,21 @@ class PLSSDesc:
         :param sec_within: Use when expecting the section number (and
          possibly Twp/Rge) to occur *within* the description block.
 
-        .. note::
-            This only works if *exactly* one ``Tract`` was identified in
-            the text. It will have no effect if more than one Tract
-            was found, but considers a multi-section equivalent to a
-            single tract -- i.e. ``'That part of Sec 1 - 3 lying within
-            the right-of-way...'`` would be considered a single tract
-            for the purposes of this setting. But using ``'segment'``
-            setting too *might* allow or capture more than one (but
-            still only one per Twp/Rge).
+         .. note::
+            Currently this only works if *exactly* one ``Tract`` was
+            identified in the text. It will have no effect if more than
+            one tract was found, but considers a multi-section
+            equivalent to a single tract -- i.e.
+            ``'That part of Sec 1 - 3 lying within the right-of-way...'``
+            would be considered a single tract for the purposes of this
+            setting. But using ``'segment'`` setting as well *might*
+            allow or capture more than one (but still only one per
+            Twp/Rge).
+
+         .. warning::
+             ``'sec_within'`` might cause the parser to over-match and
+             tack *intentionally* unused text onto the description of a
+             ``Tract``.
 
         :param commit: Whether to commit the results to the appropriate
          instance attributes. Defaults to ``True``.
