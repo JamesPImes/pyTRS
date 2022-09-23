@@ -1119,6 +1119,7 @@ def rebuild_sec_within(
         return []
     repaired_tract = tract_components[0]
     desc = repaired_tract['desc']
+    orig_desc = desc
     while unused_components:
         i, unused = unused_components.pop(0)
         unused = cleanup_desc(unused)
@@ -1129,8 +1130,9 @@ def rebuild_sec_within(
             else:
                 # Unused came after the captured description.
                 desc = f"{desc} {unused}"
-    repaired_tract['sec_within'] = True
-    repaired_tract['desc'] = desc
+    if desc != orig_desc:
+        repaired_tract['sec_within'] = True
+        repaired_tract['desc'] = desc
     return [0]
 
 
