@@ -263,13 +263,6 @@ class PLSSParser:
     relevant attributes from it.
     """
 
-    TWPRGE_START = 'TWPRGE_START'
-    TWPRGE_END = 'TWPRGE_END'
-    SEC_START = 'SEC_START'
-    SEC_END = 'SEC_END'
-    TEXT_START = 'TEXT_START'
-    TEXT_END = 'TEXT_END'
-
     # These attributes have corresponding attributes in PLSSDesc objects.
     UNPACKABLES = (
         "tracts",
@@ -279,6 +272,10 @@ class PLSSParser:
         "e_flag_lines",
         "current_layout",
     )
+    
+    # The minimum length of a substring before it will be reported as an
+    # unused description
+    MIN_REPORTABLE_UNUSED_LEN = 4
 
     def __init__(
             self,
@@ -358,6 +355,7 @@ class PLSSParser:
         self.default_ew = default_ew
         self.ocr_scrub = ocr_scrub
         self.require_colon = require_colon
+        self.sec_within = True
 
         # These exclusively affect the parsing of subordinate Tracts.
         self.clean_qq = clean_qq
@@ -367,13 +365,6 @@ class PLSSParser:
         self.break_halves = break_halves
 
         # These are temporary data.
-        self.twprge_matches = []
-        self.working_twprge_list = []
-        self.sec_matches = []
-        self.working_sec_list = []
-        self.markers_list = []
-        self.markers_dict = {}
-        self.tract_components = []
         self.unused_components = []
         self.blocks = [self.text]
         self.next_tract_uid = 0
@@ -392,7 +383,7 @@ class PLSSParser:
                 twprge_natural_to_short(tr)
                 for tr in preprocessor.fixed_twprges
             ]
-            flag = f"fixed_twprge<{'//'.join(short_versions)}>"
+            flag = f"fixed_twprge<{','.join(short_versions)}>"
             self.w_flags.append(flag)
             self.w_flag_lines.append((flag, flag))
 
@@ -405,64 +396,6 @@ class PLSSParser:
     @property
     def current_layout(self):
         return self.layout
-
-    def find_matches(self, text, layout):
-        """
-        Find matching Twp/Rge and Sec according to the specified layout.
-        :param text: The text (full description or chunk) in which to
-        find matches.
-        :param layout: The layout to use for finding matches.
-        """
-        # Populate Twp/Rge matches/flags.
-        twprge_finder = TwpRgeFinder(text, layout)
-        self.twprge_matches = twprge_finder.matches
-        self.w_flags.extend(twprge_finder.flags)
-        self.w_flag_lines.extend(twprge_finder.flag_lines)
-        # Populate section matches/flags.
-        sec_finder = SecFinder(text, layout, self.require_colon)
-        self.sec_matches = sec_finder.matches
-        self.w_flags.extend(sec_finder.flags)
-        self.w_flag_lines.extend(sec_finder.flag_lines)
-        return None
-
-    def populate_markers(self, text):
-        """
-        Convert the Twp/Rge and Sec matches into the markers_list and
-        markers_dict, which are examined by the parser to determine
-        which section(s) goes with which Twp/Rge, and which block of
-        description goes with that.
-
-        :param text: The text (full description or chunk) in which to
-        find matches.
-        """
-        # TEXT_START and TEXT_END may get overwritten, if the start or end
-        # of a Twp/Rge or Sec was matched there.
-        self.markers_dict[0] = self.TEXT_START
-        self.markers_dict[len(text)] = self.TEXT_END
-        for kind, val, start, end in self.sec_matches:
-            self.markers_dict[start] = self.SEC_START
-            self.markers_dict[end] = self.SEC_END
-            self.working_sec_list.append(val)
-        for kind, val, start, end in self.twprge_matches:
-            self.markers_dict[start] = self.TWPRGE_START
-            self.markers_dict[end] = self.TWPRGE_END
-            self.working_twprge_list.append(val)
-        self.markers_list = sorted(self.markers_dict.keys())
-        return None
-
-    def reset(self):
-        """
-        Reset the cached matches, markers, etc.
-        """
-        self.twprge_matches = []
-        self.working_twprge_list = []
-        self.sec_matches = []
-        self.working_sec_list = []
-        self.markers_list = []
-        self.markers_dict = {}
-        self.tract_components = []
-        self.unused_components = []
-        return None
 
     def parse(self, segment=False):
         """
@@ -484,56 +417,26 @@ class PLSSParser:
             Generate a warning flag for each block of unused text longer
             than a few characters, then reset the unused components.
             """
-            for unused_chunk in self.unused_components:
-                if len(unused_chunk) > 3:
-                    flag_unused(unused_chunk)
+            for unused_bit in self.unused_components:
+                if len(unused_bit) >= self.MIN_REPORTABLE_UNUSED_LEN:
+                    flag_unused(unused_bit)
 
         if segment:
             chunker = PLSSChunker(self.text, layout=self.layout)
             self.blocks = chunker.blocks
             self.unused_components.extend(chunker.unused_blocks)
-            examine_unused()
 
         for chunk in self.blocks:
-            self.parse_chunk(chunk)
-            self.gen_flags_chunk(chunk)
-            examine_unused()
+            chunk_layout = None
+            if self.layout == COPY_ALL:
+                chunk_layout = COPY_ALL
+            # This automatically unpacks the relevant data into the PLSSParser's
+            # attributes (tracts, flags, unused_components).
+            ChunkParser(chunk, layout=chunk_layout, parent=self)
 
+        examine_unused()
         self.check_error_tracts()
-
         self.hand_down_flags()
-
-    def parse_chunk(self, chunk, copy_all=False):
-        """
-        Parse a chunk of text into Tracts.
-        :param chunk: The chunk of text to parse.
-        :param copy_all: Used for a second pass if no Tracts were
-        identified during the first.
-        :return: The list of new Tract objects that were generated.
-        """
-        self.reset()
-        chunk_layout = self.layout
-        if not self.mandate_layout:
-            chunk_layout = deduce_layout(chunk)
-        if copy_all:
-            chunk_layout = COPY_ALL
-        self.find_matches(chunk, chunk_layout)
-        self.populate_markers(chunk)
-
-        # Populate the tract data (self.tract_components).
-        if chunk_layout in [DESC_STR, TR_DESC_S]:
-            self._descstr_trdescs(chunk, chunk_layout)
-        elif chunk_layout in [TRS_DESC, S_DESC_TR]:
-            self._trsdesc_sdesctr(chunk, chunk_layout)
-        else:
-            self._copyall(chunk)
-
-        # Convert the tract data into actual Tract objects.
-        new_tracts = self.construct_tracts()
-        if not new_tracts:
-            # If no tracts identified, rerun this chunk as copy_all layout.
-            new_tracts = self.parse_chunk(chunk, copy_all=True)
-        return new_tracts
 
     def hand_down_flags(self):
         """
@@ -546,201 +449,6 @@ class PLSSParser:
             tract.e_flags.extend(self.e_flags)
             tract.e_flag_lines.extend(self.e_flag_lines)
         return None
-
-    def construct_tracts(self):
-        """
-        Convert the parsed data components in ``self.tract_components``
-        into ``Tract`` objects, and append them to the ``self.tracts``
-        list.
-        """
-        new_tracts = []
-        for tract_data in self.tract_components:
-            desc = tract_data['desc']
-            if self.clean_up:
-                desc = cleanup_desc(desc)
-            for sec in tract_data['sec']:
-                trs = f"{tract_data['twprge']}{sec}"
-                new_tract = Tract(
-                    desc,
-                    trs,
-                    config=self.handed_down_config,
-                    parse_qq=self.parse_qq,
-                    source=self.source,
-                    orig_desc=self.orig_text,
-                    orig_index=self.next_tract_uid
-                )
-                self.tracts.append(new_tract)
-                new_tracts.append(new_tract)
-                self.next_tract_uid += 1
-        return new_tracts
-
-    def _descstr_trdescs(self, txt, layout=None):
-        """
-        Use the already-gathered matched Twp/Rge and Sec data to break
-        the text down into tract components for the desc_STR and
-        TR_desc_S layouts.
-        """
-        markers_list = self.markers_list
-        markers = self.markers_dict
-
-        # Note that these layouts are 'forward looking' (e.g., we don't
-        # know what section a description block will belong to until
-        # after we've encountered the description block), so we often
-        # have to look at what marker type comes next. That's also why
-        # we have to grab the first working_sec right away.
-        working_sec = self.get_next_sec()
-
-        # Default to errors for Twp/Rge.
-        working_twprge = MasterConfig._ERR_TWPRGE
-
-        if layout is None:
-            layout = self.layout
-
-        if layout == DESC_STR:
-            working_twprge = self.get_next_twprge()
-
-        final = len(markers_list) - 1
-        for count, marker_pos in enumerate(markers_list):
-            marker_type = markers[marker_pos]
-
-            # These fall back to the current pos and type for the final
-            # run through the loop.
-            next_marker_pos = markers_list[min((count + 1, final))]
-            next_marker_type = markers[next_marker_pos]
-
-            if marker_type == self.TWPRGE_END:
-                sec_err_pos = marker_pos
-
-            if marker_type == self.TWPRGE_START:
-                working_twprge = self.get_next_twprge()
-
-            if next_marker_type == self.SEC_START:
-                tract_identified = {
-                    "desc": txt[marker_pos:next_marker_pos].strip(),
-                    "sec": working_sec,
-                    "twprge": working_twprge
-                }
-                self.tract_components.append(tract_identified)
-                # Write back to the next SEC_END, if needed (i.e. if an
-                # error tract is encountered later, don't include this
-                # legit tract that we've just identified).
-                sec_err_pos = markers_list[min((count + 2, len(markers_list) - count))]
-
-            elif (next_marker_type == self.TWPRGE_START
-                    and marker_type != self.SEC_END
-                    and next_marker_pos - sec_err_pos > 5):
-                # If (1) we found a Twp/Rge next, and (2) we aren't
-                # CURRENTLY at a SEC_END, and (3) it's been more than a
-                # few characters since we last created a new Tract, then
-                # we're apparently dealing with a section error.
-                tract_identified = {
-                    "desc": txt[sec_err_pos:next_marker_pos].strip(),
-                    "sec": MasterConfig._ERR_SEC,
-                    "twprge": working_twprge
-                }
-                self.tract_components.append(tract_identified)
-
-            elif marker_type == self.SEC_START:
-                working_sec = self.get_next_sec()
-
-            elif marker_type == self.TEXT_END:
-                break
-
-            # Capture unused text at the end of the string.
-            if layout == TR_DESC_S:
-                start_kinds = [self.SEC_START, self.TWPRGE_START]
-                if marker_type == self.SEC_END and next_marker_type not in start_kinds:
-                    new_unused = txt[marker_pos:next_marker_pos].strip()
-                    self.unused_components.append(new_unused)
-
-            # Capture unused text at the end of a section (if appropriate).
-            elif layout == DESC_STR and count != final:
-                enders = [self.SEC_END, self.TWPRGE_END]
-                if marker_type in enders and next_marker_type != self.SEC_START:
-                    new_unused = txt[marker_pos:next_marker_pos].strip()
-                    self.unused_components.append(new_unused)
-        return None
-
-    def _trsdesc_sdesctr(self, txt, layout=None):
-        """
-        Use the already-gathered matched Twp/Rge and Sec data to break
-        the text down into tract components for the TRS_desc and
-        S_desc_TR layouts.
-        """
-        markers_list = self.markers_list
-        markers = self.markers_dict
-        # Default to errors for Twp/Rge and Sec.
-        working_twprge = MasterConfig._ERR_TWPRGE
-        working_sec = [MasterConfig._ERR_SEC]
-
-        if layout is None:
-            layout = self.layout
-
-        if layout == S_DESC_TR:
-            working_twprge = self.get_next_twprge()
-
-        final = len(markers_list) - 1
-        for count, marker_pos in enumerate(markers_list):
-            marker_type = markers[marker_pos]
-
-            # This falls back to the current pos for the final run
-            # through the loop.
-            next_marker_pos = markers_list[min((count + 1, final))]
-
-            if marker_type == self.SEC_START:
-                working_sec = self.get_next_sec()
-
-            elif marker_type == self.SEC_END:
-                tract_identified = {
-                    "desc": txt[marker_pos:next_marker_pos].strip(),
-                    "sec": working_sec,
-                    "twprge": working_twprge
-                }
-                self.tract_components.append(tract_identified)
-
-            elif marker_type == self.TWPRGE_START:
-                working_twprge = self.get_next_twprge()
-
-            elif marker_type == self.TWPRGE_END:
-                new_unused = txt[marker_pos:next_marker_pos]
-                self.unused_components.append(new_unused)
-        return None
-
-    def _copyall(self, txt):
-        """
-        Use the already-gathered matched Twp/Rge and Sec data, but parse
-        as copy_all layout.
-        """
-        sec = self.get_next_sec()
-        # Just the first section.
-        sec = [sec[0]]
-        twprge = self.get_next_twprge()
-        copyall_tract = {
-            'desc': txt,
-            'sec': sec,
-            'twprge': twprge
-        }
-        self.tract_components.append(copyall_tract)
-
-    def get_next_twprge(self) -> str:
-        """
-        Get the next Twp/Rge in the working list. If no more, get an
-        error Twp/Rge.
-        """
-        if self.working_twprge_list:
-            return self.working_twprge_list.pop(0)
-        else:
-            return MasterConfig._ERR_TWPRGE
-
-    def get_next_sec(self):
-        """
-        Get the next Sec list in the working list. If no more, get an
-        error Sec inside a list.
-        """
-        if self.working_sec_list:
-            return self.working_sec_list.pop(0)
-        else:
-            return [MasterConfig._ERR_SEC]
 
     def check_error_tracts(self):
         """
@@ -996,6 +704,400 @@ def cleanup_desc(text):
                 cull_length = len(cull_str)
                 text = text[:-cull_length]
     return text
+
+
+class ChunkParser:
+    """
+    INTERNAL USE:
+
+    A class to parse a chunk of text. Does most of the heavy lifting for
+    the ``PLSSParser`` and automatically hands off the relevant data to
+    the parent ``PLSSParser``.
+    """
+
+    TWPRGE_START = 'TWPRGE_START'
+    TWPRGE_END = 'TWPRGE_END'
+    SEC_START = 'SEC_START'
+    SEC_END = 'SEC_END'
+    TEXT_START = 'TEXT_START'
+    TEXT_END = 'TEXT_END'
+
+    def __init__(self, text, layout, parent: PLSSParser):
+        self.text = text
+        self.layout = layout
+        self.parent = parent
+        self.twprge_matches = []
+        self.working_twprge_list = []
+        self.sec_matches = []
+        self.working_sec_list = []
+        self.markers_list = []
+        self.markers_dict = {}
+        self.tract_components = []
+        self.last_twprge_used = False
+        self.last_sec_used = False
+        self.working_twprge = None
+        self.working_sec = None
+
+        # Stage flags, etc. before passing them to parent PLSSParser's
+        # attributes, in case we find no Tracts during a first pass and need to
+        # rerun in COPY_ALL layout.
+        self.w_flags = []
+        self.w_flag_lines = []
+        self.e_flags = []
+        self.e_flag_lines = []
+        self.unused_components = []
+
+        # Parsing also hands off the relevant data to the parent.
+        self.parse_safe()
+
+    def parse_safe(self):
+        """
+        Parse this chunk, but protect the flag attributes of the
+        ``.parent`` ``PLSSParser`` object until we know that the
+        parser has created at least one ``Tract``.
+
+        .. note::
+            ``.parse_chunk()`` will create a replacement ``ChunkParser``
+            in the event that no ``Tract`` is created during a first
+            pass.  In the replacement, it will force the use of
+            ``'COPY_ALL'`` layout to ensure a ``Tract`` is created. Then
+            the replacement's flags will overwrite those in the
+            attributes of this ``ChunkParser``, and finally they will be
+            handed off to the parent's flag attributes.
+        :return: ``None``
+        """
+        self.parse_chunk()
+        self.gen_flags_chunk()
+
+        parent = self.parent
+
+        # New Tract objects are already appended to parent's `.tract` attribute.
+        parent.w_flags.extend(self.w_flags)
+        parent.w_flag_lines.extend(self.w_flag_lines)
+        parent.e_flags.extend(self.e_flags)
+        parent.e_flag_lines.extend(self.e_flag_lines)
+
+        # Discard the Tract index before passing unused chunks to parent, which
+        # would only have been used with config setting 'sec_within'.
+        for _, unused in self.unused_components:
+            parent.unused_components.append(unused)
+
+        return None
+
+    def parse_chunk(self):
+        """
+        Parse a chunk of text into tracts.
+        :return: The list of new ``Tract`` objects that were generated.
+        """
+        chunk = self.text
+        chunk_layout = self.layout
+        if chunk_layout != COPY_ALL and not self.parent.mandate_layout:
+            chunk_layout = deduce_layout(chunk)
+        self.find_matches(chunk, chunk_layout)
+        self.populate_markers(chunk)
+
+        # If using COPY_ALL layout, use that parser method, build the single
+        # tract, and return.
+        if chunk_layout == COPY_ALL:
+            self._parse_copyall(chunk)
+            new_tracts = self.construct_tracts()
+            return new_tracts
+
+        # Populate the tract data (self.tract_components).
+        self._parse_meaningful(chunk, chunk_layout)
+
+        # Put unused twprge and unused sections back into the working lists.
+        if not self.last_twprge_used \
+                and self.working_twprge != MasterConfig._ERR_TWPRGE:
+            self.working_twprge_list.insert(0, self.working_twprge)
+        if not self.last_sec_used \
+                and self.working_sec != [MasterConfig._ERR_SEC]:
+            self.working_sec_list.insert(0, self.working_sec)
+
+        for twprge in self.working_twprge_list:
+            flag = f"unused_twprge<{twprge}>"
+            self.e_flags.append(flag)
+            self.e_flag_lines.append((flag, flag))
+
+        for seclist in self.working_sec_list:
+            flag = f"unused_sec<{','.join(seclist)}>"
+            self.e_flags.append(flag)
+            self.e_flag_lines.append((flag, flag))
+
+        if self.parent.sec_within and len(self.tract_components) == 1:
+            desc = self.tract_components[0]['desc']
+            for unused in self.unused_components.copy():
+                unused = cleanup_desc(unused[1])
+                if len(unused) >= self.parent.MIN_REPORTABLE_UNUSED_LEN:
+                    desc = f"{desc} {unused}"
+                    self.unused_components.remove(unused)
+            self.tract_components[0]['desc'] = desc
+
+        # Convert the tract data into actual Tract objects.
+        new_tracts = self.construct_tracts()
+        if not new_tracts:
+            # If no tracts identified, rerun this chunk as copy_all layout.
+            # And steal the staged flags from the replacement to hand off
+            # to the parent PLSSParser object.
+            replacement = ChunkParser(self.text, COPY_ALL, self.parent)
+            new_tracts = replacement.construct_tracts()
+            replacement_attributes = (
+                'w_flags', 'w_flag_lines', 'e_flags', 'e_flag_lines',
+                'unused_components'
+            )
+            for attr in replacement_attributes:
+                setattr(self, attr, getattr(replacement, attr))
+        return new_tracts
+
+    def find_matches(self, text, layout):
+        """
+        Find matching Twp/Rge and Sec according to the specified layout.
+        :param text: The text (full description or chunk) in which to
+        find matches.
+        :param layout: The layout to use for finding matches.
+        """
+        # Populate Twp/Rge matches/flags.
+        twprge_finder = TwpRgeFinder(text, layout)
+        self.twprge_matches = twprge_finder.matches
+        self.w_flags.extend(twprge_finder.flags)
+        self.w_flag_lines.extend(twprge_finder.flag_lines)
+        # Populate section matches/flags.
+        sec_finder = SecFinder(text, layout, self.parent.require_colon)
+        self.sec_matches = sec_finder.matches
+        self.w_flags.extend(sec_finder.flags)
+        self.w_flag_lines.extend(sec_finder.flag_lines)
+        return None
+
+    def populate_markers(self, text):
+        """
+        Convert the Twp/Rge and Sec matches into the markers_list and
+        markers_dict, which are examined by the parser to determine
+        which section(s) goes with which Twp/Rge, and which block of
+        description goes with that.
+
+        :param text: The text (full description or chunk) in which to
+        find matches.
+        """
+        # TEXT_START and TEXT_END may get overwritten, if the start or end
+        # of a Twp/Rge or Sec was matched there.
+        self.markers_dict[0] = self.TEXT_START
+        self.markers_dict[len(text)] = self.TEXT_END
+        for kind, val, start, end in self.sec_matches:
+            self.markers_dict[start] = self.SEC_START
+            self.markers_dict[end] = self.SEC_END
+            self.working_sec_list.append(val)
+        for kind, val, start, end in self.twprge_matches:
+            self.markers_dict[start] = self.TWPRGE_START
+            self.markers_dict[end] = self.TWPRGE_END
+            self.working_twprge_list.append(val)
+        self.markers_list = sorted(self.markers_dict.keys())
+        return None
+
+    def get_next_twprge(self):
+        """
+        Stage the next Twp/Rge in the working list. If no more, stage an
+        error Twp/Rge. (Also return that Twp/Rge.)
+        """
+        # Write an error flag if the previous TwpRge was not used.
+        if not self.last_twprge_used \
+                and self.working_twprge not in [None, MasterConfig._ERR_TWPRGE]:
+            flag = f"{_E_FLAG_TWPRGE_ERR}<{self.working_twprge}>"
+            context = f"<{self.working_twprge}>"
+            self.e_flags.append(flag)
+            self.e_flag_lines.append((flag, context))
+        self.last_twprge_used = False
+        if self.working_twprge_list:
+            self.working_twprge = self.working_twprge_list.pop(0)
+        else:
+            self.working_twprge = MasterConfig._ERR_TWPRGE
+        return self.working_twprge
+
+    def get_next_sec(self):
+        """
+        Stage the next Sec list in the working list. If no more, stage
+        an error Sec inside a list. (Also return that list.)
+        """
+        # Write an error flag if the previous section was not used.
+        if not self.last_sec_used \
+                and self.working_sec not in [None, MasterConfig._ERR_SEC]:
+            flag = f"{_E_FLAG_SECERR}<{self.working_sec}>"
+            context = f"<{self.working_sec}/{self.working_twprge}>"
+            self.e_flags.append(flag)
+            self.e_flag_lines.append((flag, context))
+        self.last_sec_used = False
+        if self.working_sec_list:
+            self.working_sec = self.working_sec_list.pop(0)
+        else:
+            self.working_sec = [MasterConfig._ERR_SEC]
+        return self.working_sec
+
+    def _parse_copyall(self, txt):
+        """
+        Use the already-gathered matched Twp/Rge and Sec data, but parse
+        as copy_all layout.
+        """
+        sec = self.get_next_sec()
+        # Just the first section.
+        sec = [sec[0]]
+        twprge = self.get_next_twprge()
+        copyall_tract = {
+            'desc': txt,
+            'sec': sec,
+            'twprge': twprge
+        }
+        self.tract_components.append(copyall_tract)
+
+    def _parse_meaningful(self, txt, layout):
+        """
+        Use the already-gathered matched Twp/Rge and Sec data to break
+        the text down into tract components for all layouts except
+        ``'COPY_ALL'``
+        :param txt:
+        :param layout:
+        :return:
+        """
+
+        def prep_new_tract(desc):
+            desc = cleanup_desc(desc)
+            new = {
+                'desc': desc,
+                'sec': self.working_sec,
+                'twprge': self.working_twprge,
+            }
+            self.tract_components.append(new)
+            self.last_sec_used = True
+            self.last_twprge_used = True
+            # Sec can be used only once.
+            self.working_sec = [MasterConfig._ERR_SEC]
+
+        s_desc_lays = [TRS_DESC, S_DESC_TR]
+        tr_first_lays = [TRS_DESC, TR_DESC_S]
+        final = len(self.markers_list) - 1
+
+        # Get working sec and/or twprge for 'forward-looking' layouts.
+        if layout not in s_desc_lays:
+            self.working_sec = self.get_next_sec()
+        if layout not in tr_first_lays:
+            self.working_twprge = self.get_next_twprge()
+
+        for count, marker_pos in enumerate(self.markers_list):
+            marker_type = self.markers_dict[marker_pos]
+            next_marker_pos = self.markers_list[min((final, count + 1))]
+            next_marker_type = self.markers_dict[next_marker_pos]
+
+            if marker_type == self.TWPRGE_START:
+                self.get_next_twprge()
+                continue
+            elif marker_type == self.SEC_START:
+                self.get_next_sec()
+                continue
+
+            # Get the block of text.
+            block = None
+            if marker_type == self.TEXT_START:
+                block = txt[marker_pos:next_marker_pos]
+            elif marker_type == self.TEXT_END:
+                continue
+            elif marker_type in [self.TWPRGE_END, self.SEC_END]:
+                block = txt[marker_pos:next_marker_pos]
+
+            if block is None:
+                continue
+
+            if layout in s_desc_lays and marker_type == self.SEC_END:
+                # These layouts mandate sec -> desc, so reaching the end of a
+                # section means we've identified a new tract.
+                prep_new_tract(block)
+                continue
+
+            if layout not in s_desc_lays and next_marker_type == self.SEC_START:
+                # These layouts mandate desc -> sec, so looking ahead to the start
+                # of a section means we've identified a new tract.
+                prep_new_tract(block)
+                continue
+
+            # All other scenarios are a problem. Track how many tracts had been
+            # created at the time this unused block was identified, so we can
+            # tie them back together if needed.
+            self.unused_components.append((len(self.tract_components), block))
+        return None
+
+    def construct_tracts(self):
+        """
+        Convert the parsed data components in ``self.tract_components``
+        into ``Tract`` objects, and append them to the ``self.tracts``
+        list.
+        """
+        parent = self.parent
+        new_tracts = []
+        for tract_data in self.tract_components:
+            desc = tract_data['desc']
+            if parent.clean_up:
+                desc = cleanup_desc(desc)
+            for sec in tract_data['sec']:
+                trs = f"{tract_data['twprge']}{sec}"
+                new_tract = Tract(
+                    desc,
+                    trs,
+                    config=parent.handed_down_config,
+                    parse_qq=parent.parse_qq,
+                    source=parent.source,
+                    orig_desc=parent.orig_text,
+                    orig_index=parent.next_tract_uid
+                )
+                parent.tracts.append(new_tract)
+                new_tracts.append(new_tract)
+                self.parent.next_tract_uid += 1
+        return new_tracts
+
+    def gen_flags_chunk(self):
+        """
+        Generate warning flags and corresponding context lines.
+        :return: ``None`` (results stored to ``.w_flags`` and
+         ``.w_flag_lines``).
+        """
+        # regex pattern : (flag, (context len before, context len after))
+        rgx_and_how_to_hand = {
+            well_regex: ("well", (5, 25)),
+            depth_regex: ("depth", (10, 20)),
+            including_regex: ("including", (0, 40)),
+            less_except_regex: ("less_except", (0, 40)),
+            isfa_regex: ("insofar", (0, 40)),
+        }
+        chunk = self.text
+        max_end = len(chunk)
+        for rgx, how_to_handle in rgx_and_how_to_hand.items():
+            flag, (left_context, right_context) = how_to_handle
+            start_pos = 0
+            while True:
+                start_mo = rgx.search(chunk, pos=start_pos)
+                if not start_mo:
+                    break
+
+                # Get context substring, searching for any additional matches
+                # of this same regex; and if any additional matches are found,
+                # then keep extending the context right. (To reduce redundant
+                # flags.)
+                end_mo = start_mo
+                final_end_mo = end_mo
+                while True:
+                    # Continue extending context rightward until we no
+                    # longer find another match of this regex pattern.
+                    left_bound = end_mo.end()
+                    right_bound = min((max_end, end_mo.end() + right_context))
+                    end_mo = rgx.search(chunk, pos=left_bound, endpos=right_bound)
+                    if not end_mo:
+                        break
+                    final_end_mo = end_mo
+                i = max((0, start_mo.start() - left_context))
+                j = min((final_end_mo.end() + right_context, max_end))
+                context = chunk[i:j]
+                context = context.replace('\n', ' ').strip()
+                context = f"<{context}>"
+                self.parent.w_flags.append(flag)
+                self.parent.w_flag_lines.append((flag, context))
+                # Start next search from the end of this context string.
+                start_pos = j
 
 
 __all__ = [
