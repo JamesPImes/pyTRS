@@ -988,28 +988,25 @@ class ChunkParser:
 
             # Get the block of text.
             block = None
-            if marker_type == self.TEXT_START:
+            if marker_type in [self.TEXT_START, self.TWPRGE_END, self.SEC_END]:
                 block = txt[marker_pos:next_marker_pos]
             elif marker_type == self.TEXT_END:
                 continue
-            elif marker_type in [self.TWPRGE_END, self.SEC_END]:
-                block = txt[marker_pos:next_marker_pos]
-
             if block is None:
                 continue
 
+            # Decide if the block should go in a Tract, or if it should
+            # go in unused.
             if layout in s_desc_lays and marker_type == self.SEC_END:
                 # These layouts mandate sec -> desc, so reaching the end of a
                 # section means we've identified a new tract.
                 prep_new_tract(block)
                 continue
-
-            if layout not in s_desc_lays and next_marker_type == self.SEC_START:
-                # These layouts mandate desc -> sec, so looking ahead to the start
-                # of a section means we've identified a new tract.
+            elif layout not in s_desc_lays and next_marker_type == self.SEC_START:
+                # These layouts mandate desc -> sec, so looking ahead to the
+                # start of a section means we've identified a new tract.
                 prep_new_tract(block)
                 continue
-
             # All other scenarios are a problem. Track how many tracts had been
             # created at the time this unused block was identified, so we can
             # tie them back together if needed.
