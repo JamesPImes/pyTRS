@@ -788,11 +788,7 @@ class ChunkParser:
         parent.e_flags.extend(self.e_flags)
         parent.e_flag_lines.extend(self.e_flag_lines)
         parent.tract_components.extend(self.tract_components)
-
-        # Discard the Tract index before passing unused chunks to parent, which
-        # would only have been used with config setting 'sec_within'.
-        for _, unused in self.unused_components:
-            parent.unused_components.append(unused)
+        parent.unused_components.extend(self.unused_components)
 
         return None
 
@@ -948,13 +944,7 @@ class ChunkParser:
         # Just the first section.
         sec = [sec[0]]
         twprge = self.get_next_twprge()
-        copyall_tract = {
-            'desc': txt,
-            'sec': sec,
-            'twprge': twprge,
-            'sec_within': False,
-        }
-        self.tract_components.append(copyall_tract)
+        self._stage_new_tract(txt, sec, twprge)
 
     def _parse_meaningful(self, txt, layout):
         """
@@ -968,13 +958,7 @@ class ChunkParser:
 
         def prep_new_tract(desc):
             desc = cleanup_desc(desc)
-            new = {
-                'desc': desc,
-                'sec': self.working_sec,
-                'twprge': self.working_twprge,
-                'sec_within': False,
-            }
-            self.tract_components.append(new)
+            self._stage_new_tract(desc, self.working_sec, self.working_twprge)
             self.last_sec_used = True
             self.last_twprge_used = True
             # Sec can be used only once.
@@ -1031,6 +1015,23 @@ class ChunkParser:
             # tie them back together if needed.
             self.unused_components.append((len(self.tract_components), block))
         return None
+
+    def _stage_new_tract(self, desc, sec, twprge):
+        """
+        Stage a newly identified tract into ``.tract_components``.
+
+        :param desc: Description block for new ``Tract``.
+        :param sec: A list of section numbers.
+        :param twprge: A Twp/Rge in the standardized format.
+        :return: ``None`` (appends directly to ``.tract_components``)
+        """
+        new = {
+            'desc': desc,
+            'sec': sec,
+            'twprge': twprge,
+            'sec_within': False,
+        }
+        self.tract_components.append(new)
 
     def gen_flags_chunk(self):
         """
@@ -1091,6 +1092,11 @@ def rebuild_sec_within(
     (that has not yet been compiled to a ``Tract`` object). If
     successful, will empty the ``.unused_components`` list.
 
+    Any tract components that get rebuilt with this function will have
+    their ``'sec_within'`` value changed to ``True``, so that it can be
+    flagged for the appropriate ``Tract`` object(s) created by the
+    ``PLSSParser``.
+
     .. note::
         This only works if *exactly* one tract candidate was identified.
         It will have no effect if more than one tract was found, but
@@ -1108,15 +1114,7 @@ def rebuild_sec_within(
      the description text (``0``) or *after* it (``1`` or greater).
     :param min_length: The minimum length that an unused block of
      text has to be before it gets reported.
-    :return: A list of indexes of the not-yet-compiled tract(s) that
-     were repaired.
-
-     .. note::
-            Currently, this can only return ``[]`` (empty list, being no
-            repairs), or ``[0]`` (referring to the first and only tract
-            in the list). This was designed this way in case future
-            versions successfully expand this functionality to multiple
-            tracts.
+    :return: ``None`` (Appropriate values are changed within each dict.)
     """
     if len(tract_components) != 1:
         return []
