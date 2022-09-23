@@ -300,6 +300,7 @@ class PLSSParser:
             qq_depth_max: int = None,
             qq_depth: int = None,
             break_halves=False,
+            sec_within=False,
             handed_down_config: str = None,
             source=None,
     ):
@@ -331,6 +332,7 @@ class PLSSParser:
         :param qq_depth_max:
         :param qq_depth:
         :param break_halves:
+        :param sec_within:
         :param handed_down_config: Config data to hand down to
         subordinate Tract objects. (Will be at least partially
         overridden by ``parse_qq=True``, if that is passed.)
@@ -362,7 +364,7 @@ class PLSSParser:
         self.default_ew = default_ew
         self.ocr_scrub = ocr_scrub
         self.require_colon = require_colon
-        self.sec_within = True
+        self.sec_within = sec_within
         # Keep track of which tracts were repaired with 'sec_within'.
         self.sec_within_indexes = []
 
