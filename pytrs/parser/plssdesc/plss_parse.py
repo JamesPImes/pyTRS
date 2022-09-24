@@ -246,7 +246,7 @@ class SecFinder:
             flag = f"pulled_sec_without_colon<{','.join(sec_nums)}>"
             self.flags.append((flag, flag))
             return None
-        if require_colon == SEC_COLON_CAUTIOUS and layout in [TRS_DESC, S_DESC_TR]:
+        if require_colon == self.SEC_COLON_CAUTIOUS and layout in [TRS_DESC, S_DESC_TR]:
             # Do a second pass.
             self.findall_matching_sec(
                 text, layout=layout, require_colon=self.SECOND_PASS)
