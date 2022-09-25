@@ -17,12 +17,12 @@ parsed.tracts_to_csv(
 ```
 This example writes a .csv file that looks like this (with `'Sec 13 - 15: S/2N/2'` broken out as the S½N½ of each Section 13, 14, and 15):
 
-| twp | rge | sec | desc          | lots |   qqs |
-|------|-----|-----|---------------|------|--------|
-| 154n | 97w | 01  | Lots 1 - 3, NE/4 | L1, L2, L3 | SENE, SWNE |
-| 154n | 97w | 13  | S/2N/2 | | SENE, SWNE, SENW, SWNW |
-| 154n | 97w | 14  | S/2N/2 | | SENE, SWNE, SENW, SWNW |
-| 154n | 97w | 15  | S/2N/2 | | SENE, SWNE, SENW, SWNW |
+| twp | rge | sec | desc                | lots |   qqs |
+|------|-----|-----|---------------------|------|--------|
+| 154n | 97w | 01  | Lots 1 - 3, S/2NE/4 | L1, L2, L3 | SENE, SWNE |
+| 154n | 97w | 13  | S/2N/2              | | SENE, SWNE, SENW, SWNW |
+| 154n | 97w | 14  | S/2N/2              | | SENE, SWNE, SENW, SWNW |
+| 154n | 97w | 15  | S/2N/2              | | SENE, SWNE, SENW, SWNW |
 
 We can alternatively compile these data fields (and [others](guides/guides/tract_attributes.md#tract-attributes)) into a list of dicts, nested list of lists, and other [options](guides/guides/extracting_data.md#extracting-bulk) -- or just accessed individually as `Tract` object attributes.
 
