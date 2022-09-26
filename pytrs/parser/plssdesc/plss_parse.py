@@ -445,12 +445,10 @@ class PLSSParser:
             if self.layout == COPY_ALL:
                 chunk_layout = COPY_ALL
             # This automatically unpacks the relevant data into the PLSSParser's
-            # attributes (tracts, flags, unused_components).
+            # attributes (tract_components, flags, unused_components).
             ChunkParser(chunk, layout=chunk_layout, parent=self)
 
         if self.sec_within:
-            # This only works if a single tract has been identified, but
-            # won't cause any fatal issues if that's not the case.
             rebuild_sec_within(
                 self.tract_components,
                 self.unused_components,
@@ -752,8 +750,8 @@ class ChunkParser:
         self.working_sec = None
 
         # Stage flags, etc. before passing them to parent PLSSParser's
-        # attributes, in case we find no Tracts during a first pass and need to
-        # rerun in COPY_ALL layout.
+        # attributes, in case we find no Tracts during a first pass and
+        # need to rerun in COPY_ALL layout.
         self.w_flags = []
         self.w_flag_lines = []
         self.e_flags = []
@@ -781,17 +779,13 @@ class ChunkParser:
         """
         self.parse_chunk()
         self.gen_flags_chunk()
-
         parent = self.parent
-
-        # New Tract objects are already appended to parent's `.tract` attribute.
         parent.w_flags.extend(self.w_flags)
         parent.w_flag_lines.extend(self.w_flag_lines)
         parent.e_flags.extend(self.e_flags)
         parent.e_flag_lines.extend(self.e_flag_lines)
         parent.tract_components.extend(self.tract_components)
         parent.unused_components.extend(self.unused_components)
-
         return None
 
     def parse_chunk(self):
@@ -834,9 +828,6 @@ class ChunkParser:
             self.e_flag_lines.append((flag, flag))
 
         if self.parent.sec_within:
-            # Note: Only works if a single tract candidate was identified. Will
-            # have no effect if more than one tract was found (but considers a
-            # multi-section to correspond with a single tract).
             rebuild_sec_within(
                 self.tract_components,
                 self.unused_components,
@@ -1039,7 +1030,7 @@ class ChunkParser:
          ``.w_flag_lines``).
         """
         # regex pattern : (flag, (context len before, context len after))
-        rgx_and_how_to_hand = {
+        rgx_and_how_to_handle = {
             well_regex: ("well", (5, 25)),
             depth_regex: ("depth", (10, 20)),
             including_regex: ("including", (0, 40)),
@@ -1048,18 +1039,17 @@ class ChunkParser:
         }
         chunk = self.text
         max_end = len(chunk)
-        for rgx, how_to_handle in rgx_and_how_to_hand.items():
+        for rgx, how_to_handle in rgx_and_how_to_handle.items():
             flag, (left_context, right_context) = how_to_handle
             start_pos = 0
             while True:
                 start_mo = rgx.search(chunk, pos=start_pos)
                 if not start_mo:
                     break
-
-                # Get context substring, searching for any additional matches
+                # Get context substring, searching it for any additional matches
                 # of this same regex; and if any additional matches are found,
-                # then keep extending the context right. (To reduce redundant
-                # flags.)
+                # then continue extending the context rightward. (To reduce
+                # redundant flags.)
                 end_mo = start_mo
                 final_end_mo = end_mo
                 while True:
@@ -1102,7 +1092,7 @@ def rebuild_sec_within(
         considers a multi-section equivalent to a single tract -- i.e.
         ``'That part of Sec 1 - 3 lying within the right-of-way...'``
         would be considered a single tract for the purposes of this
-        method.
+        function.
 
     :param tract_components: A list of dicts representing tracts
      that are yet to be compiled, with keys, ``'desc'``, ``'twp'``,
