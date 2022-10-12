@@ -733,6 +733,17 @@ class AliquotUnitTest(unittest.TestCase):
         )
         self._test_aliquot_basic(txts, n2_regex)
 
+    def test_n2_regex_negative(self):
+        no = (
+            'No. 2',
+        )
+        yes = (
+            'No. 1/2',
+            'No. /2'
+        )
+        self._test_aliquot_basic(yes, n2_regex)
+        self._test_aliquot_none(no, n2_regex)
+
     def test_s2_regex(self):
         txts = (
             'South Half',
