@@ -5,6 +5,9 @@ import re
 # A lookbehind requiring an aliquot marker or word boundary.
 fwb_lkbehind = r"((?<=¼|4|½|2)|(?<=\b))"
 
+# A lookahead requiring the start of an aliquot or word boundary.
+aqwb_lkahead = r"((?=N|S|E|W)|(?=\b))"
+
 # A subpattern to match 'One Quarter', 'Quarter', or equivalent symbol.
 quarter_subpattern = r"((One)?\s*Q[uarter]{3,7}|1\/?4|\/?4|¼)"
 
@@ -24,10 +27,10 @@ e_simple = r"(E\.?|East)"
 w_simple = r"(W\.?|West)"
 
 # Subpatterns for each direction with short abbreviations for 'half'.
-n2_short = r"(N2|N\/2)"
-s2_short = r"(S2|S\/2)"
-e2_short = r"(E2|E\/2)"
-w2_short = r"(W2|W\/2)"
+n2_short = r"(N2|N\s{0,2}\/2)"
+s2_short = r"(S2|S\s{0,2}\/2)"
+e2_short = r"(E2|E\s{0,2}\/2)"
+w2_short = r"(W2|W\s{0,2}\/2)"
 
 # Subpattern for cleaned up aliquot.
 aliquot_simple = r"(([NESW]½)|((NE|NW|SE|SW)¼))"
