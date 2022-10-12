@@ -730,19 +730,17 @@ class AliquotUnitTest(unittest.TestCase):
             'North 1/2',
             'N 1/2',
             'N½',
+            'No. 1/2',
+            'N 2 N 2',
         )
         self._test_aliquot_basic(txts, n2_regex)
 
-    def test_n2_regex_negative(self):
-        no = (
+        no_good = (
             'No. 2',
+            'N 2°',
+            'N2a',
         )
-        yes = (
-            'No. 1/2',
-            'No. /2'
-        )
-        self._test_aliquot_basic(yes, n2_regex)
-        self._test_aliquot_none(no, n2_regex)
+        self._test_aliquot_none(no_good, n2_regex)
 
     def test_s2_regex(self):
         txts = (
@@ -799,6 +797,7 @@ class AliquotUnitTest(unittest.TestCase):
             'NE',
             'asdfNE/4',
             'One Quarter',  # Dangerous edge case.
+            'NE/4asdf'
         )
         self._test_aliquot_none(no_good, ne_regex)
 
@@ -820,6 +819,7 @@ class AliquotUnitTest(unittest.TestCase):
         no_good = (
             'NW',
             'asdfNW/4',
+            'NW/4asdf',
         )
         self._test_aliquot_none(no_good, nw_regex)
 
@@ -841,6 +841,7 @@ class AliquotUnitTest(unittest.TestCase):
         no_good = (
             'SE',
             'asdfSE/4',
+            'SE/4asdf',
         )
         self._test_aliquot_none(no_good, se_regex)
 
@@ -862,6 +863,7 @@ class AliquotUnitTest(unittest.TestCase):
         no_good = (
             'SW',
             'asdfSW/4',
+            'SW/4asdf',
         )
         self._test_aliquot_none(no_good, sw_regex)
 
@@ -878,6 +880,7 @@ class AliquotUnitTest(unittest.TestCase):
             'NE 1/4',
             'NE',
             'asdfNE/4',
+            'NE/4asdf'
         )
         self._test_aliquot_basic(txts, ne_clean)
 
@@ -894,6 +897,7 @@ class AliquotUnitTest(unittest.TestCase):
             'NW 1/4',
             'NW',
             'asdfNW/4',
+            'NW/4asdf',
         )
         self._test_aliquot_basic(txts, nw_clean)
 
@@ -910,6 +914,7 @@ class AliquotUnitTest(unittest.TestCase):
             'SW 1/4',
             'SW',
             'asdfSW/4',
+            'SW/4asdf',
         )
         self._test_aliquot_basic(txts, sw_clean)
 
@@ -926,6 +931,7 @@ class AliquotUnitTest(unittest.TestCase):
             'SW 1/4',
             'SW',
             'asdfSW/4'
+            'SW/4asdf',
         )
         self._test_aliquot_basic(txts, sw_clean)
 
