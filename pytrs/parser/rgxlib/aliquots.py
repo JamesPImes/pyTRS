@@ -9,7 +9,7 @@ fwb_lkbehind = r"((?<=¼|4|½|2)|(?<=\b))"
 aqwb_lkahead = r"((?=N|S|E|W)|(?=\b))"
 
 # A subpattern to match 'One Quarter', 'Quarter', or equivalent symbol.
-quarter_subpattern = r"((One)?\s*Q[uarter]{3,7}|1\/?4|\/?4|¼)"
+quarter_subpattern = r"((One)?\s*Q[uarter]{3,7}|1\/4|¼)"
 
 # A subpattern to match 'One Half', 'Half', or equivalent symbol.
 half_subpattern = r"((One)?\s*Half|1\/2|½)"
@@ -27,10 +27,16 @@ e_simple = r"(E\.?|East)"
 w_simple = r"(W\.?|West)"
 
 # Subpatterns for each direction with short abbreviations for 'half'.
-n2_short = r"(N2|N\s{0,2}\/2)"
-s2_short = r"(S2|S\s{0,2}\/2)"
-e2_short = r"(E2|E\s{0,2}\/2)"
-w2_short = r"(W2|W\s{0,2}\/2)"
+n2_short = r"(N\s{0,2}(2|\/2))"
+s2_short = r"(S\s{0,2}(2|\/2))"
+e2_short = r"(E\s{0,2}(2|\/2))"
+w2_short = r"(W\s{0,2}(2|\/2))"
+
+# Subpatterns for each quarter with short abbreviations for 'quarter'.
+ne_short = r"(NE\s{0,2}(4|\/4))"
+nw_short = r"(NW\s{0,2}(4|\/4))"
+se_short = r"(SE\s{0,2}(4|\/4))"
+sw_short = r"(SW\s{0,2}(4|\/4))"
 
 # Subpattern for cleaned up aliquot.
 aliquot_simple = r"(([NESW]½)|((NE|NW|SE|SW)¼))"
@@ -42,33 +48,45 @@ aliquot_simple = r"(([NESW]½)|((NE|NW|SE|SW)¼))"
 ne_regex = re.compile(
     fr"""
     {fwb_lkbehind}
-    {ne_simple}
-    \s*
-    {quarter_subpattern}
+    (
+        ({ne_simple}\s*{quarter_subpattern})
+        |
+        ({ne_short})
+    )
+    {aqwb_lkahead}
     """, re.IGNORECASE | re.VERBOSE)
 
 se_regex = re.compile(
     fr"""
     {fwb_lkbehind}
-    {se_simple}
-    \s*
-    {quarter_subpattern}
+    (
+        ({se_simple}\s*{quarter_subpattern})
+        |
+        ({se_short})
+    )
+    {aqwb_lkahead}
     """, re.IGNORECASE | re.VERBOSE)
 
 nw_regex = re.compile(
     fr"""
     {fwb_lkbehind}
-    {nw_simple}
-    \s*
-    {quarter_subpattern}
+    (
+        ({nw_simple}\s*{quarter_subpattern})
+        |
+        ({nw_short})
+    )
+    {aqwb_lkahead}
     """, re.IGNORECASE | re.VERBOSE)
 
 sw_regex = re.compile(
     fr"""
     {fwb_lkbehind}
-    {sw_simple}
-    \s*
-    {quarter_subpattern}
+    (
+        ({sw_simple}\s*{quarter_subpattern})
+        |
+        ({sw_short})
+    )
+    {aqwb_lkahead}
     """, re.IGNORECASE | re.VERBOSE)
 
 # Halves.
@@ -81,6 +99,7 @@ n2_regex = re.compile(
         |
         ({n2_short})
     )
+    {aqwb_lkahead}
     """, re.IGNORECASE | re.VERBOSE)
 
 s2_regex = re.compile(
@@ -91,6 +110,7 @@ s2_regex = re.compile(
         |
         ({s2_short})
     )
+    {aqwb_lkahead}
     """, re.IGNORECASE | re.VERBOSE)
 
 e2_regex = re.compile(
@@ -101,6 +121,7 @@ e2_regex = re.compile(
         |
         ({e2_short})
     )
+    {aqwb_lkahead}
     """, re.IGNORECASE | re.VERBOSE)
 
 w2_regex = re.compile(
@@ -111,6 +132,7 @@ w2_regex = re.compile(
         |
         ({w2_short})
     )
+    {aqwb_lkahead}
     """, re.IGNORECASE | re.VERBOSE)
 
 
