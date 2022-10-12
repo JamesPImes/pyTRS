@@ -5,20 +5,24 @@ import re
 # A lookbehind requiring an aliquot marker or word boundary.
 fwb_lkbehind = r"((?<=¼|4|½|2)|(?<=\b))"
 
-# A lookahead requiring the start of an aliquot or word boundary.
-aqwb_lkahead = r"((?=N|S|E|W)|(?=\b))"
+# A lookahead requiring the start of an aliquot, or appropriate symbol
+# (do not use word boundary \b, to prevent symbols like degrees -- e.g.,
+#   N 2° 37'  -->  'N/2').
+aqwb_lkahead = r"((?=N|S|E|W)|(?=[\s,.;])|(?=$))"
 
 # A subpattern to match 'One Quarter', 'Quarter', or equivalent symbol.
-quarter_subpattern = r"((One)?\s*Q[uarter]{3,7}|1\/4|¼)"
+quarter_subpattern = r"((One)?\s*Q[uarter]{3,7}|1\s*\/\s*4|¼)"
 
 # A subpattern to match 'One Half', 'Half', or equivalent symbol.
-half_subpattern = r"((One)?\s*Half|1\/2|½)"
+half_subpattern = r"((One)?\s*Half|1\s*\/\s*2|½)"
 
 # Subpatterns for each quarter or abbreviation (with no fraction).
-ne_simple = r"(NE|North?\s*East)"
-se_simple = r"(SE|South?\s*East)"
-nw_simple = r"(NW|North?\s*West)"
-sw_simple = r"(SW|South?\s*West)"
+# Note: Should not be used without some forward-looking context (e.g.,
+# a fraction symbol).
+ne_simple = r"(N\s{0,2}E|North?\s*East|N\.\s{0,2}E\.)"
+se_simple = r"(S\s{0,2}E|South?\s*East|S\.\s{0,2}E\.)"
+nw_simple = r"(N\s{0,2}W|North?\s*West|N\.\s{0,2}W\.)"
+sw_simple = r"(S\s{0,2}W|South?\s*West|S\.\s{0,2}W\.)"
 
 # Subpatterns for each direction or abbreviation (with no fraction).
 n_simple = r"(N\.?|No\.?|North?)"
@@ -27,16 +31,24 @@ e_simple = r"(E\.?|East)"
 w_simple = r"(W\.?|West)"
 
 # Subpatterns for each direction with short abbreviations for 'half'.
-n2_short = r"(N\s{0,2}(2|\/2))"
-s2_short = r"(S\s{0,2}(2|\/2))"
-e2_short = r"(E\s{0,2}(2|\/2))"
-w2_short = r"(W\s{0,2}(2|\/2))"
+# Note: If space(s) is found between '/' and '2', then space(s) is
+# REQUIRED between [aliquot] and [fraction abbrev.]
+#    'N / 2' -> OK;    'N /2' -> OK;    'N/ 2'  --> Not OK.
+_form = r"(({0}\/?2)|({0}\s{{1,2}}(2|\/\s{{0,2}}2)))"
+n2_short = _form.format('N')
+s2_short = _form.format('S')
+e2_short = _form.format('E')
+w2_short = _form.format('W')
 
 # Subpatterns for each quarter with short abbreviations for 'quarter'.
-ne_short = r"(NE\s{0,2}(4|\/4))"
-nw_short = r"(NW\s{0,2}(4|\/4))"
-se_short = r"(SE\s{0,2}(4|\/4))"
-sw_short = r"(SW\s{0,2}(4|\/4))"
+# Note: If space(s) is found between '/' and '4', then space(s) is
+# REQUIRED between [aliquot] and [fraction abbrev.]
+#    'NE / 4' -> OK;   'NE /4' -> OK;  'NE/ 4'  --> Not OK.
+_form = r"(({0}\/?4)|({0}\s{{1,2}}(4|\/\s{{0,2}}4)))"
+ne_short = _form.format('NE')
+nw_short = _form.format('NW')
+se_short = _form.format('SE')
+sw_short = _form.format('SW')
 
 # Subpattern for cleaned up aliquot.
 aliquot_simple = r"(([NESW]½)|((NE|NW|SE|SW)¼))"
