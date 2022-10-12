@@ -9,7 +9,7 @@ fwb_lkbehind = r"((?<=¼|4|½|2)|(?<=\b))"
 quarter_subpattern = r"((One)?\s*Q[uarter]{3,7}|1\/?4|\/?4|¼)"
 
 # A subpattern to match 'One Half', 'Half', or equivalent symbol.
-half_subpattern = r"((One)?\s*Half|1\/?2|\/?2|½)"
+half_subpattern = r"((One)?\s*Half|1\/2|½)"
 
 # Subpatterns for each quarter or abbreviation (with no fraction).
 ne_simple = r"(NE|North?\s*East)"
@@ -22,6 +22,12 @@ n_simple = r"(N\.?|No\.?|North?)"
 s_simple = r"(S\.?|So\.?|South?)"
 e_simple = r"(E\.?|East)"
 w_simple = r"(W\.?|West)"
+
+# Subpatterns for each direction with short abbreviations for 'half'.
+n2_short = r"(N2|N\/2)"
+s2_short = r"(S2|S\/2)"
+e2_short = r"(E2|E\/2)"
+w2_short = r"(W2|W\/2)"
 
 # Subpattern for cleaned up aliquot.
 aliquot_simple = r"(([NESW]½)|((NE|NW|SE|SW)¼))"
@@ -67,33 +73,41 @@ sw_regex = re.compile(
 n2_regex = re.compile(
     fr"""
     {fwb_lkbehind}
-    {n_simple}
-    \s*
-    {half_subpattern}
+    (
+        ({n_simple}\s*{half_subpattern})
+        |
+        ({n2_short})
+    )
     """, re.IGNORECASE | re.VERBOSE)
 
 s2_regex = re.compile(
     fr"""
     {fwb_lkbehind}
-    {s_simple}
-    \s*
-    {half_subpattern}
+    (
+        ({s_simple}\s*{half_subpattern})
+        |
+        ({s2_short})
+    )
     """, re.IGNORECASE | re.VERBOSE)
 
 e2_regex = re.compile(
     fr"""
     {fwb_lkbehind}
-    {e_simple}
-    \s*
-    {half_subpattern}
+    (
+        ({e_simple}\s*{half_subpattern})
+        |
+        ({e2_short})
+    )
     """, re.IGNORECASE | re.VERBOSE)
 
 w2_regex = re.compile(
     fr"""
     {fwb_lkbehind}
-    {w_simple}
-    \s*
-    {half_subpattern}
+    (
+        ({w_simple}\s*{half_subpattern})
+        |
+        ({w2_short})
+    )
     """, re.IGNORECASE | re.VERBOSE)
 
 
