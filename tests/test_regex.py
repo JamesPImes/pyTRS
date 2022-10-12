@@ -798,6 +798,7 @@ class AliquotUnitTest(unittest.TestCase):
             'asdfNE/4',
             'One Quarter',  # Dangerous edge case.
             'NE/4asdf'
+            'NE 400',
         )
         self._test_aliquot_none(no_good, ne_regex)
 
@@ -820,6 +821,7 @@ class AliquotUnitTest(unittest.TestCase):
             'NW',
             'asdfNW/4',
             'NW/4asdf',
+            'NW 400',
         )
         self._test_aliquot_none(no_good, nw_regex)
 
@@ -842,6 +844,7 @@ class AliquotUnitTest(unittest.TestCase):
             'SE',
             'asdfSE/4',
             'SE/4asdf',
+            'SE 400',
         )
         self._test_aliquot_none(no_good, se_regex)
 
@@ -864,6 +867,7 @@ class AliquotUnitTest(unittest.TestCase):
             'SW',
             'asdfSW/4',
             'SW/4asdf',
+            'SW 400',
         )
         self._test_aliquot_none(no_good, sw_regex)
 
