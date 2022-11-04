@@ -95,39 +95,43 @@ def half_plus_q_scrubber(txt):
     new_txt = ''
     while txt != new_txt:
         new_txt = txt
-        mo = half_plus_q_regex.search(txt)
-        if mo is None:
-            continue
-
-        # The 'quarter_aliquot_rightmost' named group always matches the
-        # rightmost quarter. It is agnostic as to whether that matches
-        # specifically the NE/4, NW/4, SE/4, or SW/4. To determine which
-        # was matched, compare the contents in each of the four named
-        # groups against 'quarter_aliquot_rightmost'. Whichever of those
-        # matches is the actual rightmost quarter.
-        rightmost_comparer = mo['quarter_aliquot_rightmost']
-        rightmost_quarter = ''
-        if mo['ne_found'] == rightmost_comparer:
-            rightmost_quarter = NE_FRAC
-        elif mo['nw_found'] == rightmost_comparer:
-            rightmost_quarter = NW_FRAC
-        elif mo['se_found'] == rightmost_comparer:
-            rightmost_quarter = SE_FRAC
-        elif mo['sw_found'] == rightmost_comparer:
-            rightmost_quarter = SW_FRAC
-
-        # Replace this entire regex match with itself, but sub in the
-        # newly cleaned-up quarter + fraction, which will not match in
-        # the next loop.
-
-        # Start with full match.
-        replace_with = mo.group(0)
-        # Cut out the rightmost quarter we just found.
-        replace_with = replace_with[:-len(rightmost_comparer)]
-        # Tack on the cleaned up rightmost quarter.
-        replace_with = f"{replace_with}{rightmost_quarter}"
-        txt = re.sub(half_plus_q_regex, replace_with, txt)
+        # Replace each regex match with itself, but sub in a cleaned-up
+        # quarter + fraction, which will not match in the next loop.
+        txt = half_plus_q_regex.sub(process_half_plus_q_match, txt)
     return txt
+
+
+def process_half_plus_q_match(mo):
+    """
+    For 'half plus quarter' pattern (e.g., ``'E½NE'``), build a new
+    string to replace the match (e.g. ``'E½NE¼'``).
+
+    :param mo: A regex match object for a ``half_plus_q_regex`` pattern.
+    :return: The string for replacing that match.
+    """
+    # The 'quarter_aliquot_rightmost' named group always matches the
+    # rightmost quarter. It is agnostic as to whether that matches
+    # specifically the NE/4, NW/4, SE/4, or SW/4. To determine which
+    # was matched, compare the contents in each of the four named
+    # groups against 'quarter_aliquot_rightmost'. Whichever of those
+    # matches is the actual rightmost quarter.
+    rightmost_comparer = mo['quarter_aliquot_rightmost']
+    rightmost_quarter = ''
+    if mo['ne_found'] == rightmost_comparer:
+        rightmost_quarter = NE_FRAC
+    elif mo['nw_found'] == rightmost_comparer:
+        rightmost_quarter = NW_FRAC
+    elif mo['se_found'] == rightmost_comparer:
+        rightmost_quarter = SE_FRAC
+    elif mo['sw_found'] == rightmost_comparer:
+        rightmost_quarter = SW_FRAC
+
+    # Start with full match, cut out the rightmost quarter we just found,
+    # then tack on the cleaned up rightmost quarter.
+    replace_with = mo.group(0)
+    replace_with = replace_with[:-len(rightmost_comparer)]
+    replace_with = f"{replace_with}{rightmost_quarter}"
+    return replace_with
 
 
 def scrub_aliquots(txt, clean_qq=False):

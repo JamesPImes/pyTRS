@@ -59,7 +59,8 @@ class PreprocessFuncTestCase(unittest.TestCase):
             'S2NE': 'S½NE¼',
             'S2NENW': 'S½NE¼NW¼',
             'N2 of NE of NW, NW': 'N½NE¼NW¼, NW¼',
-            'S½N½ SW': 'S½N½SW¼'
+            'S½N½ SW': 'S½N½SW¼',
+            'S2SE, E2SW': 'S½SE¼, E½SW¼',
         }
         for txt, expected in txts_expected.items():
             self.assertEqual(expected, scrub_aliquots(txt, clean_qq=True))
