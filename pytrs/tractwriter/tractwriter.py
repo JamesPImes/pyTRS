@@ -4,7 +4,7 @@ import csv
 from pathlib import Path
 
 from ..parser import Tract, TractList
-from ..utils import gen_uid
+from ..utils import gen_uid, flatten
 
 
 class TractWriter:
@@ -181,7 +181,8 @@ class TractWriter:
             if isinstance(elem, dict):
                 elem = ','.join([f"{k}:{v}" for k, v in elem.items()])
             elif isinstance(elem, (list, tuple)):
-                elem = ', '.join(elem)
+                flat = flatten(elem)
+                elem = ', '.join(flat)
             scrubbed.append(elem)
         return scrubbed
 
