@@ -340,7 +340,7 @@ class PLSSParser:
         """
         # These inform subordinate Tract objects.
         self.parse_qq = parse_qq
-        self.source = None
+        self.source = source
         self.orig_text = text
         if handed_down_config is None:
             handed_down_config = ''
@@ -398,10 +398,6 @@ class PLSSParser:
             flag = f"fixed_twprge<{','.join(short_versions)}>"
             self.w_flags.append(flag)
             self.w_flag_lines.append((flag, flag))
-
-        # Override source in parent, if specified as init parameter.
-        if source is None:
-            self.source = source
 
         self.parse(segment=segment)
 
