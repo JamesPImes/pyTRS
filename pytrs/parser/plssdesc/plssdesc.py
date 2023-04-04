@@ -1298,7 +1298,7 @@ class PLSSDesc:
         :return: None
         """
         # This functionality is handled by TractList method.
-        self.tracts.sort_tracts(key=key, reverse=reverse)
+        self.tracts.custom_sort(key=key, reverse=reverse)
         return None
 
     def group_by_nested(
