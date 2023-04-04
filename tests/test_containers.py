@@ -10,6 +10,7 @@ try:
         TractList,
         TRSList,
     )
+    from pytrs.utils import flatten
 except ImportError:
     import sys
 
@@ -19,6 +20,7 @@ except ImportError:
         TractList,
         TRSList,
     )
+    from pytrs.utils import flatten
 
 SAMPLE_PLSSDESC_1 = PLSSDesc(
     'T154N-R97W Sec 14: NE/4, Sec 16 - 20: ALL',
@@ -114,6 +116,35 @@ class TractListTests(unittest.TestCase):
             # Verify they're the same length (i.e. nothing in grouped[twprge]
             # that is not also in the list of expected tracts).
             self.assertEqual(len(expected_tract_strs), len(stringified_tracts))
+
+    def test_custom_sort(self):
+        txt = "T154N-R97W Sec 14: NE/4, Sec 1: S2N2, Sec 5: SW/4, T153N-R98W Sec 36: ALL"
+        sorts_expected = {
+            # By section.
+            's': ['154n97w01', '154n97w05', '154n97w14', '153n98w36'],
+            # By township.
+            't': ['153n98w36', '154n97w14', '154n97w01', '154n97w05'],
+            # By range.
+            'r': ['154n97w14', '154n97w01', '154n97w05', '153n98w36'],
+        }
+
+        expected_default = ['153n98w36', '154n97w01', '154n97w05', '154n97w14']
+        d = PLSSDesc(txt)
+        tl = TractList(d)
+        tl.custom_sort()
+        self.assertEqual(expected_default, flatten(tl.tracts_to_list('trs')))
+
+        expected_default_reverse = ['154n97w14', '154n97w05', '154n97w01', '153n98w36']
+        d = PLSSDesc(txt)
+        tl = TractList(d)
+        tl.custom_sort(reverse=True)
+        self.assertEqual(expected_default_reverse, flatten(tl.tracts_to_list('trs')))
+
+        for sort_key, expected_results in sorts_expected.items():
+            d = PLSSDesc(txt)
+            tl = TractList(d)
+            tl.custom_sort(key=sort_key)
+            self.assertEqual(expected_results, flatten(tl.tracts_to_list('trs')))
 
 
 class TRSListTests(unittest.TestCase):
