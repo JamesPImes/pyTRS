@@ -477,13 +477,11 @@ class _TRSTractList:
         if is_multi_key and not is_multi_rev:
             reverse = [reverse for _ in key]
 
-        # If `iterable` sort_key and/or `sort_reverse`, make sure
-        # the length of each matches.
+        # If iterable `sort_key` and/or `reverse`, make sure the lengths match.
         if ((is_multi_key and len(key) != len(reverse))
                 or (is_multi_rev and not is_multi_key)):
             raise IndexError(
-                "Mismatched length of iterable `sort_key` "
-                "and `sort_reverse`")
+                "Mismatched length of iterable `sort_key` and `reverse`")
 
         if is_multi_key:
             # If multiple sorts, do each.
@@ -491,13 +489,13 @@ class _TRSTractList:
                 self.custom_sort(key=sk, reverse=rv)
         elif isinstance(key, str):
             # `._sort_custom` takes str-type sort keys.
-            self._sort_custom(key)
+            self._sort_custom(key, reverse)
         else:
-            # Otherwise, assume it's a lambda. Use builtin `sort()`.
+            # Otherwise, assume it's a function. Use builtin `sort()`.
             self.sort(key=key, reverse=reverse)
         return None
 
-    def _sort_custom(self, key: str = 'i,s,r,t'):
+    def _sort_custom(self, key: str = 'i,s,r,t', reverse=False):
         """
         INTERNAL USE:
 
@@ -509,6 +507,9 @@ class _TRSTractList:
 
         :param key: A str, specifying which sort(s) should be done, and
          in which order.
+
+        :param reverse: Whether to reverse the list after all sorts are
+         complete.
 
         :return: None
         """
@@ -664,8 +665,11 @@ class _TRSTractList:
         key = re.sub(r"reverse", "rev", key)
         keys = key.split(',')
         for k in keys:
-            sk, reverse = parse_key(k)
-            self.sort(key=sort_defs[sk], reverse=reverse)
+            sk, rev = parse_key(k)
+            self.sort(key=sort_defs[sk], reverse=rev)
+
+        if reverse:
+            self.reverse()
 
     def group_by_nested(
             self,
