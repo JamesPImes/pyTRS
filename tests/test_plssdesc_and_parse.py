@@ -11,6 +11,7 @@ try:
     from pytrs.parser.plssdesc.plss_parse import PLSSParser
     from pytrs.parser import Tract
     from pytrs.parser import MasterConfig
+    from pytrs.utils import flatten
 except ImportError:
     import sys
     sys.path.append('../')
@@ -18,6 +19,7 @@ except ImportError:
     from pytrs.parser.plssdesc.plss_parse import PLSSParser
     from pytrs.parser import Tract
     from pytrs.parser import MasterConfig
+    from pytrs.utils import flatten
     
 
 # All four of these have the same tracts.
@@ -181,6 +183,32 @@ class PLSSParseTests(unittest.TestCase):
                 self.assertEqual(expected_desc, d.tracts[i].desc)
                 # Check that the appropriate
                 self.assertIn(expected_flag.format(trs), d.w_flags)
+
+    def test_sort_tracts(self):
+        txt = "T154N-R97W Sec 14: NE/4, Sec 1: S2N2, Sec 5: SW/4, T153N-R98W Sec 36: ALL"
+        sorts_expected = {
+            # By section.
+            's': ['154n97w01', '154n97w05', '154n97w14', '153n98w36'],
+            # By township.
+            't': ['153n98w36', '154n97w14', '154n97w01', '154n97w05'],
+            # By range.
+            'r': ['154n97w14', '154n97w01', '154n97w05', '153n98w36'],
+        }
+
+        expected_default = ['153n98w36', '154n97w01', '154n97w05', '154n97w14']
+        d = PLSSDesc(txt)
+        d.sort_tracts()
+        self.assertEqual(expected_default, flatten(d.tracts_to_list('trs')))
+
+        expected_default_reverse = ['154n97w14', '154n97w05', '154n97w01', '153n98w36']
+        d = PLSSDesc(txt)
+        d.sort_tracts(reverse=True)
+        self.assertEqual(expected_default_reverse, flatten(d.tracts_to_list('trs')))
+
+        for sort_key, expected_results in sorts_expected.items():
+            d = PLSSDesc(txt)
+            d.sort_tracts(key=sort_key)
+            self.assertEqual(expected_results, flatten(d.tracts_to_list('trs')))
 
 
 if __name__ == '__main__':
