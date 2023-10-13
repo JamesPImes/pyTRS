@@ -353,7 +353,7 @@ class PLSSParser:
         preprocessor = PLSSPreprocessor(text, default_ns, default_ew, ocr_scrub)
         self.text = preprocessor.text
         if layout is None:
-            layout = deduce_layout(text)
+            layout = deduce_layout(self.text)
         self.layout = layout
         if clean_up is None:
             clean_up = True
