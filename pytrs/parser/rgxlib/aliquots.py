@@ -11,18 +11,18 @@ fwb_lkbehind = r"((?<=¼|4|½|2)|(?<=\b))"
 aqwb_lkahead = r"((?=N|S|E|W)|(?=[\s,.;])|(?=$))"
 
 # A subpattern to match 'One Quarter', 'Quarter', or equivalent symbol.
-quarter_subpattern = r"((One)?\s*Q[uarter]{3,7}|1\s*\/\s*4|¼)"
+quarter_subpattern = r"((One)?[\s\-]*Q[uarter]{3,7}|1\s*\/\s*4|¼)"
 
 # A subpattern to match 'One Half', 'Half', or equivalent symbol.
-half_subpattern = r"((One)?\s*Half|1\s*\/\s*2|½)"
+half_subpattern = r"((One)?[\s\-]*Half|1\s*\/\s*2|½)"
 
-# Subpatterns for each quarter or abbreviation (with no fraction).
+# Subpaterns for each quarter or abbreviation (with no fraction).
 # Note: Should not be used without some forward-looking context (e.g.,
 # a fraction symbol).
-ne_simple = r"(N\s{0,2}E|North?\s*East|N\.\s{0,2}E\.)"
-se_simple = r"(S\s{0,2}E|South?\s*East|S\.\s{0,2}E\.)"
-nw_simple = r"(N\s{0,2}W|North?\s*West|N\.\s{0,2}W\.)"
-sw_simple = r"(S\s{0,2}W|South?\s*West|S\.\s{0,2}W\.)"
+ne_simple = r"(N\s{0,2}E|North?[\s\-]*East|N\.\s{0,2}E\.)"
+se_simple = r"(S\s{0,2}E|South?[\s\-]*East|S\.\s{0,2}E\.)"
+nw_simple = r"(N\s{0,2}W|North?[\s\-]*West|N\.\s{0,2}W\.)"
+sw_simple = r"(S\s{0,2}W|South?[\s\-]*West|S\.\s{0,2}W\.)"
 
 # Subpatterns for each direction or abbreviation (with no fraction).
 n_simple = r"(N\.?|No\.?|North?)"
