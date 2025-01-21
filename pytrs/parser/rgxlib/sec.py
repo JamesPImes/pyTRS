@@ -25,7 +25,7 @@ sec_regex = re.compile(
     {no_num_sec_regex.pattern}
     (?P<plural>s)?
     
-    [\.\-–—\s]*                 # Deadspace between "Section" and secnum
+    [:\s*]?[\.\-–—\s]*                # Deadspace between "Section" and secnum
     
     # Note the double curly brackets to escape f-string syntax.
     (?P<secnum>\d{{1,3}})       # Section number, between 1 and 3 digits.

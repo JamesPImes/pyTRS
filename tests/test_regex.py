@@ -379,7 +379,8 @@ class SecUnitTest(unittest.TestCase):
             'Sec 14',
             'Sec. 14',
             'Sect. 14',
-            '§14'
+            '§14',
+            'Sec: 14',
         )
         expected = {
             'secnum': '14',
@@ -396,6 +397,7 @@ class SecUnitTest(unittest.TestCase):
             'Sections 14',
             'Secitons 14',
             'Secs 14',
+            'Sections: 14',
         )
         expected = {
             'secnum': '14',
@@ -453,7 +455,8 @@ class SecUnitTest(unittest.TestCase):
             'Sections 14',
             'Sec. 14,',
             'Sect. 14 and ',
-            '§14 &'
+            '§14 &',
+            'Section: 14 and ',
         )
         for txt in txts:
             self.assertRegex(txt, multisec_regex)
