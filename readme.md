@@ -80,6 +80,6 @@ Be sure to read the full disclaimer in [`LICENSE.txt`](LICENSE.txt). However, so
 ## Requirements
 The pyTRS library is pure Python and should work with Python 3.6+.
 
-(Explicitly tested in Python 3.10.6 and Python 3.6.8.)
+The CI/CD pipeline currently runs tests in Windows, MacOS, and Ubuntu; with Python 3.9 through 3.13.
 
-The functions and classes in ``pytrs.interface_tools`` use ``tkinter``, so Linux users will presumably need to explicitly install that, but only if the ``iterface_tools`` module is needed.
+The ``pytrs.interface_tools`` module uses ``tkinter``, so Linux users will probably need to explicitly install ``tkinter`` themselves, but only if the ``interface_tools`` package is actually needed.
