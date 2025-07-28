@@ -1073,8 +1073,7 @@ class Tract:
         :param delim: Specify what separates Twp/Rge/Sec from the
          corresponding description block (i.e. what comes between
          ``.trs`` and ``.desc``).  (Defaults to ``': '``).
-        :return: A string of the complete description, potentially
-         trimmed.
+        :return: A string of the complete description.
         """
         return f"{self.trs}{delim}{self.desc}"
 
