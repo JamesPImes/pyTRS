@@ -1792,7 +1792,7 @@ class TractList(_TRSTractList):
                 tract.desc = ', '.join(tract.lots_aliquots)
         return consolidated
 
-    def quick_desc_simplified_aliquots(
+    def quick_desc_lots_aliquots(
             self, assume_standard: Union[list, bool] = None, **kw) -> str:
         """
         Simplify the description of all tracts in this ``TractList``
@@ -1816,7 +1816,7 @@ class TractList(_TRSTractList):
         tl = self._simplify_aliquots(assume_standard)
         return tl.quick_desc(**kw)
 
-    def pretty_desc_simplified_aliquots(
+    def pretty_desc_lots_aliquots(
             self, assume_standard: Union[list, bool] = None, **kw) -> str:
         """
         Simplify the description of all tracts in this ``TractList``

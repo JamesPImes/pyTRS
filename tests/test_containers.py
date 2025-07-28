@@ -173,7 +173,7 @@ class TractListTests(unittest.TestCase):
         trs_list = consolidated.list_trs()
         self.assertEqual(trs_list_target, trs_list)
         self.assertEqual(len(consolidated), 3)
-        consol_desc = consolidated.quick_desc_simplified_aliquots(assume_standard=True)
+        consol_desc = consolidated.quick_desc_lots_aliquots(assume_standard=True)
         self.assertEqual(consol_desc_target, consol_desc)
 
         expected_descs = [
