@@ -39,7 +39,7 @@ A few uses and examples [are showcased here](guides/guides/examples.md).
 
 
 ## License
-Copyright © 2020-2022, James P. Imes, all rights reserved.
+Copyright © 2020-2025, James P. Imes, all rights reserved.
 
 #### *__pyTRS is NOT licensed for ANY commercial or for-profit use. [Contact me at <jamesimes@gmail.com>](mailto:jamesimes@gmail.com) for licensing inquiries, or to inquire about my consulting, or just to say hello / offer feedback.__*
 
