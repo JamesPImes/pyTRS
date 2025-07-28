@@ -5,6 +5,7 @@ helper functions for grouping (or ungrouping) and sorting.
 """
 
 import re
+from typing import Union
 
 from ...utils import flatten
 from ...utils import _confirm_list_of_strings as clean_attributes
@@ -1743,7 +1744,7 @@ class TractList(_TRSTractList):
             tracts.append(tract)
         return TractList(tracts)
 
-    def _simplify_aliquots(self, assume_standard: list|bool = None):
+    def _simplify_aliquots(self, assume_standard: Union[list, bool] = None):
         """
         INTERNAL USE:
 
@@ -1774,7 +1775,7 @@ class TractList(_TRSTractList):
         return consolidated
 
     def quick_desc_simplified_aliquots(
-            self, assume_standard: list|bool = None, **kw) -> str:
+            self, assume_standard: Union[list, bool] = None, **kw) -> str:
         """
         Simplify the description of all tracts in this ``TractList``
         down to the parsed lots and aliquots (reconstructed from parsed
@@ -1798,7 +1799,7 @@ class TractList(_TRSTractList):
         return tl.quick_desc(**kw)
 
     def pretty_desc_simplified_aliquots(
-            self, assume_standard: list|bool = None, **kw) -> str:
+            self, assume_standard: Union[list, bool] = None, **kw) -> str:
         """
         Simplify the description of all tracts in this ``TractList``
         down to the parsed lots and aliquots (reconstructed from parsed
