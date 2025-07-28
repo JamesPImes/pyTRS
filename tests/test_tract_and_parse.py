@@ -1,4 +1,3 @@
-
 """
 Tests for the pytrs.parser.tract module and submodules (except the
 .tract_preprocess submodule, which has its own tests).
@@ -10,13 +9,15 @@ try:
     from pytrs.parser.tract import Tract
     from pytrs.parser.tract.tract_parse import TractParser
     from pytrs.parser.tract.aliquot_parse import parse_aliquot
+    from pytrs.parser.tract.aliquot_simplify import simplify_aliquots
 except ImportError:
     import sys
+
     sys.path.append('../')
     from pytrs.parser.tract import Tract
     from pytrs.parser.tract.tract_parse import TractParser
     from pytrs.parser.tract.aliquot_parse import parse_aliquot
-
+    from pytrs.parser.tract.aliquot_simplify import simplify_aliquots
 
 # This data will be used for testing both TractParser and Tract classes.
 
@@ -28,15 +29,15 @@ BASIC = {
 }
 
 # Testing clean_qq
-CLEAN_QQ  = {
-            'Lot 1 of SE/4 of the NW/4': ['L1', 'SENW'],
-            'Southeast Quarter of the Northeast Quarter': ['SENE'],
-            'Lots 1 - 3, NENE': ['L1', 'L2', 'L3', 'NENE'],
-            'S2NE': ['SENE', 'SWNE'],
-            'S2NENW, Lot 7': ['L7', 'S2NENW'],
-            'N2 of NE of NW, NW': ['N2NENW', 'NENW', 'NWNW', 'SENW', 'SWNW'],
-            'S½N½ SW': ['S2NESW', 'S2NWSW']
-        }
+CLEAN_QQ = {
+    'Lot 1 of SE/4 of the NW/4': ['L1', 'SENW'],
+    'Southeast Quarter of the Northeast Quarter': ['SENE'],
+    'Lots 1 - 3, NENE': ['L1', 'L2', 'L3', 'NENE'],
+    'S2NE': ['SENE', 'SWNE'],
+    'S2NENW, Lot 7': ['L7', 'S2NENW'],
+    'N2 of NE of NW, NW': ['N2NENW', 'NENW', 'NWNW', 'SENW', 'SWNW'],
+    'S½N½ SW': ['S2NESW', 'S2NWSW']
+}
 
 # Testing suppress_lot_divs (True vs. False)
 WITH_LOT_DIVS = {
@@ -91,6 +92,7 @@ class TractParseTests(unittest.TestCase):
     """
     Tests for the ``TractParse`` class.
     """
+
     def test_basic(self):
         parser = TractParser(text=BASIC['desc'])
         self.assertEqual(BASIC['expected_lots'], parser.lots)
@@ -165,6 +167,7 @@ class TractTests(unittest.TestCase):
     """
     Tests for ``Tract`` class, including parsing.
     """
+
     def test_basic(self):
         tract = Tract(desc=BASIC['desc'], parse_qq=True)
         self.assertEqual(BASIC['expected_lots'], tract.lots)
@@ -439,6 +442,49 @@ class TractTests(unittest.TestCase):
             attributes, nice_headers=custom_headers, plus_cols=plus_cols)
         self.assertEqual(expected_custom, headers)
 
+    def test_aliquot_simplify(self):
+        tract_desc = 'S2SW, NENE, NWNE, NESW, NWSW, N2SENE, SWSENE, SESENE, SWNW, SESWNE'
+        aliquots = ['N2NE', 'SENE', 'SESWNE', 'SWNW', 'SW']
+        tract = Tract(tract_desc, parse_qq=True, config='clean_qq')
+        simplified_aliquots = simplify_aliquots(tract.qqs)
+        self.assertEqual(aliquots, simplified_aliquots)
+        simplified_aliquots2 = tract.aliquots
+        self.assertEqual(aliquots, simplified_aliquots2)
+
+    def test_aliquot_simplify_nonstandard(self):
+        tract_desc = 'E2, W2'
+        aliquots = ['N2', 'S2']
+        tract = Tract(tract_desc, parse_qq=True, config='clean_qq')
+        simplified_aliquots = simplify_aliquots(tract.qqs)
+        self.assertEqual(aliquots, simplified_aliquots)
+        simplified_aliquots2 = tract.aliquots
+        self.assertEqual(aliquots, simplified_aliquots2)
+
+    def test_aliquot_simplify_standard(self):
+        tract_desc = 'E2, W2'
+        aliquots = ['ALL']
+        tract = Tract(tract_desc, parse_qq=True, config='clean_qq')
+        simplified_aliquots = simplify_aliquots(tract.qqs, assume_standard=True)
+        self.assertEqual(aliquots, simplified_aliquots)
+        simplified_aliquots2 = tract.aliquots_standard
+        self.assertEqual(aliquots, simplified_aliquots2)
+
+    def test_aliquot_simplify_empty(self):
+        tract_desc = 'asdf'
+        aliquots = []
+        tract = Tract(tract_desc, parse_qq=True, config='clean_qq')
+        simplified_aliquots = simplify_aliquots(tract.qqs)
+        self.assertEqual(aliquots, simplified_aliquots)
+        simplified_aliquots2 = tract.aliquots
+        self.assertEqual(aliquots, simplified_aliquots2)
+
+    def test_lots_aliquots(self):
+        tract_desc = 'S2SW, L5, NENE, NWNE, NESW, NWSW, N2SENE, N2 of Lot 1, SWSENE, SESENE, SWNW, SESWNE'
+        aliquots = ['N2NE', 'SENE', 'SESWNE', 'SWNW', 'SW']
+        lots = ['N2 of L1', 'L5']
+        tract = Tract(tract_desc, parse_qq=True, config='clean_qq')
+        lots_aliquots = tract.lots_aliquots
+        self.assertEqual(lots + aliquots, lots_aliquots)
 
 if __name__ == '__main__':
     unittest.main()

@@ -1,9 +1,10 @@
-
 """
 A class to represent a Twp/Rge/Sec combination, with its corresponding
 description block, and to parse that description block into lots and
 aliquot Quarter-Quarters ("QQs").
 """
+
+import re
 
 from ...utils import (
     _confirm_list_of_strings as clean_attributes,
@@ -15,6 +16,7 @@ from ..config import (
 from ..trs import TRS
 from .tract_preprocess import TractPreprocessor
 from .tract_parse import TractParser
+from .aliquot_simplify import simplify_aliquots
 
 
 class Tract:
@@ -95,6 +97,8 @@ class Tract:
             ``'suppress_lot_divs'`` (i.e. ``['L1', 'L2']`` in this
             example).
 
+    - ``.sorted_lots`` -- The list of lots, sorted by lot number.
+
     - ``.ilots`` -- The identified lots as a list of integers, with any
       divisions discarded (ex: ``[1, 2]`` from ``'Lot 1, North Half of
       Lot 2'``)
@@ -102,12 +106,42 @@ class Tract:
     - ``.lots_qqs`` -- A joined list of identified lots and QQ's. (Ex:
       ``['L1', 'N2 of L2', 'NENE', 'NWNE', 'NENW', 'NWNW']``)
 
-    - ``.lot_acres`` -- A dict of lot names and their apparent gross acreages,
-      as stated in the original description.  (Ex: ``{'L1': '38.29'}``
-      from ``'Lot 1(38.29), Lot 2'``)
+    - ``.lots_aliquots`` -- A joined list of lots and simplified
+      aliquots, combined from the parsed QQ's.
+      (Ex: ``['N2 of L1', 'L2', 'N2NE', 'SW']``)
+      (Will NOT assume that this section is a 'standard' 640-acre
+      section, with 16 QQ's -- i.e., will never render ``'ALL'``, but
+      might render ``['N2', 'S2']``.)
 
-    - ``.aliquots_whole`` -- A list of cleaned-up aliquots identified in
-      the original description, not broken down into quarter-quarters.
+    - ``.lots_aliquots_standard`` -- A joined list of lots and
+      simplified aliquots, combined from the parsed QQ's.
+      (Ex: ``['N2 of L1', 'L2', 'N2NE', 'SW']``)
+      (WILL assume that this section is a 'standard' 640-acre section,
+      with 16 QQ's, to render ``'ALL'`` where appropriate.)
+
+    - ``.lot_acres`` -- A dict of lot names and their apparent gross
+      acreages, as stated in the original description.
+      (Ex: ``{'L1': '38.29'}`` from ``'Lot 1(38.29), Lot 2'``)
+
+    - ``.aliquots`` -- A list of simplified aliquots, combined from the
+      parsed QQ's. (Ex: ``['N2NE', 'SW']``)  (Will NOT assume that this
+      section is a 'standard' 640-acre section, with 16 QQ's -- i.e.,
+      will never render ``'ALL'``, but might render ``['N2', 'S2']``.)
+
+    - ``.aliquots_standard`` -- A list of simplified aliquots, combined
+      from the parsed QQ's. (Ex: ``['N2NE', 'SW']``)  (WILL assume that
+      this section is a 'standard' 640-acre section, with 16 QQ's, to
+      render ``'ALL'`` where appropriate.)
+
+    - ``.aliquots_whole`` -- A list of cleaned-up ORIGINAL aliquots
+      identified in the original description, not broken down into
+      quarter-quarters.
+
+        .. note::
+            ``.aliquots`` and ``.aliquots_standard`` are reconstructed
+            from the parsed QQs, whereas ``aliquots_whole`` is what was
+            identified as an aliquot by the parser in the ORIGINAL
+            description.
 
     - ``.pp_desc`` -- The preprocessed description. (If the object has
       not yet been parsed, it will be equivalent to ``.desc``.)
@@ -620,6 +654,47 @@ class Tract:
     def ilots(self):
         """Lots as a list of integers, with any divisions discarded."""
         return [int(lt.split('L')[-1]) for lt in self.lots]
+
+    @property
+    def aliquots(self):
+        """
+        Reconstruction of the QQ's as merged aliquots. (Does NOT assume
+        this is a standard section where 'ALL' is made up of 16 QQ's.)
+        """
+        return simplify_aliquots(self.qqs)
+
+    @property
+    def aliquots_standard(self):
+        """
+        Reconstruction of the QQ's as merged aliquots. (DOES assume that
+        this is a standard section where 'ALL' is made up of 16 QQ's.)
+        """
+        return simplify_aliquots(self.qqs, assume_standard=True)
+
+    @property
+    def sorted_lots(self):
+        """Get a list of the lots, sorted by lot number."""
+        def rank_by_lot_num(l: str):
+            return int(re.search(r"(?<=L)\d+(?=$)", l).group(0))
+        return sorted(self.lots, key=rank_by_lot_num)
+
+    @property
+    def lots_aliquots(self):
+        """
+        Combined list of lots + reconstruction of the QQ's as merged
+        aliquots. (Does NOT assume this is a standard section where
+        'ALL' is made up of 16 QQ's.)
+        """
+        return self.sorted_lots + simplify_aliquots(self.qqs)
+
+    @property
+    def lots_aliquots_standard(self):
+        """
+        Combined list of lots + reconstruction of the QQ's as merged
+        aliquots. (DOES assume that this is a standard section where
+        'ALL' is made up of 16 QQ's.)
+        """
+        return self.sorted_lots + simplify_aliquots(self.qqs, assume_standard=True)
 
     @property
     def flags(self):
