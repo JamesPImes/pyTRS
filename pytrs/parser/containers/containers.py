@@ -1726,6 +1726,9 @@ class TractList(_TRSTractList):
         combines all of their respective descriptions. Throws away all
         other fields from the original tracts.
 
+        Drops duplicate lots, QQs, and descriptions (where there is an
+        exact match).
+
         :param desc_delim: Delimiter for descriptions within the same
          Twp/Rge/Sec. Defaults to ``'; '``.
         :return: A new ``TractList``, with a new ``Tract`` for each
@@ -1734,16 +1737,28 @@ class TractList(_TRSTractList):
         grouped = self.group_by('trs')
         tracts = []
         for trs, group in grouped.items():
-            qqs = []
-            lots = []
-            descriptions = []
+            qqs_all = []
+            lots_all = []
+            descs_all = []
             for tract in group:
-                descriptions.append(tract.desc)
-                qqs.extend(tract.qqs)
-                lots.extend(tract.lots)
+                descs_all.append(tract.desc)
+                qqs_all.extend(tract.qqs)
+                lots_all.extend(tract.lots)
+            qqs_seen = set()
+            lots_seen = set()
+            descs_seen = set()
+            descriptions = [
+                d for d in descs_all
+                if not (d in descs_seen or descs_seen.add(d))
+            ]
             tract = Tract(trs=trs, desc=desc_delim.join(descriptions))
-            tract.qqs = qqs
-            tract.lots = lots
+            tract.qqs = [
+                qq for qq in qqs_all if not (qq in qqs_seen or qqs_seen.add(qq))
+            ]
+            tract.lots = [
+                lot for lot in lots_all
+                if not (lot in lots_seen or lots_seen.add(lot))
+            ]
             tracts.append(tract)
         return TractList(tracts)
 
