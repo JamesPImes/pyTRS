@@ -42,13 +42,13 @@ ALL_SAMPLES = [
 ]
 GROUPED_BY_TWPRGE = {
     '154n97w': [
-         '154n97w14: NE/4',
-         '154n97w16: ALL',
-         '154n97w17: ALL',
-         '154n97w18: ALL',
-         '154n97w19: ALL',
-         '154n97w20: ALL',
-         '154n97w01: Lots 1 - 3, S/2N/2'
+        '154n97w14: NE/4',
+        '154n97w16: ALL',
+        '154n97w17: ALL',
+        '154n97w18: ALL',
+        '154n97w19: ALL',
+        '154n97w20: ALL',
+        '154n97w01: Lots 1 - 3, S/2N/2'
     ],
     '88s3e': [
         '88s3e02: N/2NE/4',
@@ -145,6 +145,31 @@ class TractListTests(unittest.TestCase):
             tl = TractList(d)
             tl.custom_sort(key=sort_key)
             self.assertEqual(expected_results, flatten(tl.tracts_to_list('trs')))
+
+    def test_consolidate(self):
+        d1 = "T154N-R97W Sec 14: N/2, SE/4, Sec 15: S/2, Lots 5, 3, 1"
+        d2 = "T154n-R97W Sec 14: SW/4"
+        d3 = "T155N-R97W Sec 1: Lots 1 - 4, S2N2, SW/4"
+        d4 = "T155N-R97W Sec 1: SE/4"
+        trs_list_target = ['154n97w14', '154n97w15', '155n97w01']
+        consol_desc_target = "154n97w14: ALL\n154n97w15: L1, L3, L5, S2\n155n97w01: L1, L2, L3, L4, S2NE, S2NW, S2"
+
+        d1_parsed = PLSSDesc(d1, parse_qq=True)
+        d2_parsed = PLSSDesc(d2, parse_qq=True)
+        d3_parsed = PLSSDesc(d3, parse_qq=True)
+        d4_parsed = PLSSDesc(d4, parse_qq=True)
+
+        tl = TractList(d1_parsed)
+        tl.extend(d2_parsed)
+        tl.extend(d3_parsed)
+        tl.extend(d4_parsed)
+
+        consolidated = tl.consolidate()
+        trs_list = consolidated.list_trs()
+        self.assertEqual(trs_list_target, trs_list)
+        self.assertEqual(len(consolidated), 3)
+        consol_desc = consolidated.quick_desc_simplified_aliquots(assume_standard=True)
+        self.assertEqual(consol_desc_target, consol_desc)
 
 
 class TRSListTests(unittest.TestCase):

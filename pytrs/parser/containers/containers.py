@@ -1718,6 +1718,109 @@ class TractList(_TRSTractList):
         # an accurate docstring (and to simplify the signature).
         return cls._from_multiple(objects)
 
+    def consolidate(self):
+        """
+        Consolidate tracts by TRS. Creates a new ``Tract`` object for
+        each unique Twp/Rge/Sec, keeps their parsed QQs and lots, and
+        combines all of their respective descriptions. Throws away all
+        other fields from the original tracts.
+        :return: A new ``TractList``, with a new ``Tract`` for each
+         unique Twp/Rge/Sec.
+        """
+        grouped = self.group_by('trs')
+        tracts = []
+        for trs, group in grouped.items():
+            qqs = []
+            lots = []
+            descriptions = []
+            for tract in group:
+                descriptions.append(tract.desc)
+                qqs.extend(tract.qqs)
+                lots.extend(tract.lots)
+            tract = Tract(trs=trs, desc='; '.join(descriptions))
+            tract.qqs = qqs
+            tract.lots = lots
+            tracts.append(tract)
+        return TractList(tracts)
+
+    def _simplify_aliquots(self, assume_standard: list|bool = None):
+        """
+        INTERNAL USE:
+
+        Get a new, consolidated ``TractList`` with the resulting tracts'
+        descriptions having been replaced with the lots and aliquots of
+        the parsed lots and QQ's from the original tracts.
+        :param assume_standard: Whether to assume that sections in this
+         ``TractList`` are 'standard' 640-acre sections with exactly 16
+         QQ's. If not assumed, the aliquots will never be rendered as
+         ``'ALL'`` but might be rendered as ``'N2', 'S2'``.
+         ``assume_standard`` can be passed as a bool (in which case it
+         will be applied to every section), or as a list of TRS (in
+         which case tracts falling within that list of TRS will be
+         assumed to be standard).
+        :return: A new ``TractList`` with new ``Tract`` objects (most of
+         whose attributes have been wiped out, except for lots and QQs).
+        """
+        consolidated = self.consolidate()
+        if assume_standard is None or assume_standard == False:
+            assume_standard = []
+        elif assume_standard == True:
+            assume_standard = consolidated.list_trs()
+        for tract in consolidated:
+            if tract.trs in assume_standard:
+                tract.desc = ', '.join(tract.lots_aliquots_standard)
+            else:
+                tract.desc = ', '.join(tract.lots_aliquots)
+        return consolidated
+
+    def quick_desc_simplified_aliquots(
+            self, assume_standard: list|bool = None, **kw) -> str:
+        """
+        Simplify the description of all tracts in this ``TractList``
+        down to the parsed lots and aliquots (reconstructed from parsed
+        QQs) into a "quick" description.
+
+        :param assume_standard: Whether to assume that sections in this
+         ``TractList`` are 'standard' 640-acre sections with exactly 16
+         QQ's. If not assumed, the aliquots will never be rendered as
+         ``'ALL'`` but might be rendered as ``'N2', 'S2'``.
+         ``assume_standard`` can be passed as a bool (in which case it
+         will be applied to every section), or as a list of TRS (in
+         which case tracts falling within that list of TRS will be
+         assumed to be standard).
+        :param kw: All other key-word arguments are as used in
+         ``.quick_desc()``.
+        :return: A "quick" string of the description of all tracts in
+         this list, keeping only the lots and consolidated aliquots as
+         reconstructed from the parsed QQs.
+        """
+        tl = self._simplify_aliquots(assume_standard)
+        return tl.quick_desc(**kw)
+
+    def pretty_desc_simplified_aliquots(
+            self, assume_standard: list|bool = None, **kw) -> str:
+        """
+        Simplify the description of all tracts in this ``TractList``
+        down to the parsed lots and aliquots (reconstructed from parsed
+        QQs) into a "prettified" description.
+
+        :param assume_standard: Whether to assume that sections in this
+         ``TractList`` are 'standard' 640-acre sections with exactly 16
+         QQ's. If not assumed, the aliquots will never be rendered as
+         ``'ALL'`` but might be rendered as ``'N2', 'S2'``.
+         ``assume_standard`` can be passed as a bool (in which case it
+         will be applied to every section), or as a list of TRS (in
+         which case tracts falling within that list of TRS will be
+         assumed to be standard).
+        :param kw: All other key-word arguments are as used in
+         ``.pretty_desc()``.
+        :return: A "prettified" string of the description of all tracts
+         in this list, keeping only the lots and consolidated aliquots
+         as reconstructed from the parsed QQs.
+        """
+        tl = self._simplify_aliquots(assume_standard)
+        return tl.pretty_desc(**kw)
+
 
 class TRSList(_TRSTractList):
     """
