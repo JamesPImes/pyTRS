@@ -1,0 +1,164 @@
+
+"""
+Functions for combining parsed QQs into simpler aliquots.
+"""
+
+__all__ = [
+    'simplify_aliquots',
+]
+
+
+_ALIQUOT_DEFS = [
+    [{'NE', 'NW', 'SE', 'SW'}, ''],  # 'ALL', or the entire aliquot
+    [{'NE', 'NW', 'SE', 'SW'}, 'ALL'],
+    [{'NE', 'NW'}, 'N2'],
+    [{'SE', 'SW'}, 'S2'],
+    [{'NE', 'SE'}, 'E2'],
+    [{'NW', 'SW'}, 'W2'],
+    [{'N2', 'S2'}, 'ALL'],
+    [{'E2', 'W2'}, 'ALL'],
+]
+
+
+def simplify_aliquots(qqs: list[str], assume_standard=False) -> list[str]:
+    """
+    INTERNAL USE:
+
+    Take a list of QQs (of any parse depth) and combine them into a list
+    of simplified aliquots. For example:
+     ``['NENE', 'SENE', 'NWNW']`` -> ``['E2NE', 'NWNW']``
+
+    Note: By default, this does NOT assume that the entire section is
+    made up four quarters, because there exist irregular sections with
+    more than 16 QQ's. The returned result of four quarters would be two
+    halves (either N2 and S2, or E2 and W2), but not ``'ALL'``.
+
+    To assume a standard 640-acre section, use ``assume_standard=True``,
+    in which case the standard 16 QQ's will render ``'ALL'``.
+
+    Note also: This will not combine aliquots across quarter-boundaries.
+    That is, N2NE + N2NW will not combine into N2N2. This is an area for
+    future improvements.
+    """
+
+    # First breaks down the list of aliquot strings into a tree (stored as a dict).
+    # Then uses DFS to recursively recompile them into the fewest possible aliquots.
+
+    def combine_aliquot_components(available_components: set, final=False) -> set:
+        """
+        Helper function to merge all possible aliquot sub-components.
+        Ex: ``('NE', 'NW', 'SE')`` -> ``('N2NE', 'SE')``
+        :param available_components: A set of aliquot components that
+         are available to be combined.
+        :param final: Whether this is the final pass.
+        """
+        combined_components = set()
+        for cand_components, cand_aliq in _ALIQUOT_DEFS:
+            if not assume_standard and cand_aliq == 'ALL':
+                continue
+            if cand_aliq == '' and final:
+                continue
+            if cand_components <= available_components:
+                # All necessary components in the candidate aliquot are found
+                # in the actual components, so combine.
+                combined_components.add(cand_aliq)
+                # Take the newly used components out of future consideration.
+                available_components.difference_update(cand_components)
+        # Add any stragglers back to the set of rebuilt components.
+        combined_components.update(available_components)
+        return combined_components
+
+    def compile_aliquot_tree(aq_tree: dict):
+        """
+        Helper function to compile the aliquot tree back into aliquot strings.
+        """
+        # Recompile the aliquots with recursive DFS algorithm.
+        # TODO (future improvement): Combine N2NE + N2NW --> N2N2 (etc.)
+        aliquots_recompiled = set()
+        for aliq, children in aq_tree.items():
+            rebuilt_components = set()
+            subcomponents = compile_aliquot_tree(children)
+            if len(subcomponents) == 0:
+                aliquots_recompiled.add(aliq)
+                continue
+            rebuilt_components = combine_aliquot_components(subcomponents)
+            for comp in rebuilt_components:
+                aliquots_recompiled.add(f"{comp}{aliq}")
+        return aliquots_recompiled
+
+    aliquot_tree = {}
+    half_decon = {
+        'N2': ('NE', 'NW'),
+        'S2': ('SE', 'SW'),
+        'E2': ('NE', 'SE'),
+        'W2': ('NW', 'SW')
+    }
+    for qq in qqs:
+        # Deconstruct QQ string into 2-character segments.
+        #   'E2NWSW' -> ['SW', 'NW', 'E2']
+        decon_qq = [qq[i:i + 2] for i in range(0, len(qq), 2)]
+        decon_qq.reverse()
+        node = aliquot_tree
+        for i, component in enumerate(decon_qq):
+            if component in half_decon.keys():
+                # This presumes that halves appear only at the start of the aliquot
+                # description. That is, this is illegal and would cause issues: 'NEN2'
+                if i < len(decon_qq) - 1:
+                    raise ValueError(f"Illegal aliquot description: {qq!r}")
+                subcomponents = half_decon[component]
+                for subcomponent in subcomponents:
+                    node.setdefault(subcomponent, {})
+                continue
+            node.setdefault(component, {})
+            node = node[component]
+
+    reconstruc_aliqs = compile_aliquot_tree(aliquot_tree)
+    # One final combination.
+    reconstruc_aliqs = combine_aliquot_components(reconstruc_aliqs, final=True)
+    aliquots = sorted(reconstruc_aliqs, key=_aliquot_rank)
+    return aliquots
+
+
+def _aliquot_rank(aliquot: str):
+    """
+    INTERNAL USE:
+
+    Calculate a sorting value for an aliquot string.
+
+    Priority:
+     - ALL > everything else.
+     - North > South
+     - East > West
+     - Halves > Quarters
+
+    :param aliquot:
+    :return:
+    """
+    if aliquot == 'ALL':
+        return float('-inf')
+    # Split aliquot into 2-character pieces, and reverse them.
+    decon_aliq = [aliquot[i:i + 2] for i in range(0, len(aliquot), 2)]
+    decon_aliq.reverse()
+    sort_val = 0
+    for position, x in enumerate(decon_aliq, start=0):
+        x_val = 0
+        # First char NSEW
+        if x[0] == 'S':
+            x_val += 10
+        elif x[0] == 'E':
+            x_val += 20
+        elif x[0] == 'W':
+            x_val += 30
+        # Second char NSEW, or half.
+        if x[1] == '2':
+            x_val += 0
+        elif x[1] == 'N':
+            x_val += 1
+        elif x[1] == 'S':
+            x_val += 2
+        elif x[1] == 'E':
+            x_val += 3
+        elif x[1] == 'W':
+            x_val += 4
+        sort_val += x_val / (100 * 10 ** (position * 2))
+    return sort_val
