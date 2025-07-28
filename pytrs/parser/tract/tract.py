@@ -1096,6 +1096,24 @@ class Tract:
             qd = qd[:max_len - 3] + "..."
         return qd
 
+    def quick_desc_lots_aliquots(self, delim=": ", assume_standard=False) -> str:
+        """
+        Return a string of the Twp/Rge/Sec and description, but the
+        description is the lots plus the aliquots that were recreated
+        from the parsed QQs. (Requires that this ``Tract`` was parsed
+        into lots and QQs.)
+
+        :param delim: Specify what separates Twp/Rge/Sec from the
+         corresponding description block (i.e. what comes between
+         ``.trs`` and ``.lots_aliquots``).  (Defaults to ``': '``).
+        :return: A string of the 'recreated' description.
+        """
+        if assume_standard:
+            desc = self.lots_aliquots_standard
+        else:
+            desc = self.lots_aliquots
+        return f"{self.trs}{delim}{', '.join(desc)}"
+
     @staticmethod
     def get_headers(attributes, nice_headers, plus_cols=None):
         """
