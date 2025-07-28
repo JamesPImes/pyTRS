@@ -1719,12 +1719,15 @@ class TractList(_TRSTractList):
         # an accurate docstring (and to simplify the signature).
         return cls._from_multiple(objects)
 
-    def consolidate(self):
+    def consolidate(self, desc_delim='; '):
         """
         Consolidate tracts by TRS. Creates a new ``Tract`` object for
         each unique Twp/Rge/Sec, keeps their parsed QQs and lots, and
         combines all of their respective descriptions. Throws away all
         other fields from the original tracts.
+
+        :param desc_delim: Delimiter for descriptions within the same
+         Twp/Rge/Sec. Defaults to ``'; '``.
         :return: A new ``TractList``, with a new ``Tract`` for each
          unique Twp/Rge/Sec.
         """
@@ -1738,7 +1741,7 @@ class TractList(_TRSTractList):
                 descriptions.append(tract.desc)
                 qqs.extend(tract.qqs)
                 lots.extend(tract.lots)
-            tract = Tract(trs=trs, desc='; '.join(descriptions))
+            tract = Tract(trs=trs, desc=desc_delim.join(descriptions))
             tract.qqs = qqs
             tract.lots = lots
             tracts.append(tract)
