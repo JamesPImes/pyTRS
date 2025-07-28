@@ -153,7 +153,7 @@ class TractListTests(unittest.TestCase):
         # Lot 1 and SESW  in `d4` are duplicated from `d3` and should be dropped.
         d4 = "T155N-R97W Sec 1: SE/4, Lot 1, SE/4SW/4"
         # The entirety of `d5` is a duplicate and should be dropped.
-        d5 = "T155N-R97W Sec 1: SE/4, Lot 1, SE/4SW/4"
+        d5 = d4
         trs_list_target = ['154n97w14', '154n97w15', '155n97w01']
         consol_desc_target = "154n97w14: ALL\n154n97w15: L1, L3, L5, S2\n155n97w01: L1, L2, L3, L4, S2NE, S2NW, S2"
 
@@ -161,7 +161,7 @@ class TractListTests(unittest.TestCase):
         d2_parsed = PLSSDesc(d2, parse_qq=True)
         d3_parsed = PLSSDesc(d3, parse_qq=True)
         d4_parsed = PLSSDesc(d4, parse_qq=True)
-        d5_parsed = PLSSDesc(d4, parse_qq=True)
+        d5_parsed = PLSSDesc(d5, parse_qq=True)
 
         tl = TractList(d1_parsed)
         tl.extend(d2_parsed)
