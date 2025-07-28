@@ -402,6 +402,14 @@ class TractTests(unittest.TestCase):
         self.assertEqual('154n97w01: Lot 1, S/2NE/4, ...', tract.quick_desc_short())
         self.assertEqual('154n97w01: Lot 1,...', tract.quick_desc_short(max_len=20))
 
+    def test_quick_desc_lots_aliquots(self):
+        tract_desc = 'S2SW, L5, NENE, NWNE, NESW, NWSW, N2SENE, N2 of Lot 1, SWSENE, SESENE, SWNW, SESWNE'
+        trs = '154n97w14'
+        expected = '154n97w14: N2 of L1, L5, N2NE, SENE, SESWNE, SWNW, SW'
+        tract = Tract(tract_desc, trs=trs, parse_qq=True, config='clean_qq')
+        quick_desc = tract.quick_desc_lots_aliquots()
+        self.assertEqual(expected, quick_desc)
+
     def test_get_headers(self):
         """
         Test the .get_headers() static method, for converting attribute
