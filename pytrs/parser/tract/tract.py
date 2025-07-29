@@ -293,10 +293,14 @@ class Tract:
         'sec': 'Section',  # **
         'sec_num': 'Section Number',  # **
         'qqs': 'Aliquots',
+        'aliquots': 'Aliquots',  # **
+        'aliquots_standard': 'Aliquots',  # **
         'aliquots_whole': 'Aliquots (whole)',
         'lots': 'Lots',
         'ilots': 'Lot Numbers',  # **
         'lots_qqs': 'Lots & Aliquots',  # **
+        'lots_aliquots': 'Lots & Aliquots',  # **
+        'lots_aliquots_standard': 'Lots & Aliquots',  # **
         'desc': 'Description',
         'orig_desc': 'Original (full) PLSS Description',
         'pp_desc': 'Cleaned-Up Description',
