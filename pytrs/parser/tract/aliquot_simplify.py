@@ -2,7 +2,6 @@
 Functions for combining parsed QQs into simpler aliquots.
 """
 
-from .aliquot_parse import parse_aliquot
 from .tract_parse import TractParser
 
 __all__ = [
@@ -51,7 +50,7 @@ def simplify_aliquots(qqs: list[str], assume_standard=False) -> list[str]:
     def combine_aliquot_components(available_components: set, final=False) -> set:
         """
         Helper function to merge all possible aliquot sub-components.
-        Ex: ``('NE', 'NW', 'SE')`` -> ``('N2NE', 'SE')``
+        Ex: ``('NE', 'NW', 'SE')`` -> ``('N2', 'SE')``
         :param available_components: A set of aliquot components that
          are available to be combined.
         :param final: Whether this is the final pass.
@@ -80,7 +79,6 @@ def simplify_aliquots(qqs: list[str], assume_standard=False) -> list[str]:
         # TODO (future improvement): Combine N2NE + N2NW --> N2N2 (etc.)
         aliquots_recompiled = set()
         for aliq, children in aq_tree.items():
-            rebuilt_components = set()
             subcomponents = compile_aliquot_tree(children)
             if len(subcomponents) == 0:
                 aliquots_recompiled.add(aliq)
@@ -103,24 +101,14 @@ def simplify_aliquots(qqs: list[str], assume_standard=False) -> list[str]:
             split_qqs.append(split_qq)
 
     aliquot_tree = {}
-    half_decon = {
-        'N2': ('NE', 'NW'),
-        'S2': ('SE', 'SW'),
-        'E2': ('NE', 'SE'),
-        'W2': ('NW', 'SW')
-    }
     for qq in split_qqs:
         # Deconstruct QQ string into 2-character segments.
-        #   'E2NWSW' -> ['SW', 'NW', 'E2']
+        #   'NENWSW' -> ['SW', 'NW', 'NE']
+        #   Eventual resulting tree structure -> {'SW': {'NW': {'NE': {}}}}
         decon_qq = [qq[i:i + 2] for i in range(0, len(qq), 2)]
         decon_qq.reverse()
         node = aliquot_tree
         for i, component in enumerate(decon_qq):
-            if component in half_decon.keys():
-                subcomponents = half_decon[component]
-                for subcomponent in subcomponents:
-                    node.setdefault(subcomponent, {})
-                continue
             node.setdefault(component, {})
             node = node[component]
     reconstruc_aliqs = compile_aliquot_tree(aliquot_tree)
@@ -138,8 +126,7 @@ def _aliquot_rank(aliquot: str):
 
     Priority:
      - ALL > everything else.
-     - North > South
-     - East > West
+     - North > South > East > West
      - Halves > Quarters
 
     :param aliquot:
