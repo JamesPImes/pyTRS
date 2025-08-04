@@ -138,7 +138,7 @@ def _aliquot_rank(aliquot: str):
     decon_aliq = [aliquot[i:i + 2] for i in range(0, len(aliquot), 2)]
     decon_aliq.reverse()
     sort_val = 0
-    for position, x in enumerate(decon_aliq, start=0):
+    for position, x in enumerate(decon_aliq, start=1):
         x_val = 0
         # First char NSEW
         if x[0] == 'S':
@@ -158,5 +158,5 @@ def _aliquot_rank(aliquot: str):
             x_val += 3
         elif x[1] == 'W':
             x_val += 4
-        sort_val += x_val / (100 * 10 ** (position * 2))
+        sort_val += x_val / (10 ** (position * 2))
     return sort_val
