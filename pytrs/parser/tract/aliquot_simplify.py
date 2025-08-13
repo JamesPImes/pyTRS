@@ -20,26 +20,28 @@ _ALIQUOT_DEFS = [
 ]
 
 HALF_DEFS = {
-    'ALL': ('NE', 'NW', 'SE', 'SW'),
     'N2': ('NE', 'NW'),
     'S2': ('SE', 'SW'),
     'E2': ('NE', 'SE'),
     'W2': ('NW', 'SW')
 }
 
-NSEW_DEFS = {
-    'NS': ('N2', 'S2'),
-    'EW': ('E2', 'W2'),
+COMPATIBLE_HALVES = {
+    'N2': ('N2', 'S2'),
+    'S2': ('N2', 'S2'),
+    'E2': ('E2', 'W2'),
+    'W2': ('E2', 'W2'),
 }
 
 
 class AliquotNode:
     def __init__(self, parent=None, label: str = None):
         self.parent: AliquotNode = parent
-        self.label = label
+        self.label: str = label
         self.children: dict[str, AliquotNode] = {}
-        self.avail_consolidations: dict[str, set] = {}
+        self.avail_consolidations: set[tuple[str]] = set()
         self.full = False
+        self._rendered = False
 
     def __repr__(self):
         child_strings = [
@@ -57,6 +59,9 @@ class AliquotNode:
     def __setitem__(self, qq, v):
         self.children[qq] = v
         return None
+
+    def get(self, qq, default=None):
+        return self.children.get(qq, default)
 
     def _insert_aliquot_into_tree(self, qq: str):
         """
@@ -138,17 +143,14 @@ class AliquotNode:
     def all_full(self):
         return self.is_leaf() or self._subset_full(labels=['NE', 'NW', 'SE', 'SW'], _trim=True)
 
-    def n2_full(self):
-        return self._subset_full(labels=['NE', 'NW'])
-
-    def s2_full(self):
-        return self._subset_full(labels=['SE', 'SW'])
-
-    def e2_full(self):
-        return self._subset_full(labels=['NE', 'SE'])
-
-    def w2_full(self):
-        return self._subset_full(labels=['NW', 'SW'])
+    def all_rendered(self):
+        if self._rendered:
+            return True
+        child_check = [child.all_rendered() for lbl, child in self.children.items()]
+        check = all(child_check)
+        if check:
+            self._rendered = True
+        return check
 
     def trim_tree(self):
         """
@@ -162,10 +164,45 @@ class AliquotNode:
                 full.append(aq_label)
             else:
                 child.trim_tree()
-        if len(full) == 4:
+        if len(full) == 4 and self.parent is not None:
             self.full = True
             self.children = {}
         return None
+
+    def _calc_available_consolidations(self):
+        # labels = ['NE', 'NW']  for 'N2'
+        if self.full:
+            self.avail_consolidations = {tuple(HALF_DEFS.keys())}
+            return self.avail_consolidations
+        full_quarters = set()
+        child_options = {}
+        for aliq, child in self.children.items():
+            new_options = child._calc_available_consolidations()
+            if child.full:
+                full_quarters.add(aliq)
+            else:
+                child_options[aliq] = new_options
+
+        half_options = set()
+        for candidate_half, quarters in HALF_DEFS.items():
+            node_pair = [self.get(q) for q in quarters]
+            if any(node is None for node in node_pair):
+                continue
+            if all(node.full for node in node_pair):
+                # Entire half -- e.g., N2, S2, etc.
+                half_options.add((candidate_half,))
+                continue
+            a, b = node_pair
+            for cand_consolid in a.avail_consolidations:
+                direction_sample = cand_consolid[0]
+                if direction_sample not in COMPATIBLE_HALVES[candidate_half]:
+                    # Must keep N/S together, and E/W -- e.g., can't mix N2 with E2.
+                    continue
+                if cand_consolid in b.avail_consolidations:
+                    new_consolidation = (candidate_half,) + cand_consolid
+                    half_options.add(new_consolidation)
+        self.avail_consolidations = half_options
+        return self.avail_consolidations
 
 
 def simplify_aliquots(qqs: list[str], assume_standard=False) -> list[str]:
