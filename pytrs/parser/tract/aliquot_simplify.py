@@ -42,6 +42,7 @@ class AliquotNode:
         self.avail_consolidations: set[tuple[str]] = set()
         self.full = False
         self._rendered = False
+        self._consol_substrings = []
 
     def __repr__(self):
         child_strings = [
@@ -170,9 +171,10 @@ class AliquotNode:
         return None
 
     def _calc_available_consolidations(self):
-        # labels = ['NE', 'NW']  for 'N2'
+        # Reset.
+        self.avail_consolidations = {}
         if self.full:
-            self.avail_consolidations = {tuple(HALF_DEFS.keys())}
+            self.avail_consolidations = {tuple(sorted(HALF_DEFS.keys()))}
             return self.avail_consolidations
         full_quarters = set()
         child_options = {}
@@ -183,14 +185,15 @@ class AliquotNode:
             else:
                 child_options[aliq] = new_options
 
-        half_options = set()
+        options = set()
         for candidate_half, quarters in HALF_DEFS.items():
-            node_pair = [self.get(q) for q in quarters]
+            node_pair = tuple(self.get(q) for q in quarters)
             if any(node is None for node in node_pair):
                 continue
             if all(node.full for node in node_pair):
                 # Entire half -- e.g., N2, S2, etc.
-                half_options.add((candidate_half,))
+                new_consolidation = (candidate_half,)
+                options.add(new_consolidation)
                 continue
             a, b = node_pair
             for cand_consolid in a.avail_consolidations:
@@ -200,9 +203,112 @@ class AliquotNode:
                     continue
                 if cand_consolid in b.avail_consolidations:
                     new_consolidation = (candidate_half,) + cand_consolid
-                    half_options.add(new_consolidation)
-        self.avail_consolidations = half_options
-        return self.avail_consolidations
+                    options.add(new_consolidation)
+        self.avail_consolidations = options
+        return options
+
+    def consolidate(self, assume_standard=False):
+        consolidated_aliquots = []
+        self.trim_tree()
+        self._calc_available_consolidations()
+        consolidations = sorted(self.avail_consolidations, key=self._rank_consolidation_options)
+        print(consolidations)
+        while consolidations:
+            cur_consol = consolidations.pop(0)
+            # Build aliquot string.
+            top_label = self.label
+            if top_label is None:
+                top_label = ''
+            output_str = f"{''.join(reversed(cur_consol))}{top_label}"
+            consolidated_aliquots.append(output_str)
+            # Trim away used nodes.
+            self._trim_used(cur_consol)
+            nsew = _check_nsew_split(cur_consol)
+            _cull_consolidation_options(consolidations, latest=cur_consol)
+            print(consolidations)
+            print(consolidated_aliquots)
+
+    def _trim_used(self, aliquot_tuple: tuple[str]):
+        if not aliquot_tuple or self.is_leaf():
+            self.parent.children.pop(self.label)
+            return None
+        cur_aliq = aliquot_tuple[0]
+        quarters = HALF_DEFS.get(cur_aliq)
+        if quarters is not None:
+            selected_children = [self[q] for q in quarters]
+        else:
+            selected_children = [self[cur_aliq]]
+        for child_node in selected_children:
+            child_node._trim_used(aliquot_tuple[1:])
+        self._rendered = all(child._rendered for child in self.children.values())
+
+    @staticmethod
+    def _rank_consolidation_options(candidate: tuple[str]):
+        sort_val = 0
+        for position, x in enumerate(candidate, start=1):
+            x_val = 0
+            # First char NSEW
+            if x[0] == 'N':
+                x_val += 0
+            elif x[0] == 'S':
+                x_val += 1
+            elif x[0] == 'E':
+                x_val += 2
+            elif x[0] == 'W':
+                x_val += 3
+            sort_val += x_val / (10 ** (position * 2))
+            # Second char NSEW, or half.
+            if x[1] == '2':
+                x_val += 10
+            elif x[1] == 'N':
+                x_val += 20
+            elif x[1] == 'S':
+                x_val += 30
+            elif x[1] == 'E':
+                x_val += 40
+            elif x[1] == 'W':
+                x_val += 50
+        return sort_val
+
+
+def _check_nsew_split(candidate: tuple[str]):
+    """
+    Returns ``'NS'`` if candidate eventually splits N/S or ``'EW'`` if
+    it splits E/W. Returns ``None`` if candidate is only composed of
+    quarters.
+    """
+    if not candidate:
+        return None
+    i = 0
+    n = len(candidate)
+    while i < n:
+        direction_sample = candidate[i]
+        if direction_sample in ('N2', 'S2'):
+            return 'NS'
+        elif direction_sample in ('E2', 'W2'):
+            return 'EW'
+        i += 1
+    return None
+
+
+def _cull_consolidation_options(options: list[tuple[str]], latest: tuple[str]):
+    pop_idxs = []
+    keep_nsew = _check_nsew_split(latest)
+    quarters = HALF_DEFS.get(latest[0])
+    split = []
+    if quarters is not None:
+        split = [(q,) + latest[1:] for q in quarters]
+    for i, opt in enumerate(options):
+        nsew_split = _check_nsew_split(opt)
+        if keep_nsew is not None and nsew_split != keep_nsew:
+            # Splits on wrong axis.
+            pop_idxs.append(i)
+        elif opt in split:
+            pop_idxs.append(i)
+    pop_idxs.reverse()
+    for i in pop_idxs:
+        options.pop(i)
+    return options
 
 
 def simplify_aliquots(qqs: list[str], assume_standard=False) -> list[str]:
