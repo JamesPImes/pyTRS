@@ -2,6 +2,7 @@
 Functions for combining parsed QQs into simpler aliquots.
 """
 
+from __future__ import annotations
 from .tract_parse import TractParser
 
 __all__ = [
@@ -19,6 +20,11 @@ _ALIQUOT_DEFS = [
     [{'E2', 'W2'}, 'ALL'],
 ]
 
+ALL_DEFS = {
+    ('N2', 'S2'),
+    ('E2', 'W2'),
+}
+
 HALF_DEFS = {
     'N2': ('NE', 'NW'),
     'S2': ('SE', 'SW'),
@@ -35,13 +41,32 @@ COMPATIBLE_HALVES = {
 
 
 class AliquotNode:
-    def __init__(self, parent=None, label: str = None):
+    """
+    INTERNAL USE:
+
+    A 4-branching tree representation of one or more aliquot
+    descriptions. Can be used to recompile / simplify QQs into larger
+    aliquot parts with the ``.consolidate()`` method.
+
+    .. note::
+      This is not maintained for public-facing use, but it can be used
+      for a tree representation of aliquot divisions if needed. Note,
+      however, that updates and changes to the API may not be publicly
+      noted.
+    """
+
+    def __init__(self, parent: AliquotNode = None, label: str = None):
+        """
+        :param parent: The parent node. If not specified, it is assumed
+         that this is the root.
+        :param label: The quarter label for this node. Should be one of
+         ``('NE', 'NW', 'SE', 'SW')``, unless this is the root node.
+        """
         self.parent: AliquotNode = parent
         self.label: str = label
         self.children: dict[str, AliquotNode] = {}
-        self.avail_consolidations: set[tuple[str]] = set()
+        self._avail_consolidations: set[tuple[str]] = set()
         self.full = False
-        self._rendered = False
         self._consol_substrings = []
 
     def __repr__(self):
@@ -61,7 +86,12 @@ class AliquotNode:
         self.children[qq] = v
         return None
 
-    def get(self, qq, default=None):
+    def get(self, qq: str, default=None):
+        """
+        Get the child node for the specified ``qq``. If not found, will
+        return the optionally specified ``default`` instead of raising a
+        ``KeyError``.
+        """
         return self.children.get(qq, default)
 
     def _insert_aliquot_into_tree(self, qq: str):
@@ -142,16 +172,11 @@ class AliquotNode:
         return is_full
 
     def all_full(self):
+        """
+        Check if this node is completely full. If so, child nodes will
+        be trimmed.
+        """
         return self.is_leaf() or self._subset_full(labels=['NE', 'NW', 'SE', 'SW'], _trim=True)
-
-    def all_rendered(self):
-        if self._rendered:
-            return True
-        child_check = [child.all_rendered() for lbl, child in self.children.items()]
-        check = all(child_check)
-        if check:
-            self._rendered = True
-        return check
 
     def trim_tree(self):
         """
@@ -171,11 +196,24 @@ class AliquotNode:
         return None
 
     def _calc_available_consolidations(self):
-        # Reset.
-        self.avail_consolidations = {}
+        """
+        INTERNAL USE:
+
+        Calculate possible consolidations of the existing or remaining
+        nodes. For example, the ``NE, NW, SE`` (if each is a 'full'
+        node) could be consolidated into ``N2`` or ``E2``.
+
+        The results get stored to ``._avail_consolidations``. In the
+        above example, it would be as follows:
+        ``( (N2,), (E2,), (NE,), (NW,), (SE,) )``.
+        (Note that full quarters are included as possible
+        consolidations.)
+        """
+        # Reset any prior consolidation calculations.
+        self._avail_consolidations = {}
         if self.full:
-            self.avail_consolidations = {tuple(sorted(HALF_DEFS.keys()))}
-            return self.avail_consolidations
+            self._avail_consolidations = {tuple(sorted(HALF_DEFS.keys()))}
+            return self._avail_consolidations
         full_quarters = set()
         child_options = {}
         for aliq, child in self.children.items():
@@ -184,8 +222,8 @@ class AliquotNode:
                 full_quarters.add(aliq)
             else:
                 child_options[aliq] = new_options
-
-        options = set()
+        # Include any full quarters as options.
+        options = set((q,) for q in full_quarters)
         for candidate_half, quarters in HALF_DEFS.items():
             node_pair = tuple(self.get(q) for q in quarters)
             if any(node is None for node in node_pair):
@@ -196,39 +234,85 @@ class AliquotNode:
                 options.add(new_consolidation)
                 continue
             a, b = node_pair
-            for cand_consolid in a.avail_consolidations:
+            for cand_consolid in a._avail_consolidations:
                 direction_sample = cand_consolid[0]
                 if direction_sample not in COMPATIBLE_HALVES[candidate_half]:
                     # Must keep N/S together, and E/W -- e.g., can't mix N2 with E2.
                     continue
-                if cand_consolid in b.avail_consolidations:
+                if cand_consolid in b._avail_consolidations:
                     new_consolidation = (candidate_half,) + cand_consolid
                     options.add(new_consolidation)
-        self.avail_consolidations = options
+        self._avail_consolidations = options
         return options
 
-    def consolidate(self, assume_standard=False):
+    def consolidate(self, assume_standard=False) -> list[str]:
+        """
+        Consolidate the tree into maximally-sized aliquot strings (i.e.,
+        the smallest possible list of aliquot strings). If equally
+        optimal solutions are possible, this will prefer to generate
+        halves over quarters (``['N2', ...] > ['NE', 'NW', ...]``),
+        quarters over half-halves (``['NE', ...] > ['N2N2', ...]``),
+        and prefer North > South > East > West.
+
+        To assume a standard 640-acre section, use
+        ``assume_standard=True``, in which case the standard 16 QQ's
+        will render ``'ALL'``.
+
+         .. warning::
+            This method will destroy the tree. If the original tree is
+            needed after calling this method, first ensure that you have
+            created an equivalent backup.
+
+        :param assume_standard: Whether to assume that this is a
+         'standard' section -- i.e. that the ``'N2'`` + ``'S2'``
+         (or ``'E2'`` + ``'W2'``) together make up ``'ALL'``.
+        :return: A list of consolidated aliquot strings. Not necessarily
+         sorted.
+        """
         consolidated_aliquots = []
         self.trim_tree()
         self._calc_available_consolidations()
-        consolidations = sorted(self.avail_consolidations, key=self._rank_consolidation_options)
-        print(consolidations)
+        consolidations = sorted(
+            self._avail_consolidations,
+            key=lambda x: _calc_aliquot_component_rank(x, prefer_short=True)
+        )
+        top_label = self.label
+        if top_label is None:
+            top_label = ''
         while consolidations:
             cur_consol = consolidations.pop(0)
             # Build aliquot string.
-            top_label = self.label
-            if top_label is None:
-                top_label = ''
             output_str = f"{''.join(reversed(cur_consol))}{top_label}"
             consolidated_aliquots.append(output_str)
             # Trim away used nodes.
             self._trim_used(cur_consol)
-            nsew = _check_nsew_split(cur_consol)
+            # Throw away consolidation options that would cause overlapping aliquots.
             _cull_consolidation_options(consolidations, latest=cur_consol)
-            print(consolidations)
-            print(consolidated_aliquots)
+        # Now all top-level consolidations have been executed, but it is possible that
+        # top-level quarters still exist, so children are recursively consolidated, then
+        # combined with the remaining top-level quarter labels.
+        for child_lbl, child_node in self.children.items():
+            child_node.consolidate()
+            # Resulting substrings have been stored to `._consol_substrings`.
+            for s in child_node._consol_substrings:
+                # Build aliquot string.
+                consolidated_aliquots.append(f"{s}{top_label}")
+                # (Newly used nodes will have been trimmed in the recursive call
+                # on the child nodes.)
+        if assume_standard and tuple(sorted(consolidated_aliquots)) in ALL_DEFS:
+            consolidated_aliquots = ['ALL']
+        self._consol_substrings = consolidated_aliquots
+        return sorted(consolidated_aliquots, key=_calc_aliquot_rank)
 
     def _trim_used(self, aliquot_tuple: tuple[str]):
+        """
+        INTERNAL USE:
+
+        Trim away nodes that have been rendered into aliquot strings.
+        :param aliquot_tuple: The latest executed aliquot description,
+         represented as a tuple of aliquot strings, such as
+         ``('N2', 'S2')`` for the newly consolidated ``'S2N2'``.
+        """
         if not aliquot_tuple or self.is_leaf():
             self.parent.children.pop(self.label)
             return None
@@ -240,39 +324,13 @@ class AliquotNode:
             selected_children = [self[cur_aliq]]
         for child_node in selected_children:
             child_node._trim_used(aliquot_tuple[1:])
-        self._rendered = all(child._rendered for child in self.children.values())
-
-    @staticmethod
-    def _rank_consolidation_options(candidate: tuple[str]):
-        sort_val = 0
-        for position, x in enumerate(candidate, start=1):
-            x_val = 0
-            # First char NSEW
-            if x[0] == 'N':
-                x_val += 0
-            elif x[0] == 'S':
-                x_val += 1
-            elif x[0] == 'E':
-                x_val += 2
-            elif x[0] == 'W':
-                x_val += 3
-            sort_val += x_val / (10 ** (position * 2))
-            # Second char NSEW, or half.
-            if x[1] == '2':
-                x_val += 10
-            elif x[1] == 'N':
-                x_val += 20
-            elif x[1] == 'S':
-                x_val += 30
-            elif x[1] == 'E':
-                x_val += 40
-            elif x[1] == 'W':
-                x_val += 50
-        return sort_val
+        return None
 
 
 def _check_nsew_split(candidate: tuple[str]):
     """
+    INTERNAL USE:
+
     Returns ``'NS'`` if candidate eventually splits N/S or ``'EW'`` if
     it splits E/W. Returns ``None`` if candidate is only composed of
     quarters.
@@ -292,18 +350,34 @@ def _check_nsew_split(candidate: tuple[str]):
 
 
 def _cull_consolidation_options(options: list[tuple[str]], latest: tuple[str]):
+    """
+    INTERNAL USE:
+
+    Cull the list of consolidation ``options``, according to the option
+    that was taken most recently (``latest``).
+    :param options: A list of currently possible consolidations.
+    :param: The latest executed consolidation, represented as a tuple of
+     aliquot strings, such as ``('N2', 'S2')`` for the newly
+     consolidated ``'S2N2'``.
+    :return: The remaining ``options``. (Also modifies the original list
+     of tuples that was passed as ``options``.)
+    """
     pop_idxs = []
     keep_nsew = _check_nsew_split(latest)
     quarters = HALF_DEFS.get(latest[0])
-    split = []
+    split_options = []
     if quarters is not None:
-        split = [(q,) + latest[1:] for q in quarters]
+        # For example, if ('N2', 'S2') is the latest executed consolidation, it would
+        # also entail ('NE', 'S2') and ('NW', 'S2'). So we need to check if either of
+        # those are in the consolidation options and remove them.
+        split_options = [(q,) + latest[1:] for q in quarters]
     for i, opt in enumerate(options):
-        nsew_split = _check_nsew_split(opt)
-        if keep_nsew is not None and nsew_split != keep_nsew:
-            # Splits on wrong axis.
+        if opt in split_options:
             pop_idxs.append(i)
-        elif opt in split:
+            continue
+        # We also need to throw away any options that split on the wrong axis.
+        nsew_split = _check_nsew_split(opt)
+        if None not in (nsew_split, keep_nsew) and nsew_split != keep_nsew:
             pop_idxs.append(i)
     pop_idxs.reverse()
     for i in pop_idxs:
@@ -329,87 +403,57 @@ def simplify_aliquots(qqs: list[str], assume_standard=False) -> list[str]:
 
     To assume a standard 640-acre section, use ``assume_standard=True``,
     in which case the standard 16 QQ's will render ``'ALL'``.
-
-    Note also: This will not combine aliquots across quarter-boundaries.
-    That is, N2NE + N2NW will not combine into N2N2. This is an area for
-    future improvements.
     """
-
-    # First breaks down the list of aliquot strings into a tree (stored as a dict).
-    # Then uses DFS to recursively recompile them into the fewest possible aliquots.
-
-    def combine_aliquot_components(available_components: set, final=False) -> set:
-        """
-        Helper function to merge all possible aliquot sub-components.
-        Ex: ``('NE', 'NW', 'SE')`` -> ``('N2', 'SE')``
-        :param available_components: A set of aliquot components that
-         are available to be combined.
-        :param final: Whether this is the final pass.
-        """
-        combined_components = set()
-        for cand_components, cand_aliq in _ALIQUOT_DEFS:
-            if not assume_standard and cand_aliq == 'ALL':
-                continue
-            if cand_aliq == '' and final:
-                continue
-            if cand_components <= available_components:
-                # All necessary components in the candidate aliquot are found
-                # in the actual components, so combine.
-                combined_components.add(cand_aliq)
-                # Take the newly used components out of future consideration.
-                available_components.difference_update(cand_components)
-        # Add any stragglers back to the set of rebuilt components.
-        combined_components.update(available_components)
-        return combined_components
-
-    def compile_aliquot_tree(aq_tree: dict):
-        """
-        Helper function to compile the aliquot tree back into aliquot strings.
-        """
-        # Recompile the aliquots with recursive DFS algorithm.
-        # TODO (future improvement): Combine N2NE + N2NW --> N2N2 (etc.)
-        aliquots_recompiled = set()
-        for aliq, children in aq_tree.items():
-            subcomponents = compile_aliquot_tree(children)
-            if len(subcomponents) == 0:
-                aliquots_recompiled.add(aliq)
-                continue
-            rebuilt_components = combine_aliquot_components(subcomponents)
-            for comp in rebuilt_components:
-                aliquots_recompiled.add(f"{comp}{aliq}")
-        return aliquots_recompiled
-
-    # Must break any halves into quarters to use a 4-branching tree structure.
-    qqs = qqs.copy()
-    split_qqs = []
-    while qqs:
-        qq = qqs.pop()
-        if '2' not in qq:
-            split_qqs.append(qq)
-            continue
-        tp = TractParser(text=qq, clean_qq=True, break_halves=True)
-        for split_qq in tp.qqs:
-            split_qqs.append(split_qq)
-
-    aliquot_tree = {}
-    for qq in split_qqs:
-        # Deconstruct QQ string into 2-character segments.
-        #   'NENWSW' -> ['SW', 'NW', 'NE']
-        #   Eventual resulting tree structure -> {'SW': {'NW': {'NE': {}}}}
-        decon_qq = [qq[i:i + 2] for i in range(0, len(qq), 2)]
-        decon_qq.reverse()
-        node = aliquot_tree
-        for i, component in enumerate(decon_qq):
-            node.setdefault(component, {})
-            node = node[component]
-    reconstruc_aliqs = compile_aliquot_tree(aliquot_tree)
-    # One final combination.
-    reconstruc_aliqs = combine_aliquot_components(reconstruc_aliqs, final=True)
-    aliquots = sorted(reconstruc_aliqs, key=_aliquot_rank)
-    return aliquots
+    tree = AliquotNode()
+    tree.register_all_aliquots(qqs)
+    tree.trim_tree()
+    consolidated_aliquots = tree.consolidate(assume_standard=assume_standard)
+    return consolidated_aliquots
 
 
-def _aliquot_rank(aliquot: str):
+def _calc_aliquot_component_rank(components: list[str] | tuple[str], prefer_short=False):
+    """
+    INTERNAL USE:
+
+    Calculate a sorting value for a decomposed aliquot string. (Does NOT
+    accept ``'ALL'``.)
+
+    :param components: List or tuple of 2-character components of an
+     aliquot description, in order of highest-to-lowest priority.
+     Ex: ``'N2NWNE'`` would be passed as ``['NE', 'NW', 'N2']``.
+    :param prefer_short: Give highest priority to the shortest aliquots
+     (i.e., ``'SE'`` would have higher priority than ``'N2N2'``).
+    """
+    sort_val = 0
+    if prefer_short:
+        sort_val = len(components)
+    for position, x in enumerate(components, start=1):
+        x_val = 0
+        # First char NSEW
+        if x[0] == 'N':
+            x_val += 0
+        elif x[0] == 'S':
+            x_val += 1
+        elif x[0] == 'E':
+            x_val += 2
+        elif x[0] == 'W':
+            x_val += 3
+        # Second char NSEW, or half.
+        if x[1] == '2':
+            x_val += 10
+        elif x[1] == 'N':
+            x_val += 20
+        elif x[1] == 'S':
+            x_val += 30
+        elif x[1] == 'E':
+            x_val += 40
+        elif x[1] == 'W':
+            x_val += 50
+        sort_val += x_val / (10 ** (position * 2))
+    return sort_val
+
+
+def _calc_aliquot_rank(aliquot: str):
     """
     INTERNAL USE:
 
@@ -426,13 +470,16 @@ def _aliquot_rank(aliquot: str):
     if aliquot == 'ALL':
         return float('-inf')
     # Split aliquot into 2-character pieces, and reverse them.
-    decon_aliq = [aliquot[i:i + 2] for i in range(0, len(aliquot), 2)]
-    decon_aliq.reverse()
+    components = [aliquot[i:i + 2] for i in range(0, len(aliquot), 2)]
+    components.reverse()
+    # Note that this uses a different ranking metric than _calc_aliquot_component_rank()
     sort_val = 0
-    for position, x in enumerate(decon_aliq, start=1):
+    for position, x in enumerate(components, start=1):
         x_val = 0
         # First char NSEW
-        if x[0] == 'S':
+        if x[0] == 'N':
+            x_val += 0
+        elif x[0] == 'S':
             x_val += 10
         elif x[0] == 'E':
             x_val += 20
@@ -440,14 +487,14 @@ def _aliquot_rank(aliquot: str):
             x_val += 30
         # Second char NSEW, or half.
         if x[1] == '2':
-            x_val += 0
-        elif x[1] == 'N':
             x_val += 1
-        elif x[1] == 'S':
+        elif x[1] == 'N':
             x_val += 2
-        elif x[1] == 'E':
+        elif x[1] == 'S':
             x_val += 3
-        elif x[1] == 'W':
+        elif x[1] == 'E':
             x_val += 4
+        elif x[1] == 'W':
+            x_val += 5
         sort_val += x_val / (10 ** (position * 2))
     return sort_val

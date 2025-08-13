@@ -155,7 +155,7 @@ class TractListTests(unittest.TestCase):
         # The entirety of `d5` is a duplicate and should be dropped.
         d5 = d4
         trs_list_target = ['154n97w14', '154n97w15', '155n97w01']
-        consol_desc_target = "154n97w14: ALL\n154n97w15: L1, L3, L5, S2\n155n97w01: L1, L2, L3, L4, S2NE, S2NW, S2"
+        consol_desc_target = "154n97w14: ALL\n154n97w15: L1, L3, L5, S2\n155n97w01: L1, L2, L3, L4, S2N2, S2"
 
         d1_parsed = PLSSDesc(d1, parse_qq=True)
         d2_parsed = PLSSDesc(d2, parse_qq=True)
@@ -190,7 +190,7 @@ class TractListTests(unittest.TestCase):
             (
                 '155n97w01',
                 'Lots 1 - 4, S2N2, SW/4, SE/4NE/4; SE/4, Lot 1, SE/4SW/4',
-                ['L1', 'L2', 'L3', 'L4', 'S2NE', 'S2NW', 'S2']
+                ['L1', 'L2', 'L3', 'L4', 'S2N2', 'S2']
             )
         ]
         for (trs, desc, lots_aliquots), tract in zip(expected_descs, consolidated):
