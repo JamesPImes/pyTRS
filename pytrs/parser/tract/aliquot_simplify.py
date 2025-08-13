@@ -34,10 +34,29 @@ NSEW_DEFS = {
 
 
 class AliquotNode:
-    def __init__(self, parent = None):
+    def __init__(self, parent=None, label: str = None):
         self.parent: AliquotNode = parent
+        self.label = label
         self.children: dict[str, AliquotNode] = {}
         self.avail_consolidations: dict[str, set] = {}
+        self.full = False
+
+    def __repr__(self):
+        child_strings = [
+            f"{lbl}{'..' if node.children else ''}"
+            for lbl, node in self.children.items()
+        ]
+        lbl = '__'
+        if self.label is not None:
+            lbl = self.label
+        return f"{lbl}<{'|'.join(child_strings)}>"
+
+    def __getitem__(self, qq):
+        return self.children[qq]
+
+    def __setitem__(self, qq, v):
+        self.children[qq] = v
+        return None
 
     def _insert_aliquot_into_tree(self, qq: str):
         """
@@ -49,10 +68,17 @@ class AliquotNode:
         decon_qq = [qq[i:i + 2] for i in range(0, len(qq), 2)]
         decon_qq.reverse()
         node = self
-        for aliq in decon_qq:
+        i = -1
+        for i, aliq in enumerate(decon_qq):
+            if node.full:
+                return None
             if aliq not in node.children:
-                node.children[aliq] = AliquotNode(parent=node)
-            node = node.children[aliq]
+                node[aliq] = AliquotNode(parent=node, label=aliq)
+            node = node[aliq]
+        if i >= 0:
+            # If anything has been inserted, the final node is full by definition.
+            # Any future subdivisions of that aliquot are already covered.
+            node.full = True
         return None
 
     def register_aliquot(self, qq: str):
@@ -78,6 +104,68 @@ class AliquotNode:
         """
         for qq in qqs:
             self.register_aliquot(qq)
+
+    def is_leaf(self):
+        """Check if this node is a leaf."""
+        return len(self.children) == 0
+
+    def _subset_full(self, labels: list, _trim=False) -> bool:
+        """
+        INTERNAL USE:
+
+        Check if the selection of children nodes are full.
+
+        :param labels: List of any number of ``['NE', 'NW', 'SE', 'SW']``
+         to determine whether those children are full.
+        :param _trim: Use this ONLY for checking if ``.all_full()``. If
+         used, a ``True`` result in this method will cause all children
+         to be deleted from the tree.
+        :return: Whether all selected children are full.
+        """
+        relevant_nodes = [self.children.get(lbl) for lbl in labels]
+        if self.is_leaf() or self.full:
+            self.full = True
+            return True
+        elif any(node is None for node in relevant_nodes):
+            # If any nodes are present (requested or not), the requested nodes must exist.
+            return False
+        is_full = all(node.all_full() for node in relevant_nodes)
+        if _trim and is_full:
+            self.full = True
+            self.children = {}
+        return is_full
+
+    def all_full(self):
+        return self.is_leaf() or self._subset_full(labels=['NE', 'NW', 'SE', 'SW'], _trim=True)
+
+    def n2_full(self):
+        return self._subset_full(labels=['NE', 'NW'])
+
+    def s2_full(self):
+        return self._subset_full(labels=['SE', 'SW'])
+
+    def e2_full(self):
+        return self._subset_full(labels=['NE', 'SE'])
+
+    def w2_full(self):
+        return self._subset_full(labels=['NW', 'SW'])
+
+    def trim_tree(self):
+        """
+        Trim away branches that contain only full nodes.
+        """
+        if self.is_leaf():
+            return None
+        full = []
+        for aq_label, child in self.children.items():
+            if child.all_full():
+                full.append(aq_label)
+            else:
+                child.trim_tree()
+        if len(full) == 4:
+            self.full = True
+            self.children = {}
+        return None
 
 
 def simplify_aliquots(qqs: list[str], assume_standard=False) -> list[str]:
