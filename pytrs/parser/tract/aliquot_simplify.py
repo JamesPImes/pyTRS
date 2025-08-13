@@ -19,6 +19,66 @@ _ALIQUOT_DEFS = [
     [{'E2', 'W2'}, 'ALL'],
 ]
 
+HALF_DEFS = {
+    'ALL': ('NE', 'NW', 'SE', 'SW'),
+    'N2': ('NE', 'NW'),
+    'S2': ('SE', 'SW'),
+    'E2': ('NE', 'SE'),
+    'W2': ('NW', 'SW')
+}
+
+NSEW_DEFS = {
+    'NS': ('N2', 'S2'),
+    'EW': ('E2', 'W2'),
+}
+
+
+class AliquotNode:
+    def __init__(self, parent = None):
+        self.parent: AliquotNode = parent
+        self.children: dict[str, AliquotNode] = {}
+        self.avail_consolidations: dict[str, set] = {}
+
+    def _insert_aliquot_into_tree(self, qq: str):
+        """
+        Break apart the aliquot and register it into the tree. Does not
+        accept aliquots that contain halves.
+        (Call this only on the root node.)
+        """
+        # ['SW', 'NW', 'NE']
+        decon_qq = [qq[i:i + 2] for i in range(0, len(qq), 2)]
+        decon_qq.reverse()
+        node = self
+        for aliq in decon_qq:
+            if aliq not in node.children:
+                node.children[aliq] = AliquotNode(parent=node)
+            node = node.children[aliq]
+        return None
+
+    def register_aliquot(self, qq: str):
+        """
+        Break apart the aliquot and register it into the tree. (Call
+        this only on the root node.)
+        """
+        # Must break any halves into quarters to use a 4-branching tree structure.
+        split_qqs = []
+        if '2' in qq:
+            tp = TractParser(text=qq, clean_qq=True, break_halves=True)
+            for split_qq in tp.qqs:
+                split_qqs.append(split_qq)
+        else:
+            split_qqs.append(qq)
+        for qq in split_qqs:
+            self._insert_aliquot_into_tree(qq)
+
+    def register_all_aliquots(self, qqs: list[str]):
+        """
+        Break apart all aliquots in the list of QQs and register them
+        into the tree. (Call this only on the root node.)
+        """
+        for qq in qqs:
+            self.register_aliquot(qq)
+
 
 def simplify_aliquots(qqs: list[str], assume_standard=False) -> list[str]:
     """
@@ -95,8 +155,8 @@ def simplify_aliquots(qqs: list[str], assume_standard=False) -> list[str]:
         qq = qqs.pop()
         if '2' not in qq:
             split_qqs.append(qq)
+            continue
         tp = TractParser(text=qq, clean_qq=True, break_halves=True)
-        tp.parse()
         for split_qq in tp.qqs:
             split_qqs.append(split_qq)
 
