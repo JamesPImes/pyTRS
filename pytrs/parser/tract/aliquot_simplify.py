@@ -56,7 +56,7 @@ class AliquotNode:
       noted.
 
     Notable attributes:
-     * ``depth`` - Depth of the node (root's depth = 1).
+     * ``depth`` - Depth of the node from root (starting from 0).
      * ``parent``
      * ``children`` - a dict of child nodes, keyed by ``'NE'``,
         ``'NW'``, ``'SE'``, or ``'SW'``.
@@ -83,7 +83,7 @@ class AliquotNode:
         self._avail_consolidations: set[tuple[str]] = set()
         self.full = False
         self._consol_substrings = []
-        self.depth: int = 1
+        self.depth: int = 0
         if self.parent is not None:
             self.depth = self.parent.depth + 1
         self.sources = set()
