@@ -3,6 +3,7 @@ Functions for combining parsed QQs into simpler aliquots.
 """
 
 from __future__ import annotations
+from typing import Hashable
 from .tract_parse import TractParser
 
 __all__ = [
@@ -53,6 +54,19 @@ class AliquotNode:
       for a tree representation of aliquot divisions if needed. Note,
       however, that updates and changes to the API may not be publicly
       noted.
+
+    Notable attributes:
+     * ``depth`` - Depth of the node (root's depth = 1).
+     * ``parent``
+     * ``children`` - a dict of child nodes, keyed by ``'NE'``,
+        ``'NW'``, ``'SE'``, or ``'SW'``.
+     * ``label`` - Whether this node represents the NE, NW, SE, or SW.
+        (Matches the label in its parent node's ``.children`` dict).
+     * ``full`` - Whether this node represents the entirety (i.e.,
+        either a leaf; or has all 4 children, and they are all full).
+     * ``sources`` - A set, keeping track of each ``source`` that
+        optionally gets passed to ``.register_aliquot()`` or
+        ``.register_all_aliquots()``.
     """
 
     def __init__(self, parent: AliquotNode = None, label: str = None):
@@ -64,10 +78,15 @@ class AliquotNode:
         """
         self.parent: AliquotNode = parent
         self.label: str = label
-        self.children: dict[str, AliquotNode] = {}
+        cls = type(self)  # Allow cleaner subtyping.
+        self.children: dict[str, cls] = {}
         self._avail_consolidations: set[tuple[str]] = set()
         self.full = False
         self._consol_substrings = []
+        self.depth: int = 1
+        if self.parent is not None:
+            self.depth = self.parent.depth + 1
+        self.sources = set()
 
     def __repr__(self):
         child_strings = [
@@ -94,33 +113,51 @@ class AliquotNode:
         """
         return self.children.get(qq, default)
 
-    def _insert_aliquot_into_tree(self, qq: str):
+    def _insert_aliquot_into_tree(self, qq: str, source: Hashable = None):
         """
         Break apart the aliquot and register it into the tree. Does not
         accept aliquots that contain halves.
         (Call this only on the root node.)
+
+        :param qq: Any QQ, as parsed by a ``Tract``.
+        :param source: (Optional) Keep track of the source of this
+         aliquot. Gets added to a ``.sources`` attribute (a ``set``) at
+         the deepest node. ``source`` can be anything, but must be
+         hashable.
         """
         # ['SW', 'NW', 'NE']
         decon_qq = [qq[i:i + 2] for i in range(0, len(qq), 2)]
         decon_qq.reverse()
+        cls = type(self)  # Allow cleaner subtyping.
         node = self
         i = -1
         for i, aliq in enumerate(decon_qq):
-            if node.full:
+            if node.full and source is None:
+                # If source is specified, we must keep going deeper, even though
+                # we are not actually adding new lands.
                 return None
             if aliq not in node.children:
-                node[aliq] = AliquotNode(parent=node, label=aliq)
+                node[aliq] = cls(parent=node, label=aliq)
             node = node[aliq]
         if i >= 0:
             # If anything has been inserted, the final node is full by definition.
             # Any future subdivisions of that aliquot are already covered.
             node.full = True
+            if source is not None:
+                # Add source to the deepest node only.
+                node.sources.add(source)
         return None
 
-    def register_aliquot(self, qq: str):
+    def register_aliquot(self, qq: str, source: Hashable = None):
         """
         Break apart the aliquot and register it into the tree. (Call
         this only on the root node.)
+
+        :param qq: Any QQ, as parsed by a ``Tract``.
+        :param source: (Optional) Keep track of the source of this
+         aliquot. Gets added to a ``.sources`` attribute (a ``set``) at
+         the deepest node. ``source`` can be anything, but must be
+         hashable.
         """
         # Must break any halves into quarters to use a 4-branching tree structure.
         split_qqs = []
@@ -131,15 +168,21 @@ class AliquotNode:
         else:
             split_qqs.append(qq)
         for qq in split_qqs:
-            self._insert_aliquot_into_tree(qq)
+            self._insert_aliquot_into_tree(qq, source)
 
-    def register_all_aliquots(self, qqs: list[str]):
+    def register_all_aliquots(self, qqs: list[str], source: Hashable = None):
         """
         Break apart all aliquots in the list of QQs and register them
         into the tree. (Call this only on the root node.)
+
+        :param qqs: A list of QQs, as parsed by a ``Tract``.
+        :param source: (Optional) Keep track of the source of this
+         aliquot. Gets added to a ``.sources`` attribute (a ``set``) at
+         the deepest node for each registered QQ. ``source`` can be
+         anything, but must be hashable.
         """
         for qq in qqs:
-            self.register_aliquot(qq)
+            self.register_aliquot(qq, source)
 
     def is_leaf(self):
         """Check if this node is a leaf."""
@@ -167,16 +210,30 @@ class AliquotNode:
             return False
         is_full = all(node.all_full() for node in relevant_nodes)
         if _trim and is_full:
+            # Move up any sources from deeper nodes to this one.
+            self.sources.update(self.collect_sources())
             self.full = True
             self.children = {}
         return is_full
 
-    def all_full(self):
+    def collect_sources(self) -> set:
+        """
+        Collect ``.sources`` from children. Will NOT set them to this
+        node's ``.sources`` but will return a set of the collected
+        sources.
+        """
+        sources = set()
+        sources.update(self.sources)
+        for child in self.children.values():
+            sources.update(child.collect_sources())
+        return sources
+
+    def all_full(self, trim=False):
         """
         Check if this node is completely full. If so, child nodes will
-        be trimmed.
+        be trimmed if ``trim=True`` is used (off by default).
         """
-        return self.is_leaf() or self._subset_full(labels=['NE', 'NW', 'SE', 'SW'], _trim=True)
+        return self.is_leaf() or self._subset_full(labels=['NE', 'NW', 'SE', 'SW'], _trim=trim)
 
     def trim_tree(self):
         """
@@ -186,11 +243,13 @@ class AliquotNode:
             return None
         full = []
         for aq_label, child in self.children.items():
-            if child.all_full():
+            if child.all_full(trim=True):
                 full.append(aq_label)
             else:
                 child.trim_tree()
-        if len(full) == 4 and self.parent is not None:
+        if self.full or (len(full) == 4 and self.parent is not None):
+            # Move up any sources from deeper nodes to this one.
+            self.sources.update(self.collect_sources())
             self.full = True
             self.children = {}
         return None
