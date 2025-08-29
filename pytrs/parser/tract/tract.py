@@ -292,15 +292,17 @@ class Tract:
         'twprge': 'Twp & Rge',  # **
         'sec': 'Section',  # **
         'sec_num': 'Section Number',  # **
-        'qqs': 'Aliquots',
-        'aliquots': 'Aliquots',  # **
-        'aliquots_standard': 'Aliquots',  # **
-        'aliquots_whole': 'Aliquots (whole)',
+        'qqs': "QQs (or bigger/smaller, as configured)",
+        'aliquots': 'Aliquots (reconstructed from QQs)',  # **
+        'aliquots_standard':
+            'Aliquots (reconstructed from QQs, assuming standard section)',  # **
+        'aliquots_whole': 'Aliquots (as originally identified)',
         'lots': 'Lots',
         'ilots': 'Lot Numbers',  # **
-        'lots_qqs': 'Lots & Aliquots',  # **
-        'lots_aliquots': 'Lots & Aliquots',  # **
-        'lots_aliquots_standard': 'Lots & Aliquots',  # **
+        'lots_qqs': 'Lots & QQs (or bigger/smaller, as configured)',  # **
+        'lots_aliquots': 'Lots & Aliquots (reconstructed from QQs)',  # **
+        'lots_aliquots_standard':
+            'Lots & Aliquots (reconstructed from QQs, assuming standard section)',  # **
         'desc': 'Description',
         'orig_desc': 'Original (full) PLSS Description',
         'pp_desc': 'Cleaned-Up Description',
