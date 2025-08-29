@@ -292,14 +292,14 @@ class Tract:
         'twprge': 'Twp & Rge',  # **
         'sec': 'Section',  # **
         'sec_num': 'Section Number',  # **
-        'qqs': "QQs (or bigger/smaller, as configured)",
+        'qqs': 'QQs',
         'aliquots': 'Aliquots (reconstructed from QQs)',  # **
         'aliquots_standard':
             'Aliquots (reconstructed from QQs, assuming standard section)',  # **
         'aliquots_whole': 'Aliquots (as originally identified)',
         'lots': 'Lots',
         'ilots': 'Lot Numbers',  # **
-        'lots_qqs': 'Lots & QQs (or bigger/smaller, as configured)',  # **
+        'lots_qqs': 'Lots & QQs',  # **
         'lots_aliquots': 'Lots & Aliquots (reconstructed from QQs)',  # **
         'lots_aliquots_standard':
             'Lots & Aliquots (reconstructed from QQs, assuming standard section)',  # **
