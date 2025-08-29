@@ -423,7 +423,7 @@ class TractTests(unittest.TestCase):
             'Description',
             'Lots',
             'Lot Numbers',
-            'Aliquots',
+            'QQs',
             'Test1',
             'Test2']
         # nice_headers = True pulls default nice headers.
