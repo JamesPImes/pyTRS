@@ -86,6 +86,14 @@ class Config:
              tack *intentionally* unused text onto the description of a
              ``Tract``.
 
+    - ``'no_pm'`` -- Tells the preprocessor not to expect "__ Principal
+      Meridian" (or an abbreviation) after any Twp/Rge in a PLSS
+      description. This can completely mitigate a known performance
+      issue when encountering a PLSS description that contains more than
+      5 or 6 Twp/Rge's. The risk is that if a principal meridian is
+      actually encountered while using this setting, it will not be
+      handled correctly.
+
     - ``'qq_depth_min.<number>'`` -- Sets the minimum ``qq_depth`` to
       the specified <number>. (◊, †)
 
