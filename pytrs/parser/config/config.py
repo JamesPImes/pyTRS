@@ -223,6 +223,7 @@ class Config:
         'qq_depth_max',
         'break_halves',
         'sec_within',
+        'no_pm',
     )
 
     # A list of attribute names whose values should be a bool:
@@ -237,6 +238,7 @@ class Config:
         'segment',
         'break_halves',
         'sec_within',
+        'no_pm',
     )
 
     _INT_TYPE_ATTRIBUTES = (
@@ -305,6 +307,7 @@ class Config:
         self.qq_depth_max = None
         self.break_halves = None
         self.sec_within = None
+        self.no_pm = None
 
         # Break up text.
         self._text_to_attributes(config_text)

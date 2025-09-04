@@ -67,9 +67,9 @@ class PLSSPreprocessor:
 
                 When parsing long descriptions (more than 5 or 6
                 Twp/Rges in the original block of text), the principal
-                meridian regex can cause major performance issues,
-                especially beyond the 12th Twp/Rge. Disabling this regex
-                with ``no_pm=True`` will improve performance.
+                meridian scrubber can cause major performance issues,
+                especially beyond the 12th Twp/Rge. Disabling this
+                scrubber with ``no_pm=True`` will improve performance.
         """
 
         self.orig_text = orig_text

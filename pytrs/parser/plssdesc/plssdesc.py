@@ -310,6 +310,9 @@ class PLSSDesc:
         # Whether to iron out common OCR artifacts.
         self.ocr_scrub = False
 
+        # Whether to iron out "Principal Meridian" (or abbrev.) while preprocessing.
+        self.no_pm = False
+
         # Whether to segment the text during parsing (can /potentially/
         # capture descriptions with multiple layouts).
         self.segment = False
@@ -480,7 +483,9 @@ class PLSSDesc:
             qq_depth_min=None,
             qq_depth_max=None,
             qq_depth=None,
-            break_halves=None):
+            break_halves=None,
+            no_pm=None,
+    ):
         """
         Parse the description. If parameter ``commit=True`` (default),
         the results will be stored to the various instance
@@ -626,6 +631,18 @@ class PLSSDesc:
          quarters, even if we're beyond the ``qq_depth_min``. (``False``
          by default.)
 
+        :param no_pm: (Defaults False) Assume the text does not contain
+            "Principal Meridian" (or abbreviation thereof) following
+            Twp/Rge.
+
+            .. note::
+
+                When parsing long descriptions (more than 5 or 6
+                Twp/Rges in the original block of text), the principal
+                meridian scrubber can cause major performance issues,
+                especially beyond the 12th Twp/Rge. Disabling this
+                scrubber with ``no_pm=True`` will improve performance.
+
         :return: Returns a ``TractList`` object containing the
          resulting ``Tract`` objects. (That same ``TractList`` will be
          stored to ``.tracts`` if ``commit=True``.
@@ -690,6 +707,8 @@ class PLSSDesc:
             qq_depth_min = self.qq_depth_min
         if qq_depth_max is None:
             qq_depth_max = self.qq_depth_max
+        if no_pm is None:
+            no_pm = self.no_pm
 
         # Parameters for `PLSSParser.parse()`.
         config_params = {
@@ -710,6 +729,7 @@ class PLSSDesc:
             "qq_depth_max": qq_depth_max,
             "qq_depth": qq_depth,
             "break_halves": break_halves,
+            "no_pm": no_pm,
             "handed_down_config": handed_down_config,
         }
 
@@ -822,7 +842,9 @@ class PLSSDesc:
             default_ns=None,
             default_ew=None,
             commit=False,
-            ocr_scrub=None) -> str:
+            ocr_scrub=None,
+            no_pm=None,
+    ) -> str:
         """
         Preprocess the PLSS description to iron out common kinks in
         the input data, and optionally store the results to the
@@ -848,6 +870,18 @@ class PLSSDesc:
          configured.)
         :param commit: Whether to store the results to ``.pp_desc``.
          (Defaults to ``False``)
+        :param no_pm: (Defaults False) Assume the text does not contain
+            ``'__ Principal Meridian'`` (or abbreviation thereof)
+            following any Twp/Rge.
+
+            .. note::
+
+                When parsing long descriptions (more than 5 or 6
+                Twp/Rges in the original block of text), the principal
+                meridian scrubber can cause major performance issues,
+                especially beyond the 12th Twp/Rge. Disabling this
+                scrubber with ``no_pm=True`` will improve performance.
+
         :return: The preprocessed string.
         """
         text = self.orig_desc
@@ -857,7 +891,9 @@ class PLSSDesc:
             default_ew = self.default_ew
         if ocr_scrub is None:
             ocr_scrub = self.ocr_scrub
-        preprocessor = PLSSPreprocessor(text, default_ns, default_ew, ocr_scrub)
+        if no_pm is None:
+            no_pm = self.no_pm
+        preprocessor = PLSSPreprocessor(text, default_ns, default_ew, ocr_scrub, no_pm)
         pp_desc = preprocessor.text
         if commit:
             self.pp_desc = pp_desc

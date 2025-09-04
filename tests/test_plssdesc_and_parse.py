@@ -1,4 +1,3 @@
-
 """
 Tests for the pytrs.parser.plssdesc module and submodules (except the
 .plss_preprocess submodule, which has its own tests).
@@ -14,13 +13,13 @@ try:
     from pytrs.utils import flatten
 except ImportError:
     import sys
+
     sys.path.append('../')
     from pytrs.parser import PLSSDesc
     from pytrs.parser.plssdesc.plss_parse import PLSSParser
     from pytrs.parser import Tract
     from pytrs.parser import MasterConfig
     from pytrs.utils import flatten
-    
 
 # All four of these have the same tracts.
 TEST_DESC_MULTI_TRS_DESC = (
@@ -183,6 +182,45 @@ class PLSSParseTests(unittest.TestCase):
                 self.assertEqual(expected_desc, d.tracts[i].desc)
                 # Check that the appropriate
                 self.assertIn(expected_flag.format(trs), d.w_flags)
+
+    def test_no_pm(self):
+        desc_with_pm = 'T154N-R97W, 5th PM, Sec 14: NE/4'
+        desc_without_pm = 'T154N-R97W, Sec 14: NE/4'
+        # Default parsing on both descriptions should be OK; and 2nd
+        # description with config='no_pm' should be OK.
+        expected_ok = {'trs': '154n97w14', 'desc': 'NE/4'}
+
+        # If using 'no_pm' config, it is expected that the parser WILL NOT
+        # handle desc_with_pm correctly. (Will interpret it as TR_desc_S
+        # layout.
+        expected_no_pm_bad = {
+            'trs': '154n97w14',
+            'desc': '5th PM',
+            'flags': ['unused_desc< NE/4>']
+        }
+
+        # Both OK under default config.
+        for desc in (desc_with_pm, desc_without_pm):
+            parsed_default = PLSSDesc(desc)
+            self.assertEqual(1, len(parsed_default.tracts))
+            for tract in parsed_default:
+                self.assertEqual(expected_ok['trs'], tract.trs)
+                self.assertEqual(expected_ok['desc'], tract.desc)
+
+        # desc_without_pm OK under config='no_pm'
+        parsed_no_pm_ok = PLSSDesc(desc_without_pm, config='no_pm')
+        self.assertEqual(1, len(parsed_no_pm_ok.tracts))
+        for tract in parsed_no_pm_ok:
+            self.assertEqual(expected_ok['trs'], tract.trs)
+            self.assertEqual(expected_ok['desc'], tract.desc)
+
+        # desc_with_pm is NOT OK under config='no_pm'
+        parsed_no_pm_bad = PLSSDesc(desc_with_pm, config='no_pm')
+        self.assertEqual(1, len(parsed_no_pm_bad.tracts))
+        for tract in parsed_no_pm_bad:
+            self.assertEqual(expected_no_pm_bad['trs'], tract.trs)
+            self.assertEqual(expected_no_pm_bad['desc'], tract.desc)
+            self.assertEqual(expected_no_pm_bad['flags'], tract.flags)
 
     def test_sort_tracts(self):
         txt = "T154N-R97W Sec 14: NE/4, Sec 1: S2N2, Sec 5: SW/4, T153N-R98W Sec 36: ALL"

@@ -301,6 +301,7 @@ class PLSSParser:
             qq_depth: int = None,
             break_halves=False,
             sec_within=False,
+            no_pm=False,
             handed_down_config: str = None,
             source=None,
     ):
@@ -333,6 +334,7 @@ class PLSSParser:
         :param qq_depth:
         :param break_halves:
         :param sec_within:
+        :param no_pm:
         :param handed_down_config: Config data to hand down to
         subordinate Tract objects. (Will be at least partially
         overridden by ``parse_qq=True``, if that is passed.)
@@ -350,7 +352,7 @@ class PLSSParser:
 
         # These impact the parse of this PLSS description.
         self.mandate_layout = not segment and layout is not None
-        preprocessor = PLSSPreprocessor(text, default_ns, default_ew, ocr_scrub)
+        preprocessor = PLSSPreprocessor(text, default_ns, default_ew, ocr_scrub, no_pm)
         self.text = preprocessor.text
         if layout is None:
             layout = deduce_layout(self.text)
@@ -365,6 +367,7 @@ class PLSSParser:
         self.ocr_scrub = ocr_scrub
         self.require_colon = require_colon
         self.sec_within = sec_within
+        self.no_pm = no_pm
         # Keep track of which tracts were repaired with 'sec_within'.
         self.sec_within_indexes = []
 
