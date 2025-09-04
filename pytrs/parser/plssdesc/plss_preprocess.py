@@ -42,7 +42,9 @@ class PLSSPreprocessor:
             orig_text: str,
             default_ns=MasterConfig.default_ns,
             default_ew=MasterConfig.default_ew,
-            ocr_scrub=False):
+            ocr_scrub=False,
+            no_pm=False,
+    ):
         """
         A class for preprocessing text for the ``PLSSParser``.
 
@@ -57,12 +59,24 @@ class PLSSPreprocessor:
         :param ocr_scrub: Whether to try to iron out common OCR
         'artifacts'. May cause unintended changes. (Defaults to
         ``False``)
+        :param no_pm: (Defaults False) Assume the text does not contain
+            "Principal Meridian" (or abbreviation thereof) following
+            Twp/Rge.
+
+            .. note::
+
+                When parsing long descriptions (more than 5 or 6
+                Twp/Rges in the original block of text), the principal
+                meridian regex can cause major performance issues,
+                especially beyond the 12th Twp/Rge. Disabling this regex
+                with ``no_pm=True`` will improve performance.
         """
 
         self.orig_text = orig_text
         self.ocr_scrub = ocr_scrub
         self.default_ns = default_ns
         self.default_ew = default_ew
+        self.no_pm = no_pm
 
         # These attributes are populated by `.preprocess()`:
         self.fixed_twprges = []
@@ -76,6 +90,7 @@ class PLSSPreprocessor:
             default_ns=None,
             default_ew=None,
             ocr_scrub=None,
+            no_pm=None,
             commit=False) -> tuple:
         """
         Preprocess the PLSS description to iron out common kinks in
@@ -93,8 +108,10 @@ class PLSSPreprocessor:
             default_ew = self.default_ew
         if ocr_scrub is None:
             ocr_scrub = self.ocr_scrub
+        if no_pm is None:
+            no_pm = self.no_pm
         txt, fixed_twprges = plss_preprocess(
-            txt, default_ns, default_ew, ocr_scrub)
+            txt, default_ns, default_ew, ocr_scrub, no_pm)
         if commit:
             self.text = txt
             self.fixed_twprges = fixed_twprges
@@ -105,7 +122,9 @@ def plss_preprocess(
         txt: str,
         default_ns: str = None,
         default_ew: str = None,
-        ocr_scrub: bool = False) -> tuple:
+        ocr_scrub: bool = False,
+        no_pm: bool = False,
+) -> tuple:
     """
     Preprocess the PLSS description to iron out common kinks in
     the input data. Stores the results to ``.text`` attribute and
@@ -132,9 +151,11 @@ def plss_preprocess(
 
     # Iteratively run each of the preprocess regexes over the text,
     # swapping in the cleaned up Twp/Rge every time.
-    pp_regexes = SCRUBBER_REGEXES
+    pp_regexes = list(SCRUBBER_REGEXES)
+    if no_pm:
+        i = pp_regexes.index(pp_twprge_pm)
+        pp_regexes.pop(i)
     if ocr_scrub:
-        pp_regexes = list(SCRUBBER_REGEXES)
         pp_regexes.insert(0, OCR_SCRUBBER)
     for pp_rgx in pp_regexes:
         txt = sub_scrubber(pp_rgx, txt, default_ns, default_ew)

@@ -1,4 +1,3 @@
-
 """
 Tests for the pytrs.parser.plssdesc.plss_preprocess submodule.
 """
@@ -12,6 +11,7 @@ try:
     )
 except ImportError:
     import sys
+
     sys.path.append('../')
     from pytrs.parser.plssdesc.plss_preprocess import (
         PLSSPreprocessor,
@@ -101,6 +101,25 @@ class PreprocessTest(unittest.TestCase):
         ]
         self.assertEqual(expected, find_twprge(
             txt, default_ns='s', default_ew='e', preprocess=True))
+
+    def test_no_pm(self):
+        """Test the ``no_pm`` config setting."""
+        txts = (
+            'Township 154 North, Range 97 West, 5th PM, Sec 14: NE/4',
+            'T154N-R97W, 5th PM, Sec 14: NE/4',
+            '154N-97W, 5th PM, Sec 14: NE/4',
+            'T154-R97, 5th PM, Sec 14: NE/4',
+            '154N-R97, 5th PM, Sec 14: NE/4',
+        )
+        # Note: Following is only the expected result for some of the
+        # test cases because default n/s and e/w are 'n' and 'w'.
+        expected_clear = 'T154N-R97W Sec 14: NE/4'
+        expected_no_pm = 'T154N-R97W 5th PM, Sec 14: NE/4'
+        for txt in txts:
+            clear_pm = PLSSPreprocessor(txt).text
+            no_pm = PLSSPreprocessor(txt, no_pm=True).text
+            self.assertEqual(expected_clear, clear_pm)
+            self.assertEqual(expected_no_pm, no_pm)
 
 
 if __name__ == '__main__':
