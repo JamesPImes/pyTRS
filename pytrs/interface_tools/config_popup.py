@@ -138,7 +138,8 @@ class PromptConfig(tk.Frame):
         'segment',
         'wait_to_parse',
         'parse_qq',
-        'break_halves'
+        'break_halves',
+        'no_pm',
     ]
 
     # Parameters that are set to a number and control how deeply to
@@ -408,6 +409,13 @@ class PromptConfig(tk.Frame):
             "...but with `break_halves` turned on, this would parse into "
             "['NENWNE', 'SENWNE', 'NESWNE', 'SESWNE'].\n\n"
             "Default: off (`False`)"
+        ),
+
+        'no_pm': (
+            "Use this setting if you know the data does not contain "
+            "Principal Meridian following any Twp/Rge. "
+            "(This can greatly improve performance on descriptions "
+            "that contain more than a handful of Twp/Rge's.)"
         ),
     }
 
