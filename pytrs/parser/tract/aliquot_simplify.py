@@ -78,7 +78,7 @@ class AliquotNode:
         """
         self.parent: AliquotNode = parent
         self.label: str = label
-        cls = type(self)  # Allow cleaner subtyping.
+        cls = type(self)  # Allow easier subclass.
         self.children: dict[str, cls] = {}
         self._avail_consolidations: set[tuple[str]] = set()
         self.full = False
@@ -113,6 +113,17 @@ class AliquotNode:
         """
         return self.children.get(qq, default)
 
+    def _decon_qq(self, qq: str) -> list[str]:
+        """
+        Break apart the aliquot into a list of strings, in highest-to-
+        lowest magnitude (i.e., ``'SWNE'`` -> ``['NE', 'SW']``).
+
+        :param qq: Any QQ, as parsed by a ``Tract``.
+        """
+        decon_qq = [qq[i:i + 2] for i in range(0, len(qq), 2)]
+        decon_qq.reverse()
+        return decon_qq
+
     def _insert_aliquot_into_tree(self, qq: str, source: Hashable = None):
         """
         Break apart the aliquot and register it into the tree. Does not
@@ -125,10 +136,9 @@ class AliquotNode:
          the deepest node. ``source`` can be anything, but must be
          hashable.
         """
-        # ['SW', 'NW', 'NE']
-        decon_qq = [qq[i:i + 2] for i in range(0, len(qq), 2)]
-        decon_qq.reverse()
-        cls = type(self)  # Allow cleaner subtyping.
+        # 'NENWSW' -> ['SW', 'NW', 'NE']
+        decon_qq = self._decon_qq(qq)
+        cls = type(self)  # Allow easier subclass.
         node = self
         i = -1
         for i, aliq in enumerate(decon_qq):
@@ -148,6 +158,73 @@ class AliquotNode:
                 node.sources.add(source)
         return None
 
+    def _remove_aliquot_from_tree(self, qq: str):
+        """
+        Break apart the aliquot and remove it from the tree. Does not
+        accept aliquots that contain halves.
+
+        :param qq: Any QQ, as parsed by a ``Tract``.
+        """
+        cls = type(self)  # Allow easier subclass.
+        # 'NENWSW' -> ['SW', 'NW', 'NE']
+        decon_qq = self._decon_qq(qq)
+        max_depth = len(decon_qq)
+        node = self
+        depth = 0
+        for depth, aliq in enumerate(decon_qq):
+            child = node.get(aliq)
+            if node.is_leaf() and depth < max_depth:
+                node.full = False
+                for new_child_label in ('NE', 'NW', 'SE', 'SW'):
+                    new_child = cls(parent=node, label=new_child_label)
+                    new_child.full = True
+                    node[new_child_label] = new_child
+            elif child is None:
+                # No point in going deeper.
+                break
+            if depth == max_depth - 1:
+                # Next depth is the one to delete.
+                child = node.get(aliq)
+                if child is not None:
+                    # Pass sources upward.
+                    child_sources = child.collect_sources()
+                    node.sources.update(child_sources)
+                    node.children.pop(child.label)
+                break
+            node = node[aliq]
+        # Traverse back up from the last-reached node, to trim any empty nodes
+        # (because any node that has become a leaf by this method is EMPTY
+        # instead of full).
+        while depth > 0:
+            parent = node.parent
+            if node.is_leaf():
+                # Pass sources upward.
+                parent.sources.update(node.collect_sources())
+                parent.children.pop(node.label)
+            node = parent
+            depth -= 1
+        return None
+
+    @staticmethod
+    def _split_aliquots(qq: str):
+        """
+        Split any halves in an already-parsed aliquot string into a list
+        of aliquots that can be handled by this 4-branching tree
+        structure.
+
+        :param qq: An already-parsed aliquot string.
+        :return: A list of aliquot strings, with halves split into
+         quarters.
+        """
+        split_qqs = []
+        if '2' in qq:
+            tp = TractParser(text=qq, clean_qq=True, break_halves=True)
+            for split_qq in tp.qqs:
+                split_qqs.append(split_qq)
+        else:
+            split_qqs.append(qq)
+        return split_qqs
+
     def register_aliquot(self, qq: str, source: Hashable = None):
         """
         Break apart the aliquot and register it into the tree. (Call
@@ -159,14 +236,7 @@ class AliquotNode:
          the deepest node. ``source`` can be anything, but must be
          hashable.
         """
-        # Must break any halves into quarters to use a 4-branching tree structure.
-        split_qqs = []
-        if '2' in qq:
-            tp = TractParser(text=qq, clean_qq=True, break_halves=True)
-            for split_qq in tp.qqs:
-                split_qqs.append(split_qq)
-        else:
-            split_qqs.append(qq)
+        split_qqs = self._split_aliquots(qq)
         for qq in split_qqs:
             self._insert_aliquot_into_tree(qq, source)
 
@@ -183,6 +253,27 @@ class AliquotNode:
         """
         for qq in qqs:
             self.register_aliquot(qq, source)
+
+    def remove_aliquot(self, qq: str):
+        """
+        Break apart the aliquot and remove it from the tree. (Call this
+        only on the root node.)
+
+        :param qq: Any QQ, as parsed by a ``Tract``.
+        """
+        split_qqs = self._split_aliquots(qq)
+        for qq in split_qqs:
+            self._remove_aliquot_from_tree(qq)
+
+    def remove_all_aliquots(self, qqs: list[str]):
+        """
+        Break apart all aliquots in the list of QQs and remove them from
+        the tree. (Call this only on the root node.)
+
+        :param qqs: A list of QQs, as parsed by a ``Tract``.
+        """
+        for qq in qqs:
+            self.remove_aliquot(qq)
 
     def is_leaf(self):
         """Check if this node is a leaf."""
