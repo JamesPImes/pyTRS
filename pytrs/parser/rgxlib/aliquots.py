@@ -8,7 +8,7 @@ fwb_lkbehind = r"((?<=¼|4|½|2)|(?<=\b))"
 # A lookahead requiring the start of an aliquot, or appropriate symbol
 # (do not use word boundary \b, to prevent symbols like degrees -- e.g.,
 #   N 2° 37'  -->  'N/2').
-aqwb_lkahead = r"((?=N|S|E|W)|(?=[\s,.;])|(?=$))"
+aqwb_lkahead = r"((?=N|S|E|W)|(?=[\s,.;\]\)])|(?=$))"
 
 # A subpattern to match 'One Quarter', 'Quarter', or equivalent symbol.
 quarter_subpattern = r"((One)?[\s\-]*Q[uarter]{3,7}|1\s*\/\s*4|¼)"
